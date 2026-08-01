@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "carrera": "Ingeniería de Sistemas",
+    "universidad": "Universidad de Oriente (UDO)",
+    "nucleo": "Núcleo de Monagas — Maturín",
+    "totalSemestres": 10,
+    "totalAsignaturas": 49,
+    "totalUC": 132,
+    "notaUC": "Las unidades crédito (uc) fueron inferidas del último dígito del código de cada asignatura. VERIFICAR contra el pensum oficial antes de usarlas en cálculos de progreso.",
+    "areas": {
+      "generales": "Formación general, idiomas y metodología",
+      "ciencias-basicas": "Matemáticas, física y química",
+      "estadistica": "Estadística y probabilidad",
+      "computacion": "Programación, datos y sistemas de información",
+      "electronica": "Circuitos, electrónica y comunicaciones",
+      "sistemas": "Teoría de sistemas e investigación de operaciones",
+      "gestion": "Economía, costos y gestión empresarial",
+      "tesis": "Trabajo de grado"
+    }
+  },
+  "asignaturas": [
+    { "codigo": "0021111", "nombre": "Extraacadémica", "semestre": 1, "uc": 1, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0061013", "nombre": "Comprensión y Expresión Lingüística I", "semestre": 1, "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0071823", "nombre": "Inglés Instrumental", "semestre": 1, "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0081814", "nombre": "Matemáticas I", "semestre": 1, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": [] },
+    { "codigo": "0091012", "nombre": "Desarrollo de Destrezas para el Aprendizaje", "semestre": 1, "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0101214", "nombre": "Química General", "semestre": 1, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": [] },
+
+    { "codigo": "0051324", "nombre": "Física I", "semestre": 2, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": ["0081814"] },
+    { "codigo": "0061023", "nombre": "Comprensión y Expresión Lingüística II", "semestre": 2, "uc": 3, "area": "generales", "prerrequisitos": ["0061013"] },
+    { "codigo": "0071121", "nombre": "Inglés Técnico I", "semestre": 2, "uc": 1, "area": "generales", "prerrequisitos": ["0071823"] },
+    { "codigo": "0081824", "nombre": "Matemáticas II", "semestre": 2, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": ["0081814"] },
+    { "codigo": "0721162", "nombre": "Intr. a la Lógica Formal y Algoritmos", "semestre": 2, "uc": 2, "area": "computacion", "prerrequisitos": [] },
+
+    { "codigo": "0052131", "nombre": "Laboratorio de Física I", "semestre": 3, "uc": 1, "area": "ciencias-basicas", "prerrequisitos": ["0051324"] },
+    { "codigo": "0052134", "nombre": "Física II", "semestre": 3, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": ["0051324"] },
+    { "codigo": "0082814", "nombre": "Matemáticas III", "semestre": 3, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": ["0081824"] },
+    { "codigo": "0712642", "nombre": "Introducción a la Ingeniería de Sistemas", "semestre": 3, "uc": 2, "area": "sistemas", "prerrequisitos": [] },
+    { "codigo": "0722103", "nombre": "Programación Orientada a Objetos", "semestre": 3, "uc": 3, "area": "computacion", "prerrequisitos": ["0081824", "0721162"] },
+    { "codigo": "0722111", "nombre": "Taller de Program. Orientada a Objetos", "semestre": 3, "uc": 1, "area": "computacion", "prerrequisitos": ["0721162"] },
+
+    { "codigo": "0073023", "nombre": "Metodología de la Investigación", "semestre": 4, "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0082824", "nombre": "Matemáticas IV", "semestre": 4, "uc": 4, "area": "ciencias-basicas", "prerrequisitos": ["0082814"] },
+    { "codigo": "0623313", "nombre": "Estadística I", "semestre": 4, "uc": 3, "area": "estadistica", "prerrequisitos": ["0082814"] },
+    { "codigo": "0712142", "nombre": "Introducción a la Economía", "semestre": 4, "uc": 2, "area": "gestion", "prerrequisitos": [] },
+    { "codigo": "0722123", "nombre": "Objetos y Abstracción de Datos", "semestre": 4, "uc": 3, "area": "computacion", "prerrequisitos": ["0722103", "0722111"] },
+    { "codigo": "0722131", "nombre": "Taller de Objet. y Abstracción de Datos", "semestre": 4, "uc": 1, "area": "computacion", "prerrequisitos": ["0722111"] },
+
+    { "codigo": "0624622", "nombre": "Estadística II", "semestre": 5, "uc": 2, "area": "estadistica", "prerrequisitos": ["0623313"] },
+    { "codigo": "0713122", "nombre": "Inferencia y Diseño de Experimentos", "semestre": 5, "uc": 2, "area": "estadistica", "prerrequisitos": ["0623313"] },
+    { "codigo": "0713172", "nombre": "Sistemas de Costo", "semestre": 5, "uc": 2, "area": "gestion", "prerrequisitos": ["0712142"] },
+    { "codigo": "0713463", "nombre": "Circuitos y Sistemas", "semestre": 5, "uc": 3, "area": "electronica", "prerrequisitos": ["0052134", "0082824"] },
+    { "codigo": "0713632", "nombre": "Teoría de Sistemas", "semestre": 5, "uc": 2, "area": "sistemas", "prerrequisitos": ["0712642"] },
+    { "codigo": "0713643", "nombre": "Sistemas de Operación", "semestre": 5, "uc": 3, "area": "computacion", "prerrequisitos": ["0722123"] },
+    { "codigo": "0723913", "nombre": "Métodos Numéricos", "semestre": 5, "uc": 3, "area": "ciencias-basicas", "prerrequisitos": ["0082824", "0722103"] },
+
+    { "codigo": "0713113", "nombre": "Economía de Empresas", "semestre": 6, "uc": 3, "area": "gestion", "prerrequisitos": ["0713172"] },
+    { "codigo": "0713622", "nombre": "Admón. de Stmas. de Base de Datos", "semestre": 6, "uc": 2, "area": "computacion", "prerrequisitos": ["0713643"] },
+    { "codigo": "0713633", "nombre": "Enfoque Sistémico", "semestre": 6, "uc": 3, "area": "sistemas", "prerrequisitos": ["0713632"] },
+    { "codigo": "0713653", "nombre": "Análisis de Decisiones", "semestre": 6, "uc": 3, "area": "sistemas", "prerrequisitos": ["0713122"] },
+    { "codigo": "0713663", "nombre": "Optimización de Operaciones", "semestre": 6, "uc": 3, "area": "sistemas", "prerrequisitos": ["0723913"] },
+    { "codigo": "0723533", "nombre": "Electrónica", "semestre": 6, "uc": 3, "area": "electronica", "prerrequisitos": ["0713463"] },
+
+    { "codigo": "0714153", "nombre": "Prepar., Eval. y Control de Proyectos", "semestre": 7, "uc": 3, "area": "gestion", "prerrequisitos": ["0713113"] },
+    { "codigo": "0714323", "nombre": "Anál. y Diseño de Stms. de Información", "semestre": 7, "uc": 3, "area": "computacion", "prerrequisitos": ["0713622"] },
+    { "codigo": "0714633", "nombre": "Modelos de Operaciones I", "semestre": 7, "uc": 3, "area": "sistemas", "prerrequisitos": ["0713663"] },
+    { "codigo": "0714643", "nombre": "Sistemas Dinámicos", "semestre": 7, "uc": 3, "area": "sistemas", "prerrequisitos": ["0723533"] },
+    { "codigo": "0724641", "nombre": "Laboratorio de Circuitos y Electrónica", "semestre": 7, "uc": 1, "area": "electronica", "prerrequisitos": ["0723533"] },
+
+    { "codigo": "0625613", "nombre": "Administración Financiera de Empresas", "semestre": 8, "uc": 3, "area": "gestion", "prerrequisitos": ["0713113"] },
+    { "codigo": "0714123", "nombre": "Gestión Empresarial I", "semestre": 8, "uc": 3, "area": "gestion", "prerrequisitos": ["0714153"] },
+    { "codigo": "0714133", "nombre": "Modelos de Operaciones II", "semestre": 8, "uc": 3, "area": "sistemas", "prerrequisitos": ["0714633"] },
+    { "codigo": "0714612", "nombre": "Aplicación y Audit. de Stmas. de Inform.", "semestre": 8, "uc": 2, "area": "computacion", "prerrequisitos": ["0714323"] },
+    { "codigo": "0714642", "nombre": "Sistemas de Comunicación Industrial", "semestre": 8, "uc": 2, "area": "electronica", "prerrequisitos": ["0713622"] },
+
+    { "codigo": "0625822", "nombre": "Leyes y Deontología", "semestre": 9, "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0715112", "nombre": "Planificación Estratégica", "semestre": 9, "uc": 2, "area": "gestion", "prerrequisitos": ["0714123"] },
+
+    { "codigo": "0715116", "nombre": "Trabajo de Grado", "semestre": 10, "uc": 6, "area": "tesis", "prerrequisitos": ["0714133", "0715112"] }
+  ]
+}

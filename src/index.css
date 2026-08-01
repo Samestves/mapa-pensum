@@ -1,0 +1,378 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* ------------------------------------------------------------------
+   Tema oscuro (por defecto). Todo el color vive en estas variables:
+   cambiar de tema es cambiar data-tema en <html>, nada mas.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  --lienzo: #05080e;
+  --rejilla: #101a28;
+  --panel: #0a1018;
+  --panel-borde: #1b2637;
+  --panel-suave: #111b28;
+  --nodo: #121d2c;
+  --nodo-borde: #2a3a52;
+  --tinta: #eaf1fa;
+  --tinta-suave: #9db0c9;
+  --tinta-tenue: #62748e;
+
+  --area-generales: #9aa8bd;
+  --area-ciencias-basicas: #46c8f5;
+  --area-estadistica: #b781ff;
+  --area-computacion: #2fe8c6;
+  --area-electronica: #ffa94d;
+  --area-sistemas: #6094ff;
+  --area-gestion: #ff6f9f;
+  --area-tesis: #ffd93d;
+
+  --estado-aprobada: #2fe8c6;
+  --estado-cursando: #ffb454;
+  --estado-rojo: #ff6b7d;
+
+  /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
+     tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
+     blanco sobre lienzo claro seria invisible. */
+  --nucleo: #ffffff;
+  --nucleo-fuerza: 72%;
+
+  /* Halo de los titulos de semestre: sobre fondo oscuro es luz blanca */
+  --halo-titulo: rgba(190, 225, 255, 0.3);
+}
+
+[data-tema='claro'] {
+  color-scheme: light;
+
+  --lienzo: #eef1f7;
+  --rejilla: #dde4ee;
+  --panel: #ffffff;
+  --panel-borde: #d7dfea;
+  --panel-suave: #f4f7fb;
+  --nodo: #ffffff;
+  --nodo-borde: #c6d1e0;
+  --tinta: #0c1725;
+  --tinta-suave: #45566e;
+  --tinta-tenue: #75859c;
+
+  --area-generales: #56677e;
+  --area-ciencias-basicas: #0b7aa8;
+  --area-estadistica: #7434cb;
+  --area-computacion: #0a9781;
+  --area-electronica: #c8650d;
+  --area-sistemas: #2751cc;
+  --area-gestion: #c92f65;
+  --area-tesis: #9c7700;
+
+  --estado-aprobada: #0a9781;
+  --estado-cursando: #c8650d;
+  --estado-rojo: #d92d45;
+
+  --nucleo: #ffffff;
+  --nucleo-fuerza: 14%;
+
+  /* En tema claro el halo va al reves: separa el texto negro del lienzo */
+  --halo-titulo: rgba(255, 255, 255, 0.9);
+}
+
+/* @theme inline hace que las utilidades emitan var(--x) en vez del valor
+   resuelto, que es lo que permite cambiar de tema en caliente. */
+@theme inline {
+  --color-lienzo: var(--lienzo);
+  --color-rejilla: var(--rejilla);
+  --color-panel: var(--panel);
+  --color-panel-borde: var(--panel-borde);
+  --color-panel-suave: var(--panel-suave);
+  --color-nodo: var(--nodo);
+  --color-nodo-borde: var(--nodo-borde);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-tinta-tenue: var(--tinta-tenue);
+  --color-aprobada: var(--estado-aprobada);
+  --color-cursando: var(--estado-cursando);
+
+  --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--lienzo);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* el grafo hace su propio pan/zoom, la pagina no scrollea */
+
+  /* Arrastrar el grafo seleccionaba el texto de todas las tarjetas.
+     Esto es una app de lienzo: aqui no se selecciona nada por defecto. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Se marca lo que si tiene sentido copiar */
+.seleccionable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.transicion-tema {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+
+/* ------------------------------------------------------------------
+   Animaciones del grafo.
+   Todas las aristas llevan pathLength="100", asi que los recorridos se
+   miden en porcentaje y no hace falta getTotalLength() en JS.
+   ------------------------------------------------------------------ */
+
+@keyframes viajar {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Cometa: varias capas con el MISMO guion corto, desfasadas unas centesimas
+   entre si. La de delante va fina y brillante y las de atras mas anchas y
+   tenues, asi se lee como una luz con estela y no como un guion deslizandose.
+   El guion suma 100 con su hueco, asi que el bucle cierra sin salto. */
+.cometa {
+  stroke-dasharray: 2.5 97.5;
+  animation: viajar 4.2s linear infinite;
+}
+
+/* Particula que viaja por el trazado real del cable. offset-path acepta el
+   mismo path que dibuja la arista, asi que sigue la curva exacta. */
+@keyframes recorrer {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+.particula {
+  offset-path: var(--ruta);
+  offset-rotate: 0deg;
+  animation: recorrer 4.2s linear infinite;
+}
+
+/* currentColor es el color del area, que se fija en el <g> de cada arista */
+.filamento {
+  stroke: color-mix(in oklab, var(--nucleo) var(--nucleo-fuerza), currentColor);
+}
+
+.filamento-relleno {
+  fill: color-mix(in oklab, var(--nucleo) var(--nucleo-fuerza), currentColor);
+}
+
+/* ---- Descarga: el golpe de corriente al aprobar una materia -------------
+   Se monta solo durante la animacion. Misma idea de cometa, pero de una
+   pasada, mas rapido al principio y frenando al llegar. */
+@keyframes descarga {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.descarga {
+  stroke-dasharray: 9 91;
+  animation: descarga 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+}
+
+/* Chispa que encabeza la descarga, sobre la curva real del cable */
+@keyframes chispa {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+.chispa {
+  offset-path: var(--ruta);
+  offset-rotate: 0deg;
+  animation: chispa 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+}
+
+/* Onda al impactar en el punto de soldadura del destino. El retardo la
+   sincroniza con la llegada de la chispa, no con el disparo. */
+@keyframes onda {
+  0% {
+    r: 3;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  100% {
+    r: 26;
+    opacity: 0;
+  }
+}
+
+.onda {
+  animation: onda 620ms cubic-bezier(0.2, 0.7, 0.3, 1) 640ms forwards;
+}
+
+/* Destello del nodo que se acaba de desbloquear. Tambien espera a que la
+   corriente llegue: encenderse antes que el cable se ve mal. */
+@keyframes destello {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.destello {
+  animation: destello 800ms ease-out 600ms forwards;
+}
+
+/* Anillo que se expande cada vez que una materia cambia de estado.
+   Se remonta con key={estado}, asi que se reproduce en cada cambio. */
+@keyframes anillo {
+  from {
+    opacity: 0.85;
+    stroke-width: 2;
+  }
+  to {
+    opacity: 0;
+    stroke-width: 14;
+  }
+}
+
+.anillo-cambio {
+  animation: anillo 620ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* El check de la casilla se dibuja trazando la linea, no apareciendo de golpe */
+@keyframes dibujar-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.trazo-check {
+  stroke-dasharray: 1;
+  animation: dibujar-check 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Boton de ficha: asoma al pasar el cursor. En pantallas tactiles, donde
+   no hay hover, se queda siempre visible. */
+.boton-ficha {
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.75);
+}
+
+.grupo-nodo:hover .boton-ficha,
+.grupo-nodo.activo .boton-ficha {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (hover: none) {
+  .boton-ficha {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Latido lento del borde de una asignatura en curso */
+@keyframes respirar {
+  0%,
+  100% {
+    stroke-opacity: 0.55;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.respirando {
+  animation: respirar 2.6s ease-in-out infinite;
+}
+
+/* Entrada de la tarjeta de detalle */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.surgir {
+  animation: surgir 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cometa,
+  .particula,
+  .chispa,
+  .onda,
+  .descarga,
+  .destello,
+  .respirando,
+  .anillo-cambio,
+  .trazo-check,
+  .surgir {
+    animation: none;
+  }
+
+  .trazo-check {
+    stroke-dasharray: none;
+  }
+}
