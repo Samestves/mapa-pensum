@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
 import {
+  ChevronUp,
   LayoutList,
   Moon,
-  PanelRight,
   Route,
+  SlidersHorizontal,
   Sun,
   Waypoints,
 } from 'lucide-react'
 
-/** Botón de icono del sistema: todos los de la cabecera miden y pesan igual */
+/** Boton de icono del sistema: todos los de la cabecera miden y pesan igual */
 function Icono({ icono: Ico, titulo, activo, alPulsar, clase = '' }) {
   return (
     <button
@@ -34,26 +34,14 @@ function BarraSuperior({
   resumen,
   vista,
   alCambiarVista,
-  panelAbierto,
-  alAlternarPanel,
+  avanceAbierto,
+  alAlternarAvance,
+  alAbrirElectivas,
   alPlanificar,
+  alOcultarBarra,
 }) {
-  const [compacto, setCompacto] = useState(false)
-  const barra = useRef(null)
-
-  // Por debajo de cierto ancho el resumen estorba mas de lo que informa
-  useEffect(() => {
-    const medir = () => setCompacto(window.innerWidth < 900)
-    medir()
-    window.addEventListener('resize', medir)
-    return () => window.removeEventListener('resize', medir)
-  }, [])
-
   return (
-    <header
-      ref={barra}
-      className="transicion-tema z-40 flex shrink-0 items-center gap-2 border-b border-panel-borde bg-panel px-3 py-2.5 sm:gap-3 sm:px-5"
-    >
+    <header className="transicion-tema z-40 flex shrink-0 items-center gap-2 border-b border-panel-borde bg-panel px-3 py-2.5 sm:gap-3 sm:px-5">
       <span
         className="grid size-9 shrink-0 place-items-center rounded-lg"
         style={{
@@ -64,31 +52,42 @@ function BarraSuperior({
         <Waypoints size={19} strokeWidth={2.4} />
       </span>
 
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-[15px] leading-tight font-extrabold tracking-tight text-tinta sm:text-base">
+      {/* En movil el titulo no cabe y truncado se ve peor que ausente:
+          queda solo el logo, que ya identifica la app. */}
+      <div className="hidden min-w-0 flex-1 sm:block">
+        <h1 className="truncate text-base leading-tight font-extrabold tracking-tight text-tinta">
           Mapa de Pensum
         </h1>
-        <p className="hidden truncate text-[11px] leading-tight font-medium text-tinta-suave sm:block">
+        <p className="hidden truncate text-[11px] leading-tight font-medium text-tinta-suave md:block">
           {meta.carrera} · {meta.nucleo}
         </p>
       </div>
+      <div className="min-w-0 flex-1 sm:hidden" />
 
-      {!compacto && (
-        <div className="flex items-center gap-2.5 rounded-lg border border-panel-borde px-3 py-1.5">
-          <span className="font-mono text-sm font-bold text-aprobada">
-            {resumen.porcentaje.toFixed(1)}%
-          </span>
-          <span className="h-1.5 w-20 overflow-hidden rounded-full bg-lienzo">
-            <span
-              className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-              style={{ width: `${resumen.porcentaje}%` }}
-            />
-          </span>
-          <span className="font-mono text-[10px] font-semibold text-tinta-tenue">
-            {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
-          </span>
-        </div>
-      )}
+      {/* El chip de progreso es el acceso al detalle del avance */}
+      <button
+        type="button"
+        onClick={alAlternarAvance}
+        title="Ver el detalle de mi avance"
+        className={`transicion-tema flex shrink-0 items-center gap-2.5 rounded-lg border px-3 py-1.5 ${
+          avanceAbierto
+            ? 'border-transparent bg-panel-suave'
+            : 'border-panel-borde hover:bg-panel-suave'
+        }`}
+      >
+        <span className="font-mono text-sm font-bold text-aprobada">
+          {resumen.porcentaje.toFixed(1)}%
+        </span>
+        <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
+          <span
+            className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
+            style={{ width: `${resumen.porcentaje}%` }}
+          />
+        </span>
+        <span className="hidden font-mono text-[10px] font-semibold text-tinta-tenue lg:inline">
+          {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
+        </span>
+      </button>
 
       {/* Cambiar de vista: en movil la lista es la util, el mapa es opcional */}
       <div className="transicion-tema flex shrink-0 items-center gap-0.5 rounded-lg border border-panel-borde p-0.5">
@@ -108,6 +107,12 @@ function BarraSuperior({
         />
       </div>
 
+      <Icono
+        icono={SlidersHorizontal}
+        titulo="Elegir mis electivas"
+        alPulsar={alAbrirElectivas}
+      />
+
       <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
 
       <Icono
@@ -116,9 +121,7 @@ function BarraSuperior({
         alPulsar={alternarTema}
       />
 
-      {!panelAbierto && (
-        <Icono icono={PanelRight} titulo="Mostrar mi avance" alPulsar={alAlternarPanel} />
-      )}
+      <Icono icono={ChevronUp} titulo="Ocultar la barra" alPulsar={alOcultarBarra} />
     </header>
   )
 }

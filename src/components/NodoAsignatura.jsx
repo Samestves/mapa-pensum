@@ -1,64 +1,27 @@
+import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorArea, etiquetaArea } from '../theme/areas'
 
 /**
- * Los cuatro estados se distinguen por borde, relleno y trazo, nunca por
- * apagar la tarjeta: las bloqueadas se leen igual de bien que las demas.
+ * Los cuatro estados se distinguen por relleno, borde y trazo de la propia
+ * tarjeta, no por un control aparte: la marca se hace desde la ficha y aqui
+ * solo se refleja. El tinte de aprobada es deliberadamente fuerte para que
+ * el mapa se pueda leer de un vistazo desde lejos.
  */
 const ESTILO = {
   [ESTADO.BLOQUEADA]: { borde: null, opacidadBorde: 0.4, grosor: 1.25, guiones: '5 4', tinte: 0, acento: 0.4 },
   [ESTADO.DISPONIBLE]: { borde: null, opacidadBorde: 0.85, grosor: 1.5, guiones: null, tinte: 0.05, acento: 1 },
-  [ESTADO.CURSANDO]: { borde: 'var(--estado-cursando)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.1, acento: 1 },
-  [ESTADO.APROBADA]: { borde: 'var(--estado-aprobada)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.16, acento: 1 },
+  [ESTADO.CURSANDO]: { borde: 'var(--estado-cursando)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.14, acento: 1 },
+  [ESTADO.APROBADA]: { borde: 'var(--estado-aprobada)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.22, acento: 1 },
 }
 
-// Casilla del checklist, arriba a la derecha de la tarjeta
-const CASILLA = { cx: NODO.ancho - NODO.padDer - 9, cy: 22, lado: 18 }
-
-
-/** Casilla que se marca y desmarca. El check se dibuja trazando la linea. */
-function Casilla({ estado, color }) {
-  const aprobada = estado === ESTADO.APROBADA
-  const cursando = estado === ESTADO.CURSANDO
-  const { cx, cy, lado } = CASILLA
-  const r = lado / 2
-
-  return (
-    <g>
-      <rect
-        x={cx - r}
-        y={cy - r}
-        width={lado}
-        height={lado}
-        rx={6}
-        fill={color}
-        fillOpacity={aprobada ? 0.95 : cursando ? 0.22 : 0}
-        stroke={color}
-        strokeOpacity={estado === ESTADO.BLOQUEADA ? 0.45 : 0.9}
-        strokeWidth={1.6}
-        strokeDasharray={estado === ESTADO.BLOQUEADA ? '3 3' : undefined}
-        style={{ transition: 'fill-opacity 240ms ease, stroke-opacity 240ms ease' }}
-      />
-
-      {aprobada && (
-        // key={estado} remonta el trazo, asi el check se redibuja cada vez
-        <path
-          key={estado}
-          className="trazo-check"
-          pathLength="1"
-          d={`M ${cx - 4.4} ${cy - 0.2} L ${cx - 1.2} ${cy + 3.2} L ${cx + 4.6} ${cy - 4}`}
-          fill="none"
-          stroke="var(--nodo)"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-
-      {cursando && <circle cx={cx} cy={cy} r="3.2" fill={color} />}
-    </g>
-  )
+// Icono de estado, arriba a la derecha. Informa, no es un boton.
+const ICONO = {
+  [ESTADO.APROBADA]: Check,
+  [ESTADO.CURSANDO]: CircleDot,
+  [ESTADO.BLOQUEADA]: Lock,
+  [ESTADO.DISPONIBLE]: null,
 }
 
 function NodoAsignatura({
@@ -82,14 +45,9 @@ function NodoAsignatura({
   const colorBorde = estilo.borde ?? acento
   const colorTinte =
     estado === ESTADO.CURSANDO ? 'var(--estado-cursando)' : 'var(--estado-aprobada)'
-  const colorCasilla =
-    estado === ESTADO.APROBADA
-      ? 'var(--estado-aprobada)'
-      : estado === ESTADO.CURSANDO
-        ? 'var(--estado-cursando)'
-        : acento
 
   const aprobada = estado === ESTADO.APROBADA
+  const Icono = ICONO[estado]
 
   // El bloque de nombre se centra: 1, 2 o 3 lineas quedan siempre equilibradas
   const primeraLinea =
@@ -236,7 +194,16 @@ function NodoAsignatura({
         {etiquetaArea(area)}
       </text>
 
-      <Casilla estado={estado} color={colorCasilla} />
+      {Icono && (
+        <Icono
+          x={NODO.ancho - NODO.padDer - 15}
+          y={13}
+          width={15}
+          height={15}
+          color={estado === ESTADO.BLOQUEADA ? 'var(--tinta-tenue)' : colorBorde}
+          strokeWidth={2.6}
+        />
+      )}
     </g>
   )
 }

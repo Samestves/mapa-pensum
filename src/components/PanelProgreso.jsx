@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  X,
   CircleDot,
   GraduationCap,
   ListChecks,
@@ -9,7 +8,6 @@ import {
   SlidersHorizontal,
   TriangleAlert,
 } from 'lucide-react'
-import { colorArea, etiquetaArea } from '../theme/areas'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 
 function Dato({ icono: Icono, valor, de, etiqueta, color }) {
@@ -24,37 +22,6 @@ function Dato({ icono: Icono, valor, de, etiqueta, color }) {
         {de != null && <span className="text-xs text-tinta-tenue"> / {de}</span>}
       </div>
     </div>
-  )
-}
-
-function FilaArea({ fila, activa, alPulsar }) {
-  const color = colorArea(fila.area)
-  const pct = fila.uc ? (fila.ucAprobadas / fila.uc) * 100 : 0
-
-  return (
-    <button
-      type="button"
-      onClick={alPulsar}
-      title={`Aislar ${etiquetaArea(fila.area)} en el mapa`}
-      className="w-full rounded-lg border px-2.5 py-2 text-left transition-colors hover:bg-panel-suave"
-      style={{ borderColor: activa ? color : 'transparent' }}
-    >
-      <div className="flex items-center gap-2">
-        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-tinta">
-          {etiquetaArea(fila.area)}
-        </span>
-        <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
-          {fila.ucAprobadas}/{fila.uc}
-        </span>
-      </div>
-      <div className="mt-1.5 ml-4 h-1 overflow-hidden rounded-full bg-lienzo">
-        <div
-          className="h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
-      </div>
-    </button>
   )
 }
 
@@ -141,11 +108,15 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
   )
 }
 
+/**
+ * Popover de detalle del avance, anclado al chip de progreso de la cabecera.
+ * Solo trae lo que NO esta ya a la vista en otro sitio: el desglose en
+ * numeros, las cuotas de electivas y el reinicio. El porcentaje vive en el
+ * chip y el filtro por area en la leyenda.
+ */
 function PanelProgreso({
   progreso,
   avanceElectivas,
-  areaFiltrada,
-  alFiltrarArea,
   alAbrirElectivas,
   reiniciar,
   hayMarcas,
@@ -159,8 +130,6 @@ function PanelProgreso({
   if (!abierto) return null
 
   return (
-    // Ya no ocupa una columna fija: flota sobre el lienzo y se cierra al
-    // pulsar fuera, asi el mapa recupera todo el ancho.
     <>
       <button
         type="button"
@@ -168,21 +137,7 @@ function PanelProgreso({
         onClick={alCerrar}
         className="fixed inset-0 z-30 cursor-default"
       />
-      <aside className="surgir transicion-tema absolute top-3 right-3 bottom-3 z-40 flex w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-panel-borde bg-panel/95 shadow-2xl backdrop-blur-xl">
-        <div className="flex items-center justify-between border-b border-panel-borde px-4 py-3">
-          <h2 className="text-sm font-bold text-tinta">Mi avance</h2>
-          <button
-            type="button"
-            onClick={alCerrar}
-            aria-label="Cerrar panel"
-            title="Cerrar"
-            className="grid size-7 place-items-center rounded-lg text-tinta-suave transition-colors hover:text-tinta"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-      <div className="flex flex-col gap-4 overflow-y-auto p-4">
+      <div className="surgir transicion-tema absolute top-2 right-3 z-40 flex max-h-[calc(100%-1rem)] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
         <div>
           <div className="flex items-end justify-between">
             <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
@@ -252,40 +207,10 @@ function PanelProgreso({
           </div>
         </div>
 
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Avance por área
-            </h3>
-            {areaFiltrada && (
-              <button
-                type="button"
-                onClick={() => alFiltrarArea(null)}
-                className="text-[10px] font-bold text-aprobada"
-              >
-                Ver todo
-              </button>
-            )}
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {progreso.porArea.map((fila) => (
-              <FilaArea
-                key={fila.area}
-                fila={fila}
-                activa={areaFiltrada === fila.area}
-                alPulsar={() => alFiltrarArea(areaFiltrada === fila.area ? null : fila.area)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Reiniciar vive aqui, junto a los datos que borra, y no en la
-            cabecera entre acciones que se usan a diario. */}
-        <div className="mt-2 border-t border-panel-borde pt-4">
+        <div className="border-t border-panel-borde pt-3">
           <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
         </div>
       </div>
-      </aside>
     </>
   )
 }

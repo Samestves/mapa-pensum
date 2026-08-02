@@ -295,65 +295,6 @@ body {
   animation: anillo 620ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
-/* El check de la casilla se dibuja trazando la linea, no apareciendo de golpe */
-@keyframes dibujar-check {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.trazo-check {
-  stroke-dasharray: 1;
-  animation: dibujar-check 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* La franja inferior de la tarjeta muestra UC y area en reposo, y los
-   controles de estado al pasar el cursor. Se cruzan con un fundido en el
-   mismo sitio, asi que no se solapan ni mueven nada. */
-.solo-reposo,
-.solo-activo {
-  transition: opacity 160ms ease;
-}
-
-.solo-activo {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.grupo-nodo:hover .solo-reposo,
-.grupo-nodo.activo .solo-reposo {
-  opacity: 0;
-}
-
-.grupo-nodo:hover .solo-activo,
-.grupo-nodo.activo .solo-activo {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.segmento {
-  cursor: pointer;
-}
-
-.segmento:hover rect {
-  fill-opacity: 0.32;
-  stroke-opacity: 1;
-}
-
-/* Sin hover no hay forma de sacar la barra: se deja siempre puesta */
-@media (hover: none) {
-  .solo-reposo {
-    opacity: 0;
-  }
-  .solo-activo {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
 /* Latido lento del borde de una asignatura en curso */
 @keyframes respirar {
   0%,
@@ -438,12 +379,7 @@ body {
   .destello,
   .respirando,
   .anillo-cambio,
-  .trazo-check,
   .surgir {
     animation: none;
-  }
-
-  .trazo-check {
-    stroke-dasharray: none;
   }
 }

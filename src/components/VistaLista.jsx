@@ -143,8 +143,8 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
  * 0.10, donde el texto no se lee. Aqui la informacion es la misma pero en
  * un formato que si funciona con el pulgar.
  */
-function VistaLista({ layout, estados, alMarcar }) {
-  const { columnas, nodos, relaciones, porCodigo } = layout
+function VistaLista({ layout, estados, avanceElectivas, alMarcar }) {
+  const { columnas, nodos, electivas, relaciones, porCodigo } = layout
 
   const porSemestre = useMemo(() => {
     const mapa = new Map()
@@ -154,6 +154,25 @@ function VistaLista({ layout, estados, alMarcar }) {
     }
     return mapa
   }, [nodos])
+
+  // Las electivas cierran la lista, en sus dos grupos con su cuota
+  const gruposElectivas = useMemo(
+    () => [
+      {
+        clave: 'tecnica',
+        titulo: 'ELECTIVAS TÉCNICAS',
+        avance: avanceElectivas.tecnica,
+        items: electivas.filter((e) => e.tipo === 'tecnica'),
+      },
+      {
+        clave: 'humanistica',
+        titulo: 'ELECTIVAS HUMANÍSTICAS',
+        avance: avanceElectivas.humanistica,
+        items: electivas.filter((e) => e.tipo === 'humanistica'),
+      },
+    ],
+    [electivas, avanceElectivas],
+  )
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -194,6 +213,44 @@ function VistaLista({ layout, estados, alMarcar }) {
             </section>
           )
         })}
+
+        {gruposElectivas.map((grupo) => (
+          <section key={grupo.clave}>
+            <header className="transicion-tema sticky top-0 z-10 -mx-1 mb-2 bg-lienzo px-1 py-2">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[11px] font-extrabold tracking-[0.18em] text-tinta">
+                  {grupo.titulo}
+                </h2>
+                <span
+                  className="font-mono text-[10px] font-bold"
+                  style={{
+                    color: grupo.avance.completa
+                      ? 'var(--estado-aprobada)'
+                      : 'var(--estado-cursando)',
+                  }}
+                >
+                  {grupo.avance.uc}/{grupo.avance.meta} UC
+                </span>
+              </div>
+              <p className="text-[10px] text-tinta-tenue">
+                Elige las que quieras hasta cubrir la cuota.
+              </p>
+            </header>
+            <ul className="flex flex-col gap-2">
+              {grupo.items.map((nodo) => (
+                <FilaMateria
+                  key={nodo.codigo}
+                  nodo={nodo}
+                  estado={estados[nodo.codigo]}
+                  relaciones={relaciones}
+                  porCodigo={porCodigo}
+                  estados={estados}
+                  alMarcar={alMarcar}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </div>
   )

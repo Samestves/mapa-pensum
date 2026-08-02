@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import pensum from './data/pensum.json'
 import { calcularLayout } from './layout/calcularLayout'
 import { usePensum } from './hooks/usePensum'
@@ -43,8 +44,10 @@ function App() {
     localStorage.setItem(CLAVE_VISTA, vista)
   }, [vista])
 
-  // El avance ya no ocupa columna: se abre desde la cabecera y flota
+  // El avance ya no ocupa columna: se abre desde el chip de la cabecera
   const [panelAbierto, setPanelAbierto] = useState(false)
+  // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
+  const [barraOculta, setBarraOculta] = useState(false)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
   const [planAbierto, setPlanAbierto] = useState(false)
   const [electivasAbiertas, setElectivasAbiertas] = useState(false)
@@ -67,17 +70,34 @@ function App() {
 
   return (
     <div className="flex h-full flex-col">
-      <BarraSuperior
-        meta={meta}
-        tema={tema}
-        alternarTema={alternarTema}
-        resumen={progreso}
-        vista={vista}
-        alCambiarVista={setVista}
-        panelAbierto={panelAbierto}
-        alAlternarPanel={() => setPanelAbierto((v) => !v)}
-        alPlanificar={() => setPlanAbierto(true)}
-      />
+      {barraOculta ? (
+        <button
+          type="button"
+          onClick={() => setBarraOculta(false)}
+          title="Mostrar la barra"
+          aria-label="Mostrar la barra"
+          className="transicion-tema absolute top-0 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-b-xl border border-t-0 border-panel-borde bg-panel/90 px-4 py-1 text-tinta-suave backdrop-blur hover:py-1.5 hover:text-tinta"
+        >
+          <ChevronDown size={15} />
+        </button>
+      ) : (
+        <BarraSuperior
+          meta={meta}
+          tema={tema}
+          alternarTema={alternarTema}
+          resumen={progreso}
+          vista={vista}
+          alCambiarVista={setVista}
+          avanceAbierto={panelAbierto}
+          alAlternarAvance={() => setPanelAbierto((v) => !v)}
+          alAbrirElectivas={() => setElectivasAbiertas(true)}
+          alPlanificar={() => setPlanAbierto(true)}
+          alOcultarBarra={() => {
+            setBarraOculta(true)
+            setPanelAbierto(false)
+          }}
+        />
+      )}
 
       {planAbierto && (
         <PlanRuta
@@ -126,15 +146,21 @@ function App() {
             />
           </>
         ) : (
-          <VistaLista layout={layout} estados={estados} alMarcar={marcar} />
+          <VistaLista
+            layout={layout}
+            estados={estados}
+            avanceElectivas={avanceElectivas}
+            alMarcar={marcar}
+          />
         )}
 
         <PanelProgreso
           progreso={progreso}
           avanceElectivas={avanceElectivas}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={filtrarArea}
-          alAbrirElectivas={() => setElectivasAbiertas(true)}
+          alAbrirElectivas={() => {
+            setPanelAbierto(false)
+            setElectivasAbiertas(true)
+          }}
           reiniciar={reiniciar}
           hayMarcas={hayMarcas}
           abierto={panelAbierto}

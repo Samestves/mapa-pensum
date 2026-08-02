@@ -7,9 +7,14 @@ import { colorArea } from '../theme/areas'
  * Tarjeta compacta de la zona de electivas. Mas baja que la de una materia
  * obligatoria a proposito: son opcionales y no deben competir con la malla.
  */
+// Recorta un nombre para la linea de requisito de la tarjeta compacta
+const corto = (texto, max = 26) =>
+  texto.length > max ? `${texto.slice(0, max - 1)}…` : texto
+
 function NodoElectiva({
   nodo,
   estado,
+  requisito,
   resaltado,
   atenuado,
   seleccionado,
@@ -22,6 +27,21 @@ function NodoElectiva({
   const aprobada = estado === ESTADO.APROBADA
   const cursando = estado === ESTADO.CURSANDO
   const bloqueada = estado === ESTADO.BLOQUEADA
+
+  // La zona de electivas no lleva cables, asi que la dependencia se dice
+  // con palabras: que te falta si esta bloqueada, o que es de libre acceso.
+  const pie = bloqueada
+    ? `Requiere ${corto(requisito ?? '…')}`
+    : (nodo.prerrequisitos ?? []).length === 0
+      ? 'Libre · sin requisitos'
+      : aprobada || cursando
+        ? `${codigo} · ${uc} UC`
+        : 'Disponible · requisitos cumplidos'
+  const colorPie = bloqueada
+    ? 'var(--tinta-tenue)'
+    : (nodo.prerrequisitos ?? []).length === 0 && !aprobada && !cursando
+      ? 'var(--estado-aprobada)'
+      : 'var(--tinta-tenue)'
 
   const colorBorde = aprobada
     ? 'var(--estado-aprobada)'
@@ -91,10 +111,10 @@ function NodoElectiva({
         x={NODO.padIzq}
         y={ELECTIVAS.alto - 10}
         fontSize={8.5}
-        fill="var(--tinta-tenue)"
+        fill={colorPie}
         className="font-mono"
       >
-        {codigo} · {uc} UC
+        {pie}
       </text>
 
       {Icono && (

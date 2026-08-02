@@ -271,6 +271,12 @@ function GrafoPensum({
               key={nodo.codigo}
               nodo={nodo}
               estado={estados[nodo.codigo]}
+              // Primer requisito pendiente, para decirlo en la tarjeta
+              requisito={
+                (nodo.prerrequisitos ?? [])
+                  .filter((p) => estados[p] !== ESTADO.APROBADA)
+                  .map((p) => porCodigo.get(p)?.nombre ?? p)[0]
+              }
               seleccionado={seleccionado === nodo.codigo}
               resaltado={cadena != null && cadena.has(nodo.codigo)}
               atenuado={atenuado(nodo.codigo)}
