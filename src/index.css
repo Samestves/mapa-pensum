@@ -365,9 +365,53 @@ body {
    rasterizar el mapa entero en una textura, y el mapa son mil seiscientos
    elementos SVG. La explicacion larga esta en useRuta.js.
 
-   Solo se anima opacidad. Nada de transform: la vista de carrera contiene
-   paneles en position:fixed, y un transform en un ancestro los reencuadra. */
+   El cambio va en dos tiempos, la vista que se va y la que llega, y solo
+   toca opacidad y transform, que son las dos propiedades que el compositor
+   resuelve sin repintar. La escala es minima y en sentidos opuestos: lo que
+   se va se aleja, lo que llega se posa. Con mas de un uno por ciento deja de
+   leerse como profundidad y empieza a leerse como un zoom.
+
+   Sobre el transform: dentro de la vista de carrera hay dos paneles en
+   position:fixed, y un transform en un ancestro los reencuadraria. Los dos
+   se abren solo por accion del usuario, o sea nunca durante estos 600 ms,
+   y como no se usa animation-fill-mode al terminar no queda transform
+   ninguno. Por eso aqui si se puede y en el mapa montado no haria falta. */
+@keyframes salir-vista {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+/* forwards: tiene que quedarse invisible hasta que la ruta cambie de verdad,
+   o el ultimo fotograma antes del relevo seria un parpadeo a opacidad 1. */
+.salida-vista {
+  animation: salir-vista 170ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 @keyframes entrar-vista {
+  from {
+    opacity: 0;
+    transform: scale(1.01);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entrada-vista {
+  animation: entrar-vista 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* El relevo de la silueta por el mapa, anidado dentro de la entrada de ruta.
+   Corta y de sola opacidad: las dos se multiplican, y sumarle escala encima
+   de la escala de fuera haria que el mapa entrara torcido. */
+@keyframes entrar-mapa {
   from {
     opacity: 0;
   }
@@ -376,8 +420,8 @@ body {
   }
 }
 
-.entrada-vista {
-  animation: entrar-vista 220ms cubic-bezier(0.32, 0.72, 0, 1);
+.entrada-mapa {
+  animation: entrar-mapa 280ms ease-out;
 }
 
 /* La silueta que ocupa el sitio del mapa mientras el mapa llega. Late flojo a
@@ -524,6 +568,8 @@ body {
   .anillo-cambio,
   .surgir,
   .entrada-vista,
+  .salida-vista,
+  .entrada-mapa,
   .esqueleto-mapa {
     animation: none;
   }

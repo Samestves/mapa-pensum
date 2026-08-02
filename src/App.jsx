@@ -34,7 +34,7 @@ function ponerMeta(carrera) {
  * paga los 107 nodos de Agronomica por mirar Sistemas.
  */
 function App() {
-  const { ruta, navegar } = useRuta()
+  const { ruta, saliendo, navegar } = useRuta()
   const slug = existe(ruta) ? ruta : null
 
   const [carrera, setCarrera] = useState(() => (slug ? carreraEnCache(slug) : null))
@@ -82,41 +82,54 @@ function App() {
     if (ruta && !existe(ruta)) window.history.replaceState(null, '', '/')
   }, [ruta])
 
-  if (!slug) return <SelectorCarrera alElegir={navegar} />
-
-  if (error) {
-    return (
-      <div className="grid h-full place-items-center p-6 text-center">
-        <div>
-          <p className="text-sm text-tinta-suave">No se pudo cargar el pensum. {error}</p>
-          <button
-            type="button"
-            onClick={() => navegar('')}
-            className="mt-3 rounded-lg border border-panel-borde px-3 py-1.5 text-xs font-semibold text-tinta-suave hover:text-tinta"
-          >
-            Volver a las carreras
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   // Se ve poco: la tarjeta empieza a bajar el pensum al pasar el puntero por
   // encima. Pero con el dedo no hay hover, y entrando directo por la URL con
   // la red lenta puede durar. Lo que se enseña entonces no es un girador sino
   // la silueta de esta carrera, que viene del indice y por tanto ya esta en
   // memoria: se ve al instante que se entro donde se queria.
-  if (!lista) {
-    return (
-      <div className="entrada-vista grid h-full place-items-center">
-        <EsqueletoMapa slug={slug} conNombre />
+  const contenido = !slug ? (
+    <SelectorCarrera alElegir={navegar} />
+  ) : error ? (
+    <div className="grid h-full place-items-center p-6 text-center">
+      <div>
+        <p className="text-sm text-tinta-suave">No se pudo cargar el pensum. {error}</p>
+        <button
+          type="button"
+          onClick={() => navegar('')}
+          className="mt-3 rounded-lg border border-panel-borde px-3 py-1.5 text-xs font-semibold text-tinta-suave hover:text-tinta"
+        >
+          Volver a las carreras
+        </button>
       </div>
-    )
-  }
+    </div>
+  ) : !lista ? (
+    <div className="grid h-full place-items-center">
+      <EsqueletoMapa slug={slug} conNombre />
+    </div>
+  ) : (
+    // key por slug: cambiar de carrera remonta la vista en vez de arrastrar
+    // el zoom y la seleccion de la anterior
+    <VistaCarrera key={slug} carrera={lista} alVolver={() => navegar('')} />
+  )
 
-  // key por slug: cambiar de carrera remonta la vista en vez de arrastrar el
-  // zoom y la seleccion de la anterior
-  return <VistaCarrera key={slug} carrera={lista} alVolver={() => navegar('')} />
+  // Las dos fases del cambio de ruta cuelgan de aqui y no de cada vista, que
+  // es lo que permite que la que se va y la que llega se animen igual sin que
+  // ninguna de las dos sepa que existe la otra.
+  //
+  // La key lleva tambien la fase, no solo la ruta: una animacion CSS no se
+  // reinicia sola si el elemento sobrevive al cambio, y entrar con la red
+  // lenta pasa por el esqueleto antes que por el mapa sin cambiar de ruta.
+  // Sin la fase, ese segundo relevo apareceria de golpe.
+  const fase = !slug ? 'selector' : error ? 'error' : !lista ? 'esqueleto' : 'mapa'
+
+  return (
+    <div
+      key={`${ruta}:${fase}`}
+      className={`h-full ${saliendo ? 'salida-vista' : 'entrada-vista'}`}
+    >
+      {contenido}
+    </div>
+  )
 }
 
 export default App

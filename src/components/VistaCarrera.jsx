@@ -71,8 +71,16 @@ function VistaCarrera({ carrera, alVolver }) {
   // el mapa entra encima de su propia silueta.
   const [mapaMontado, setMapaMontado] = useState(false)
   useEffect(() => {
-    const id = requestAnimationFrame(() => setMapaMontado(true))
-    return () => cancelAnimationFrame(id)
+    const cuadro = requestAnimationFrame(() => setMapaMontado(true))
+    // Red de seguridad: en una pestaña oculta requestAnimationFrame no se
+    // dispara NUNCA. Sin esto, abrir una carrera en una pestaña de fondo la
+    // dejaria en la silueta para siempre. Se comprobo de verdad, no es una
+    // precaucion teorica.
+    const red = setTimeout(() => setMapaMontado(true), 200)
+    return () => {
+      cancelAnimationFrame(cuadro)
+      clearTimeout(red)
+    }
   }, [])
 
   // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
@@ -89,7 +97,7 @@ function VistaCarrera({ carrera, alVolver }) {
   }
 
   return (
-    <div className="entrada-vista relative flex h-full flex-col overflow-hidden" style={tonos}>
+    <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
       {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
           1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
       <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
@@ -138,11 +146,12 @@ function VistaCarrera({ carrera, alVolver }) {
       )}
 
       {/* La key cambia una sola vez, cuando el mapa releva a la silueta: eso
-          rearranca .entrada-vista y el mapa aparece fundiendose encima de
-          ella en vez de dando un salto. */}
+          rearranca la animacion y el mapa aparece fundiendose encima de ella
+          en vez de dando un salto. Es mas corta que la de la ruta porque va
+          anidada dentro de ella: dos opacidades que se multiplican. */}
       <div
         key={mapaMontado ? 'mapa' : 'esqueleto'}
-        className="entrada-vista relative flex flex-1 overflow-hidden"
+        className="entrada-mapa relative flex flex-1 overflow-hidden"
       >
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />

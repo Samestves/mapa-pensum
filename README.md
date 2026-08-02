@@ -153,17 +153,23 @@ La idea era que la tarjeta del selector se desplegara hasta convertirse en el ma
 
 Eran tres o cuatro segundos. La pista de que la culpa no era de React fue que **volver al selector tardaba lo mismo**, y ahí React no tiene nada que hacer: se mide en cero milisegundos. Lo que corría en los dos sentidos era la transición, y al volver lo que hay que fotografiar sigue siendo el mapa.
 
-Lo que hay ahora, medido sobre el build de producción:
+En su lugar el cambio va en dos tiempos y lo hace CSS: la vista actual se despide (170 ms) y la nueva entra (420 ms). Solo se tocan opacidad y una escala del uno por ciento — las dos propiedades que el compositor resuelve sin repintar nada. Entremedias, el mapa se monta un fotograma después de que aparece la cabecera, y ese hueco lo ocupa la silueta de la carrera, que vive en el índice y por tanto ya está en memoria en el instante del click.
+
+Esa silueta hace además el trabajo que hacía la transición: el mapa aparece justo encima de la forma que ya estaba ahí.
+
+Medido fotograma a fotograma sobre el build de producción, entrando a Sistemas:
 
 | | Antes | Ahora |
 |---|---|---|
-| Click en una tarjeta → algo en pantalla | ~3-4 s | **5 ms** |
-| …→ mapa completo | ~3-4 s | 102 ms |
-| Volver al selector | ~3-4 s | **14 ms** |
+| Click → el selector empieza a irse | — | **10 ms** |
+| Click → mapa en pantalla | ~3-4 s congelados | 254 ms |
+| Transición completa | ~3-4 s congelados | ~540 ms |
+| Volver al selector | ~3-4 s congelados | ~600 ms, **cero tareas largas** |
 
-Tres cambios, ninguno espectacular: cambio de ruta seco con una animación de entrada por CSS de sola opacidad (el compositor no repinta nada), el mapa se monta un fotograma después de que aparece la cabecera, y en ese hueco va la silueta de la carrera — que vive en el índice, o sea que ya está en memoria en el instante del click.
+La diferencia de fondo no está en los números sino en qué son: antes eran segundos de página muerta, ahora son medio segundo de animación que se puede interrumpir.
 
-Esa silueta hace además el trabajo que hacía la transición: el mapa aparece justo encima de la forma que ya estaba ahí.
+> [!NOTE]
+> El primer intento fue quitar la animación del todo. Quedó en 5 ms y se sentía brusco: sin un tiempo de salida, el cambio se lee como un corte de vídeo. Los 170 ms de despedida no son latencia, son la parte que faltaba.
 
 </details>
 

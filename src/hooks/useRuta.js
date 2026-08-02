@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Enrutador de la app. Solo hay dos formas de ruta:
@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
  *   /<slug>      el mapa de una carrera
  *
  * Escrito a mano en vez de traer react-router porque para dos rutas sin
- * parametros anidados ni rutas hijas son treinta lineas contra unos 10 KB
+ * parametros anidados ni rutas hijas son cuarenta lineas contra unos 10 KB
  * comprimidos. En un proyecto cuyo publico paga los datos, y que ya dibuja su
  * propio grafo sin libreria, la coherencia es no meter la libreria.
  *
@@ -21,31 +21,64 @@ import { useCallback, useEffect, useState } from 'react'
  * Que volver al selector se sintiera igual de lento que entrar fue la pista:
  * React ahi no tiene nada que hacer, se mide en cero milisegundos.
  *
- * Lo que queda es un cambio de ruta seco. La sensacion de continuidad la pone
- * la animacion de entrada por CSS (.entrada-vista, solo opacidad) y la
- * silueta de la carrera que ocupa el sitio del mapa mientras se monta.
+ * Lo que hay ahora es un cambio en dos tiempos hecho con CSS: la vista actual
+ * se despide y la nueva entra. Cuesta un setTimeout y dos animaciones de
+ * opacidad, que el compositor resuelve sin repintar nada.
  */
+
+/* Lo que dura la despedida antes de cambiar de ruta. No es tiempo muerto: se
+   ve a la vista actual irse, que es justo lo que faltaba para que el cambio
+   no se leyera como un corte. Mas de esto ya se siente como esperar. */
+const SALIDA = 170
+
 const rutaActual = () => decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '')
+
+const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function useRuta() {
   const [ruta, setRuta] = useState(rutaActual)
+  const [saliendo, setSaliendo] = useState(false)
+  const pendiente = useRef(null)
 
   useEffect(() => {
-    // Atras y adelante del navegador
-    const alVolver = () => setRuta(rutaActual())
-    window.addEventListener('popstate', alVolver)
-    return () => window.removeEventListener('popstate', alVolver)
+    // Atras y adelante del navegador. Aqui no hay despedida posible: la URL
+    // ya cambio, asi que se corta cualquier salida en curso y se salta a la
+    // ruta nueva, que entrara con su animacion igual.
+    const alNavegarElNavegador = () => {
+      clearTimeout(pendiente.current)
+      setSaliendo(false)
+      setRuta(rutaActual())
+    }
+    window.addEventListener('popstate', alNavegarElNavegador)
+    return () => {
+      window.removeEventListener('popstate', alNavegarElNavegador)
+      clearTimeout(pendiente.current)
+    }
   }, [])
 
   const navegar = useCallback((destino) => {
-    const ruta = destino ?? ''
-    if (ruta === rutaActual()) return
+    const nueva = destino ?? ''
+    if (nueva === rutaActual()) return
 
-    window.history.pushState(null, '', `/${ruta}`)
-    setRuta(ruta)
-    // Cambiar de ruta es cambiar de pagina: la nueva empieza arriba
-    window.scrollTo(0, 0)
+    const aplicar = () => {
+      window.history.pushState(null, '', `/${nueva}`)
+      setRuta(nueva)
+      setSaliendo(false)
+      // Cambiar de ruta es cambiar de pagina: la nueva empieza arriba
+      window.scrollTo(0, 0)
+    }
+
+    if (sinMovimiento()) {
+      aplicar()
+      return
+    }
+
+    // Si ya habia una salida en curso (doble click, o cambio de idea a mitad)
+    // se descarta y manda la ultima
+    clearTimeout(pendiente.current)
+    setSaliendo(true)
+    pendiente.current = setTimeout(aplicar, SALIDA)
   }, [])
 
-  return { ruta, navegar }
+  return { ruta, saliendo, navegar }
 }

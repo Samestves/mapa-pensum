@@ -18,7 +18,7 @@ function SelectorCarrera({ alElegir }) {
   const ultima = ultimaCarrera()
 
   return (
-    <div className="entrada-vista h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       {/* El ancho crece con la pantalla en vez de quedarse clavado en 1024px:
           en un monitor grande ocho tarjetas apretadas al centro dejan medio
           lienzo vacio y se ven de juguete. */}
