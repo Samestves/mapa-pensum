@@ -1,4 +1,3 @@
-import { Check, CircleDot, Info } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorArea, etiquetaArea } from '../theme/areas'
@@ -17,11 +16,6 @@ const ESTILO = {
 // Casilla del checklist, arriba a la derecha de la tarjeta
 const CASILLA = { cx: NODO.ancho - NODO.padDer - 9, cy: 22, lado: 18 }
 
-// Barra de acciones. Ocupa la franja inferior de la tarjeta, la misma donde
-// en reposo van las UC y el area: son datos secundarios, asi que se cambian
-// por los controles al pasar el cursor. Nada se superpone al nombre.
-const BARRA = { y: 74, alto: 20, x: NODO.padIzq, ancho: NODO.ancho - NODO.padIzq - NODO.padDer }
-const SEGMENTO = BARRA.ancho / 3
 
 /** Casilla que se marca y desmarca. El check se dibuja trazando la linea. */
 function Casilla({ estado, color }) {
@@ -67,47 +61,6 @@ function Casilla({ estado, color }) {
   )
 }
 
-/** Un segmento de la barra de acciones */
-function Segmento({ indice, icono: Icono, etiqueta, activo, color, alPulsar }) {
-  const x = BARRA.x + indice * SEGMENTO
-  const cx = x + SEGMENTO / 2
-
-  return (
-    <g
-      onClick={(e) => {
-        // Sin esto el click subiria a la tarjeta y la marcaria tambien
-        e.stopPropagation()
-        alPulsar()
-      }}
-      className="segmento"
-    >
-      <title>{etiqueta}</title>
-      <rect
-        x={x + 1}
-        y={BARRA.y}
-        width={SEGMENTO - 2}
-        height={BARRA.alto}
-        rx={6}
-        fill={color}
-        fillOpacity={activo ? 0.22 : 0}
-        stroke={color}
-        strokeOpacity={activo ? 0.9 : 0.25}
-        strokeWidth="1"
-        style={{ transition: 'fill-opacity 160ms ease, stroke-opacity 160ms ease' }}
-      />
-      <Icono
-        x={cx - 6.5}
-        y={BARRA.y + BARRA.alto / 2 - 6.5}
-        width={13}
-        height={13}
-        color={color}
-        opacity={activo ? 1 : 0.75}
-        strokeWidth={2.4}
-      />
-    </g>
-  )
-}
-
 function NodoAsignatura({
   nodo,
   estado,
@@ -118,8 +71,6 @@ function NodoAsignatura({
   claveDestello,
   tocado,
   claveToque,
-  alMarcar,
-  alAlternar,
   alVerFicha,
   alEntrar,
   alSalir,
@@ -148,11 +99,11 @@ function NodoAsignatura({
     <g
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
-      onClick={alAlternar}
+      onClick={alVerFicha}
       onPointerEnter={alEntrar}
       onPointerLeave={alSalir}
       className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
-      style={{ transition: 'opacity 180ms ease' }}
+      style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
       <title>{`${codigo} — ${nombre} · ${etiquetaArea(area)} · ${estado}`}</title>
 
@@ -264,58 +215,26 @@ function NodoAsignatura({
         </text>
       ))}
 
-      {/* En reposo: UC y area. Al pasar el cursor se cambian por la barra. */}
-      <g className="solo-reposo">
-        <text
-          x={NODO.padIzq}
-          y={86}
-          fontSize={TEXTO.meta}
-          fill="var(--tinta-tenue)"
-          className="font-mono"
-        >
-          {uc} UC
-        </text>
-        <text
-          x={NODO.ancho - NODO.padDer}
-          y={86}
-          textAnchor="end"
-          fontSize={TEXTO.meta}
-          fill={acento}
-          fillOpacity={estilo.acento}
-          className="font-medium"
-        >
-          {etiquetaArea(area)}
-        </text>
-      </g>
-
-      <g className="solo-activo">
-        <Segmento
-          indice={0}
-          icono={Check}
-          etiqueta="Aprobada"
-          activo={aprobada}
-          color="var(--estado-aprobada)"
-          alPulsar={() => alMarcar(codigo, aprobada ? null : ESTADO.APROBADA)}
-        />
-        <Segmento
-          indice={1}
-          icono={CircleDot}
-          etiqueta="Cursando"
-          activo={estado === ESTADO.CURSANDO}
-          color="var(--estado-cursando)"
-          alPulsar={() =>
-            alMarcar(codigo, estado === ESTADO.CURSANDO ? null : ESTADO.CURSANDO)
-          }
-        />
-        <Segmento
-          indice={2}
-          icono={Info}
-          etiqueta="Ver prerrequisitos y detalle"
-          activo={seleccionado}
-          color="var(--tinta-suave)"
-          alPulsar={alVerFicha}
-        />
-      </g>
+      <text
+        x={NODO.padIzq}
+        y={86}
+        fontSize={TEXTO.meta}
+        fill="var(--tinta-tenue)"
+        className="font-mono"
+      >
+        {uc} UC
+      </text>
+      <text
+        x={NODO.ancho - NODO.padDer}
+        y={86}
+        textAnchor="end"
+        fontSize={TEXTO.meta}
+        fill={acento}
+        fillOpacity={estilo.acento}
+        className="font-medium"
+      >
+        {etiquetaArea(area)}
+      </text>
 
       <Casilla estado={estado} color={colorCasilla} />
     </g>

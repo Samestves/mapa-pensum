@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ChevronsRight,
+  X,
   CircleDot,
   GraduationCap,
   ListChecks,
@@ -156,28 +156,31 @@ function PanelProgreso({
     progreso
   const porcentaje = useNumeroAnimado(progreso.porcentaje)
 
+  if (!abierto) return null
+
   return (
-    <aside
-      className={`transicion-tema absolute inset-y-0 right-0 z-30 flex w-72 shrink-0 flex-col border-l border-panel-borde bg-panel transition-transform duration-300 ease-out ${
-        abierto ? 'translate-x-0 lg:relative' : 'translate-x-full lg:hidden'
-      }`}
-    >
-      <div className="flex items-center justify-between border-b border-panel-borde px-4 py-3">
-        <h2 className="text-sm font-bold text-tinta">Mi avance</h2>
-        <button
-          type="button"
-          onClick={alCerrar}
-          aria-label="Ocultar panel"
-          title="Ocultar panel"
-          className="group flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold text-tinta-tenue hover:text-tinta"
-        >
-          Ocultar
-          <ChevronsRight
-            size={15}
-            className="transition-transform duration-200 group-hover:translate-x-0.5"
-          />
-        </button>
-      </div>
+    // Ya no ocupa una columna fija: flota sobre el lienzo y se cierra al
+    // pulsar fuera, asi el mapa recupera todo el ancho.
+    <>
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={alCerrar}
+        className="fixed inset-0 z-30 cursor-default"
+      />
+      <aside className="surgir transicion-tema absolute top-3 right-3 bottom-3 z-40 flex w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-panel-borde bg-panel/95 shadow-2xl backdrop-blur-xl">
+        <div className="flex items-center justify-between border-b border-panel-borde px-4 py-3">
+          <h2 className="text-sm font-bold text-tinta">Mi avance</h2>
+          <button
+            type="button"
+            onClick={alCerrar}
+            aria-label="Cerrar panel"
+            title="Cerrar"
+            className="grid size-7 place-items-center rounded-lg text-tinta-suave transition-colors hover:text-tinta"
+          >
+            <X size={16} />
+          </button>
+        </div>
 
       <div className="flex flex-col gap-4 overflow-y-auto p-4">
         <div>
@@ -282,7 +285,8 @@ function PanelProgreso({
           <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 

@@ -1,4 +1,12 @@
-import { NODO, ANCHO_TEXTO, ESPACIADO, MARGEN, ALTO_ENCABEZADO, TEXTO } from './constantes'
+import {
+  NODO,
+  ANCHO_TEXTO,
+  ESPACIADO,
+  MARGEN,
+  ALTO_ENCABEZADO,
+  TEXTO,
+  ELECTIVAS,
+} from './constantes'
 import { generarAristas } from './aristas'
 import { construirRelaciones } from './relaciones'
 
@@ -49,7 +57,49 @@ export function partirEnLineas(texto, anchoDisponible, fontSize, maxLineas) {
  *
  * Devuelve tambien el tamano del lienzo, que el <svg> necesita para su viewBox.
  */
-export function calcularLayout(asignaturas) {
+/**
+ * Coloca las electivas en una zona propia debajo de los 10 semestres,
+ * reutilizando las mismas columnas: 10 por fila, en dos grupos.
+ * No tienen semestre asignado, asi que su unico orden posible es el catalogo.
+ */
+function colocarElectivas(electivas, xColumnas, yInicio) {
+  const grupos = []
+  const nodos = []
+  let y = yInicio
+
+  for (const [tipo, titulo] of [
+    ['tecnica', 'ELECTIVAS TÉCNICAS'],
+    ['humanistica', 'ELECTIVAS HUMANÍSTICAS'],
+  ]) {
+    const items = electivas.filter((e) => e.tipo === tipo)
+    if (!items.length) continue
+
+    const yTitulo = y
+    y += ELECTIVAS.encabezado
+
+    items.forEach((electiva, i) => {
+      const fila = Math.floor(i / xColumnas.length)
+      const columna = i % xColumnas.length
+      nodos.push({
+        ...electiva,
+        esElectiva: true,
+        x: xColumnas[columna],
+        y: y + fila * (ELECTIVAS.alto + ELECTIVAS.fila),
+        lineasNombre: partirEnLineas(electiva.nombre, ANCHO_TEXTO, TEXTO.meta + 1.5, 2),
+      })
+    })
+
+    const filas = Math.ceil(items.length / xColumnas.length)
+    y += filas * (ELECTIVAS.alto + ELECTIVAS.fila) - ELECTIVAS.fila
+
+    grupos.push({ tipo, titulo, yTitulo, yFin: y, cantidad: items.length })
+    y += ELECTIVAS.separacionGrupo
+  }
+
+  return { nodos, grupos, alto: y - yInicio }
+}
+
+export function calcularLayout(asignaturas, electivas = []) {
   const semestres = [...new Set(asignaturas.map((a) => a.semestre))].sort((a, b) => a - b)
 
   const nodos = []
@@ -88,20 +138,35 @@ export function calcularLayout(asignaturas) {
   const columnasN = Math.max(semestres.length, 1)
   const filasN = Math.max(maxFilas, 1)
 
+  // Fondo del ultimo nodo del mapa principal
+  const finSemestres =
+    MARGEN.top + ALTO_ENCABEZADO + filasN * NODO.alto + (filasN - 1) * ESPACIADO.fila
+
+  const zona = colocarElectivas(
+    electivas,
+    columnas.map((c) => c.x),
+    finSemestres + ELECTIVAS.corredor,
+  )
+
+  const todos = [...nodos, ...zona.nodos]
+
   return {
     nodos,
     columnas,
+    electivas: zona.nodos,
+    gruposElectivas: zona.grupos,
+    finSemestres,
+    // Las electivas son un mapa aparte: cero cables entre las dos zonas.
+    // Un cable que baje desde la malla se leeria como "esta electiva es
+    // parte del semestre X", y no lo es.
     aristas: generarAristas(nodos),
-    relaciones: construirRelaciones(nodos),
-    porCodigo: new Map(nodos.map((n) => [n.codigo, n])),
+    // Las relaciones si las incluyen: al señalar una electiva se ilumina lo
+    // que pide en el mapa de arriba, sin dibujar cable.
+    relaciones: construirRelaciones(todos),
+    porCodigo: new Map(todos.map((n) => [n.codigo, n])),
     maxFilas,
     ancho:
       MARGEN.left + columnasN * NODO.ancho + (columnasN - 1) * ESPACIADO.columna + MARGEN.right,
-    alto:
-      MARGEN.top +
-      ALTO_ENCABEZADO +
-      filasN * NODO.alto +
-      (filasN - 1) * ESPACIADO.fila +
-      MARGEN.bottom,
+    alto: finSemestres + (zona.nodos.length ? ELECTIVAS.corredor + zona.alto : 0) + MARGEN.bottom,
   }
 }

@@ -80,8 +80,8 @@ function Leyenda({ abierta, alAlternar, areaFiltrada, alFiltrarArea }) {
       </div>
 
       <p className="border-t border-panel-borde px-3 py-2 text-[10px] leading-snug text-tinta-tenue">
-        Click en una materia para marcarla como aprobada; otro click la desmarca. El botón
-        ⓘ abre su ficha. Arrastra para mover, rueda para zoom.
+        Click en una materia abre su ficha, ahí la marcas como aprobada o cursando.
+        Arrastra para mover, rueda para zoom.
       </p>
     </div>
   )

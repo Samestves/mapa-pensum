@@ -5,6 +5,7 @@ import { ESTADO } from '../hooks/usePensum'
 import { cadenaDe } from '../layout/relaciones'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import NodoAsignatura from './NodoAsignatura'
+import NodoElectiva from './NodoElectiva'
 import Arista from './Arista'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
@@ -45,10 +46,10 @@ function GrafoPensum({
   senalado,
   alSenalar,
   alSeleccionar,
-  alAlternarAprobada,
   alMarcar,
 }) {
-  const { nodos, columnas, aristas, relaciones, porCodigo, ancho, alto } = layout
+  const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, porCodigo, ancho, alto } =
+    layout
 
   const {
     contenedorRef,
@@ -219,12 +220,63 @@ function GrafoPensum({
               alMarcar={alMarcar}
               alEntrar={() => alSenalar(nodo.codigo)}
               alSalir={() => alSenalar(null)}
-              alAlternar={() => {
+              alVerFicha={() => {
                 // Si el puntero se movio, fue un arrastre del lienzo, no un click
                 if (huboMovimiento.current) return
-                alAlternarAprobada(nodo.codigo)
+                alSeleccionar(seleccionado === nodo.codigo ? null : nodo.codigo)
               }}
-              alVerFicha={() => {
+            />
+          ))}
+
+          {/* Zona de electivas, debajo de los 10 semestres */}
+          {gruposElectivas.map((grupo) => (
+            <g key={grupo.tipo}>
+              <line
+                x1={MARGEN.left}
+                y1={grupo.yTitulo + 4}
+                x2={ancho - MARGEN.right}
+                y2={grupo.yTitulo + 4}
+                stroke="var(--tinta-tenue)"
+                strokeOpacity="0.22"
+                strokeWidth="1"
+                strokeDasharray="2 8"
+              />
+              <text
+                x={MARGEN.left}
+                y={grupo.yTitulo + 34}
+                fontSize="15"
+                fill="var(--tinta)"
+                stroke="var(--halo-titulo)"
+                strokeWidth="4"
+                paintOrder="stroke"
+                strokeLinejoin="round"
+                className="font-extrabold tracking-[0.2em]"
+              >
+                {grupo.titulo}
+              </text>
+              <text
+                x={MARGEN.left + 300}
+                y={grupo.yTitulo + 34}
+                fontSize="11"
+                fill="var(--tinta-suave)"
+                className="font-mono font-semibold"
+              >
+                elige {grupo.tipo === 'tecnica' ? 15 : 6} UC de {grupo.cantidad} opciones
+              </text>
+            </g>
+          ))}
+
+          {electivas.map((nodo) => (
+            <NodoElectiva
+              key={nodo.codigo}
+              nodo={nodo}
+              estado={estados[nodo.codigo]}
+              seleccionado={seleccionado === nodo.codigo}
+              resaltado={cadena != null && cadena.has(nodo.codigo)}
+              atenuado={atenuado(nodo.codigo)}
+              alEntrar={() => alSenalar(nodo.codigo)}
+              alSalir={() => alSenalar(null)}
+              alHacerClick={() => {
                 if (huboMovimiento.current) return
                 alSeleccionar(seleccionado === nodo.codigo ? null : nodo.codigo)
               }}

@@ -1,6 +1,7 @@
 import { Check, CircleDot, Lock, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { colorArea, etiquetaArea } from '../theme/areas'
+import { fondoMateria } from '../theme/fondos'
 
 const ANCHO = 300
 
@@ -86,33 +87,40 @@ function DetalleAsignatura({
       className="surgir transicion-tema absolute z-20 flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
       style={{ left: izquierda, top: arriba, width: ANCHO }}
     >
-      <div
-        className="flex items-start gap-2 border-b border-panel-borde px-3.5 py-3"
-        style={{
-          backgroundColor: `color-mix(in oklab, ${colorArea(nodo.area)} 10%, transparent)`,
-        }}
-      >
-        <span
-          className="mt-1 h-8 w-1 shrink-0 rounded-full"
-          style={{ backgroundColor: colorArea(nodo.area) }}
+      {/* Cabecera con fondo generado y desenfocado: el color viene del area
+          y la forma del codigo, asi cada materia tiene el suyo. */}
+      <div className="relative overflow-hidden border-b border-panel-borde">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-8"
+          style={{ background: fondoMateria(nodo.codigo, nodo.area), filter: 'blur(26px)' }}
         />
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] tracking-wider text-tinta-tenue">
-            {nodo.codigo} · Semestre {nodo.semestre}
-          </p>
-          <h3 className="text-sm leading-tight font-bold text-tinta">{nodo.nombre}</h3>
-          <p className="mt-0.5 text-[11px]" style={{ color: colorArea(nodo.area) }}>
-            {etiquetaArea(nodo.area)} · {nodo.uc} UC
-          </p>
+        <div className="relative flex items-start gap-2.5 px-4 py-3.5">
+          <span
+            className="mt-1 h-9 w-1 shrink-0 rounded-full"
+            style={{ backgroundColor: colorArea(nodo.area) }}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] tracking-wider text-tinta-suave">
+              {nodo.codigo}
+              {nodo.semestre ? ` · Semestre ${nodo.semestre}` : ' · Electiva'}
+            </p>
+            <h3 className="text-[15px] leading-tight font-extrabold text-tinta">
+              {nodo.nombre}
+            </h3>
+            <p className="mt-0.5 text-[11px] font-semibold text-tinta-suave">
+              {etiquetaArea(nodo.area)} · {nodo.uc} UC
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={alCerrar}
+            aria-label="Cerrar"
+            className="grid size-6 shrink-0 place-items-center rounded-md text-tinta-suave transition-colors hover:text-tinta"
+          >
+            <X size={14} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={alCerrar}
-          aria-label="Cerrar"
-          className="grid size-6 shrink-0 place-items-center rounded-md text-tinta-tenue hover:text-tinta"
-        >
-          <X size={14} />
-        </button>
       </div>
 
       <div className="flex gap-2 px-3.5 py-3">

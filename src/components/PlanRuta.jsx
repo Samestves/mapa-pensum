@@ -34,7 +34,16 @@ function Control({ etiqueta, valor, sufijo, min, max, alCambiar, ayuda }) {
  * Planificador y exportacion. Calcula en cuantos semestres terminas segun la
  * carga que puedas llevar, y deja llevarte el plan en PDF o en Markdown.
  */
-function PlanRuta({ asignaturas, marcas, estados, progreso, relaciones, meta, alCerrar }) {
+function PlanRuta({
+  asignaturas,
+  electivas,
+  marcas,
+  estados,
+  progreso,
+  relaciones,
+  meta,
+  alCerrar,
+}) {
   const [nombre, setNombre] = useState(() => localStorage.getItem(CLAVE_NOMBRE) ?? '')
   const [ucPorSemestre, setUc] = useState(
     () => Number(localStorage.getItem(CLAVE_UC)) || 16,
@@ -57,8 +66,9 @@ function PlanRuta({ asignaturas, marcas, estados, progreso, relaciones, meta, al
   const pesos = useMemo(() => pesoDesbloqueo(relaciones), [relaciones])
 
   const plan = useMemo(
-    () => planificar(asignaturas, marcas, estados, pesos, ucPorSemestre),
-    [asignaturas, marcas, estados, pesos, ucPorSemestre],
+    () =>
+      planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, electivas, meta.creditos),
+    [asignaturas, marcas, estados, pesos, ucPorSemestre, electivas, meta.creditos],
   )
 
   const descargarMarkdown = () => {

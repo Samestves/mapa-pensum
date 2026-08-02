@@ -18,11 +18,61 @@ export const ucSugeridas = (horasSemana) =>
  *
  * Es una funcion pura: mismas marcas y mismo tope, mismo plan.
  */
-export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre) {
+export function planificar(
+  asignaturas,
+  marcas,
+  estados,
+  pesos,
+  ucPorSemestre,
+  electivas = [],
+  cuotas = null,
+) {
+  const todas = [...asignaturas, ...electivas]
   const aprobadas = new Set(
-    asignaturas.filter((a) => marcas[a.codigo] === ESTADO.APROBADA).map((a) => a.codigo),
+    todas.filter((a) => marcas[a.codigo] === ESTADO.APROBADA).map((a) => a.codigo),
   )
-  const pendientes = asignaturas.filter((a) => !aprobadas.has(a.codigo))
+
+  // Cuanta electiva falta por cubrir de cada cuota. Solo se planifican las
+  // que hagan falta: meter las 39 daria un plan absurdo de 20 semestres.
+  const faltaCuota = {
+    tecnica: Math.max(
+      0,
+      (cuotas?.electivasTecnicas ?? 0) -
+        electivas
+          .filter((e) => e.tipo === 'tecnica' && aprobadas.has(e.codigo))
+          .reduce((s, e) => s + e.uc, 0),
+    ),
+    humanistica: Math.max(
+      0,
+      (cuotas?.electivasHumanisticas ?? 0) -
+        electivas
+          .filter((e) => e.tipo === 'humanistica' && aprobadas.has(e.codigo))
+          .reduce((s, e) => s + e.uc, 0),
+    ),
+  }
+
+  // Se eligen las electivas mas baratas y sin prerrequisitos primero: son
+  // las que cubren la cuota estorbando lo menos posible.
+  const sugeridas = []
+  for (const tipo of ['tecnica', 'humanistica']) {
+    let falta = faltaCuota[tipo]
+    const candidatas = electivas
+      .filter((e) => e.tipo === tipo && !aprobadas.has(e.codigo))
+      .sort(
+        (a, b) =>
+          (a.prerrequisitos?.length ?? 0) - (b.prerrequisitos?.length ?? 0) || b.uc - a.uc,
+      )
+    for (const e of candidatas) {
+      if (falta <= 0) break
+      sugeridas.push(e)
+      falta -= e.uc
+    }
+  }
+
+  const pendientes = [
+    ...asignaturas.filter((a) => !aprobadas.has(a.codigo)),
+    ...sugeridas,
+  ]
 
   const semestres = []
   let restantes = [...pendientes]
@@ -48,7 +98,12 @@ export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre) {
       const pesoB = pesos.get(b.codigo) ?? 0
       if (pesoA !== pesoB) return pesoB - pesoA
 
-      if (a.semestre !== b.semestre) return a.semestre - b.semestre
+      // Las electivas van al final: son de relleno, no marcan el camino
+      const electivaA = a.tipo ? 1 : 0
+      const electivaB = b.tipo ? 1 : 0
+      if (electivaA !== electivaB) return electivaA - electivaB
+
+      if (a.semestre !== b.semestre) return (a.semestre ?? 99) - (b.semestre ?? 99)
       return b.uc - a.uc
     })
 

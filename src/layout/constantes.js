@@ -22,6 +22,17 @@ export const ESPACIADO = {
 
 export const MARGEN = { top: 24, right: 48, bottom: 72, left: 48 }
 
+// Zona de electivas, debajo de los 10 semestres. Comparte las columnas del
+// mapa principal para que se lea como una continuacion y no como otro dibujo.
+export const ELECTIVAS = {
+  // Aire entre el ultimo semestre y la zona: son dos mapas separados
+  corredor: 110,
+  encabezado: 52,
+  alto: 62,
+  fila: 14,
+  separacionGrupo: 44,
+}
+
 // Franja reservada arriba de cada columna para el titulo del semestre
 export const ALTO_ENCABEZADO = 56
 

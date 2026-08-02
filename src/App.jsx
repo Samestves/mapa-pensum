@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronsLeft } from 'lucide-react'
 import pensum from './data/pensum.json'
 import { calcularLayout } from './layout/calcularLayout'
 import { usePensum } from './hooks/usePensum'
@@ -18,7 +17,10 @@ function App() {
   const { meta, asignaturas, electivas } = pensum
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
-  const layout = useMemo(() => calcularLayout(asignaturas), [asignaturas])
+  const layout = useMemo(
+    () => calcularLayout(asignaturas, electivas),
+    [asignaturas, electivas],
+  )
 
   const {
     marcas,
@@ -28,7 +30,6 @@ function App() {
     descarga,
     toque,
     marcar,
-    alternarAprobada,
     reiniciar,
     hayMarcas,
   } = usePensum(asignaturas, electivas, meta.creditos)
@@ -42,7 +43,8 @@ function App() {
     localStorage.setItem(CLAVE_VISTA, vista)
   }, [vista])
 
-  const [panelAbierto, setPanelAbierto] = useState(() => window.innerWidth >= 1024)
+  // El avance ya no ocupa columna: se abre desde la cabecera y flota
+  const [panelAbierto, setPanelAbierto] = useState(false)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
   const [planAbierto, setPlanAbierto] = useState(false)
   const [electivasAbiertas, setElectivasAbiertas] = useState(false)
@@ -80,6 +82,7 @@ function App() {
       {planAbierto && (
         <PlanRuta
           asignaturas={asignaturas}
+          electivas={electivas}
           marcas={marcas}
           estados={estados}
           progreso={progreso}
@@ -113,7 +116,6 @@ function App() {
               senalado={senalado}
               alSenalar={setSenalado}
               alSeleccionar={seleccionar}
-              alAlternarAprobada={alternarAprobada}
               alMarcar={marcar}
             />
             <Leyenda
@@ -125,27 +127,6 @@ function App() {
           </>
         ) : (
           <VistaLista layout={layout} estados={estados} alMarcar={marcar} />
-        )}
-
-        {/* Pestana en el borde: deja claro de donde sale el panel */}
-        {!panelAbierto && (
-          <button
-            type="button"
-            onClick={() => setPanelAbierto(true)}
-            title="Mostrar mi avance"
-            className="transicion-tema group absolute top-1/2 right-0 z-30 flex -translate-y-1/2 items-center gap-1.5 rounded-l-xl border border-r-0 border-panel-borde bg-panel/90 py-4 pr-1.5 pl-2 backdrop-blur hover:pr-2.5"
-          >
-            <ChevronsLeft
-              size={15}
-              className="text-tinta-suave transition-transform duration-200 group-hover:-translate-x-0.5"
-            />
-            <span
-              className="text-[10px] font-bold tracking-wide text-tinta-suave"
-              style={{ writingMode: 'vertical-rl' }}
-            >
-              MI AVANCE
-            </span>
-          </button>
         )}
 
         <PanelProgreso
