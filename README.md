@@ -1,37 +1,257 @@
-# Mapa de Pensum — Ing. de Sistemas UDO
+<div align="center">
 
-Visualizador interactivo del pensum de Ingeniería de Sistemas de la Universidad de
-Oriente, Núcleo Monagas. Las 49 asignaturas se dibujan como un grafo de prerrequisitos
-con estética de placa de circuito: los cables que unen las materias se encienden a
-medida que apruebas lo que va antes.
+<img src="public/og.png" alt="Mapa de Pensum — las ocho carreras del Núcleo de Monagas" width="820">
 
-## Demo
+# Mapa de Pensum
 
-**[mapa-pensum.vercel.app](https://mapa-pensum.vercel.app)**
+**Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto te falta.**
 
-<!-- Cuando grabes un GIF de la app, súbelo a docs/ y descomenta esta línea:
-![Mapa de Pensum en acción](docs/demo.gif)
--->
+Las ocho carreras de la Universidad de Oriente, Núcleo de Monagas, dibujadas como el grafo de prelaciones que en realidad son.
+
+[**Abrir la aplicación →**](https://mapa-pensum.vercel.app)
+
+`Vite` · `React` · `JavaScript` · `Tailwind CSS` · `SVG a mano` · `Sin backend`
+
+</div>
+
+---
+
+## El problema
+
+La DACE publica cada pensum como una tabla. Una tabla te dice que Fitopatología Aplicada requiere Microbiología Vegetal, pero no te dice que si la dejas para después arrastras cuatro materias contigo, ni cuáles puedes inscribir el semestre que viene, ni cuánto te falta de verdad.
+
+Un pensum **no es una lista: es un grafo dirigido**. Esta herramienta lo dibuja como tal.
 
 ## Qué hace
 
-- **Grafo de prerrequisitos** de las 49 asignaturas en 10 semestres, dibujado a mano en SVG.
-- **Marcar tu avance** como un checklist: un click marca la materia, otro la desmarca. Al
-  aprobar, la corriente baja por los cables hacia lo que acabas de desbloquear.
-- **Estados derivados**: solo se guardan tus marcas de *aprobada* y *cursando*.
-  *Disponible* y *bloqueada* se recalculan siempre a partir de los prerrequisitos.
-- **Cadena completa**: al señalar una materia se ilumina todo lo que necesita hacia atrás
-  y todo lo que abre hacia adelante.
-- **Electivas**: catálogo de las 39 electivas técnicas y humanísticas, con las cuotas de
-  15 y 6 UC que exige el título.
-- **Planificador de ruta**: calcula en cuántos semestres terminas según la carga que puedas
-  llevar, respetando todas las prelaciones, y te lo lleva en PDF o Markdown.
-- **Avance por área**, con filtro para aislar cada área en el mapa.
-- **Vista de lista** para móvil: el mismo contenido en un formato que se lee con el pulgar,
-  porque el mapa completo mide 3200 px y en un teléfono solo cabe a escala 0.10.
-- Tema claro/oscuro, pan y zoom, y todo el progreso guardado en el navegador.
+| | |
+|---|---|
+| **Mapa de prelaciones** | Cada materia es un nodo, cada prelación un cable. Los cables no cruzan ninguna tarjeta: el ruteo lo garantiza |
+| **Marcar tu avance** | Aprobada, cursando o sin cursar. Se guarda en tu navegador, sin cuentas ni servidores |
+| **Qué puedes inscribir** | Al marcar, las materias con las prelaciones cumplidas se desbloquean solas |
+| **Cadena al señalar** | Pasa el cursor sobre una materia y se ilumina todo lo que necesita y todo lo que habilita |
+| **Planificador** | Dice en cuántos semestres terminas según la carga que puedas llevar, y lo exporta a PDF o Markdown |
+| **Vista de lista** | En el teléfono el mapa completo se vería a escala 0,10. La lista es la vista principal en móvil |
+| **Ocho carreras** | Cada una con su color, su ruta y su propia vista previa al compartir |
 
-## Correr en local
+## Las ocho carreras
+
+| Carrera | Obligatorias | Electivas | UC oblig. | Cadena más larga | Créditos del título |
+|---|---:|---:|---:|---:|---:|
+| [Gerencia de Recursos Humanos](https://mapa-pensum.vercel.app/gerencia-de-recursos-humanos) | 49 | 16 | 149 | 6 | — |
+| [Ingeniería Agronómica](https://mapa-pensum.vercel.app/ingenieria-agronomica) | 58 | 49 | 150 | 6 | — |
+| [Ingeniería de Petróleo](https://mapa-pensum.vercel.app/ingenieria-de-petroleo) | 53 | 25 | 150 | **9** | — |
+| [Ingeniería de Sistemas](https://mapa-pensum.vercel.app/ingenieria-de-sistemas) | 49 | 39 | 132 | **9** | **153** |
+| [Ingeniería en Producción Animal](https://mapa-pensum.vercel.app/ingenieria-en-produccion-animal) | 60 | 25 | 160 | 6 | — |
+| [Licenciatura en Administración](https://mapa-pensum.vercel.app/licenciatura-en-administracion) | 56 | 20 | 155 | 7 | — |
+| [Licenciatura en Contaduría Pública](https://mapa-pensum.vercel.app/licenciatura-en-contaduria-publica) | 56 | 23 | 155 | 8 | — |
+| [Licenciatura en Tecnología de los Alimentos](https://mapa-pensum.vercel.app/licenciatura-en-tecnologia-de-los-alimentos) | 45 | 36 | 140 | 4 | — |
+
+**659 materias** en total. La *cadena más larga* es el número mínimo de semestres que impone la estructura de prelaciones: en Petróleo hay nueve materias encadenadas una detrás de otra, así que **no hay carga académica que permita terminar en menos de nueve semestres**. Es el tipo de cosa que la tabla original no te dice.
+
+Solo Sistemas tiene los créditos del título confirmados. Ver [Honestidad con los datos](#honestidad-con-los-datos).
+
+<!-- Para grabar los GIF, ver docs/README.md
+## En movimiento
+
+| Marcar y desbloquear | Selector de carreras |
+|---|---|
+| ![Marcar una materia](docs/marcar.gif) | ![Selector](docs/selector.gif) |
+-->
+
+## Cómo funciona
+
+### El flujo de datos
+
+```mermaid
+flowchart LR
+    A["datos/crudo/*.json<br/>scrape de la DACE"] --> N
+    B["datos/overlay.json<br/>lo que la DACE no publica"] --> N
+    N["normalizar.js"] --> M["src/data/carreras/*.json<br/>un modelo único"]
+    M --> V["validar-pensum.js"]
+    V -->|falla| X["build roto"]
+    V -->|pasa| APP["la aplicación"]
+    M --> P["prerenderizar.js<br/>HTML por carrera"]
+    M --> O["og.js<br/>miniatura al compartir"]
+```
+
+El crudo **no se edita nunca**. Cuando la DACE actualice un pensum se vuelve a bajar y el overlay sobrevive. **Agregar una carrera es dejar caer su JSON**: el normalizador la recoge, Vite le hace su propio chunk y aparece en el selector con su silueta. Ponerle color y créditos en el overlay es opcional.
+
+### El grafo
+
+Cada materia es un nodo y cada prelación una arista dirigida. La posición es determinista: **X según el semestre, Y según el índice dentro del semestre.** Nada de simulaciones de fuerzas.
+
+```mermaid
+flowchart LR
+    M1["Matemáticas I"] --> M2["Matemáticas II"]
+    M2 --> M3["Matemáticas III"]
+    M2 --> EST["Estadística I"]
+    M3 --> M4["Matemáticas IV"]
+    M4 --> MN["Métodos Numéricos"]
+    PROG["Intro. Programación"] --> MN
+    MN --> OPT["Optimización"]
+    OPT --> MOD["Modelos I"]
+    MOD --> TG["Trabajo de Grado"]
+```
+
+Un fragmento real de Sistemas. Fíjate en que **Métodos Numéricos necesita dos cosas a la vez**: el grafo no es un árbol, y por eso una materia puede tener varios cables entrando.
+
+## Decisiones técnicas
+
+Las que explican casi todo el código.
+
+<details>
+<summary><b>El SVG está dibujado a mano, sin librería de grafos</b></summary>
+
+<br>
+
+`react-flow` son unos 50 kB comprimidos de un editor de nodos que aquí no hace falta, y habría que pelearle la restricción de que *la columna es el semestre*. `elkjs` pesa alrededor de 1 MB porque es Java compilado a JavaScript. `dagre` son unos 30 kB para calcular capas cuando la capa ya te la da el dato.
+
+El público de esto está en Venezuela: hay muchos teléfonos viejos y los datos móviles se pagan. Cada kilobyte cuenta, así que el grafo se dibuja a mano y el enrutador también (cuarenta líneas contra los ~10 kB de react-router para dos rutas sin parámetros anidados).
+
+</details>
+
+<details>
+<summary><b>Ningún cable pasa por encima de una tarjeta</b></summary>
+
+<br>
+
+Las prelaciones entre semestres contiguos van por el pasillo vacío que queda entre columnas. Los saltos largos —de 3.º a 7.º, por ejemplo— se rutean por el **corredor horizontal libre entre dos tarjetas** de las columnas intermedias.
+
+Es la parte más delicada del proyecto y se verifica muestreando cientos de puntos de cada trazado contra todos los rectángulos de las tarjetas. El invariante es cero colisiones.
+
+</details>
+
+<details>
+<summary><b>Los filtros SVG están prohibidos en los cables</b></summary>
+
+<br>
+
+`feGaussianBlur` con las unidades por defecto (`objectBoundingBox`) calcula la región del filtro a partir de la caja del elemento. En una línea perfectamente horizontal esa caja **tiene altura cero**, así que la región del filtro es nula y el elemento no se pinta.
+
+Se descubrió porque cinco cables rectos eran invisibles. El brillo se hace apilando trazos cada vez más anchos y transparentes; no hay ni un filtro en el mapa.
+
+</details>
+
+<details>
+<summary><b>Las animaciones nunca se desmontan</b></summary>
+
+<br>
+
+Al salir de un *hover*, las luces que recorren los cables se quedaban congeladas dos o tres segundos. La causa: los trazados animados se desmontaban al atenuarse, y al volver a montarlos la animación reiniciaba **y volvía a esperar su retardo**.
+
+Ahora solo cambia la opacidad, y los retardos son negativos para que cada animación nazca ya empezada en un punto distinto del ciclo. Sincronizadas todas se verían como un metrónomo.
+
+</details>
+
+<details>
+<summary><b>El color sale del dato, no de una decisión por componente</b></summary>
+
+<br>
+
+Sistemas tiene sus ocho áreas clasificadas a mano y de ahí sale su color. Las otras siete no las tienen, y pintarlas de un solo color deja el mapa plano.
+
+Ahí el tono se reparte entre diez colores en arco alrededor del color de la carrera, y **cuál le toca a cada materia sale de un hash de su código**. Parece azar, pero la misma materia sale siempre del mismo color: un azar de verdad cambiaría el mapa en cada recarga y dejarías de reconocer el tuyo.
+
+</details>
+
+<details>
+<summary><b>Se prerenderiza el contenido, no la aplicación</b></summary>
+
+<br>
+
+Para que un buscador encuentre "pensum administración UDO Monagas" hace falta HTML con texto real. La ruta habitual sería renderizar React en el servidor, pero varios *hooks* leen `window` y `localStorage` al inicializar y habría que blindarlos todos para ganar algo que aquí no aporta: el estado es cien por cien del cliente.
+
+Así que el build escribe un HTML por carrera con su `<title>`, canonical, Open Graph, JSON-LD y **la lista completa de materias en el markup**. React vacía ese contenido y monta la aplicación encima.
+
+</details>
+
+<details>
+<summary><b>La miniatura al compartir se dibuja en Node, sin dependencias</b></summary>
+
+<br>
+
+`scripts/og.js` compone la imagen píxel a píxel y codifica el PNG con `zlib`, que ya viene en la plataforma. La alternativa era traer `sharp` o `resvg` para rasterizar un SVG: decenas de megas de binario por una imagen que no cambia nunca.
+
+El texto va en matriz de puntos con una fuente de 5×7 escrita en el propio script, con las ocho letras que hacen falta y ni una más. No es una carencia disimulada: el proyecto entero son puntos y cables. Las siluetas de abajo salen del índice real, así que **la imagen se actualiza sola al agregar una carrera**.
+
+</details>
+
+## Honestidad con los datos
+
+Los pensums vienen de lo que publica la DACE y pueden tener errores o estar desactualizados. Tres reglas que se siguen sin excepción:
+
+**1. Lo que no se sabe, no se muestra.** Solo Sistemas tiene los créditos del título confirmados (153, contra INTRADACE). En las otras siete **no aparece el porcentaje de avance**, porque no hay denominador honesto. El chip de la cabecera cuenta materias en vez de inventar un total. Si algún día llegan los créditos oficiales de una carrera, se llenan en su overlay y esa carrera sube de nivel sola.
+
+**2. Las reglas se verifican antes de usarse.** Los códigos parecen codificar información y en parte lo hacen:
+
+| Regla | Resultado | Uso |
+|---|---|---|
+| Último dígito = unidades crédito | **88/88** contra el pensum oficial de Sistemas | Se deriva |
+| Penúltimo dígito = semestre | **Falla el 73 %** en Sistemas, 66 % en Petróleo, 71 % en Alimentos | **Descartada** |
+
+El semestre sale de las claves del JSON y de ningún otro sitio. La segunda regla parecía cierta mirando un solo pensum; generalizarla habría corrompido la mitad de los datos en silencio.
+
+**3. Lo que huele raro se avisa, no se corrige a mano.** En Administración y Contaduría **ninguna materia del semestre 10 declara prelaciones**, ni siquiera el Trabajo de Grado, cuando en las otras seis carreras siempre cuelga del seminario previo. Es casi seguro un hueco de la fuente, pero inventar la prelación sería peor. El validador lo marca como aviso y en el mapa se ve tal cual: sin cables.
+
+## El validador
+
+`npm run validar` corre sobre los pensums normalizados —lo mismo que lee la aplicación— y sale con código 1 si algo no cuadra, así que **un scrape malo rompe el build en vez de llegar a producción**.
+
+Por carrera comprueba códigos duplicados, prelaciones que apunten a materias inexistentes, prelaciones en semestre igual o posterior, ciclos en el grafo (DFS con marcado tricolor), coherencia de créditos, cuotas alcanzables con la oferta real y la regla del último dígito donde no es tautológica.
+
+```
+ok      gerencia-de-recursos-humanos       49 oblig   16 en 2 grupos  149 UC  (sin creditos oficiales)
+ok      ingenieria-agronomica              58 oblig   49 en 3 grupos  150 UC  (sin creditos oficiales)
+ok      ingenieria-de-sistemas             49 oblig   39 en 2 grupos  132 UC  titulo 153
+avisos  licenciatura-en-administracion     56 oblig   20 en 2 grupos  155 UC  (sin creditos oficiales)
+        AVISO  Ninguna de las 5 materias del semestre 10 declara prerrequisitos.
+```
+
+Acepta una ruta alterna, útil para probarlo contra datos rotos a propósito:
+
+```bash
+node scripts/validar-pensum.js ruta/a/otra/carpeta
+```
+
+## Rutas y SEO
+
+```
+/           Selector: las ocho carreras
+/<slug>     Mapa de una carrera
+```
+
+Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y que **se empieza a bajar al pasar el cursor por su tarjeta**, décimas de segundo antes del click. El build genera además `sitemap.xml` y `robots.txt`.
+
+## Estructura
+
+```
+datos/
+├── crudo/                  Scrape de la DACE tal cual. No se edita.
+└── overlay.json            Color, créditos y avisos por carrera
+scripts/
+├── normalizar.js           crudo + overlay → modelo único
+├── validar-pensum.js       Puerta de calidad del build
+├── prerenderizar.js        Un HTML por carrera, con contenido rastreable
+└── og.js                   La miniatura al compartir, píxel a píxel
+src/
+├── data/carreras.js        Índice, caché y carga por carrera
+├── layout/
+│   ├── constantes.js       Toda la geometría del mapa
+│   ├── calcularLayout.js   Asignaturas → coordenadas (función pura)
+│   ├── aristas.js          Ruteo de los cables
+│   ├── relaciones.js       Adyacencia y cadenas de prelaciones
+│   └── planificador.js     Reparto de materias por semestre
+├── hooks/
+│   ├── usePensum.js        Estados, progreso y persistencia
+│   ├── useVistaGrafo.js    Pan, zoom y encaje
+│   ├── useRuta.js          Enrutador (40 líneas)
+│   └── useTema.js          Claro/oscuro
+├── components/             Selector, grafo, nodos, aristas, paneles, plan
+└── theme/                  Áreas, paleta por carrera y fondos procedurales
+```
+
+## Desarrollo
 
 ```bash
 npm install
@@ -42,150 +262,46 @@ npm run dev
 |---|---|
 | `npm run dev` | Normaliza los datos y arranca el servidor de desarrollo |
 | `npm run datos` | Genera `src/data/carreras/` desde `datos/` |
-| `npm run validar` | Valida los pensums normalizados (ver abajo) |
-| `npm run build` | Normaliza, valida y compila a `dist/` |
-| `npm run lint` | oxlint |
+| `npm run validar` | Valida los pensums normalizados |
+| `npm run build` | Normaliza, valida, compila, genera la miniatura y prerenderiza |
 | `npm run preview` | Sirve el build ya compilado |
+| `npm run lint` | oxlint |
 
-## Stack
+`src/data/carreras/` está generado y no se versiona: sale minificado y su diff sería una sola línea gigante.
 
-**Vite · React · JavaScript · Tailwind CSS**
+## Despliegue
 
-Iconos de [Lucide](https://lucide.dev) y tipografías Manrope y JetBrains Mono servidas
-desde el propio bundle con `@fontsource`. El grafo está dibujado a mano en SVG, sin
-librerías de grafos.
+Desplegado en **Vercel**. El repo trae `vercel.json`: al importar el repositorio, Vercel detecta Vite, corre `npm run build` y publica `dist/`.
 
-## Hosting
+El flujo de trabajo usa dos ramas:
 
-Desplegado en **Vercel**. El repo trae `vercel.json`: al importar el repositorio, Vercel
-detecta Vite, corre `npm run build` y publica `dist/`.
-
-Como el build corre el validador primero, un pensum inconsistente rompe el deploy en vez
-de llegar a producción.
-
-El contador de visitas es **Vercel Web Analytics** (`@vercel/analytics`, montado en
-`src/main.jsx`). Hay que activarlo una vez desde la pestaña *Analytics* del proyecto en
-Vercel; en local no envía nada, solo escribe los eventos en la consola.
-
-## Los datos
-
-Ocho carreras del núcleo, cada una con su pensum. El flujo es de una sola dirección:
-
-```
-datos/crudo/*.json     Scrape de la DACE tal cual. NO se edita a mano.
-datos/overlay.json     Lo que sabemos y la DACE no publica.
-        ↓  npm run datos
-src/data/carreras/     Generado. Un JSON por carrera + el índice.
+```mermaid
+gitGraph
+    commit
+    branch dev
+    commit
+    commit
+    checkout main
+    merge dev
 ```
 
-**Agregar una carrera es dejar caer su JSON en `datos/crudo/`.** El resto se descubre
-solo: el normalizador la recoge, Vite le hace su propio chunk y aparece funcionando.
-Añadirle color y créditos en el overlay es opcional.
+- `git push origin dev` → Vercel crea un **despliegue de vista previa** con su propia URL, para probar sin tocar producción
+- `git push origin main` → publica en `mapa-pensum.vercel.app`
 
-Que el crudo no se toque es lo que permite volver a bajar el pensum cuando la DACE lo
-cambie sin perder el trabajo hecho encima.
+**Analítica.** `@vercel/analytics` cuenta las visitas y `@vercel/speed-insights` mide el rendimiento real de quien usa la web —no el de un banco de pruebas—, que en este público es la métrica que importa. Los dos se montan en `src/main.jsx` y hay que activarlos una vez desde el panel del proyecto.
 
-Dos reglas sobre los códigos, ambas comprobadas contra los 88 registros verificados de
-Sistemas:
+> [!NOTE]
+> La documentación de Vercel sugiere importar desde `@vercel/speed-insights/next`. Eso es para Next.js. Aquí es Vite, y la subruta correcta es **`/react`**.
 
-- **El último dígito son las unidades crédito.** Acierta 88/88, así que la UC se deriva.
-- **El penúltimo NO es el semestre.** Falla el 73% en Sistemas, 66% en Petróleo y 71% en
-  Alimentos. El semestre sale de las claves del JSON y de ningún otro sitio.
+## Accesibilidad
 
-Solo Sistemas tiene créditos oficiales (153, confirmados por INTRADACE) y áreas
-clasificadas a mano. Las demás cargan igual, y lo que depende de datos que no hay
-—porcentaje de avance, cuotas de electivas, colores por área— **no se muestra en vez de
-inventarse**.
+Navegación por teclado en los controles, `<title>` descriptivo en cada nodo del SVG, contraste AA verificado en ambos temas y `prefers-reduced-motion` respetado en todas las animaciones, incluidas las transiciones de página y el efecto 3D del selector.
 
-## Rutas y SEO
+## Créditos y aviso
 
-```
-/           Selector: las ocho carreras
-/<slug>     Mapa de una carrera
-```
+Datos tomados de los pensums publicados por la [DACE del Núcleo de Monagas](http://dacemonagas.udo.edu.ve).
 
-El enrutador está escrito a mano (`src/hooks/useRuta.js`). Para dos rutas sin parámetros
-anidados son cuarenta líneas contra unos 10 KB comprimidos de react-router, y en un
-proyecto cuyo público paga los datos móviles eso importa.
+> [!IMPORTANT]
+> Esta herramienta es un apoyo para visualizar tu carrera, **no una fuente oficial**. Confirma siempre con control de estudios antes de tomar cualquier decisión académica.
 
-`npm run build` genera además un HTML estático por carrera con su `<title>`, descripción,
-canonical, Open Graph, JSON-LD y **la lista completa de materias en el markup**, más
-`sitemap.xml` y `robots.txt`. React vacía ese contenido y monta la app encima.
-
-Se prerenderiza el contenido, no la app: varios hooks leen `window` al inicializar y
-habría que blindarlos todos para ganar algo que aquí no hace falta, porque el estado es
-100% del cliente. Lo único que se necesita es que un buscador encuentre texto real.
-
-## El validador
-
-`npm run validar` corre sobre los pensums normalizados, o sea sobre exactamente lo mismo
-que lee la app, y falla con código 1 si algo no cuadra. Por carrera comprueba que todo
-código en `prerrequisitos` exista, que no haya ciclos, que ningún prerrequisito esté en
-un semestre igual o posterior, que no haya códigos duplicados, que las cuotas sean
-alcanzables con la oferta y que los créditos cuadren.
-
-Acepta una ruta alterna como argumento, útil para probarlo contra datos rotos a propósito:
-
-```bash
-node scripts/validar-pensum.js ruta/a/otra/carpeta
-```
-
-## Estructura
-
-```
-datos/                      Fuente: crudo intocable + overlay
-scripts/
-├── normalizar.js           crudo + overlay → modelo único
-└── validar-pensum.js       Puerta de calidad del build
-src/
-├── data/carreras.js        Índice y carga por carrera (un chunk cada una)
-├── layout/
-│   ├── constantes.js       Toda la geometría del mapa
-│   ├── calcularLayout.js   Asignaturas → coordenadas (función pura)
-│   ├── aristas.js          Ruteo de los cables
-│   ├── relaciones.js       Adyacencia y cadenas de prerrequisitos
-│   └── planificador.js     Reparto de materias por semestre
-├── hooks/
-│   ├── usePensum.js        Estados, progreso y persistencia
-│   ├── useVistaGrafo.js    Pan, zoom y encaje
-│   └── useTema.js          Claro/oscuro
-├── components/             Grafo, nodos, aristas, paneles, plan
-└── theme/areas.js          Paleta por área
-```
-
-Tres decisiones que explican casi todo el código:
-
-**El layout es determinista.** `calcularLayout()` es una función pura: X según el semestre,
-Y según el índice dentro del semestre. Mismas asignaturas, mismas coordenadas siempre.
-Nada de simulaciones de fuerzas.
-
-**Los cables nunca pasan por encima de una tarjeta.** Los que unen semestres contiguos
-viajan por el hueco vacío entre columnas. Los que saltan más de un semestre cruzan por el
-pasillo libre que queda entre dos tarjetas de la columna intermedia.
-
-**El resplandor no usa filtros SVG.** Se apilan trazos cada vez más anchos y transparentes.
-Un `feGaussianBlur` con `objectBoundingBox` no pinta nada sobre una línea perfectamente
-horizontal, porque la región del filtro queda con altura cero.
-
-## Los créditos
-
-El título son **153 unidades crédito**, según INTRADACE:
-
-| | UC |
-|---|---|
-| 49 asignaturas obligatorias | 132 |
-| Electivas técnicas | 15 |
-| Electivas humanísticas | 6 |
-| **Total** | **153** |
-
-Los códigos y las prelaciones están verificados contra el pensum oficial vigente
-(resolución CU-021/2013). Las UC de cada asignatura salen del último dígito de su código;
-el documento oficial no las declara, pero la suma cuadra exactamente con el total de
-INTRADACE, así que el criterio es correcto.
-
-Aparte quedan dos requisitos de grado sin peso en esos 153: el **Servicio Comunitario**
-(`0214100`) y la **Extraacadémica Deportiva** (`0151111`).
-
-## Licencia
-
-MIT.
+Iconos de [Lucide](https://lucide.dev). Tipografías Manrope y JetBrains Mono servidas desde el propio bundle con `@fontsource`, sin llamadas a terceros.

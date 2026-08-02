@@ -211,6 +211,8 @@ for (const carrera of indice) {
   x += anchoCarrera(carrera) + SEPARACION
 }
 
+// Va en public/ y no en dist/: asi Vite la copia sola al compilar, queda
+// versionada y el README puede usarla de portada sin duplicarla.
 const png = codificarPng(ANCHO, ALTO, lienzo)
-writeFileSync('dist/og.png', png)
+writeFileSync('public/og.png', png)
 console.log(`  og.png  ${ANCHO}x${ALTO}  ${(png.length / 1024).toFixed(1)} kB`)

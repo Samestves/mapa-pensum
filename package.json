@@ -7,7 +7,7 @@
     "dev": "npm run datos && vite",
     "datos": "node scripts/normalizar.js",
     "validar": "node scripts/validar-pensum.js",
-    "build": "npm run datos && npm run validar && vite build && node scripts/og.js && node scripts/prerenderizar.js",
+    "build": "npm run datos && npm run validar && node scripts/og.js && vite build && node scripts/prerenderizar.js",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -15,6 +15,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "lucide-react": "^1.28.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
