@@ -7,7 +7,7 @@
     "dev": "npm run datos && vite",
     "datos": "node scripts/normalizar.js",
     "validar": "node scripts/validar-pensum.js",
-    "build": "npm run datos && npm run validar && vite build && node scripts/prerenderizar.js",
+    "build": "npm run datos && npm run validar && vite build && node scripts/og.js && node scripts/prerenderizar.js",
     "lint": "oxlint",
     "preview": "vite preview"
   },

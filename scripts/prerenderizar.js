@@ -67,6 +67,13 @@ function paginaDe(carrera) {
     /<meta\s+property="og:description"\s+content="[^"]*"\s*\/>/,
     `<meta property="og:description" content="${escapar(descripcion)}" />`,
   )
+  // og:url tiene que apuntar a ESTA carrera: si todas comparten la del
+  // inicio, quien comparta el enlace de Agronomica vera el titulo del inicio.
+  html = reemplazar(
+    html,
+    /<meta\s+property="og:url"\s+content="[^"]*"\s*\/>/,
+    `<meta property="og:url" content="${url}" />`,
+  )
 
   // JSON-LD: le dice al buscador que esto es un plan de estudios y de quien
   const jsonLd = {
