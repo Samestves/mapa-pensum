@@ -103,6 +103,18 @@ html,
 body,
 #root {
   height: 100%;
+  /* dvh sigue a la barra del navegador movil. Con 100% a secas la app queda
+     mas alta que la ventana cuando la barra se retrae y aparece un scroll
+     fantasma en el borde inferior. */
+  height: 100dvh;
+}
+
+/* La app nunca scrollea: el grafo hace su propio pan/zoom y las vistas
+   scrollean por dentro. Si algo desborda es un bug de maquetacion, y
+   prefiero que se recorte a que aparezca una barra horizontal. */
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -327,41 +339,112 @@ body {
   animation: surgir 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ---- Ocultar la cabecera ------------------------------------------------
+   El truco de grid-template-rows de 1fr a 0fr anima el alto real sin
+   necesidad de medirlo en JS ni de fijar un max-height inventado que
+   luego se rompe cuando la barra crece. La curva es la de las hojas de
+   iOS: sale rapido y frena al final, sin rebote. */
+.barra-colapsable {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.barra-colapsable[data-oculta='true'] {
+  grid-template-rows: 0fr;
+}
+
+.barra-colapsable > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* El contenido se desvanece y sube un pelo mientras la fila se cierra:
+   asi no se ve como un recorte, sino como que la barra se retira. */
+.barra-contenido {
+  transition:
+    opacity 240ms ease,
+    transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.barra-colapsable[data-oculta='true'] .barra-contenido {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* La pestaña para traerla de vuelta nunca se desmonta: se desliza desde
+   detras del borde. Montarla y desmontarla cortaba la transicion. */
+.pestana-barra {
+  transition:
+    transform 420ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 200ms ease;
+}
+
+.pestana-barra[data-visible='false'] {
+  transform: translate(-50%, -110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pestana-barra[data-visible='true'] {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
 /* ------------------------------------------------------------------
-   Impresion. Se oculta todo con visibility en vez de display: asi la
-   hoja conserva su maquetacion en lugar de recolocarse al imprimir.
+   Impresion.
+
+   La hoja se imprime desde una copia aparte colgada de <body> por un
+   portal, no desde la que se ve en el modal. Antes se ocultaba la app
+   con visibility y se sacaba la hoja con position:absolute, y eso fallaba
+   por dos motivos a la vez:
+
+   1. La hoja vive dentro de un modal con overflow:hidden y max-height.
+      Un hijo absolute se sigue recortando por ese padre, asi que al PDF
+      solo llegaba lo que cabia en la primera pantalla.
+   2. La hoja hereda las variables del tema. En tema oscuro --tinta es
+      casi blanco, o sea texto blanco sobre papel blanco.
+
+   La copia cuelga directa de <body>, sin padres que recorten, y lleva
+   data-tema="claro" para renderizar con la paleta de tinta sobre papel.
    ------------------------------------------------------------------ */
+.solo-impresion {
+  display: none;
+}
+
 @media print {
   @page {
     margin: 14mm;
   }
 
+  html,
   body {
+    height: auto;
     overflow: visible;
     background: #fff;
   }
 
-  body * {
-    visibility: hidden;
+  /* La app no se imprime; se imprime la copia de la hoja */
+  #root {
+    display: none !important;
   }
 
-  .hoja,
-  .hoja * {
-    visibility: visible;
-  }
-
-  .hoja {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 0;
-    background: #fff;
-    color: #000;
+  .solo-impresion {
+    display: block !important;
   }
 
   .no-imprimir {
     display: none !important;
+  }
+
+  /* En pantalla estrecha la hoja se compacta, pero en papel siempre hay
+     ancho de sobra: se recupera la maqueta completa. */
+  .cifras-hoja {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .solo-ancho {
+    display: inline !important;
   }
 
   /* Que un semestre no se parta a la mitad entre dos hojas */
@@ -381,5 +464,13 @@ body {
   .anillo-cambio,
   .surgir {
     animation: none;
+  }
+
+  /* Estas se mueven con transition, no con animation: hay que apagarlas
+     aparte o siguen deslizandose. */
+  .barra-colapsable,
+  .barra-contenido,
+  .pestana-barra {
+    transition: none;
   }
 }

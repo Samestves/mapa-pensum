@@ -69,35 +69,42 @@ function App() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {barraOculta ? (
-        <button
-          type="button"
-          onClick={() => setBarraOculta(false)}
-          title="Mostrar la barra"
-          aria-label="Mostrar la barra"
-          className="transicion-tema absolute top-0 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1.5 rounded-b-xl border border-t-0 border-panel-borde bg-panel/90 px-4 py-1 text-tinta-suave backdrop-blur hover:py-1.5 hover:text-tinta"
-        >
-          <ChevronDown size={15} />
-        </button>
-      ) : (
-        <BarraSuperior
-          meta={meta}
-          tema={tema}
-          alternarTema={alternarTema}
-          resumen={progreso}
-          vista={vista}
-          alCambiarVista={setVista}
-          avanceAbierto={panelAbierto}
-          alAlternarAvance={() => setPanelAbierto((v) => !v)}
-          alAbrirElectivas={() => setElectivasAbiertas(true)}
-          alPlanificar={() => setPlanAbierto(true)}
-          alOcultarBarra={() => {
-            setBarraOculta(true)
-            setPanelAbierto(false)
-          }}
-        />
-      )}
+    <div className="relative flex h-full flex-col overflow-hidden">
+      {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
+          1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
+      <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
+        <div>
+          <BarraSuperior
+            meta={meta}
+            tema={tema}
+            alternarTema={alternarTema}
+            resumen={progreso}
+            vista={vista}
+            alCambiarVista={setVista}
+            avanceAbierto={panelAbierto}
+            alAlternarAvance={() => setPanelAbierto((v) => !v)}
+            alAbrirElectivas={() => setElectivasAbiertas(true)}
+            alPlanificar={() => setPlanAbierto(true)}
+            alOcultarBarra={() => {
+              setBarraOculta(true)
+              setPanelAbierto(false)
+            }}
+          />
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setBarraOculta(false)}
+        title="Mostrar la barra"
+        aria-label="Mostrar la barra"
+        aria-hidden={!barraOculta}
+        tabIndex={barraOculta ? 0 : -1}
+        data-visible={barraOculta}
+        className="pestana-barra transicion-tema absolute top-0 left-1/2 z-50 flex items-center gap-1.5 rounded-b-xl border border-t-0 border-panel-borde bg-panel/90 px-5 py-1.5 text-tinta-suave backdrop-blur hover:text-tinta"
+      >
+        <ChevronDown size={15} />
+      </button>
 
       {planAbierto && (
         <PlanRuta

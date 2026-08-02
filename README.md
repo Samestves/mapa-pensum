@@ -62,6 +62,10 @@ detecta Vite, corre `npm run build` y publica `dist/`.
 Como el build corre el validador primero, un `pensum.json` inconsistente rompe el deploy
 en vez de llegar a producción.
 
+El contador de visitas es **Vercel Web Analytics** (`@vercel/analytics`, montado en
+`src/main.jsx`). Hay que activarlo una vez desde la pestaña *Analytics* del proyecto en
+Vercel; en local no envía nada, solo escribe los eventos en la consola.
+
 ## El validador
 
 `npm run validar` falla con código 1 si algo no cuadra. Comprueba que todo código en

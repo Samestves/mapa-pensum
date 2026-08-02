@@ -9,6 +9,20 @@ export const HORAS_POR_UC = 3
 export const ucSugeridas = (horasSemana) =>
   Math.max(4, Math.min(30, Math.round(horasSemana / HORAS_POR_UC)))
 
+export const horasDe = (uc) => uc * HORAS_POR_UC
+
+/**
+ * Mes aproximado de grado, contando dos semestres por año desde hoy.
+ * Es aritmetica de calendario, no el cronograma oficial de la UDO: no
+ * contempla retrasos de inicio, intensivos ni semestres perdidos.
+ */
+export function mesEstimadoGrado(semestres, desde = new Date()) {
+  if (!semestres) return null
+  const fecha = new Date(desde)
+  fecha.setMonth(fecha.getMonth() + semestres * 6)
+  return fecha
+}
+
 /**
  * Arma un plan semestre a semestre desde donde estas hoy.
  *
