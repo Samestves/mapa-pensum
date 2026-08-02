@@ -56,7 +56,7 @@ function Arista({
   x2,
   y2,
   area,
-  profundidad,
+  codigoOrigen,
   viva,
   resaltada,
   atenuada,
@@ -65,7 +65,8 @@ function Arista({
   retardo,
   velocidad,
 }) {
-  const color = colorNodo({ area, profundidad })
+  // El cable toma el color de su origen: asi se sigue de donde viene
+  const color = colorNodo({ area, codigo: codigoOrigen })
 
   const estado = atenuada
     ? 'atenuada'

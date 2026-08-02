@@ -17,9 +17,16 @@
  * perteneciendo a la misma familia.
  */
 
-// Grados a cada lado del tono de la carrera. Mas ancho empieza a leerse como
-// colores ajenos y la carrera pierde identidad.
-const ARCO = 58
+// Grados a cada lado del tono de la carrera. Sistemas reparte sus ocho areas
+// por casi toda la rueda y es justo eso lo que hace bonito su mapa, asi que
+// el arco es ancho: la carrera se sigue reconociendo por donde esta centrado
+// el abanico, no por tener un solo tono.
+const ARCO = 116
+
+// Cuantos tonos distintos tiene una carrera. Ocho son los de Sistemas por
+// areas; con diez el mapa se ve variado sin que dos cables vecinos acaben
+// pareciendo el mismo color.
+export const TONOS = 10
 
 const limitar = (n, min, max) => Math.min(max, Math.max(min, n))
 
@@ -99,7 +106,7 @@ export function variablesDeTono(carrera, tema) {
   if (carrera.tieneAreas || !carrera.color) return undefined
 
   const base = tema === 'oscuro' ? carrera.color.oscuro : carrera.color.claro
-  const tonos = tonosDeCarrera(base, Math.max(1, carrera.profundidadMaxima))
+  const tonos = tonosDeCarrera(base, TONOS)
 
   const vars = { '--carrera': base }
   tonos.forEach((color, i) => {

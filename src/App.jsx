@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { cargarCarrera, existe, resumenDe } from './data/carreras'
+import { Waypoints } from 'lucide-react'
+import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
 import { useRuta } from './hooks/useRuta'
 import SelectorCarrera from './components/SelectorCarrera'
@@ -36,8 +37,14 @@ function App() {
   const { ruta, navegar } = useRuta()
   const slug = existe(ruta) ? ruta : null
 
-  const [carrera, setCarrera] = useState(null)
+  const [carrera, setCarrera] = useState(() => (slug ? carreraEnCache(slug) : null))
   const [error, setError] = useState(null)
+
+  // La cache se consulta DURANTE el render, no en un efecto. Si se dejara en
+  // el efecto, el primer render tras cambiar de ruta seguiria teniendo la
+  // carrera vieja y se colaria un fotograma de pantalla de carga aunque el
+  // pensum ya estuviera bajado desde el hover.
+  const lista = carrera?.slug === slug ? carrera : slug ? carreraEnCache(slug) : null
 
   useEffect(() => {
     if (!slug) {
@@ -52,6 +59,12 @@ function App() {
     // El resumen del indice basta para el <title> mientras baja el pensum
     ponerMeta(resumenDe(slug))
     recordarCarrera(slug)
+
+    const listo = carreraEnCache(slug)
+    if (listo) {
+      setCarrera(listo)
+      return
+    }
 
     cargarCarrera(slug)
       .then((datos) => vigente && setCarrera(datos))
@@ -88,17 +101,25 @@ function App() {
     )
   }
 
-  if (!carrera || carrera.slug !== slug) {
+  // Casi nunca se ve: la tarjeta precarga el pensum antes de navegar. Queda
+  // para la entrada directa por URL con la red lenta, y ahi vale mas un
+  // latido que una pantalla en blanco que parece que se colgo.
+  if (!lista) {
     return (
-      <div className="grid h-full place-items-center">
-        <span className="sr-only">Cargando el pensum</span>
+      <div className="grid h-full place-items-center" role="status" aria-live="polite">
+        <div className="respirando-suave flex flex-col items-center gap-3">
+          <Waypoints size={28} className="text-aprobada" strokeWidth={2.2} />
+          <span className="text-[11px] font-semibold text-tinta-tenue">
+            Cargando el pensum…
+          </span>
+        </div>
       </div>
     )
   }
 
   // key por slug: cambiar de carrera remonta la vista en vez de arrastrar el
   // zoom y la seleccion de la anterior
-  return <VistaCarrera key={slug} carrera={carrera} alVolver={() => navegar('')} />
+  return <VistaCarrera key={slug} carrera={lista} alVolver={() => navegar('')} />
 }
 
 export default App

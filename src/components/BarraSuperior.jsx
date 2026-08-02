@@ -1,4 +1,4 @@
-import { ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
+import { ArrowLeft, ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
 
 /** Boton de icono del sistema: todos los de la cabecera miden y pesan igual.
     En movil bajan a 32px, que sigue siendo objetivo tactil comodo. */
@@ -37,33 +37,35 @@ function BarraSuperior({
 }) {
   return (
     <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
-      {/* El logo es la vuelta al selector: es donde la gente ya intenta
-          hacer click para volver al inicio en cualquier sitio web. */}
+      {/* Volver al selector. Antes esto era el logo, y nadie lo encontraba:
+          un logo se lee como marca, no como boton. Una flecha con la palabra
+          al lado no deja lugar a dudas. En movil queda solo la flecha, que
+          es el gesto de "atras" que todo el mundo reconoce. */}
       <button
         type="button"
         onClick={alVolver}
         title="Ver todas las carreras"
         aria-label="Ver todas las carreras"
-        className="group grid size-8 shrink-0 place-items-center rounded-lg sm:size-9"
-        style={{
-          backgroundColor: 'color-mix(in oklab, var(--estado-aprobada) 16%, transparent)',
-          color: 'var(--estado-aprobada)',
-        }}
+        className="transicion-tema group flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-panel-borde px-2 text-tinta-suave hover:bg-panel-suave hover:text-tinta sm:h-9 sm:px-2.5"
       >
-        <Waypoints
-          size={18}
-          strokeWidth={2.4}
-          className="transition-transform duration-300 group-hover:scale-110"
+        <ArrowLeft
+          size={16}
+          className="shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5"
         />
+        <span className="hidden text-[12px] font-bold lg:inline">Carreras</span>
       </button>
 
       {/* En movil el titulo no cabe y truncado se ve peor que ausente:
           queda solo el logo, que ya identifica la app. */}
+      {/* Nombre corto arriba y el completo debajo. El subtitulo estaba en
+          leading-tight pegado al titulo y en un peso demasiado ligero: ahora
+          tiene aire y va en tinta-suave, que da 9:1 de contraste en los dos
+          temas. */}
       <div className="hidden min-w-0 flex-1 sm:block">
-        <h1 className="truncate text-base leading-tight font-extrabold tracking-tight text-tinta">
+        <h1 className="truncate text-[15px] leading-snug font-extrabold tracking-tight text-tinta lg:text-base">
           {carrera.nombreCorto}
         </h1>
-        <p className="hidden truncate text-[11px] leading-tight font-medium text-tinta-suave md:block">
+        <p className="hidden truncate text-[11px] leading-snug font-medium text-tinta-suave lg:block">
           {carrera.nombre} · {carrera.nucleo}
         </p>
       </div>

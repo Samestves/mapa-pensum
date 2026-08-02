@@ -339,6 +339,21 @@ body {
   animation: surgir 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Latido de la pantalla de carga */
+@keyframes respirar-suave {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.respirando-suave {
+  animation: respirar-suave 1.6s ease-in-out infinite;
+}
+
 /* ---- Selector de carreras -----------------------------------------------
    El giro se aplica por style en linea desde JS (sigue al cursor), aqui va
    solo la transicion para que volver al reposo no sea un salto. */
@@ -489,6 +504,7 @@ body {
   .descarga,
   .destello,
   .respirando,
+  .respirando-suave,
   .anillo-cambio,
   .surgir {
     animation: none;
