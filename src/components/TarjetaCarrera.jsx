@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
-import { cargarCarrera, precargarCarrera } from '../data/carreras'
+import { precargarCarrera } from '../data/carreras'
 import MiniMapa from './MiniMapa'
 
 // Grados de inclinacion en el borde de la tarjeta. Mas que esto se lee como
@@ -15,15 +15,16 @@ const GIRO = 7
  * prefers-reduced-motion, y sin el la tarjeta queda perfectamente usable.
  *
  * Sobre la carga: el pensum se empieza a bajar al pasar por encima, decimas
- * de segundo antes del click. Y el click espera a tenerlo antes de navegar.
- * Antes se navegaba de inmediato y la View Transition congelaba la pagina
- * mientras por debajo seguia bajando el JSON: se quedaba tiesa sin enseñar
- * nada. Ahora la espera, si la hay, ocurre AQUI y con la tarjeta avisando.
+ * de segundo antes del click, asi que casi siempre ya esta en memoria cuando
+ * el usuario suelta. Pero el click NO lo espera. Hubo una version que si lo
+ * esperaba, y con el dedo (que no tiene hover) o con la red lenta el boton se
+ * quedaba pulsado sin que pasara nada visible, que es exactamente lo que se
+ * lee como "se colgo". Se navega ya, y si el pensum aun no llego es el mapa
+ * quien lo dice, con la silueta de la carrera puesta en su sitio.
  */
 function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
   const caja = useRef(null)
   const [giro, setGiro] = useState(null)
-  const [cargando, setCargando] = useState(false)
 
   const color =
     (tema === 'oscuro' ? carrera.color?.oscuro : carrera.color?.claro) ?? 'var(--tinta-suave)'
@@ -40,14 +41,9 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
     setGiro({ x: -py * GIRO * 2, y: px * GIRO * 2, luzX: (px + 0.5) * 100, luzY: (py + 0.5) * 100 })
   }
 
-  const entrar = async () => {
-    setCargando(true)
-    try {
-      await cargarCarrera(carrera.slug)
-    } catch {
-      // Que navegue igual: App muestra el error y ofrece volver
-    }
-    setCargando(false)
+  const entrar = () => {
+    // Por si se llego aqui sin pasar el puntero: teclado, o un toque limpio
+    precargarCarrera(carrera.slug)
     alElegir(carrera.slug)
   }
 
@@ -60,7 +56,6 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       onFocus={() => precargarCarrera(carrera.slug)}
       onPointerLeave={() => setGiro(null)}
       onClick={entrar}
-      aria-busy={cargando}
       className="tarjeta-carrera group transicion-tema relative block w-full rounded-2xl border border-panel-borde bg-panel p-4 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none sm:p-5 xl:p-6"
       style={{
         '--acento': color,
@@ -102,10 +97,8 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
         </div>
         <ArrowUpRight
           size={16}
-          className={`shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 ${
-            cargando ? 'animate-pulse' : ''
-          }`}
-          style={{ color: giro || cargando ? color : undefined }}
+          className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          style={{ color: giro ? color : undefined }}
         />
       </div>
 
@@ -115,14 +108,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
         className="relative mt-4 h-16 xl:mt-6 xl:h-24"
         style={{ transform: giro ? 'translateZ(28px)' : undefined }}
       >
-        <MiniMapa
-          silueta={carrera.silueta}
-          color={color}
-          className="h-full w-full"
-          // Nombre compartido con el lienzo del mapa: el navegador interpola
-          // uno en el otro al navegar
-          style={{ viewTransitionName: `mapa-${carrera.slug}` }}
-        />
+        <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />
       </div>
 
       <p className="relative mt-3 truncate text-[10px] text-tinta-tenue xl:mt-4 xl:text-[11px]">

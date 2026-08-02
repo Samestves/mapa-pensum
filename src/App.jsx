@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Waypoints } from 'lucide-react'
 import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
 import { useRuta } from './hooks/useRuta'
+import EsqueletoMapa from './components/EsqueletoMapa'
 import SelectorCarrera from './components/SelectorCarrera'
 import VistaCarrera from './components/VistaCarrera'
 
@@ -101,18 +101,15 @@ function App() {
     )
   }
 
-  // Casi nunca se ve: la tarjeta precarga el pensum antes de navegar. Queda
-  // para la entrada directa por URL con la red lenta, y ahi vale mas un
-  // latido que una pantalla en blanco que parece que se colgo.
+  // Se ve poco: la tarjeta empieza a bajar el pensum al pasar el puntero por
+  // encima. Pero con el dedo no hay hover, y entrando directo por la URL con
+  // la red lenta puede durar. Lo que se enseña entonces no es un girador sino
+  // la silueta de esta carrera, que viene del indice y por tanto ya esta en
+  // memoria: se ve al instante que se entro donde se queria.
   if (!lista) {
     return (
-      <div className="grid h-full place-items-center" role="status" aria-live="polite">
-        <div className="respirando-suave flex flex-col items-center gap-3">
-          <Waypoints size={28} className="text-aprobada" strokeWidth={2.2} />
-          <span className="text-[11px] font-semibold text-tinta-tenue">
-            Cargando el pensum…
-          </span>
-        </div>
+      <div className="entrada-vista grid h-full place-items-center">
+        <EsqueletoMapa slug={slug} conNombre />
       </div>
     )
   }

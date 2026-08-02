@@ -339,21 +339,6 @@ body {
   animation: surgir 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Latido de la pantalla de carga */
-@keyframes respirar-suave {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.respirando-suave {
-  animation: respirar-suave 1.6s ease-in-out infinite;
-}
-
 /* ---- Selector de carreras -----------------------------------------------
    El giro se aplica por style en linea desde JS (sigue al cursor), aqui va
    solo la transicion para que volver al reposo no sea un salto. */
@@ -374,12 +359,44 @@ body {
   transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* La transicion entre el selector y el mapa la interpola el navegador; solo
-   se le fija la duracion para que acompañe al resto del sistema. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 320ms;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+/* ---- Cambio de ruta -----------------------------------------------------
+   Esto sustituye a la View Transition, que se quito porque congelaba la
+   pagina tres o cuatro segundos: para interpolar, el navegador tiene que
+   rasterizar el mapa entero en una textura, y el mapa son mil seiscientos
+   elementos SVG. La explicacion larga esta en useRuta.js.
+
+   Solo se anima opacidad. Nada de transform: la vista de carrera contiene
+   paneles en position:fixed, y un transform en un ancestro los reencuadra. */
+@keyframes entrar-vista {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.entrada-vista {
+  animation: entrar-vista 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La silueta que ocupa el sitio del mapa mientras el mapa llega. Late flojo a
+   proposito: tiene que leerse como "esto viene en camino", no competir con lo
+   que va a aparecer encima. La opacidad base va aparte de la animacion para
+   que al apagarla por reduced-motion no se quede a plena intensidad. */
+@keyframes latir-esqueleto {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.esqueleto-mapa {
+  opacity: 0.35;
+  animation: latir-esqueleto 1.8s ease-in-out infinite;
 }
 
 /* ---- Ocultar la cabecera ------------------------------------------------
@@ -504,9 +521,10 @@ body {
   .descarga,
   .destello,
   .respirando,
-  .respirando-suave,
   .anillo-cambio,
-  .surgir {
+  .surgir,
+  .entrada-vista,
+  .esqueleto-mapa {
     animation: none;
   }
 
@@ -518,11 +536,5 @@ body {
   .tarjeta-carrera,
   .tarjeta-carrera > * {
     transition: none;
-  }
-
-  /* Sin esto el navegador seguiria interpolando el cambio de pagina */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
   }
 }

@@ -145,6 +145,29 @@ Ahora solo cambia la opacidad, y los retardos son negativos para que cada animac
 </details>
 
 <details>
+<summary><b>La View Transition era bonita y se quitó</b></summary>
+
+<br>
+
+La idea era que la tarjeta del selector se desplegara hasta convertirse en el mapa, con la [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) haciendo la interpolación. El efecto funciona. El precio no: para interpolar, el navegador **rasteriza en una textura el antes y el después de la página**, y el después es un SVG de mil seiscientos elementos a pantalla completa. Mientras lo hace, la página está congelada de verdad — no responde a nada.
+
+Eran tres o cuatro segundos. La pista de que la culpa no era de React fue que **volver al selector tardaba lo mismo**, y ahí React no tiene nada que hacer: se mide en cero milisegundos. Lo que corría en los dos sentidos era la transición, y al volver lo que hay que fotografiar sigue siendo el mapa.
+
+Lo que hay ahora, medido sobre el build de producción:
+
+| | Antes | Ahora |
+|---|---|---|
+| Click en una tarjeta → algo en pantalla | ~3-4 s | **5 ms** |
+| …→ mapa completo | ~3-4 s | 102 ms |
+| Volver al selector | ~3-4 s | **14 ms** |
+
+Tres cambios, ninguno espectacular: cambio de ruta seco con una animación de entrada por CSS de sola opacidad (el compositor no repinta nada), el mapa se monta un fotograma después de que aparece la cabecera, y en ese hueco va la silueta de la carrera — que vive en el índice, o sea que ya está en memoria en el instante del click.
+
+Esa silueta hace además el trabajo que hacía la transición: el mapa aparece justo encima de la forma que ya estaba ahí.
+
+</details>
+
+<details>
 <summary><b>El color sale del dato, no de una decisión por componente</b></summary>
 
 <br>
@@ -221,7 +244,7 @@ node scripts/validar-pensum.js ruta/a/otra/carpeta
 /<slug>     Mapa de una carrera
 ```
 
-Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y que **se empieza a bajar al pasar el cursor por su tarjeta**, décimas de segundo antes del click. El build genera además `sitemap.xml` y `robots.txt`.
+Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y que **se empieza a bajar al pasar el cursor por su tarjeta**, décimas de segundo antes del click. El click no lo espera: con el dedo no hay *hover*, y un botón que se queda pulsado sin que pase nada se lee como que la web se colgó. El build genera además `sitemap.xml` y `robots.txt`.
 
 ## Estructura
 
@@ -245,7 +268,7 @@ src/
 ├── hooks/
 │   ├── usePensum.js        Estados, progreso y persistencia
 │   ├── useVistaGrafo.js    Pan, zoom y encaje
-│   ├── useRuta.js          Enrutador (40 líneas)
+│   ├── useRuta.js          Enrutador, sin librería
 │   └── useTema.js          Claro/oscuro
 ├── components/             Selector, grafo, nodos, aristas, paneles, plan
 └── theme/                  Áreas, paleta por carrera y fondos procedurales

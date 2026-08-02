@@ -7,14 +7,23 @@ import { useCallback, useEffect, useState } from 'react'
  *   /<slug>      el mapa de una carrera
  *
  * Escrito a mano en vez de traer react-router porque para dos rutas sin
- * parametros anidados ni rutas hijas son cuarenta lineas contra unos 10 KB
+ * parametros anidados ni rutas hijas son treinta lineas contra unos 10 KB
  * comprimidos. En un proyecto cuyo publico paga los datos, y que ya dibuja su
  * propio grafo sin libreria, la coherencia es no meter la libreria.
  *
- * La navegacion usa la View Transitions API cuando existe: el navegador saca
- * una foto del antes y del despues y los interpola, que es lo que permite que
- * la tarjeta del selector se convierta en el mapa. Donde no existe (Firefox
- * hoy) el cambio es instantaneo y no se rompe nada.
+ * Aqui vivia una View Transition y se quito. La idea era que la tarjeta del
+ * selector se desplegara hasta convertirse en el mapa, y el efecto es bonito,
+ * pero para interpolar el navegador tiene que rasterizar en una textura el
+ * antes y el despues de la pagina. El "despues" es un SVG de mil seiscientos
+ * elementos a pantalla completa, y mientras lo rasteriza la pagina esta
+ * congelada de verdad: no responde a nada. Eran tres o cuatro segundos, y en
+ * los dos sentidos, porque al volver el que hay que fotografiar es el mapa.
+ * Que volver al selector se sintiera igual de lento que entrar fue la pista:
+ * React ahi no tiene nada que hacer, se mide en cero milisegundos.
+ *
+ * Lo que queda es un cambio de ruta seco. La sensacion de continuidad la pone
+ * la animacion de entrada por CSS (.entrada-vista, solo opacidad) y la
+ * silueta de la carrera que ocupa el sitio del mapa mientras se monta.
  */
 const rutaActual = () => decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '')
 
@@ -32,23 +41,10 @@ export function useRuta() {
     const ruta = destino ?? ''
     if (ruta === rutaActual()) return
 
-    const aplicar = () => {
-      window.history.pushState(null, '', `/${ruta}`)
-      setRuta(ruta)
-    }
-
-    // startViewTransition necesita que el DOM cambie DENTRO del callback, y
-    // React actualiza de forma asincrona. flushSync lo forzaria, pero cuesta
-    // un render sincrono del mapa entero; en su lugar se deja que React
-    // pinte y el navegador interpole lo que haya cambiado al terminar.
-    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.startViewTransition(() => {
-        aplicar()
-        return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-      })
-    } else {
-      aplicar()
-    }
+    window.history.pushState(null, '', `/${ruta}`)
+    setRuta(ruta)
+    // Cambiar de ruta es cambiar de pagina: la nueva empieza arriba
+    window.scrollTo(0, 0)
   }, [])
 
   return { ruta, navegar }

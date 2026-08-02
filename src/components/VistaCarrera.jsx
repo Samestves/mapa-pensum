@@ -5,6 +5,7 @@ import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import BarraSuperior from './BarraSuperior'
+import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
 import Leyenda from './Leyenda'
 import PanelProgreso from './PanelProgreso'
@@ -62,6 +63,18 @@ function VistaCarrera({ carrera, alVolver }) {
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
 
+  // El mapa se monta un fotograma DESPUES de que aparece la vista. Son mil
+  // seiscientos elementos SVG: aqui cuestan unas decimas, en un telefono de
+  // los que de verdad usa la gente pasan del medio segundo. Si eso ocurriera
+  // en el mismo fotograma del click, el click no enseñaria nada durante todo
+  // ese rato. Asi la cabecera con el nombre de la carrera sale de inmediato y
+  // el mapa entra encima de su propia silueta.
+  const [mapaMontado, setMapaMontado] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMapaMontado(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
   // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
   // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
   // cada una apaga la otra.
@@ -76,7 +89,7 @@ function VistaCarrera({ carrera, alVolver }) {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
+    <div className="entrada-vista relative flex h-full flex-col overflow-hidden" style={tonos}>
       {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
           1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
       <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
@@ -124,13 +137,16 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       )}
 
-      {/* El mismo view-transition-name que la miniatura de la tarjeta: es lo
-          que hace que al entrar la tarjeta se despliegue hasta ser el mapa. */}
+      {/* La key cambia una sola vez, cuando el mapa releva a la silueta: eso
+          rearranca .entrada-vista y el mapa aparece fundiendose encima de
+          ella en vez de dando un salto. */}
       <div
-        className="relative flex flex-1 overflow-hidden"
-        style={{ viewTransitionName: `mapa-${carrera.slug}` }}
+        key={mapaMontado ? 'mapa' : 'esqueleto'}
+        className="entrada-vista relative flex flex-1 overflow-hidden"
       >
-        {vista === 'mapa' ? (
+        {!mapaMontado ? (
+          <EsqueletoMapa slug={carrera.slug} />
+        ) : vista === 'mapa' ? (
           <>
             <GrafoPensum
               layout={layout}
