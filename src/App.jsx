@@ -8,7 +8,6 @@ import BarraSuperior from './components/BarraSuperior'
 import GrafoPensum from './components/GrafoPensum'
 import Leyenda from './components/Leyenda'
 import PanelProgreso from './components/PanelProgreso'
-import PanelElectivas from './components/PanelElectivas'
 import PlanRuta from './components/PlanRuta'
 import VistaLista from './components/VistaLista'
 
@@ -50,7 +49,6 @@ function App() {
   const [barraOculta, setBarraOculta] = useState(false)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
   const [planAbierto, setPlanAbierto] = useState(false)
-  const [electivasAbiertas, setElectivasAbiertas] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
@@ -83,7 +81,6 @@ function App() {
             alCambiarVista={setVista}
             avanceAbierto={panelAbierto}
             alAlternarAvance={() => setPanelAbierto((v) => !v)}
-            alAbrirElectivas={() => setElectivasAbiertas(true)}
             alPlanificar={() => setPlanAbierto(true)}
             alOcultarBarra={() => {
               setBarraOculta(true)
@@ -116,17 +113,6 @@ function App() {
           relaciones={layout.relaciones}
           meta={meta}
           alCerrar={() => setPlanAbierto(false)}
-        />
-      )}
-
-      {electivasAbiertas && (
-        <PanelElectivas
-          electivas={electivas}
-          estados={estados}
-          marcas={marcas}
-          avance={avanceElectivas}
-          alMarcar={marcar}
-          alCerrar={() => setElectivasAbiertas(false)}
         />
       )}
 
@@ -164,10 +150,6 @@ function App() {
         <PanelProgreso
           progreso={progreso}
           avanceElectivas={avanceElectivas}
-          alAbrirElectivas={() => {
-            setPanelAbierto(false)
-            setElectivasAbiertas(true)
-          }}
           reiniciar={reiniciar}
           hayMarcas={hayMarcas}
           abierto={panelAbierto}

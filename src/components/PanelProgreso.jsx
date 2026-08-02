@@ -5,7 +5,6 @@ import {
   ListChecks,
   LockOpen,
   RotateCcw,
-  SlidersHorizontal,
   TriangleAlert,
 } from 'lucide-react'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
@@ -114,15 +113,7 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
  * numeros, las cuotas de electivas y el reinicio. El porcentaje vive en el
  * chip y el filtro por area en la leyenda.
  */
-function PanelProgreso({
-  progreso,
-  avanceElectivas,
-  alAbrirElectivas,
-  reiniciar,
-  hayMarcas,
-  abierto,
-  alCerrar,
-}) {
+function PanelProgreso({ progreso, avanceElectivas, reiniciar, hayMarcas, abierto, alCerrar }) {
   const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } =
     progreso
   const porcentaje = useNumeroAnimado(progreso.porcentaje)
@@ -188,19 +179,14 @@ function PanelProgreso({
         </div>
 
         <div className="transicion-tema rounded-lg border border-panel-borde p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Electivas
-            </h3>
-            <button
-              type="button"
-              onClick={alAbrirElectivas}
-              className="flex items-center gap-1 text-[10px] font-bold text-aprobada"
-            >
-              <SlidersHorizontal size={12} />
-              Elegir
-            </button>
-          </div>
+          <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+            Electivas
+          </h3>
+          {/* Solo informa. Se marcan donde estan dibujadas: en la zona de
+              electivas del mapa o al final de la lista. */}
+          <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
+            Elígelas en el mapa o al final de la lista.
+          </p>
           <div className="flex flex-col gap-2">
             <CuotaElectiva etiqueta="Técnicas" avance={avanceElectivas.tecnica} />
             <CuotaElectiva etiqueta="Humanísticas" avance={avanceElectivas.humanistica} />

@@ -1,18 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  ChevronUp,
-  LayoutList,
-  MoreHorizontal,
-  Moon,
-  Route,
-  SlidersHorizontal,
-  Sun,
-  Waypoints,
-} from 'lucide-react'
+import { ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
 
 /** Boton de icono del sistema: todos los de la cabecera miden y pesan igual.
     En movil bajan a 32px, que sigue siendo objetivo tactil comodo. */
-function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto', clase = '' }) {
+function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto' }) {
   const medida = variante === 'segmento' ? 'size-8' : 'size-8 sm:size-9'
   const borde = variante === 'segmento' ? 'border-0' : 'border'
   return (
@@ -25,74 +15,10 @@ function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto', clas
         activo
           ? 'border-transparent bg-panel-suave text-tinta'
           : 'border-panel-borde text-tinta-suave hover:text-tinta'
-      } ${clase}`}
+      }`}
     >
       <Ico size={16} />
     </button>
-  )
-}
-
-/**
- * Menu de acciones secundarias, solo en movil. A 375px los cinco botones
- * sueltos no caben: el ultimo se salia de la pantalla y solo aparecia
- * scrolleando de lado. Aqui las tres acciones que no son de navegacion
- * se pliegan detras de un boton.
- */
-function MenuMas({ tema, alternarTema, alAbrirElectivas, alPlanificar }) {
-  const [abierto, setAbierto] = useState(false)
-  const caja = useRef(null)
-
-  useEffect(() => {
-    if (!abierto) return
-    const fuera = (e) => {
-      if (!caja.current?.contains(e.target)) setAbierto(false)
-    }
-    const tecla = (e) => e.key === 'Escape' && setAbierto(false)
-    document.addEventListener('pointerdown', fuera)
-    document.addEventListener('keydown', tecla)
-    return () => {
-      document.removeEventListener('pointerdown', fuera)
-      document.removeEventListener('keydown', tecla)
-    }
-  }, [abierto])
-
-  const opciones = [
-    { icono: SlidersHorizontal, texto: 'Elegir mis electivas', alPulsar: alAbrirElectivas },
-    { icono: Route, texto: 'Planificar mi ruta', alPulsar: alPlanificar },
-    {
-      icono: tema === 'oscuro' ? Sun : Moon,
-      texto: tema === 'oscuro' ? 'Tema claro' : 'Tema oscuro',
-      alPulsar: alternarTema,
-    },
-  ]
-
-  return (
-    <div ref={caja} className="relative shrink-0 sm:hidden">
-      <Icono
-        icono={MoreHorizontal}
-        titulo="Más opciones"
-        activo={abierto}
-        alPulsar={() => setAbierto((v) => !v)}
-      />
-      {abierto && (
-        <div className="surgir transicion-tema absolute top-full right-0 z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-panel-borde bg-panel/95 shadow-2xl backdrop-blur-xl">
-          {opciones.map(({ icono: Ico, texto, alPulsar }) => (
-            <button
-              key={texto}
-              type="button"
-              onClick={() => {
-                alPulsar()
-                setAbierto(false)
-              }}
-              className="flex w-full items-center gap-2.5 border-b border-panel-borde px-3 py-2.5 text-left text-[12px] font-semibold text-tinta-suave last:border-b-0 hover:bg-panel-suave hover:text-tinta"
-            >
-              <Ico size={15} className="shrink-0" />
-              {texto}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -105,12 +31,11 @@ function BarraSuperior({
   alCambiarVista,
   avanceAbierto,
   alAlternarAvance,
-  alAbrirElectivas,
   alPlanificar,
   alOcultarBarra,
 }) {
   return (
-    <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1.5 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
+    <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
       <span
         className="grid size-8 shrink-0 place-items-center rounded-lg sm:size-9"
         style={{
@@ -138,7 +63,7 @@ function BarraSuperior({
         type="button"
         onClick={alAlternarAvance}
         title="Ver el detalle de mi avance"
-        className={`transicion-tema flex shrink-0 items-center gap-2.5 rounded-lg border px-2.5 py-1.5 sm:px-3 ${
+        className={`transicion-tema flex shrink-0 items-center gap-2.5 rounded-lg border px-2 py-1.5 sm:px-3 ${
           avanceAbierto
             ? 'border-transparent bg-panel-suave'
             : 'border-panel-borde hover:bg-panel-suave'
@@ -176,26 +101,12 @@ function BarraSuperior({
         />
       </div>
 
-      {/* Sueltas en escritorio, plegadas en un menu en movil */}
-      <div className="hidden shrink-0 items-center gap-3 sm:flex">
-        <Icono
-          icono={SlidersHorizontal}
-          titulo="Elegir mis electivas"
-          alPulsar={alAbrirElectivas}
-        />
-        <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
-        <Icono
-          icono={tema === 'oscuro' ? Sun : Moon}
-          titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-          alPulsar={alternarTema}
-        />
-      </div>
+      <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
 
-      <MenuMas
-        tema={tema}
-        alternarTema={alternarTema}
-        alAbrirElectivas={alAbrirElectivas}
-        alPlanificar={alPlanificar}
+      <Icono
+        icono={tema === 'oscuro' ? Sun : Moon}
+        titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        alPulsar={alternarTema}
       />
 
       <Icono icono={ChevronUp} titulo="Ocultar la barra" alPulsar={alOcultarBarra} />
