@@ -13,3 +13,17 @@ export const AREAS = {
 
 export const colorArea = (area) => AREAS[area]?.color ?? 'var(--tinta-tenue)'
 export const etiquetaArea = (area) => AREAS[area]?.etiqueta ?? area
+
+/**
+ * Color de acento de una materia. Donde hay area clasificada manda el area
+ * (Sistemas); donde no, se usa la rampa por profundidad que VistaCarrera
+ * publica como --tono-N en el contenedor.
+ *
+ * Va por variable CSS y no por un color calculado en props para que el
+ * cambio de tema siga siendo instantaneo y para no arrastrar un resolutor
+ * hasta el ultimo componente del arbol.
+ */
+export const colorNodo = (nodo) =>
+  nodo?.area
+    ? colorArea(nodo.area)
+    : `var(--tono-${nodo?.profundidad ?? 1}, var(--tinta-suave))`

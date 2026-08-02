@@ -185,6 +185,7 @@ function GrafoPensum({
                 x2={arista.x2}
                 y2={arista.y2}
                 area={arista.area}
+                profundidad={arista.profundidad}
                 // Retardo y velocidad distintos por cable: sincronizados
                 // todos se veria como un metronomo. Se calculan del indice,
                 // asi que son estables y no reinician la animacion.

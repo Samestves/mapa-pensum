@@ -1,4 +1,4 @@
-import { colorArea, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea } from '../theme/areas'
 
 const HOY = () =>
   new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -95,14 +95,14 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
                     {/* Casilla vacia: la hoja impresa se va tachando a mano */}
                     <span
                       className="size-2.5 shrink-0 rounded-[3px] border"
-                      style={{ borderColor: colorArea(a.area) }}
+                      style={{ borderColor: colorNodo(a) }}
                     />
                     <span className="w-14 shrink-0 font-mono text-[9px] text-tinta-tenue sm:w-16">
                       {a.codigo}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-semibold">{a.nombre}</span>
                     <span className="solo-ancho hidden shrink-0 text-[9px] text-tinta-tenue sm:inline">
-                      {etiquetaArea(a.area)}
+                      {a.area ? etiquetaArea(a.area) : ''}
                     </span>
                     <span className="w-9 shrink-0 text-right font-mono text-[9px] text-tinta-tenue">
                       {a.uc} UC

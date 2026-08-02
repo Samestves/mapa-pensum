@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { calcularLayout } from '../layout/calcularLayout'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
+import { variablesDeTono } from '../theme/paleta'
 import BarraSuperior from './BarraSuperior'
 import GrafoPensum from './GrafoPensum'
 import Leyenda from './Leyenda'
@@ -20,7 +21,7 @@ const CLAVE_VISTA = 'mapa-pensum:vista'
  * y el estado de vista (zoom, seleccion, paneles abiertos) arranca limpio, que
  * es lo correcto: la posicion del mapa de una carrera no significa nada en otra.
  */
-function VistaCarrera({ carrera }) {
+function VistaCarrera({ carrera, alVolver }) {
   const { asignaturas, grupos } = carrera
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
@@ -38,6 +39,10 @@ function VistaCarrera({ carrera }) {
     hayMarcas,
   } = usePensum(carrera)
   const { tema, alternarTema } = useTema()
+
+  // Rampa de tonos de la carrera, publicada como --tono-N para que cada nodo
+  // la resuelva por su profundidad sin recibir el color por props.
+  const tonos = useMemo(() => variablesDeTono(carrera, tema), [carrera, tema])
 
   // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
   const [vista, setVista] = useState(
@@ -71,7 +76,7 @@ function VistaCarrera({ carrera }) {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
       {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
           1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
       <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
@@ -90,6 +95,7 @@ function VistaCarrera({ carrera }) {
               setBarraOculta(true)
               setPanelAbierto(false)
             }}
+            alVolver={alVolver}
           />
         </div>
       </div>
@@ -118,7 +124,12 @@ function VistaCarrera({ carrera }) {
         />
       )}
 
-      <div className="relative flex flex-1 overflow-hidden">
+      {/* El mismo view-transition-name que la miniatura de la tarjeta: es lo
+          que hace que al entrar la tarjeta se despliegue hasta ser el mapa. */}
+      <div
+        className="relative flex flex-1 overflow-hidden"
+        style={{ viewTransitionName: `mapa-${carrera.slug}` }}
+      >
         {vista === 'mapa' ? (
           <>
             <GrafoPensum

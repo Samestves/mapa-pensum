@@ -119,6 +119,20 @@ for (const archivo of archivos) {
   for (const a of todas) if (color.get(a.codigo) === 'blanco') buscarCiclo(a.codigo, [])
   for (const ciclo of ciclos) err(`Ciclo de prerrequisitos: ${ciclo}`)
 
+  // --- 5b. Olor a prelacion que falta en la fuente ------------------------
+  // Un ultimo semestre entero sin una sola prelacion casi seguro significa
+  // que la DACE no las publico, no que de verdad no existan: el Trabajo de
+  // Grado siempre cuelga de algo. Es aviso y no error porque el dato es el
+  // que es y no lo vamos a inventar, pero conviene que se vea.
+  const ultimo = Math.max(...c.asignaturas.map((a) => a.semestre ?? 0))
+  const delUltimo = c.asignaturas.filter((a) => a.semestre === ultimo)
+  if (delUltimo.length > 1 && delUltimo.every((a) => !a.prerrequisitos.length)) {
+    avisar(
+      `Ninguna de las ${delUltimo.length} materias del semestre ${ultimo} declara ` +
+        'prerrequisitos. Probable hueco de la fuente: confirmar con control de estudios.',
+    )
+  }
+
   // --- 6. Creditos y cuotas ----------------------------------------------
   const ucSumadas = c.asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
   if (ucSumadas !== c.ucObligatorias) {

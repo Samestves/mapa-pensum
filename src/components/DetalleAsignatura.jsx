@@ -1,6 +1,6 @@
 import { Check, CircleDot, Lock, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
-import { colorArea, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
 
 const ANCHO = 300
@@ -36,7 +36,7 @@ function Fila({ asignatura, estado }) {
     <li className="flex items-center gap-2">
       <span
         className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: colorArea(asignatura.area) }}
+        style={{ backgroundColor: colorNodo(asignatura) }}
       />
       <span className="min-w-0 flex-1 truncate text-[11px] text-tinta-suave">
         {asignatura.nombre}
@@ -93,12 +93,12 @@ function DetalleAsignatura({
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -inset-8"
-          style={{ background: fondoMateria(nodo.codigo, nodo.area), filter: 'blur(26px)' }}
+          style={{ background: fondoMateria(nodo.codigo, colorNodo(nodo)), filter: 'blur(26px)' }}
         />
         <div className="relative flex items-start gap-2.5 px-4 py-3.5">
           <span
             className="mt-1 h-9 w-1 shrink-0 rounded-full"
-            style={{ backgroundColor: colorArea(nodo.area) }}
+            style={{ backgroundColor: colorNodo(nodo) }}
           />
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] tracking-wider text-tinta-suave">
@@ -109,7 +109,8 @@ function DetalleAsignatura({
               {nodo.nombre}
             </h3>
             <p className="mt-0.5 text-[11px] font-semibold text-tinta-suave">
-              {etiquetaArea(nodo.area)} · {nodo.uc} UC
+              {nodo.area && `${etiquetaArea(nodo.area)} · `}
+              {nodo.uc} UC
             </p>
           </div>
           <button

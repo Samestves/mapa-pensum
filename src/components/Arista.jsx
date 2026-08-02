@@ -1,4 +1,4 @@
-import { colorArea } from '../theme/areas'
+import { colorNodo } from '../theme/areas'
 
 const OPACIDAD = { viva: 0.9, resaltada: 1, normal: 0.42, atenuada: 0.07 }
 
@@ -56,6 +56,7 @@ function Arista({
   x2,
   y2,
   area,
+  profundidad,
   viva,
   resaltada,
   atenuada,
@@ -64,7 +65,7 @@ function Arista({
   retardo,
   velocidad,
 }) {
-  const color = colorArea(area)
+  const color = colorNodo({ area, profundidad })
 
   const estado = atenuada
     ? 'atenuada'

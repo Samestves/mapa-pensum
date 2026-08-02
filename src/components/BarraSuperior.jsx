@@ -33,24 +33,35 @@ function BarraSuperior({
   alAlternarAvance,
   alPlanificar,
   alOcultarBarra,
+  alVolver,
 }) {
   return (
     <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
-      <span
-        className="grid size-8 shrink-0 place-items-center rounded-lg sm:size-9"
+      {/* El logo es la vuelta al selector: es donde la gente ya intenta
+          hacer click para volver al inicio en cualquier sitio web. */}
+      <button
+        type="button"
+        onClick={alVolver}
+        title="Ver todas las carreras"
+        aria-label="Ver todas las carreras"
+        className="group grid size-8 shrink-0 place-items-center rounded-lg sm:size-9"
         style={{
           backgroundColor: 'color-mix(in oklab, var(--estado-aprobada) 16%, transparent)',
           color: 'var(--estado-aprobada)',
         }}
       >
-        <Waypoints size={18} strokeWidth={2.4} />
-      </span>
+        <Waypoints
+          size={18}
+          strokeWidth={2.4}
+          className="transition-transform duration-300 group-hover:scale-110"
+        />
+      </button>
 
       {/* En movil el titulo no cabe y truncado se ve peor que ausente:
           queda solo el logo, que ya identifica la app. */}
       <div className="hidden min-w-0 flex-1 sm:block">
         <h1 className="truncate text-base leading-tight font-extrabold tracking-tight text-tinta">
-          Mapa de Pensum
+          {carrera.nombreCorto}
         </h1>
         <p className="hidden truncate text-[11px] leading-tight font-medium text-tinta-suave md:block">
           {carrera.nombre} · {carrera.nucleo}

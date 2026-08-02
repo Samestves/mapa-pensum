@@ -1,7 +1,7 @@
 import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
-import { colorArea } from '../theme/areas'
+import { colorNodo } from '../theme/areas'
 
 /**
  * Tarjeta compacta de la zona de electivas. Mas baja que la de una materia
@@ -22,8 +22,8 @@ function NodoElectiva({
   alEntrar,
   alSalir,
 }) {
-  const { x, y, codigo, nombre, uc, area, lineasNombre } = nodo
-  const acento = colorArea(area)
+  const { x, y, codigo, nombre, uc, lineasNombre } = nodo
+  const acento = colorNodo(nodo)
   const aprobada = estado === ESTADO.APROBADA
   const cursando = estado === ESTADO.CURSANDO
   const bloqueada = estado === ESTADO.BLOQUEADA

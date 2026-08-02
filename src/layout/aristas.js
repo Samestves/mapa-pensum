@@ -139,6 +139,9 @@ export function generarAristas(nodos) {
         // El color lo pone el area del prerrequisito: asi se puede seguir
         // de un vistazo de donde viene cada rama del pensum.
         area: origen.area,
+        // Sin areas clasificadas el color sale de la profundidad del origen,
+        // asi la cadena se sigue igual de bien en las otras siete carreras
+        profundidad: origen.profundidad,
         cruzaColumnas: tramos.length > 0,
         d: trazar(x1, y1, x2, y2, tramos),
         x1,

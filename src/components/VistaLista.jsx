@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronDown, CircleDot, Lock } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
-import { colorArea, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea } from '../theme/areas'
 
 const COLOR_ESTADO = {
   [ESTADO.APROBADA]: 'var(--estado-aprobada)',
@@ -30,7 +30,7 @@ function Boton({ icono: Icono, texto, activo, color, alPulsar }) {
 
 function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar }) {
   const [abierta, setAbierta] = useState(false)
-  const acento = colorArea(nodo.area)
+  const acento = colorNodo(nodo)
   const aprobada = estado === ESTADO.APROBADA
   const cursando = estado === ESTADO.CURSANDO
 
@@ -123,7 +123,7 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
                 <li key={p.codigo} className="flex items-center gap-2 text-[11px]">
                   <span
                     className="size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: colorArea(p.area) }}
+                    style={{ backgroundColor: colorNodo(p) }}
                   />
                   <span className="min-w-0 flex-1 truncate text-tinta-suave">{p.nombre}</span>
                   {estados[p.codigo] === ESTADO.APROBADA ? (

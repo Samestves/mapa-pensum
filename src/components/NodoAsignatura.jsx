@@ -1,7 +1,7 @@
 import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
-import { colorArea, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea } from '../theme/areas'
 
 /**
  * Los cuatro estados se distinguen por relleno, borde y trazo de la propia
@@ -38,8 +38,8 @@ function NodoAsignatura({
   alEntrar,
   alSalir,
 }) {
-  const { x, y, codigo, nombre, uc, area, lineasNombre } = nodo
-  const acento = colorArea(area)
+  const { x, y, codigo, nombre, uc, lineasNombre } = nodo
+  const acento = colorNodo(nodo)
   const estilo = ESTILO[estado]
 
   const colorBorde = estilo.borde ?? acento
@@ -63,7 +63,12 @@ function NodoAsignatura({
       className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
-      <title>{`${codigo} — ${nombre} · ${etiquetaArea(area)} · ${estado}`}</title>
+      {/* Etiqueta accesible. El area solo existe donde esta clasificada */}
+      <title>
+        {[codigo, '—', nombre, nodo.area && `· ${etiquetaArea(nodo.area)}`, `· ${estado}`]
+          .filter(Boolean)
+          .join(' ')}
+      </title>
 
       <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />
 
@@ -191,7 +196,7 @@ function NodoAsignatura({
         fillOpacity={estilo.acento}
         className="font-medium"
       >
-        {etiquetaArea(area)}
+        {nodo.area ? etiquetaArea(nodo.area) : ''}
       </text>
 
       {Icono && (

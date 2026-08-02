@@ -339,6 +339,34 @@ body {
   animation: surgir 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ---- Selector de carreras -----------------------------------------------
+   El giro se aplica por style en linea desde JS (sigue al cursor), aqui va
+   solo la transicion para que volver al reposo no sea un salto. */
+.tarjeta-carrera {
+  transform-style: preserve-3d;
+  transition:
+    transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 200ms ease,
+    background-color 200ms ease;
+  will-change: transform;
+}
+
+.tarjeta-carrera:hover {
+  border-color: color-mix(in oklab, var(--acento) 45%, var(--panel-borde));
+}
+
+.tarjeta-carrera > * {
+  transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La transicion entre el selector y el mapa la interpola el navegador; solo
+   se le fija la duracion para que acompañe al resto del sistema. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* ---- Ocultar la cabecera ------------------------------------------------
    El truco de grid-template-rows de 1fr a 0fr anima el alto real sin
    necesidad de medirlo en JS ni de fijar un max-height inventado que
@@ -470,7 +498,15 @@ body {
      aparte o siguen deslizandose. */
   .barra-colapsable,
   .barra-contenido,
-  .pestana-barra {
+  .pestana-barra,
+  .tarjeta-carrera,
+  .tarjeta-carrera > * {
     transition: none;
+  }
+
+  /* Sin esto el navegador seguiria interpolando el cambio de pagina */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }

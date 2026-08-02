@@ -97,6 +97,25 @@ clasificadas a mano. Las demás cargan igual, y lo que depende de datos que no h
 —porcentaje de avance, cuotas de electivas, colores por área— **no se muestra en vez de
 inventarse**.
 
+## Rutas y SEO
+
+```
+/           Selector: las ocho carreras
+/<slug>     Mapa de una carrera
+```
+
+El enrutador está escrito a mano (`src/hooks/useRuta.js`). Para dos rutas sin parámetros
+anidados son cuarenta líneas contra unos 10 KB comprimidos de react-router, y en un
+proyecto cuyo público paga los datos móviles eso importa.
+
+`npm run build` genera además un HTML estático por carrera con su `<title>`, descripción,
+canonical, Open Graph, JSON-LD y **la lista completa de materias en el markup**, más
+`sitemap.xml` y `robots.txt`. React vacía ese contenido y monta la app encima.
+
+Se prerenderiza el contenido, no la app: varios hooks leen `window` al inicializar y
+habría que blindarlos todos para ganar algo que aquí no hace falta, porque el estado es
+100% del cliente. Lo único que se necesita es que un buscador encuentre texto real.
+
 ## El validador
 
 `npm run validar` corre sobre los pensums normalizados, o sea sobre exactamente lo mismo

@@ -1,5 +1,3 @@
-import { colorArea } from './areas'
-
 /** Hash estable del codigo: la misma materia siempre da el mismo fondo */
 function semilla(codigo) {
   let h = 2166136261
@@ -15,9 +13,11 @@ function semilla(codigo) {
  * el codigo de la materia. Desenfocadas dan ese aire de degradado de malla
  * tipo iOS, y no hacen falta imagenes: nada que descargar, nada que licenciar
  * y funciona igual sin conexion.
+ *
+ * Recibe el color ya resuelto y no el area: asi sirve igual para Sistemas,
+ * que colorea por area, y para las otras siete, que lo hacen por profundidad.
  */
-export function fondoMateria(codigo, area) {
-  const color = colorArea(area)
+export function fondoMateria(codigo, color) {
   const s = semilla(codigo)
 
   const manchas = [
