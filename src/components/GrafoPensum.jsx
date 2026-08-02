@@ -230,7 +230,7 @@ function GrafoPensum({
 
           {/* Zona de electivas, debajo de los 10 semestres */}
           {gruposElectivas.map((grupo) => (
-            <g key={grupo.tipo}>
+            <g key={grupo.clave}>
               <line
                 x1={MARGEN.left}
                 y1={grupo.yTitulo + 4}
@@ -254,6 +254,8 @@ function GrafoPensum({
               >
                 {grupo.titulo}
               </text>
+              {/* La cuota sale del pensum, no del componente. Donde no la
+                  hay se dice cuantas opciones existen y nada mas. */}
               <text
                 x={MARGEN.left + 300}
                 y={grupo.yTitulo + 34}
@@ -261,7 +263,9 @@ function GrafoPensum({
                 fill="var(--tinta-suave)"
                 className="font-mono font-semibold"
               >
-                elige {grupo.tipo === 'tecnica' ? 15 : 6} UC de {grupo.cantidad} opciones
+                {grupo.cuota != null
+                  ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`
+                  : `${grupo.cantidad} opciones`}
               </text>
             </g>
           ))}

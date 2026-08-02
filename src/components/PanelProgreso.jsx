@@ -24,23 +24,29 @@ function Dato({ icono: Icono, valor, de, etiqueta, color }) {
   )
 }
 
-function CuotaElectiva({ etiqueta, avance }) {
-  const pct = avance.meta ? Math.min(100, (avance.uc / avance.meta) * 100) : 0
+/** Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado. */
+function CuotaGrupo({ avance }) {
   const color = avance.completa ? 'var(--estado-aprobada)' : 'var(--estado-cursando)'
+  const pct = avance.meta ? Math.min(100, (avance.uc / avance.meta) * 100) : 0
+
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-[11px] font-semibold text-tinta">{etiqueta}</span>
-        <span className="font-mono text-[10px] font-bold" style={{ color }}>
-          {avance.uc}/{avance.meta} UC
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="min-w-0 truncate text-[11px] font-semibold text-tinta">
+          {avance.titulo}
+        </span>
+        <span className="shrink-0 font-mono text-[10px] font-bold" style={{ color }}>
+          {avance.meta != null ? `${avance.uc}/${avance.meta} UC` : `${avance.uc} UC`}
         </span>
       </div>
-      <div className="mt-1 h-1 overflow-hidden rounded-full bg-lienzo">
-        <div
-          className="h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{ width: `${pct}%`, backgroundColor: color }}
-        />
-      </div>
+      {avance.meta != null && (
+        <div className="mt-1 h-1 overflow-hidden rounded-full bg-lienzo">
+          <div
+            className="h-full rounded-full transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%`, backgroundColor: color }}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -113,10 +119,13 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
  * numeros, las cuotas de electivas y el reinicio. El porcentaje vive en el
  * chip y el filtro por area en la leyenda.
  */
-function PanelProgreso({ progreso, avanceElectivas, reiniciar, hayMarcas, abierto, alCerrar }) {
+function PanelProgreso({ progreso, avanceGrupos, reiniciar, hayMarcas, abierto, alCerrar }) {
   const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } =
     progreso
-  const porcentaje = useNumeroAnimado(progreso.porcentaje)
+  // Sin creditos oficiales no hay porcentaje: se muestran materias y UC sueltas
+  const hayPorcentaje = progreso.porcentaje != null
+  const porcentaje = useNumeroAnimado(progreso.porcentaje ?? 0)
+  const grupos = Object.values(avanceGrupos)
 
   if (!abierto) return null
 
@@ -129,25 +138,45 @@ function PanelProgreso({ progreso, avanceElectivas, reiniciar, hayMarcas, abiert
         className="fixed inset-0 z-30 cursor-default"
       />
       <div className="surgir transicion-tema absolute top-2 right-3 z-40 flex max-h-[calc(100%-1rem)] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
-        <div>
-          <div className="flex items-end justify-between">
-            <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Título completado
-            </span>
-            <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
-              {porcentaje.toFixed(1)}%
-            </span>
+        {/* El porcentaje necesita un denominador oficial. Donde no lo hay se
+            dice lo acumulado sin inventar un total. */}
+        {hayPorcentaje ? (
+          <div>
+            <div className="flex items-end justify-between">
+              <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+                Título completado
+              </span>
+              <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
+                {porcentaje.toFixed(1)}%
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-lienzo">
+              <div
+                className="h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
+                style={{ width: `${porcentaje}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-[10px] text-tinta-tenue">
+              {ucAprobadas + ucElectivas} de {ucTitulo} UC, contando obligatorias y electivas.
+            </p>
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-lienzo">
-            <div
-              className="h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-              style={{ width: `${porcentaje}%` }}
-            />
+        ) : (
+          <div>
+            <div className="flex items-end justify-between">
+              <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+                Materias aprobadas
+              </span>
+              <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
+                {aprobadas}
+                <span className="text-sm text-tinta-tenue">/{total}</span>
+              </span>
+            </div>
+            <p className="mt-1.5 text-[10px] leading-snug text-tinta-tenue">
+              Llevas {ucAprobadas} UC. No mostramos porcentaje del título porque no tenemos
+              los créditos oficiales de esta carrera.
+            </p>
           </div>
-          <p className="mt-1.5 text-[10px] text-tinta-tenue">
-            {ucAprobadas + ucElectivas} de {ucTitulo} UC, contando obligatorias y electivas.
-          </p>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <Dato
@@ -178,20 +207,23 @@ function PanelProgreso({ progreso, avanceElectivas, reiniciar, hayMarcas, abiert
           />
         </div>
 
-        <div className="transicion-tema rounded-lg border border-panel-borde p-3">
-          <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-            Electivas
-          </h3>
-          {/* Solo informa. Se marcan donde estan dibujadas: en la zona de
-              electivas del mapa o al final de la lista. */}
-          <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
-            Elígelas en el mapa o al final de la lista.
-          </p>
-          <div className="flex flex-col gap-2">
-            <CuotaElectiva etiqueta="Técnicas" avance={avanceElectivas.tecnica} />
-            <CuotaElectiva etiqueta="Humanísticas" avance={avanceElectivas.humanistica} />
+        {grupos.length > 0 && (
+          <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+            <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+              Electivas
+            </h3>
+            {/* Solo informa. Se marcan donde estan dibujadas: en la zona de
+                electivas del mapa o al final de la lista. */}
+            <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
+              Elígelas en el mapa o al final de la lista.
+            </p>
+            <div className="flex flex-col gap-2">
+              {grupos.map((g) => (
+                <CuotaGrupo key={g.clave} avance={g} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="border-t border-panel-borde pt-3">
           <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />

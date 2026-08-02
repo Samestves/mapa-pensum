@@ -40,9 +40,10 @@ npm run dev
 
 | Script | Qué hace |
 |---|---|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run validar` | Valida `pensum.json` (ver abajo) |
-| `npm run build` | Valida y compila a `dist/` |
+| `npm run dev` | Normaliza los datos y arranca el servidor de desarrollo |
+| `npm run datos` | Genera `src/data/carreras/` desde `datos/` |
+| `npm run validar` | Valida los pensums normalizados (ver abajo) |
+| `npm run build` | Normaliza, valida y compila a `dist/` |
 | `npm run lint` | oxlint |
 | `npm run preview` | Sirve el build ya compilado |
 
@@ -59,31 +60,66 @@ librerías de grafos.
 Desplegado en **Vercel**. El repo trae `vercel.json`: al importar el repositorio, Vercel
 detecta Vite, corre `npm run build` y publica `dist/`.
 
-Como el build corre el validador primero, un `pensum.json` inconsistente rompe el deploy
-en vez de llegar a producción.
+Como el build corre el validador primero, un pensum inconsistente rompe el deploy en vez
+de llegar a producción.
 
 El contador de visitas es **Vercel Web Analytics** (`@vercel/analytics`, montado en
 `src/main.jsx`). Hay que activarlo una vez desde la pestaña *Analytics* del proyecto en
 Vercel; en local no envía nada, solo escribe los eventos en la consola.
 
+## Los datos
+
+Ocho carreras del núcleo, cada una con su pensum. El flujo es de una sola dirección:
+
+```
+datos/crudo/*.json     Scrape de la DACE tal cual. NO se edita a mano.
+datos/overlay.json     Lo que sabemos y la DACE no publica.
+        ↓  npm run datos
+src/data/carreras/     Generado. Un JSON por carrera + el índice.
+```
+
+**Agregar una carrera es dejar caer su JSON en `datos/crudo/`.** El resto se descubre
+solo: el normalizador la recoge, Vite le hace su propio chunk y aparece funcionando.
+Añadirle color y créditos en el overlay es opcional.
+
+Que el crudo no se toque es lo que permite volver a bajar el pensum cuando la DACE lo
+cambie sin perder el trabajo hecho encima.
+
+Dos reglas sobre los códigos, ambas comprobadas contra los 88 registros verificados de
+Sistemas:
+
+- **El último dígito son las unidades crédito.** Acierta 88/88, así que la UC se deriva.
+- **El penúltimo NO es el semestre.** Falla el 73% en Sistemas, 66% en Petróleo y 71% en
+  Alimentos. El semestre sale de las claves del JSON y de ningún otro sitio.
+
+Solo Sistemas tiene créditos oficiales (153, confirmados por INTRADACE) y áreas
+clasificadas a mano. Las demás cargan igual, y lo que depende de datos que no hay
+—porcentaje de avance, cuotas de electivas, colores por área— **no se muestra en vez de
+inventarse**.
+
 ## El validador
 
-`npm run validar` falla con código 1 si algo no cuadra. Comprueba que todo código en
-`prerrequisitos` exista, que no haya ciclos, que ningún prerrequisito esté en un semestre
-igual o posterior, que no haya códigos duplicados y que los totales de `meta` coincidan
-con los datos reales.
+`npm run validar` corre sobre los pensums normalizados, o sea sobre exactamente lo mismo
+que lee la app, y falla con código 1 si algo no cuadra. Por carrera comprueba que todo
+código en `prerrequisitos` exista, que no haya ciclos, que ningún prerrequisito esté en
+un semestre igual o posterior, que no haya códigos duplicados, que las cuotas sean
+alcanzables con la oferta y que los créditos cuadren.
 
-Acepta una ruta alterna como argumento, útil para probarlo contra un JSON roto a propósito:
+Acepta una ruta alterna como argumento, útil para probarlo contra datos rotos a propósito:
 
 ```bash
-node scripts/validar-pensum.js otro-pensum.json
+node scripts/validar-pensum.js ruta/a/otra/carpeta
 ```
 
 ## Estructura
 
 ```
+datos/                      Fuente: crudo intocable + overlay
+scripts/
+├── normalizar.js           crudo + overlay → modelo único
+└── validar-pensum.js       Puerta de calidad del build
 src/
-├── data/pensum.json        Fuente de verdad: 49 asignaturas
+├── data/carreras.js        Índice y carga por carrera (un chunk cada una)
 ├── layout/
 │   ├── constantes.js       Toda la geometría del mapa
 │   ├── calcularLayout.js   Asignaturas → coordenadas (función pura)

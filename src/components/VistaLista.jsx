@@ -78,8 +78,12 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
             <span className="block truncate text-[13px] font-bold text-tinta">
               {nodo.nombre}
             </span>
+            {/* El area solo existe donde esta clasificada a mano. Sin ella
+                no se pinta el separador, o quedaria un "· undefined". */}
             <span className="block font-mono text-[10px] text-tinta-tenue">
-              {nodo.codigo} · {nodo.uc} UC · {etiquetaArea(nodo.area)}
+              {nodo.codigo}
+              {nodo.uc != null && ` · ${nodo.uc} UC`}
+              {nodo.area && ` · ${etiquetaArea(nodo.area)}`}
             </span>
           </span>
           <ChevronDown
@@ -143,8 +147,8 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
  * 0.10, donde el texto no se lee. Aqui la informacion es la misma pero en
  * un formato que si funciona con el pulgar.
  */
-function VistaLista({ layout, estados, avanceElectivas, alMarcar }) {
-  const { columnas, nodos, electivas, relaciones, porCodigo } = layout
+function VistaLista({ layout, estados, avanceGrupos, alMarcar }) {
+  const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
 
   const porSemestre = useMemo(() => {
     const mapa = new Map()
@@ -155,23 +159,17 @@ function VistaLista({ layout, estados, avanceElectivas, alMarcar }) {
     return mapa
   }, [nodos])
 
-  // Las electivas cierran la lista, en sus dos grupos con su cuota
-  const gruposElectivas = useMemo(
-    () => [
-      {
-        clave: 'tecnica',
-        titulo: 'ELECTIVAS TÉCNICAS',
-        avance: avanceElectivas.tecnica,
-        items: electivas.filter((e) => e.tipo === 'tecnica'),
-      },
-      {
-        clave: 'humanistica',
-        titulo: 'ELECTIVAS HUMANÍSTICAS',
-        avance: avanceElectivas.humanistica,
-        items: electivas.filter((e) => e.tipo === 'humanistica'),
-      },
-    ],
-    [electivas, avanceElectivas],
+  // Los grupos que no pertenecen a un semestre cierran la lista. Son N y los
+  // define el pensum: Sistemas trae dos de electivas y Agronomica ademas las
+  // Areas de Grado.
+  const secciones = useMemo(
+    () =>
+      gruposElectivas.map((g) => ({
+        ...g,
+        avance: avanceGrupos[g.clave],
+        items: electivas.filter((e) => e.grupo === g.clave),
+      })),
+    [gruposElectivas, electivas, avanceGrupos],
   )
 
   return (
@@ -214,26 +212,34 @@ function VistaLista({ layout, estados, avanceElectivas, alMarcar }) {
           )
         })}
 
-        {gruposElectivas.map((grupo) => (
+        {secciones.map((grupo) => (
           <section key={grupo.clave}>
             <header className="transicion-tema sticky top-0 z-10 -mx-1 mb-2 bg-lienzo px-1 py-2">
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between gap-2">
                 <h2 className="text-[11px] font-extrabold tracking-[0.18em] text-tinta">
                   {grupo.titulo}
                 </h2>
+                {/* Sin cuota oficial se dice lo que llevas y ya: un
+                    denominador inventado seria peor que no poner ninguno. */}
                 <span
-                  className="font-mono text-[10px] font-bold"
+                  className="shrink-0 font-mono text-[10px] font-bold"
                   style={{
-                    color: grupo.avance.completa
+                    color: grupo.avance?.completa
                       ? 'var(--estado-aprobada)'
                       : 'var(--estado-cursando)',
                   }}
                 >
-                  {grupo.avance.uc}/{grupo.avance.meta} UC
+                  {grupo.avance?.meta != null
+                    ? `${grupo.avance.uc}/${grupo.avance.meta} UC`
+                    : `${grupo.avance?.uc ?? 0} UC`}
                 </span>
               </div>
               <p className="text-[10px] text-tinta-tenue">
-                Elige las que quieras hasta cubrir la cuota.
+                {grupo.tipo === 'informativa'
+                  ? 'Catálogo informativo: confirma con control de estudios cuántas debes cursar.'
+                  : grupo.cuota != null
+                    ? 'Elige las que quieras hasta cubrir la cuota.'
+                    : 'Elige las que quieras. No tenemos la cuota oficial de esta carrera.'}
               </p>
             </header>
             <ul className="flex flex-col gap-2">

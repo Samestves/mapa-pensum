@@ -1,163 +1,63 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
-import pensum from './data/pensum.json'
-import { calcularLayout } from './layout/calcularLayout'
-import { usePensum } from './hooks/usePensum'
-import { useTema } from './hooks/useTema'
-import BarraSuperior from './components/BarraSuperior'
-import GrafoPensum from './components/GrafoPensum'
-import Leyenda from './components/Leyenda'
-import PanelProgreso from './components/PanelProgreso'
-import PlanRuta from './components/PlanRuta'
-import VistaLista from './components/VistaLista'
+import { useEffect, useState } from 'react'
+import { cargarCarrera, existe } from './data/carreras'
+import VistaCarrera from './components/VistaCarrera'
 
-const CLAVE_VISTA = 'mapa-pensum:vista'
+// Mientras no exista el selector, Sistemas es la portada: es la carrera que
+// ya usan los estudiantes y la unica con datos completos.
+const POR_DEFECTO = 'ingenieria-de-sistemas'
 
+/**
+ * Fase 1: la app carga UNA carrera y la dibuja. El slug sale de ?carrera=,
+ * que es un apaño temporal para poder abrir las otras siete antes de que
+ * existan las rutas de verdad.
+ *
+ * En la fase 2 esto pasa a ser el enrutador: / es el selector y
+ * /<slug> el mapa. La carga en si ya es la definitiva (un chunk por carrera),
+ * asi que ese cambio solo toca de donde sale el slug.
+ */
 function App() {
-  const { meta, asignaturas, electivas } = pensum
+  const [slug] = useState(() => {
+    const pedida = new URLSearchParams(window.location.search).get('carrera')
+    return pedida && existe(pedida) ? pedida : POR_DEFECTO
+  })
+  const [carrera, setCarrera] = useState(null)
+  const [error, setError] = useState(null)
 
-  // El layout es geometria pura y no depende del avance: se calcula una vez
-  const layout = useMemo(
-    () => calcularLayout(asignaturas, electivas),
-    [asignaturas, electivas],
-  )
-
-  const {
-    marcas,
-    estados,
-    progreso,
-    avanceElectivas,
-    descarga,
-    toque,
-    marcar,
-    reiniciar,
-    hayMarcas,
-  } = usePensum(asignaturas, electivas, meta.creditos)
-  const { tema, alternarTema } = useTema()
-
-  // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
-  const [vista, setVista] = useState(
-    () => localStorage.getItem(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
-  )
   useEffect(() => {
-    localStorage.setItem(CLAVE_VISTA, vista)
-  }, [vista])
+    let vigente = true
+    setCarrera(null)
+    setError(null)
+    cargarCarrera(slug)
+      .then((datos) => vigente && setCarrera(datos))
+      .catch((e) => vigente && setError(e.message))
+    // Si el usuario cambia de carrera antes de que llegue la anterior, la
+    // respuesta vieja no debe pisar a la nueva
+    return () => {
+      vigente = false
+    }
+  }, [slug])
 
-  // El avance ya no ocupa columna: se abre desde el chip de la cabecera
-  const [panelAbierto, setPanelAbierto] = useState(false)
-  // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
-  const [barraOculta, setBarraOculta] = useState(false)
-  const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
-  const [planAbierto, setPlanAbierto] = useState(false)
-  const [areaFiltrada, setAreaFiltrada] = useState(null)
-  const [seleccionado, setSeleccionado] = useState(null)
-  const [senalado, setSenalado] = useState(null)
-
-  // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
-  // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
-  // cada una apaga la otra.
-  const filtrarArea = (area) => {
-    setAreaFiltrada(area)
-    if (area) setSeleccionado(null)
+  if (error) {
+    return (
+      <div className="grid h-full place-items-center p-6 text-center">
+        <p className="text-sm text-tinta-suave">
+          No se pudo cargar el pensum. {error}
+        </p>
+      </div>
+    )
   }
 
-  const seleccionar = (codigo) => {
-    setSeleccionado(codigo)
-    if (codigo) setAreaFiltrada(null)
+  if (!carrera) {
+    return (
+      <div className="grid h-full place-items-center">
+        <span className="sr-only">Cargando el pensum</span>
+      </div>
+    )
   }
 
-  return (
-    <div className="relative flex h-full flex-col overflow-hidden">
-      {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
-          1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
-      <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
-        <div>
-          <BarraSuperior
-            meta={meta}
-            tema={tema}
-            alternarTema={alternarTema}
-            resumen={progreso}
-            vista={vista}
-            alCambiarVista={setVista}
-            avanceAbierto={panelAbierto}
-            alAlternarAvance={() => setPanelAbierto((v) => !v)}
-            alPlanificar={() => setPlanAbierto(true)}
-            alOcultarBarra={() => {
-              setBarraOculta(true)
-              setPanelAbierto(false)
-            }}
-          />
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setBarraOculta(false)}
-        title="Mostrar la barra"
-        aria-label="Mostrar la barra"
-        aria-hidden={!barraOculta}
-        tabIndex={barraOculta ? 0 : -1}
-        data-visible={barraOculta}
-        className="pestana-barra transicion-tema absolute top-0 left-1/2 z-50 flex items-center gap-1.5 rounded-b-xl border border-t-0 border-panel-borde bg-panel/90 px-5 py-1.5 text-tinta-suave backdrop-blur hover:text-tinta"
-      >
-        <ChevronDown size={15} />
-      </button>
-
-      {planAbierto && (
-        <PlanRuta
-          asignaturas={asignaturas}
-          electivas={electivas}
-          marcas={marcas}
-          estados={estados}
-          progreso={progreso}
-          relaciones={layout.relaciones}
-          meta={meta}
-          alCerrar={() => setPlanAbierto(false)}
-        />
-      )}
-
-      <div className="relative flex flex-1 overflow-hidden">
-        {vista === 'mapa' ? (
-          <>
-            <GrafoPensum
-              layout={layout}
-              estados={estados}
-              descarga={descarga}
-              toque={toque}
-              areaFiltrada={areaFiltrada}
-              seleccionado={seleccionado}
-              senalado={senalado}
-              alSenalar={setSenalado}
-              alSeleccionar={seleccionar}
-              alMarcar={marcar}
-            />
-            <Leyenda
-              abierta={leyendaAbierta}
-              alAlternar={() => setLeyendaAbierta((v) => !v)}
-              areaFiltrada={areaFiltrada}
-              alFiltrarArea={filtrarArea}
-            />
-          </>
-        ) : (
-          <VistaLista
-            layout={layout}
-            estados={estados}
-            avanceElectivas={avanceElectivas}
-            alMarcar={marcar}
-          />
-        )}
-
-        <PanelProgreso
-          progreso={progreso}
-          avanceElectivas={avanceElectivas}
-          reiniciar={reiniciar}
-          hayMarcas={hayMarcas}
-          abierto={panelAbierto}
-          alCerrar={() => setPanelAbierto(false)}
-        />
-      </div>
-    </div>
-  )
+  // key por slug: cambiar de carrera remonta la vista en vez de arrastrar
+  // el zoom y la seleccion de la anterior
+  return <VistaCarrera key={carrera.slug} carrera={carrera} />
 }
 
 export default App

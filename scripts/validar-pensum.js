@@ -1,214 +1,186 @@
 /**
- * Validacion del pensum. Se corre con: npm run validar
- * Sale con codigo 1 si hay al menos un error, para poder encadenarlo en CI.
+ * Validacion de los pensums normalizados. Se corre con: npm run validar
+ * Sale con codigo 1 si hay al menos un error, para que rompa el build antes
+ * de que un scrape malo llegue a produccion.
  *
- * Comprueba:
- *  1. Campos obligatorios y tipos por asignatura
- *  2. Codigos duplicados
- *  3. Todo prerrequisito existe como asignatura
+ * Corre sobre src/data/carreras/*.json, o sea sobre exactamente lo mismo que
+ * lee la app, no sobre el crudo. Comprueba por carrera:
+ *
+ *  1. Campos obligatorios y tipos
+ *  2. Codigos duplicados (entre obligatorias y entre grupos)
+ *  3. Todo prerrequisito existe dentro de la carrera
  *  4. Ningun prerrequisito esta en semestre igual o posterior
  *  5. No hay ciclos en el grafo de prerrequisitos
- *  6. Coherencia con meta (totales de asignaturas, semestres, UC, areas)
+ *  6. Coherencia de creditos y que las cuotas sean alcanzables
+ *  7. La regla del ultimo digito = UC, solo donde no es tautologica
  */
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..')
-// Acepta una ruta alterna como argumento; sirve para probar el validador con casos rotos
-const ruta = process.argv[2] ?? join(raiz, 'src/data/pensum.json')
-const pensum = JSON.parse(readFileSync(ruta, 'utf8'))
+// Acepta una ruta alterna; sirve para probar el validador con casos rotos
+const dir = process.argv[2] ?? join(raiz, 'src/data/carreras')
 
-const errores = []
-const avisos = []
-const err = (msg) => errores.push(msg)
-const avisar = (msg) => avisos.push(msg)
-
-const { meta, asignaturas } = pensum
-
-if (!Array.isArray(asignaturas) || asignaturas.length === 0) {
-  console.error('pensum.json no tiene un arreglo "asignaturas" utilizable.')
+if (!existsSync(dir)) {
+  console.error(`No existe ${dir}. Corre primero: npm run datos`)
   process.exit(1)
 }
 
-// --- 1. Campos obligatorios ---------------------------------------------
-const areasDeclaradas = new Set(Object.keys(meta?.areas ?? {}))
+let erroresTotales = 0
+let avisosTotales = 0
 
-for (const [i, a] of asignaturas.entries()) {
-  const ref = a?.codigo ?? `indice ${i}`
-  if (typeof a.codigo !== 'string' || !a.codigo) err(`[${ref}] codigo invalido`)
-  if (typeof a.nombre !== 'string' || !a.nombre) err(`[${ref}] nombre invalido`)
-  if (!Number.isInteger(a.semestre) || a.semestre < 1) err(`[${ref}] semestre invalido: ${a.semestre}`)
-  if (!Number.isInteger(a.uc) || a.uc < 0) err(`[${ref}] uc invalido: ${a.uc}`)
-  if (!Array.isArray(a.prerrequisitos)) err(`[${ref}] prerrequisitos debe ser un arreglo`)
-  if (areasDeclaradas.size && !areasDeclaradas.has(a.area)) {
-    err(`[${ref}] area "${a.area}" no esta declarada en meta.areas`)
+const archivos = readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'indice.json')
+
+for (const archivo of archivos) {
+  const c = JSON.parse(readFileSync(join(dir, archivo), 'utf8'))
+  const errores = []
+  const avisos = []
+  const err = (m) => errores.push(m)
+  const avisar = (m) => avisos.push(m)
+
+  const electivas = c.grupos.flatMap((g) => g.asignaturas.map((a) => ({ ...a, grupo: g.clave })))
+  const todas = [...c.asignaturas, ...electivas]
+
+  // --- 1. Campos obligatorios --------------------------------------------
+  for (const [i, a] of todas.entries()) {
+    const ref = a?.codigo ?? `indice ${i}`
+    if (typeof a.codigo !== 'string' || !a.codigo) err(`[${ref}] codigo invalido`)
+    if (typeof a.nombre !== 'string' || !a.nombre) err(`[${ref}] nombre invalido`)
+    // uc null solo se admite en los codigos comodin, que no son materias
+    // reales. Quien decide que es comodin es el normalizador: si la regla se
+    // repitiera aqui, las dos copias acabarian discrepando.
+    if (a.uc != null && (!Number.isInteger(a.uc) || a.uc < 0)) err(`[${ref}] uc invalido: ${a.uc}`)
+    if (a.uc == null && !a.esComodin) err(`[${ref}] uc nula en una materia real`)
+    if (a.esComodin && a.uc != null) err(`[${ref}] comodin con uc: ${a.uc}`)
+    if (!Array.isArray(a.prerrequisitos)) err(`[${ref}] prerrequisitos debe ser un arreglo`)
   }
-}
-
-// --- 2. Codigos duplicados ----------------------------------------------
-const porCodigo = new Map()
-for (const a of asignaturas) {
-  if (porCodigo.has(a.codigo)) err(`Codigo duplicado: ${a.codigo}`)
-  porCodigo.set(a.codigo, a)
-}
-
-// --- 3 y 4. Prerrequisitos existen y van antes en el tiempo -------------
-for (const a of asignaturas) {
-  if (!Array.isArray(a.prerrequisitos)) continue
-
-  const vistos = new Set()
-  for (const codigoPre of a.prerrequisitos) {
-    if (vistos.has(codigoPre)) avisar(`[${a.codigo}] prerrequisito repetido: ${codigoPre}`)
-    vistos.add(codigoPre)
-
-    if (codigoPre === a.codigo) {
-      err(`[${a.codigo}] se tiene a si misma como prerrequisito`)
-      continue
+  for (const a of c.asignaturas) {
+    if (!Number.isInteger(a.semestre) || a.semestre < 1) {
+      err(`[${a.codigo}] semestre invalido: ${a.semestre}`)
     }
+  }
 
-    const pre = porCodigo.get(codigoPre)
-    if (!pre) {
-      err(`[${a.codigo}] prerrequisito inexistente: ${codigoPre}`)
-      continue
+  // --- 2. Codigos duplicados ---------------------------------------------
+  const porCodigo = new Map()
+  for (const a of todas) {
+    if (porCodigo.has(a.codigo)) err(`Codigo duplicado: ${a.codigo} (${a.nombre})`)
+    else porCodigo.set(a.codigo, a)
+  }
+
+  // --- 3 y 4. Prerrequisitos existen y van antes en el tiempo ------------
+  for (const a of todas) {
+    if (!Array.isArray(a.prerrequisitos)) continue
+    const vistos = new Set()
+
+    for (const codigoPre of a.prerrequisitos) {
+      if (vistos.has(codigoPre)) avisar(`[${a.codigo}] prerrequisito repetido: ${codigoPre}`)
+      vistos.add(codigoPre)
+
+      if (codigoPre === a.codigo) {
+        err(`[${a.codigo}] se tiene a si misma como prerrequisito`)
+        continue
+      }
+
+      const pre = porCodigo.get(codigoPre)
+      if (!pre) {
+        err(`[${a.codigo}] prerrequisito inexistente: ${codigoPre}`)
+        continue
+      }
+
+      // Solo aplica entre obligatorias: las electivas no tienen semestre fijo
+      if (a.semestre != null && pre.semestre != null && pre.semestre >= a.semestre) {
+        err(
+          `[${a.codigo}] (sem ${a.semestre}) depende de ${pre.codigo} (sem ${pre.semestre}): ` +
+            'el prerrequisito debe estar en un semestre anterior',
+        )
+      }
     }
-    if (pre.semestre >= a.semestre) {
+  }
+
+  // --- 5. Ciclos (DFS con marcado tricolor) ------------------------------
+  // blanco = sin visitar, gris = en la pila actual, negro = cerrado.
+  const color = new Map(todas.map((a) => [a.codigo, 'blanco']))
+  const ciclos = []
+
+  function buscarCiclo(codigo, pila) {
+    color.set(codigo, 'gris')
+    pila.push(codigo)
+    for (const pre of porCodigo.get(codigo)?.prerrequisitos ?? []) {
+      if (!porCodigo.has(pre)) continue // ya reportado como inexistente
+      const col = color.get(pre)
+      if (col === 'gris') ciclos.push([...pila.slice(pila.indexOf(pre)), pre].join(' -> '))
+      else if (col === 'blanco') buscarCiclo(pre, pila)
+    }
+    pila.pop()
+    color.set(codigo, 'negro')
+  }
+  for (const a of todas) if (color.get(a.codigo) === 'blanco') buscarCiclo(a.codigo, [])
+  for (const ciclo of ciclos) err(`Ciclo de prerrequisitos: ${ciclo}`)
+
+  // --- 6. Creditos y cuotas ----------------------------------------------
+  const ucSumadas = c.asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
+  if (ucSumadas !== c.ucObligatorias) {
+    err(`ucObligatorias dice ${c.ucObligatorias} pero las uc suman ${ucSumadas}`)
+  }
+
+  if (c.creditos) {
+    if (c.creditos.obligatorias !== ucSumadas) {
+      err(`creditos.obligatorias dice ${c.creditos.obligatorias} pero las uc suman ${ucSumadas}`)
+    }
+    const cuotas = c.grupos.reduce((s, g) => s + (g.cuota ?? 0), 0)
+    const suma = c.creditos.obligatorias + cuotas
+    if (suma !== c.creditos.titulo) {
+      err(`creditos.titulo dice ${c.creditos.titulo} pero obligatorias + cuotas suman ${suma}`)
+    }
+  }
+
+  // Una cuota mayor que la oferta seria imposible de cumplir
+  for (const g of c.grupos) {
+    if (g.cuota == null) continue
+    const ofertado = g.asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
+    if (ofertado < g.cuota) {
+      err(`El grupo "${g.titulo}" ofrece ${ofertado} UC pero su cuota pide ${g.cuota}`)
+    }
+  }
+
+  // --- 7. Regla del ultimo digito ----------------------------------------
+  // Solo tiene sentido donde la UC NO se derivo del codigo: en las carreras
+  // de la DACE la comprobacion seria circular. En Sistemas la UC viene del
+  // pensum oficial, asi que aqui la regla se pone a prueba de verdad.
+  if (!c.ucDerivada) {
+    const rotas = todas.filter((a) => a.uc != null && Number(a.codigo.slice(-1)) !== a.uc)
+    if (rotas.length) {
       err(
-        `[${a.codigo}] (sem ${a.semestre}) depende de ${pre.codigo} (sem ${pre.semestre}): ` +
-          'el prerrequisito debe estar en un semestre anterior',
+        `La regla ultimo digito = UC falla en ${rotas.length}: ` +
+          rotas.slice(0, 5).map((a) => `${a.codigo}!=${a.uc}`).join(', '),
       )
     }
   }
+
+  // --- Reporte por carrera ------------------------------------------------
+  const estado = errores.length ? 'FALLA' : avisos.length ? 'avisos' : 'ok'
+  console.log(
+    `${estado.padEnd(7)} ${c.slug.padEnd(44)} ` +
+      `${String(c.asignaturas.length).padStart(3)} oblig  ` +
+      `${String(electivas.length).padStart(3)} en ${c.grupos.length} grupos  ` +
+      `${String(ucSumadas).padStart(3)} UC` +
+      (c.creditos ? `  titulo ${c.creditos.titulo}` : '  (sin creditos oficiales)'),
+  )
+  for (const a of avisos) console.log(`        AVISO  ${a}`)
+  for (const e of errores) console.error(`        ERROR  ${e}`)
+
+  erroresTotales += errores.length
+  avisosTotales += avisos.length
 }
 
-// --- 5. Ciclos (DFS con marcado tricolor) -------------------------------
-// blanco = sin visitar, gris = en la pila actual, negro = cerrado.
-const color = new Map(asignaturas.map((a) => [a.codigo, 'blanco']))
-const ciclos = []
-
-function buscarCiclo(codigo, pila) {
-  color.set(codigo, 'gris')
-  pila.push(codigo)
-
-  for (const pre of porCodigo.get(codigo)?.prerrequisitos ?? []) {
-    if (!porCodigo.has(pre)) continue // ya reportado como inexistente
-    const c = color.get(pre)
-    if (c === 'gris') {
-      const desde = pila.indexOf(pre)
-      ciclos.push([...pila.slice(desde), pre].join(' -> '))
-    } else if (c === 'blanco') {
-      buscarCiclo(pre, pila)
-    }
-  }
-
-  pila.pop()
-  color.set(codigo, 'negro')
-}
-
-for (const a of asignaturas) {
-  if (color.get(a.codigo) === 'blanco') buscarCiclo(a.codigo, [])
-}
-for (const c of ciclos) err(`Ciclo de prerrequisitos: ${c}`)
-
-// --- 6. Coherencia con meta ---------------------------------------------
-const ucSumadas = asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
-const maxSemestre = Math.max(...asignaturas.map((a) => a.semestre ?? 0))
-
-if (meta?.totalAsignaturas !== asignaturas.length) {
-  err(`meta.totalAsignaturas dice ${meta?.totalAsignaturas} pero hay ${asignaturas.length}`)
-}
-if (meta?.totalUC !== ucSumadas) {
-  err(`meta.totalUC dice ${meta?.totalUC} pero las uc suman ${ucSumadas}`)
-}
-if (meta?.totalSemestres !== maxSemestre) {
-  err(`meta.totalSemestres dice ${meta?.totalSemestres} pero el maximo es ${maxSemestre}`)
-}
-
-const semestresVacios = []
-for (let s = 1; s <= maxSemestre; s++) {
-  if (!asignaturas.some((a) => a.semestre === s)) semestresVacios.push(s)
-}
-if (semestresVacios.length) avisar(`Semestres sin asignaturas: ${semestresVacios.join(', ')}`)
-
-// --- 7. Electivas y requisitos -------------------------------------------
-// Las electivas no tienen semestre fijo: el estudiante elige cuales cursa.
-// Solo se comprueba que no choquen con las obligatorias y que sus
-// prerrequisitos apunten a materias que existan.
-const electivas = pensum.electivas ?? []
-const tipos = new Set(['tecnica', 'humanistica'])
-const codigosElectivas = new Set()
-
-for (const e of electivas) {
-  const ref = e?.codigo ?? '(sin codigo)'
-  if (porCodigo.has(e.codigo)) err(`[${ref}] electiva con el mismo codigo que una obligatoria`)
-  if (codigosElectivas.has(e.codigo)) err(`[${ref}] electiva duplicada`)
-  codigosElectivas.add(e.codigo)
-
-  if (!tipos.has(e.tipo)) err(`[${ref}] tipo de electiva invalido: ${e.tipo}`)
-  if (!Number.isInteger(e.uc) || e.uc < 0) err(`[${ref}] uc invalido: ${e.uc}`)
-  if (areasDeclaradas.size && !areasDeclaradas.has(e.area)) {
-    err(`[${ref}] area "${e.area}" no esta declarada en meta.areas`)
-  }
-
-  for (const pre of e.prerrequisitos ?? []) {
-    if (!porCodigo.has(pre) && !electivas.some((o) => o.codigo === pre)) {
-      err(`[${ref}] prerrequisito inexistente: ${pre}`)
-    }
-  }
-}
-
-const cuotas = meta?.creditos
-if (cuotas) {
-  if (cuotas.obligatorias !== ucSumadas) {
-    err(`meta.creditos.obligatorias dice ${cuotas.obligatorias} pero las uc suman ${ucSumadas}`)
-  }
-  const suma = cuotas.obligatorias + cuotas.electivasTecnicas + cuotas.electivasHumanisticas
-  if (suma !== cuotas.total) {
-    err(`meta.creditos.total dice ${cuotas.total} pero las partes suman ${suma}`)
-  }
-
-  // Sin oferta suficiente, la cuota seria imposible de cumplir
-  for (const [tipo, clave] of [
-    ['tecnica', 'electivasTecnicas'],
-    ['humanistica', 'electivasHumanisticas'],
-  ]) {
-    const disponible = electivas
-      .filter((e) => e.tipo === tipo)
-      .reduce((s, e) => s + e.uc, 0)
-    if (disponible < cuotas[clave]) {
-      err(`Las electivas ${tipo}s ofrecen ${disponible} UC pero la cuota pide ${cuotas[clave]}`)
-    }
-  }
-}
-
-// --- Reporte -------------------------------------------------------------
-const sinSalida = new Set(asignaturas.map((a) => a.codigo))
-for (const a of asignaturas) for (const p of a.prerrequisitos ?? []) sinSalida.delete(p)
-
-const ucElectiva = (tipo) =>
-  electivas.filter((e) => e.tipo === tipo).reduce((s, e) => s + e.uc, 0)
-
-console.log('Validacion del pensum')
-console.log(`  Asignaturas .......... ${asignaturas.length}`)
-console.log(`  Semestres ............ ${maxSemestre}`)
-console.log(`  UC obligatorias ...... ${ucSumadas}`)
-console.log(
-  `  Electivas ............ ${electivas.length} ` +
-    `(${ucElectiva('tecnica')} UC tecnicas, ${ucElectiva('humanistica')} UC humanisticas ofertadas)`,
-)
-if (cuotas) console.log(`  Creditos del titulo .. ${cuotas.total}`)
-console.log(`  Sin prerrequisitos ... ${asignaturas.filter((a) => !a.prerrequisitos?.length).length}`)
-console.log(`  Hojas (no desbloquean nada) ... ${sinSalida.size}`)
 console.log('')
-
-for (const a of avisos) console.log(`AVISO  ${a}`)
-if (avisos.length) console.log('')
-
-if (errores.length) {
-  for (const e of errores) console.error(`ERROR  ${e}`)
-  console.error(`\n${errores.length} error(es). La validacion NO pasa.`)
+if (erroresTotales) {
+  console.error(`${erroresTotales} error(es) en ${archivos.length} carreras. La validacion NO pasa.`)
   process.exit(1)
 }
-
-console.log('Todo correcto: sin codigos faltantes, sin ciclos y sin prerrequisitos fuera de orden.')
+console.log(
+  `${archivos.length} carreras validadas, ${avisosTotales} aviso(s). ` +
+    'Sin codigos faltantes, sin ciclos y sin prerrequisitos fuera de orden.',
+)

@@ -1,0 +1,569 @@
+{
+  "carrera": "Ingeniería de Petróleo",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumIngPet.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061013",
+        "asignatura": "Comprensión y expresión Lingüística I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071112",
+        "asignatura": "Inglés Instrumental I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081814",
+        "asignatura": "Matemáticas I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0101814",
+        "asignatura": "Química I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extraacadémica (Deportiva)",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0051814",
+        "asignatura": "Física I",
+        "prerrequisitos": [
+          "0081814"
+        ]
+      },
+      {
+        "codigo": "0071222",
+        "asignatura": "Inglés Instrumental II",
+        "prerrequisitos": [
+          "0071112"
+        ]
+      },
+      {
+        "codigo": "0081824",
+        "asignatura": "Matemáticas II",
+        "prerrequisitos": [
+          "0081814"
+        ]
+      },
+      {
+        "codigo": "0101821",
+        "asignatura": "Laboratorio I de Química",
+        "prerrequisitos": [
+          "0101814"
+        ]
+      },
+      {
+        "codigo": "0101824",
+        "asignatura": "Química II",
+        "prerrequisitos": [
+          "0101814"
+        ]
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "0051821",
+        "asignatura": "Laboratorio I de Física",
+        "prerrequisitos": [
+          "0051814"
+        ]
+      },
+      {
+        "codigo": "0051824",
+        "asignatura": "Física II",
+        "prerrequisitos": [
+          "0051814"
+        ]
+      },
+      {
+        "codigo": "0082814",
+        "asignatura": "Matemáticas III",
+        "prerrequisitos": [
+          "0081824"
+        ]
+      },
+      {
+        "codigo": "0082833",
+        "asignatura": "Introducción a la Programación",
+        "prerrequisitos": [
+          "0081824"
+        ]
+      },
+      {
+        "codigo": "0632032",
+        "asignatura": "Inglés Instrumental III",
+        "prerrequisitos": [
+          "0071222"
+        ]
+      },
+      {
+        "codigo": "0632612",
+        "asignatura": "Introducción a la Ingeniería de Petróleo",
+        "prerrequisitos": [
+          "0101824"
+        ]
+      },
+      {
+        "codigo": "0662812",
+        "asignatura": "Dibujo",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "0082824",
+        "asignatura": "Matemáticas IV",
+        "prerrequisitos": [
+          "0082814"
+        ]
+      },
+      {
+        "codigo": "0632012",
+        "asignatura": "Redacción de Informes Técnicos",
+        "prerrequisitos": [
+          "0632612"
+        ]
+      },
+      {
+        "codigo": "0632042",
+        "asignatura": "Inglés Instrumental IV",
+        "prerrequisitos": [
+          "0632032"
+        ]
+      },
+      {
+        "codigo": "0632324",
+        "asignatura": "Mecánica para Ingenieros",
+        "prerrequisitos": [
+          "0051824"
+        ]
+      },
+      {
+        "codigo": "0632724",
+        "asignatura": "Geología General y Laboratorio",
+        "prerrequisitos": [
+          "0632612",
+          "0662812"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "0083813",
+        "asignatura": "Métodos Numéricos para Ingenieros",
+        "prerrequisitos": [
+          "0082824",
+          "0082833"
+        ]
+      },
+      {
+        "codigo": "0613553",
+        "asignatura": "Mecánica de los Materiales",
+        "prerrequisitos": [
+          "0632324"
+        ]
+      },
+      {
+        "codigo": "0613753",
+        "asignatura": "Termodinámica",
+        "prerrequisitos": [
+          "0082814",
+          "0101824"
+        ]
+      },
+      {
+        "codigo": "0623314",
+        "asignatura": "Estadística para Ingenieros",
+        "prerrequisitos": [
+          "0082833"
+        ]
+      },
+      {
+        "codigo": "0633113",
+        "asignatura": "Propiedades de la Roca y de los Fluidos",
+        "prerrequisitos": [
+          "0082824",
+          "0632724"
+        ]
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "0633121",
+        "asignatura": "Laboratorio de Yacimientos",
+        "prerrequisitos": [
+          "0633113"
+        ]
+      },
+      {
+        "codigo": "0633123",
+        "asignatura": "Yacimientos I",
+        "prerrequisitos": [
+          "0083813",
+          "0633113"
+        ]
+      },
+      {
+        "codigo": "0633423",
+        "asignatura": "Gasotecnia",
+        "prerrequisitos": [
+          "0613753"
+        ]
+      },
+      {
+        "codigo": "0633624",
+        "asignatura": "Geología Estructural",
+        "prerrequisitos": [
+          "0633113"
+        ]
+      },
+      {
+        "codigo": "0633663",
+        "asignatura": "Computación y Modelos Matemáticos",
+        "prerrequisitos": [
+          "0083813"
+        ]
+      },
+      {
+        "codigo": "0633824",
+        "asignatura": "Fenómenos de Transporte Aplicado",
+        "prerrequisitos": [
+          "0613753"
+        ]
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "0634123",
+        "asignatura": "Yacimientos II",
+        "prerrequisitos": [
+          "0633123"
+        ]
+      },
+      {
+        "codigo": "0634314",
+        "asignatura": "Perforación",
+        "prerrequisitos": [
+          "0633624",
+          "0633824"
+        ]
+      },
+      {
+        "codigo": "0634623",
+        "asignatura": "Evaluación Económica de Proyectos",
+        "prerrequisitos": [
+          "0623314"
+        ]
+      },
+      {
+        "codigo": "0634734",
+        "asignatura": "Registro de Pozos",
+        "prerrequisitos": [
+          "0633624"
+        ]
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "0634143",
+        "asignatura": "Prueba de Pozos",
+        "prerrequisitos": [
+          "0634123"
+        ]
+      },
+      {
+        "codigo": "0634223",
+        "asignatura": "Producción de Hidrocarburos",
+        "prerrequisitos": [
+          "0633123"
+        ]
+      },
+      {
+        "codigo": "0634322",
+        "asignatura": "Laboratorio de Perforación",
+        "prerrequisitos": [
+          "0634314"
+        ]
+      },
+      {
+        "codigo": "0634323",
+        "asignatura": "Completación y Reacondicionamiento de Pozos",
+        "prerrequisitos": [
+          "0634314"
+        ]
+      },
+      {
+        "codigo": "0634553",
+        "asignatura": "Simulación de Yacimientos",
+        "prerrequisitos": [
+          "0634123"
+        ]
+      },
+      {
+        "codigo": "0634612",
+        "asignatura": "Seminario y Proyecto de Investigación",
+        "prerrequisitos": [
+          "0633121",
+          "0634734"
+        ]
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "0635113",
+        "asignatura": "Explotación de Yacimientos de Crudos Pesados",
+        "prerrequisitos": [
+          "0634143"
+        ]
+      },
+      {
+        "codigo": "0635212",
+        "asignatura": "Petróleo y Ambiente",
+        "prerrequisitos": [
+          "0634323"
+        ]
+      },
+      {
+        "codigo": "0635213",
+        "asignatura": "Procesos de Campo",
+        "prerrequisitos": [
+          "0634223"
+        ]
+      },
+      {
+        "codigo": "0635513",
+        "asignatura": "Procesamiento de Hidrocarburos y Laboratorio",
+        "prerrequisitos": [
+          "0634223"
+        ]
+      },
+      {
+        "codigo": "0635714",
+        "asignatura": "Geología de Producción",
+        "prerrequisitos": [
+          "0634734"
+        ]
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "0635625",
+        "asignatura": "Trabajo de Grado",
+        "prerrequisitos": [
+          "0634612"
+        ]
+      },
+      {
+        "codigo": "0214100",
+        "asignatura": "Servicio Comunitario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9099999",
+        "asignatura": "Áreas de Grado",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "0604413",
+        "asignatura": "Electrotecnia",
+        "prerrequisitos": [
+          "0051824"
+        ]
+      },
+      {
+        "codigo": "0625723",
+        "asignatura": "Fundamentos de Mantenimiento",
+        "prerrequisitos": [
+          "0623314"
+        ]
+      },
+      {
+        "codigo": "0634343",
+        "asignatura": "Perforación Avanzada",
+        "prerrequisitos": [
+          "0634314"
+        ]
+      },
+      {
+        "codigo": "0634363",
+        "asignatura": "Detección de Presiones Anormales",
+        "prerrequisitos": [
+          "0634314"
+        ]
+      },
+      {
+        "codigo": "0634423",
+        "asignatura": "Tratamiento de Gas",
+        "prerrequisitos": [
+          "0633423"
+        ]
+      },
+      {
+        "codigo": "0634643",
+        "asignatura": "Matemática Aplicada a la Ing. De Petróleo",
+        "prerrequisitos": [
+          "0083813"
+        ]
+      },
+      {
+        "codigo": "0634713",
+        "asignatura": "Sismica para Ingenieros",
+        "prerrequisitos": [
+          "0633624"
+        ]
+      },
+      {
+        "codigo": "0634823",
+        "asignatura": "Geoestadística",
+        "prerrequisitos": [
+          "0623314",
+          "0633624"
+        ]
+      },
+      {
+        "codigo": "0635123",
+        "asignatura": "Control y Gerencia de Yacimientos",
+        "prerrequisitos": [
+          "0634123"
+        ]
+      },
+      {
+        "codigo": "0635143",
+        "asignatura": "Recuperación Adicional de Crudos Pesados",
+        "prerrequisitos": [
+          "0634123"
+        ]
+      },
+      {
+        "codigo": "0635233",
+        "asignatura": "Técnicas Modernas en Ingeniería de Producción",
+        "prerrequisitos": [
+          "0634223"
+        ]
+      },
+      {
+        "codigo": "0635313",
+        "asignatura": "Perforación Direccional",
+        "prerrequisitos": [
+          "0634323"
+        ]
+      },
+      {
+        "codigo": "0635323",
+        "asignatura": "Comport. Comp. y Estim. Pozos Horiz.",
+        "prerrequisitos": [
+          "0634323"
+        ]
+      },
+      {
+        "codigo": "0635443",
+        "asignatura": "Ingeniería de Control de Riesgos",
+        "prerrequisitos": [
+          "0633423"
+        ]
+      },
+      {
+        "codigo": "0635523",
+        "asignatura": "Emulsiones y sus Aplicaciones",
+        "prerrequisitos": [
+          "0633123"
+        ]
+      },
+      {
+        "codigo": "0635623",
+        "asignatura": "Pasantías Técnicas",
+        "prerrequisitos": [
+          "0633123"
+        ]
+      },
+      {
+        "codigo": "0635893",
+        "asignatura": "Higiene y Seguridad Industrial",
+        "prerrequisitos": [
+          "0634223"
+        ]
+      },
+      {
+        "codigo": "0642103",
+        "asignatura": "Fisicoquímica I",
+        "prerrequisitos": [
+          "0633423"
+        ]
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0061183",
+        "asignatura": "Etica",
+        "prerrequisitos": [
+          "0091012"
+        ]
+      },
+      {
+        "codigo": "0061222",
+        "asignatura": "Historia de la Cultura",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0061822",
+        "asignatura": "Sexología Básica",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0062012",
+        "asignatura": "Visión Filosófica de las Ciencias",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062032",
+        "asignatura": "Expresión Escrita",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0062052",
+        "asignatura": "Dinámica de Grupos",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0112832",
+        "asignatura": "Grupo y Liderazgo",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 78,
+    "asignaturas_en_semestres": 53,
+    "asignaturas_electivas": 25,
+    "prerrequisitos_no_encontrados": []
+  }
+}

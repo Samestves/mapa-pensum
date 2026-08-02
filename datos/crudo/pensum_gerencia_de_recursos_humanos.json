@@ -1,0 +1,402 @@
+{
+  "carrera": "Gerencia de Recursos Humanos",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumLicGerRecHum.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061213",
+        "asignatura": "Comprensión y Expresión Lingüística I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071513",
+        "asignatura": "Inglés I para Ciencias Administrativas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081613",
+        "asignatura": "Matemáticas I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extraacadémica (Deportiva)",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0061223",
+        "asignatura": "Comprensión y Expresión Lingüística II",
+        "prerrequisitos": [
+          "0061213"
+        ]
+      },
+      {
+        "codigo": "0071523",
+        "asignatura": "Inglés II para Ciencias Administrativas",
+        "prerrequisitos": [
+          "0071513"
+        ]
+      },
+      {
+        "codigo": "0081623",
+        "asignatura": "Matemáticas II",
+        "prerrequisitos": [
+          "0081613"
+        ]
+      },
+      {
+        "codigo": "6811123",
+        "asignatura": "Teoría Administrativa",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6811823",
+        "asignatura": "Informática",
+        "prerrequisitos": [
+          "0081613"
+        ]
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "6812133",
+        "asignatura": "Introducción a la Gerencia de Recursos Humanos",
+        "prerrequisitos": [
+          "6811123"
+        ]
+      },
+      {
+        "codigo": "6812333",
+        "asignatura": "Sociología del Trabajo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6812434",
+        "asignatura": "Psicología General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6812533",
+        "asignatura": "Estadística I",
+        "prerrequisitos": [
+          "0081623"
+        ]
+      },
+      {
+        "codigo": "6812633",
+        "asignatura": "Microeconomía",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "6812043",
+        "asignatura": "Introducción a la Investigación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6812144",
+        "asignatura": "Gestión de RRHH I",
+        "prerrequisitos": [
+          "6812133"
+        ]
+      },
+      {
+        "codigo": "6812444",
+        "asignatura": "Psicología Social",
+        "prerrequisitos": [
+          "6812434"
+        ]
+      },
+      {
+        "codigo": "6812543",
+        "asignatura": "Estadística Aplicada",
+        "prerrequisitos": [
+          "6812533"
+        ]
+      },
+      {
+        "codigo": "6812643",
+        "asignatura": "Macroeconomía",
+        "prerrequisitos": [
+          "6812633"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "6813053",
+        "asignatura": "Metodología de la Investigación",
+        "prerrequisitos": [
+          "6812043"
+        ]
+      },
+      {
+        "codigo": "6813154",
+        "asignatura": "Gestión de RRHH II",
+        "prerrequisitos": [
+          "6812144"
+        ]
+      },
+      {
+        "codigo": "6813353",
+        "asignatura": "Introducción al Derecho",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6813453",
+        "asignatura": "Dinámica de Grupo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6813654",
+        "asignatura": "Contabilidad General",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "6813164",
+        "asignatura": "Gestión de RRHH III",
+        "prerrequisitos": [
+          "6813154"
+        ]
+      },
+      {
+        "codigo": "6813363",
+        "asignatura": "Legislación Laboral",
+        "prerrequisitos": [
+          "6813353"
+        ]
+      },
+      {
+        "codigo": "6813463",
+        "asignatura": "Comportamiento Organizacional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6813663",
+        "asignatura": "Sueldos y Salarios I",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "6814173",
+        "asignatura": "Gestión de RRHH en el Sector Público",
+        "prerrequisitos": [
+          "6813164"
+        ]
+      },
+      {
+        "codigo": "6814273",
+        "asignatura": "Fisiología y Ergonomía del Trabajo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814373",
+        "asignatura": "Derecho Colectivo del Trabajo",
+        "prerrequisitos": [
+          "6813363"
+        ]
+      },
+      {
+        "codigo": "6814673",
+        "asignatura": "Sueldos y Salarios II",
+        "prerrequisitos": [
+          "6813663"
+        ]
+      },
+      {
+        "codigo": "6814873",
+        "asignatura": "Seguridad Social",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "6814183",
+        "asignatura": "Cambio y Estrategias Organizacionales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814283",
+        "asignatura": "Seguridad, Higiene y Ambiente",
+        "prerrequisitos": [
+          "6814273"
+        ]
+      },
+      {
+        "codigo": "6814383",
+        "asignatura": "Gestión Internacional del Trabajo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814683",
+        "asignatura": "Gestión Estratégica de Empresa",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814883",
+        "asignatura": "Informática Gerencial",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "6815093",
+        "asignatura": "Seminario de Proyecto de Tesis de Grado",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815193",
+        "asignatura": "Sistemas y Proced. Administrativos de RRHH",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815393",
+        "asignatura": "Ética Profesional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815493",
+        "asignatura": "Toma de Decisiones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815693",
+        "asignatura": "Presupuesto Empresarial",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "6815009",
+        "asignatura": "Trabajo de Grado",
+        "prerrequisitos": [
+          "6815093"
+        ]
+      },
+      {
+        "codigo": "6815104",
+        "asignatura": "Pasantía Profesional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214100",
+        "asignatura": "Servicio Comunitario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9099999",
+        "asignatura": "Areas de Grado",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "6814072",
+        "asignatura": "Programación Neurolingüística",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814172",
+        "asignatura": "Problemas de Personal",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814372",
+        "asignatura": "Procedimientos Administrativos del Trabajo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814472",
+        "asignatura": "Liderazgo, Motivación y Comunicación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814672",
+        "asignatura": "Calidad y Productividad en la Empresa",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815092",
+        "asignatura": "Inteligencia Emocional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815192",
+        "asignatura": "Consultoría de Procesos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815292",
+        "asignatura": "Psicosociología del Trabajo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815392",
+        "asignatura": "Relaciones Laborales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815492",
+        "asignatura": "Estrategias Gerenciales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815592",
+        "asignatura": "Mercadeo Interno",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815692",
+        "asignatura": "Impuesto Sobre la Renta",
+        "prerrequisitos": []
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "6813662",
+        "asignatura": "Problemas Sociales y Económicos de Venezuela",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814182",
+        "asignatura": "Dirección de Reuniones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814282",
+        "asignatura": "Gestión Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814682",
+        "asignatura": "Cooperativismo",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 65,
+    "asignaturas_en_semestres": 49,
+    "asignaturas_electivas": 16,
+    "prerrequisitos_no_encontrados": []
+  }
+}

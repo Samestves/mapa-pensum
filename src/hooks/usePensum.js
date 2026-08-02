@@ -7,7 +7,14 @@ export const ESTADO = {
   BLOQUEADA: 'bloqueada',
 }
 
-const CLAVE = 'mapa-pensum:marcas'
+const CLAVE_BASE = 'mapa-pensum:marcas'
+// Antes de las multiples carreras habia una sola clave sin sufijo. Los
+// estudiantes que ya usaban la app tienen su avance ahi, asi que la primera
+// vez se adopta en vez de arrancar en blanco.
+const CLAVE_HEREDADA = CLAVE_BASE
+const SLUG_HEREDADO = 'ingenieria-de-sistemas'
+
+const claveDe = (slug) => `${CLAVE_BASE}:${slug}`
 const MARCAS_VALIDAS = [ESTADO.APROBADA, ESTADO.CURSANDO]
 
 // Ciclo del click: sin marcar → aprobada → cursando → sin marcar
@@ -17,43 +24,63 @@ function siguienteMarca(actual) {
   return ESTADO.APROBADA
 }
 
-/**
- * Lee las marcas guardadas descartando lo que ya no sirva: codigos que no
- * existen en el pensum actual y valores que no sean aprobada/cursando.
- * Si el JSON esta corrupto se arranca en limpio en vez de reventar.
- */
-function leerGuardadas(codigosValidos) {
-  try {
-    const crudo = localStorage.getItem(CLAVE)
-    if (!crudo) return {}
-    const datos = JSON.parse(crudo)
-    if (!datos || typeof datos !== 'object') return {}
+/** Descarta lo que ya no sirva: codigos ajenos al pensum y marcas invalidas */
+function depurar(datos, codigosValidos) {
+  if (!datos || typeof datos !== 'object') return {}
+  const limpias = {}
+  for (const [codigo, marca] of Object.entries(datos)) {
+    if (codigosValidos.has(codigo) && MARCAS_VALIDAS.includes(marca)) limpias[codigo] = marca
+  }
+  return limpias
+}
 
-    const limpias = {}
-    for (const [codigo, marca] of Object.entries(datos)) {
-      if (codigosValidos.has(codigo) && MARCAS_VALIDAS.includes(marca)) {
-        limpias[codigo] = marca
-      }
+/**
+ * Lee las marcas guardadas de una carrera. Si el JSON esta corrupto se
+ * arranca en limpio en vez de reventar.
+ */
+function leerGuardadas(slug, codigosValidos) {
+  try {
+    const propia = localStorage.getItem(claveDe(slug))
+    if (propia) return depurar(JSON.parse(propia), codigosValidos)
+
+    // Migracion de la clave vieja, solo para la carrera que existia entonces
+    if (slug === SLUG_HEREDADO) {
+      const vieja = localStorage.getItem(CLAVE_HEREDADA)
+      if (vieja) return depurar(JSON.parse(vieja), codigosValidos)
     }
-    return limpias
+    return {}
   } catch {
     return {}
   }
 }
 
 /**
- * Fuente de verdad del avance. Solo se persisten las marcas del usuario
- * (aprobada / cursando); disponible y bloqueada se derivan siempre.
+ * Fuente de verdad del avance de una carrera. Solo se persisten las marcas
+ * del usuario (aprobada / cursando); disponible y bloqueada se derivan.
+ *
+ * Cada carrera guarda su avance por separado: un estudiante puede mirar otra
+ * carrera sin que le ensucie la suya.
  */
-export function usePensum(asignaturas, electivas = [], cuotas = null) {
-  // Las electivas comparten el mismo mapa de marcas que las obligatorias:
-  // para el usuario "aprobada" significa lo mismo en las dos.
-  const codigosValidos = useMemo(
-    () => new Set([...asignaturas, ...electivas].map((a) => a.codigo)),
-    [asignaturas, electivas],
-  )
+export function usePensum(carrera) {
+  const { slug, asignaturas, grupos, creditos } = carrera
 
-  const [marcas, setMarcas] = useState(() => leerGuardadas(codigosValidos))
+  // Las electivas comparten el mapa de marcas con las obligatorias: para el
+  // estudiante "aprobada" significa lo mismo en las dos.
+  const todas = useMemo(
+    () => [...asignaturas, ...grupos.flatMap((g) => g.asignaturas)],
+    [asignaturas, grupos],
+  )
+  const codigosValidos = useMemo(() => new Set(todas.map((a) => a.codigo)), [todas])
+
+  const [marcas, setMarcas] = useState(() => leerGuardadas(slug, codigosValidos))
+
+  // Al cambiar de carrera hay que traer las marcas de esa otra
+  const slugMontado = useRef(slug)
+  useEffect(() => {
+    if (slugMontado.current === slug) return
+    slugMontado.current = slug
+    setMarcas(leerGuardadas(slug, codigosValidos))
+  }, [slug, codigosValidos])
 
   // Descarga electrica de la ultima asignatura aprobada. El contador hace que
   // aprobar dos veces la misma vuelva a lanzar la animacion.
@@ -64,11 +91,11 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(CLAVE, JSON.stringify(marcas))
+      localStorage.setItem(claveDe(slug), JSON.stringify(marcas))
     } catch {
       // Modo privado o cuota llena: la app sigue funcionando sin persistir
     }
-  }, [marcas])
+  }, [slug, marcas])
 
   // La animacion dura menos de un segundo; despues se limpia el DOM
   useEffect(() => {
@@ -79,47 +106,47 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
 
   const estados = useMemo(() => {
     const mapa = {}
-    for (const a of [...asignaturas, ...electivas]) {
+    for (const a of todas) {
       const marca = marcas[a.codigo]
       if (marca) {
         mapa[a.codigo] = marca
         continue
       }
       // Sin prerrequisitos, every() da true: nace disponible
-      const libre = (a.prerrequisitos ?? []).every(
-        (pre) => marcas[pre] === ESTADO.APROBADA,
-      )
+      const libre = (a.prerrequisitos ?? []).every((pre) => marcas[pre] === ESTADO.APROBADA)
       mapa[a.codigo] = libre ? ESTADO.DISPONIBLE : ESTADO.BLOQUEADA
     }
     return mapa
-  }, [asignaturas, electivas, marcas])
+  }, [todas, marcas])
 
   /**
-   * Avance de las electivas. No cuenta cuantas escogiste sino cuantas UC
-   * llevas de cada cuota: las tecnicas van de 1 a 3 UC, asi que contarlas
-   * por cabeza daria un numero equivocado.
+   * Avance de cada grupo de electivas. No cuenta cuantas escogiste sino
+   * cuantas UC llevas de la cuota: las tecnicas de Sistemas van de 1 a 3 UC,
+   * asi que contarlas por cabeza daria un numero equivocado.
+   *
+   * Los grupos sin cuota (las carreras de las que no tenemos los creditos
+   * oficiales, y las secciones informativas como Areas de Grado) se cuentan
+   * igual pero sin meta: se dice lo que llevas, no cuanto falta.
    */
-  const avanceElectivas = useMemo(() => {
-    const porTipo = (tipo, meta) => {
-      const elegidas = electivas.filter(
-        (e) => e.tipo === tipo && marcas[e.codigo] === ESTADO.APROBADA,
-      )
-      const uc = elegidas.reduce((s, e) => s + e.uc, 0)
-      return {
-        tipo,
+  const avanceGrupos = useMemo(() => {
+    const mapa = {}
+    for (const g of grupos) {
+      const elegidas = g.asignaturas.filter((e) => marcas[e.codigo] === ESTADO.APROBADA)
+      const uc = elegidas.reduce((s, e) => s + (e.uc ?? 0), 0)
+      mapa[g.clave] = {
+        clave: g.clave,
+        titulo: g.titulo,
+        tipo: g.tipo,
         elegidas,
         uc,
-        meta,
-        completa: uc >= meta,
+        meta: g.cuota,
+        completa: g.cuota != null && uc >= g.cuota,
         // Lo que sobra no suma para el titulo, pero se muestra igual
-        excedente: Math.max(0, uc - meta),
+        excedente: g.cuota != null ? Math.max(0, uc - g.cuota) : 0,
       }
     }
-    return {
-      tecnica: porTipo('tecnica', cuotas?.electivasTecnicas ?? 0),
-      humanistica: porTipo('humanistica', cuotas?.electivasHumanisticas ?? 0),
-    }
-  }, [electivas, marcas, cuotas])
+    return mapa
+  }, [grupos, marcas])
 
   const progreso = useMemo(() => {
     let ucAprobadas = 0
@@ -127,23 +154,30 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
     let cursando = 0
     let disponibles = 0
 
-    // Desglose por area: es lo que alimenta las barras del panel lateral
+    // Desglose por area. Solo tiene sentido donde las areas estan
+    // clasificadas; en las demas carreras queda vacio.
     const areas = new Map()
 
     for (const a of asignaturas) {
       const estado = estados[a.codigo]
-      if (!areas.has(a.area)) {
-        areas.set(a.area, { area: a.area, uc: 0, ucAprobadas: 0, total: 0, aprobadas: 0 })
+      const uc = a.uc ?? 0
+
+      if (a.area) {
+        if (!areas.has(a.area)) {
+          areas.set(a.area, { area: a.area, uc: 0, ucAprobadas: 0, total: 0, aprobadas: 0 })
+        }
+        const fila = areas.get(a.area)
+        fila.uc += uc
+        fila.total += 1
+        if (estado === ESTADO.APROBADA) {
+          fila.ucAprobadas += uc
+          fila.aprobadas += 1
+        }
       }
-      const fila = areas.get(a.area)
-      fila.uc += a.uc
-      fila.total += 1
 
       if (estado === ESTADO.APROBADA) {
-        ucAprobadas += a.uc
+        ucAprobadas += uc
         aprobadas += 1
-        fila.ucAprobadas += a.uc
-        fila.aprobadas += 1
       } else if (estado === ESTADO.CURSANDO) {
         cursando += 1
       } else if (estado === ESTADO.DISPONIBLE) {
@@ -151,21 +185,25 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
       }
     }
 
-    const ucTotales = asignaturas.reduce((s, a) => s + a.uc, 0)
+    const ucTotales = asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
 
-    // El porcentaje del titulo se mide sobre los 153 creditos completos, no
-    // solo sobre las obligatorias: las electivas tambien hacen falta.
-    const ucTitulo = cuotas?.total ?? ucTotales
-    const ucElectivasValidas =
-      Math.min(avanceElectivas.tecnica.uc, avanceElectivas.tecnica.meta) +
-      Math.min(avanceElectivas.humanistica.uc, avanceElectivas.humanistica.meta)
+    // Solo cuentan las UC electivas que caben en su cuota
+    const ucElectivas = Object.values(avanceGrupos).reduce(
+      (s, g) => s + (g.meta != null ? Math.min(g.uc, g.meta) : 0),
+      0,
+    )
+
+    // Sin creditos oficiales no hay denominador honesto, y preferimos no
+    // decir nada a inventar un porcentaje. La UI lo detecta por null.
+    const ucTitulo = creditos?.titulo ?? null
+    const porcentaje = ucTitulo ? ((ucAprobadas + ucElectivas) / ucTitulo) * 100 : null
 
     return {
       ucAprobadas,
       ucTotales,
       ucTitulo,
-      ucElectivas: ucElectivasValidas,
-      porcentaje: ucTitulo ? ((ucAprobadas + ucElectivasValidas) / ucTitulo) * 100 : 0,
+      ucElectivas,
+      porcentaje,
       porcentajeObligatorias: ucTotales ? (ucAprobadas / ucTotales) * 100 : 0,
       aprobadas,
       cursando,
@@ -173,7 +211,7 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
       total: asignaturas.length,
       porArea: [...areas.values()].sort((a, b) => b.uc - a.uc),
     }
-  }, [asignaturas, estados, cuotas, avanceElectivas])
+  }, [asignaturas, estados, creditos, avanceGrupos])
 
   // Fija una marca concreta. marca === null desmarca.
   const marcar = useCallback((codigo, marca) => {
@@ -190,16 +228,13 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
 
     // La descarga solo tiene sentido al aprobar: es el momento en que algo
     // se desbloquea. Pasar a cursando o desmarcar no enciende nada.
-    if (marca === ESTADO.APROBADA) {
-      setDescarga({ codigo, n: contador.current })
-    }
+    if (marca === ESTADO.APROBADA) setDescarga({ codigo, n: contador.current })
   }, [])
 
   // Click en la tarjeta: marcado tipo checklist, marcada o sin marcar.
   // Los tres estados completos siguen estando en la ficha.
   const alternarAprobada = useCallback(
-    (codigo) =>
-      marcar(codigo, marcas[codigo] === ESTADO.APROBADA ? null : ESTADO.APROBADA),
+    (codigo) => marcar(codigo, marcas[codigo] === ESTADO.APROBADA ? null : ESTADO.APROBADA),
     [marcar, marcas],
   )
 
@@ -218,7 +253,7 @@ export function usePensum(asignaturas, electivas = [], cuotas = null) {
     marcas,
     estados,
     progreso,
-    avanceElectivas,
+    avanceGrupos,
     descarga,
     toque,
     marcar,

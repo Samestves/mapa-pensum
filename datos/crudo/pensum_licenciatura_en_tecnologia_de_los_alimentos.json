@@ -1,0 +1,488 @@
+{
+  "carrera": "Licenciatura en Tecnología de los Alimentos",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumLicTecAlim.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061013",
+        "asignatura": "Comprensión y expresión Lingüística I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extraacadémica (Deportiva)",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2091113",
+        "asignatura": "Matemáticas I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2091214",
+        "asignatura": "Química General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2091314",
+        "asignatura": "Biología General",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "2091122",
+        "asignatura": "Aplicación de Paquetes Informáticos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2091123",
+        "asignatura": "Matemáticas II",
+        "prerrequisitos": [
+          "2091113"
+        ]
+      },
+      {
+        "codigo": "2091223",
+        "asignatura": "Introducción a la Tecnología de Alimentos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2091224",
+        "asignatura": "Técnicas de Análisis Químico e Instrumental",
+        "prerrequisitos": [
+          "2091214"
+        ]
+      },
+      {
+        "codigo": "2091324",
+        "asignatura": "Química Orgánica",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "2092113",
+        "asignatura": "Química de Alimentos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2092114",
+        "asignatura": "Física",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2092214",
+        "asignatura": "Bioquímica",
+        "prerrequisitos": [
+          "2091324"
+        ]
+      },
+      {
+        "codigo": "2092314",
+        "asignatura": "Microbiología General",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "2092122",
+        "asignatura": "Empacado de Alimentos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2092223",
+        "asignatura": "Fisiología y Nutrición Humana",
+        "prerrequisitos": [
+          "2092214"
+        ]
+      },
+      {
+        "codigo": "2092224",
+        "asignatura": "Análisis de Alimentos",
+        "prerrequisitos": [
+          "2091224"
+        ]
+      },
+      {
+        "codigo": "2092324",
+        "asignatura": "Principios de Ingeniería de Alimentos",
+        "prerrequisitos": [
+          "2092114"
+        ]
+      },
+      {
+        "codigo": "2092424",
+        "asignatura": "Microbiología de Alimentos",
+        "prerrequisitos": [
+          "2092314"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "2093111",
+        "asignatura": "Lab. de Procesos de Conservación de Alimentos",
+        "prerrequisitos": [
+          "2092324"
+        ]
+      },
+      {
+        "codigo": "2093112",
+        "asignatura": "Inglés Técnico I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093113",
+        "asignatura": "Higiene y Saneamiento de la Ind. Alimentaria",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093115",
+        "asignatura": "Procesos de Conservación de Alimentos",
+        "prerrequisitos": [
+          "2092324"
+        ]
+      },
+      {
+        "codigo": "2093213",
+        "asignatura": "Administración de Empresas",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "2093024",
+        "asignatura": "Análisis Estadístico",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093122",
+        "asignatura": "Inglés Técnico II",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093123",
+        "asignatura": "Planeación y Control de la Producción",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093224",
+        "asignatura": "Tecnología de Productos Lácteos",
+        "prerrequisitos": [
+          "2092424"
+        ]
+      },
+      {
+        "codigo": "2093324",
+        "asignatura": "Tecnología de Productos Cárnicos",
+        "prerrequisitos": [
+          "2092224"
+        ]
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "2094113",
+        "asignatura": "Metodología de la Investigación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094214",
+        "asignatura": "Evaluación Sensorial de Alimentos",
+        "prerrequisitos": [
+          "2093024"
+        ]
+      },
+      {
+        "codigo": "2094414",
+        "asignatura": "Tecnología de Alimentos Acuícolas",
+        "prerrequisitos": [
+          "2093111",
+          "2093115"
+        ]
+      },
+      {
+        "codigo": "2094514",
+        "asignatura": "Tecnología de Alimentos Vegetales",
+        "prerrequisitos": [
+          "2093111",
+          "2093115"
+        ]
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "2094122",
+        "asignatura": "Ética Profesional y Legislación Alimentaria",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094123",
+        "asignatura": "Mercadotecnia",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094124",
+        "asignatura": "Control de Calidad",
+        "prerrequisitos": [
+          "2093024"
+        ]
+      },
+      {
+        "codigo": "2094222",
+        "asignatura": "Toxicología de Alimentos",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "2095112",
+        "asignatura": "Seminario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095513",
+        "asignatura": "Seminario Trabajo de Grado",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095913",
+        "asignatura": "Fundam. del Desarrollo de Nuevos Productos",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "2095129",
+        "asignatura": "Trabajo de Grado",
+        "prerrequisitos": [
+          "2095513"
+        ]
+      },
+      {
+        "codigo": "0214100",
+        "asignatura": "Servicio Comunitario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9099999",
+        "asignatura": "Áreas de Grado",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "2092512",
+        "asignatura": "Alimentos y Sociedad",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093212",
+        "asignatura": "Biodeterioro de Alimentos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093222",
+        "asignatura": "Salud Ocupacional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093313",
+        "asignatura": "Estadística no Paramétrica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093413",
+        "asignatura": "Evaluación de la Calidad Proteínica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093523",
+        "asignatura": "Diseño y Análisis de Experimentos I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093533",
+        "asignatura": "Investigación por Muestreo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093614",
+        "asignatura": "Análisis de Regresión",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093724",
+        "asignatura": "Análisis Mulrivariante I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094023",
+        "asignatura": "Biotecnología de Alimentos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094213",
+        "asignatura": "Seguridad Industrial",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094223",
+        "asignatura": "Fermentación Industrial",
+        "prerrequisitos": [
+          "2092424"
+        ]
+      },
+      {
+        "codigo": "2094323",
+        "asignatura": "Manejo Post-cosecha de Frutos y Hortalizas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094324",
+        "asignatura": "Diseño y Análisis de Experimentos II",
+        "prerrequisitos": [
+          "2093523"
+        ]
+      },
+      {
+        "codigo": "2094423",
+        "asignatura": "Superficie de Respuesta",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2094523",
+        "asignatura": "Gestión y Comercial. En la Ind. Alimentaria",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095012",
+        "asignatura": "Org. y Admón. de Serv. de Aliment. y Bebidas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095613",
+        "asignatura": "Aditivos Alimentarios",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095813",
+        "asignatura": "Pasantía Industrial",
+        "prerrequisitos": []
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0045622",
+        "asignatura": "Técnicas Pedagógicas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062052",
+        "asignatura": "Dinámica de Grupos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062123",
+        "asignatura": "Literatura Venezolana",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062412",
+        "asignatura": "Etimología Grecolatina",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0063622",
+        "asignatura": "Redacción y Composición",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0064022",
+        "asignatura": "Ortografía",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0073312",
+        "asignatura": "Etimología Morfológica de las Palabras Técnic",
+        "prerrequisitos": [
+          "2093112"
+        ]
+      },
+      {
+        "codigo": "0073322",
+        "asignatura": "Inglés Técnico Avanzado",
+        "prerrequisitos": [
+          "2093122"
+        ]
+      },
+      {
+        "codigo": "0074212",
+        "asignatura": "Inglés Conversacional I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0074222",
+        "asignatura": "Inglés Conversacional II",
+        "prerrequisitos": [
+          "0074212"
+        ]
+      },
+      {
+        "codigo": "0092112",
+        "asignatura": "Programación Neurolingüistica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0092312",
+        "asignatura": "Toma de Decisiones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0093112",
+        "asignatura": "Motivación y Comunicación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113053",
+        "asignatura": "Dirección de Reuniones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113323",
+        "asignatura": "Geografía de Venezuela",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0114122",
+        "asignatura": "Teoría Económica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0115312",
+        "asignatura": "Los Derechos Humanos en Venezuela",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 81,
+    "asignaturas_en_semestres": 45,
+    "asignaturas_electivas": 36,
+    "prerrequisitos_no_encontrados": []
+  }
+}

@@ -69,16 +69,8 @@ function Boton({ icono: Ico, texto, principal, alPulsar }) {
  * se adapta al ancho, y la del portal es la que sale por la impresora. Ver
  * el bloque @media print de index.css para por que no puede ser la misma.
  */
-function PlanRuta({
-  asignaturas,
-  electivas,
-  marcas,
-  estados,
-  progreso,
-  relaciones,
-  meta,
-  alCerrar,
-}) {
+function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) {
+  const { asignaturas, grupos } = carrera
   const [nombre, setNombre] = useState(() => localStorage.getItem(CLAVE_NOMBRE) ?? '')
   const [ucPorSemestre, setUc] = useState(
     () => Number(localStorage.getItem(CLAVE_UC)) || 16,
@@ -115,9 +107,8 @@ function PlanRuta({
   const pesos = useMemo(() => pesoDesbloqueo(relaciones), [relaciones])
 
   const plan = useMemo(
-    () =>
-      planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, electivas, meta.creditos),
-    [asignaturas, marcas, estados, pesos, ucPorSemestre, electivas, meta.creditos],
+    () => planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, grupos),
+    [asignaturas, marcas, estados, pesos, ucPorSemestre, grupos],
   )
 
   const totalSemestres = plan.semestres.length
@@ -127,11 +118,13 @@ function PlanRuta({
     const lineas = [
       `# Mi ruta hasta el grado`,
       ``,
-      `${meta.carrera} — ${meta.nucleo}`,
+      `${carrera.nombre} — ${carrera.nucleo}`,
       nombre ? `Estudiante: ${nombre}` : null,
       `Generado el ${new Date().toLocaleDateString('es-VE')}`,
       ``,
-      `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas}/${progreso.ucTotales} UC)`,
+      progreso.porcentaje != null
+        ? `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas}/${progreso.ucTotales} UC)`
+        : `- Avance: ${progreso.aprobadas}/${progreso.total} materias (${progreso.ucAprobadas} UC)`,
       `- Materias pendientes: ${plan.materiasRestantes}`,
       `- Semestres estimados: ${totalSemestres} con ${ucPorSemestre} UC por semestre`,
       grado ? `- Grado aproximado: ${MES(grado)}` : null,
@@ -166,7 +159,7 @@ function PlanRuta({
   const hoja = (
     <HojaPlan
       nombre={nombre}
-      meta={meta}
+      carrera={carrera}
       progreso={progreso}
       plan={plan}
       ucPorSemestre={ucPorSemestre}

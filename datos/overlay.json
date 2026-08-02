@@ -1,0 +1,64 @@
+{
+  "_nota": [
+    "Conocimiento que NO viene de la DACE. Los archivos de datos/crudo son el",
+    "scrape tal cual y no se editan a mano: cuando la DACE cambie se vuelven a",
+    "bajar y este overlay sobrevive.",
+    "",
+    "Todo aqui es opcional. Una carrera sin entrada en este archivo carga igual,",
+    "solo que sin color propio, sin cuotas y sin % de avance.",
+    "",
+    "Los colores viven juntos a proposito: el requisito es que las 8 se lean como",
+    "una familia, y eso solo se puede juzgar viendolas una al lado de la otra.",
+    "Cada par es (tema oscuro, tema claro) y los tonos estan repartidos por el",
+    "circulo cromatico con croma parecido para que ninguna grite mas que otra."
+  ],
+
+  "ingenieria-de-sistemas": {
+    "nombreCorto": "Sistemas",
+    "color": { "oscuro": "#6094ff", "claro": "#2751cc" },
+    "creditos": {
+      "titulo": 153,
+      "obligatorias": 132,
+      "fuente": "INTRADACE, verificado contra el pensum oficial CU-021/2013"
+    },
+    "cuotas": { "tecnica": 15, "humanistica": 6 }
+  },
+
+  "ingenieria-agronomica": {
+    "nombreCorto": "Agronómica",
+    "color": { "oscuro": "#3fcb74", "claro": "#1b7a44" }
+  },
+
+  "ingenieria-en-produccion-animal": {
+    "nombreCorto": "Producción Animal",
+    "color": { "oscuro": "#a9c23f", "claro": "#5f7a16" },
+    "avisos": [
+      "La DACE publica este pensum bajo la URL PensumIngAmbiental.php, que por su nombre corresponderia a Ingenieria Ambiental. El contenido es inequivocamente Produccion Animal. Confirmar con control de estudios."
+    ]
+  },
+
+  "ingenieria-de-petroleo": {
+    "nombreCorto": "Petróleo",
+    "color": { "oscuro": "#e8a33d", "claro": "#9a6410" }
+  },
+
+  "licenciatura-en-tecnologia-de-los-alimentos": {
+    "nombreCorto": "Tecnología de Alimentos",
+    "color": { "oscuro": "#ff7a6b", "claro": "#c03a2b" }
+  },
+
+  "licenciatura-en-contaduria-publica": {
+    "nombreCorto": "Contaduría",
+    "color": { "oscuro": "#2fd3c0", "claro": "#0a8577" }
+  },
+
+  "licenciatura-en-administracion": {
+    "nombreCorto": "Administración",
+    "color": { "oscuro": "#8a7cf0", "claro": "#4b3bc4" }
+  },
+
+  "gerencia-de-recursos-humanos": {
+    "nombreCorto": "Recursos Humanos",
+    "color": { "oscuro": "#f072b0", "claro": "#b32c74" }
+  }
+}

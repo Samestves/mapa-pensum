@@ -23,8 +23,9 @@ function Cifra({ etiqueta, valor, sufijo }) {
  * y el bloque @media print de index.css las revierte, porque en papel
  * siempre hay sitio para la version completa.
  */
-function HojaPlan({ nombre, meta, progreso, plan, ucPorSemestre, grado }) {
+function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
   const anos = (plan.semestres.length / 2).toFixed(1)
+  const hayPorcentaje = progreso.porcentaje != null
 
   return (
     <div className="hoja bg-panel p-4 text-tinta sm:p-6">
@@ -34,7 +35,7 @@ function HojaPlan({ nombre, meta, progreso, plan, ucPorSemestre, grado }) {
             Mi ruta hasta el grado
           </h2>
           <p className="text-[10px] text-tinta-suave sm:text-[11px]">
-            {meta.carrera} · {meta.nucleo}
+            {carrera.nombre} · {carrera.nucleo}
           </p>
         </div>
         <div className="shrink-0 text-right text-[10px] text-tinta-tenue">
@@ -44,7 +45,15 @@ function HojaPlan({ nombre, meta, progreso, plan, ucPorSemestre, grado }) {
       </header>
 
       <div className="cifras-hoja mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Cifra etiqueta="Avance" valor={progreso.porcentaje.toFixed(1)} sufijo="%" />
+        {hayPorcentaje ? (
+          <Cifra etiqueta="Avance" valor={progreso.porcentaje.toFixed(1)} sufijo="%" />
+        ) : (
+          <Cifra
+            etiqueta="Aprobadas"
+            valor={progreso.aprobadas}
+            sufijo={`/ ${progreso.total}`}
+          />
+        )}
         <Cifra
           etiqueta="UC aprobadas"
           valor={progreso.ucAprobadas}

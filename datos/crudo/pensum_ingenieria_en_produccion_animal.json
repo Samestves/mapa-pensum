@@ -1,0 +1,549 @@
+{
+  "carrera": "Ingeniería en Producción Animal",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumIngAmbiental.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061013",
+        "asignatura": "Comprensión y expresión Lingüística I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081714",
+        "asignatura": "Matemática I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0101714",
+        "asignatura": "Química General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extraacadémica (Deportiva)",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211111",
+        "asignatura": "Laboratorio Biología General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211113",
+        "asignatura": "Biología General",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0071723",
+        "asignatura": "Inglés Instrumental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081724",
+        "asignatura": "Matemáticas II",
+        "prerrequisitos": [
+          "0081714"
+        ]
+      },
+      {
+        "codigo": "0101723",
+        "asignatura": "Química Orgánica",
+        "prerrequisitos": [
+          "0101714"
+        ]
+      },
+      {
+        "codigo": "0201821",
+        "asignatura": "Introducción a la Agronomía",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211121",
+        "asignatura": "Dibujo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211322",
+        "asignatura": "Introducción a La Producción Animal I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0101721",
+        "asignatura": "Laboratorio de Química Orgánica",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "0202033",
+        "asignatura": "Botánica Agrícola",
+        "prerrequisitos": [
+          "0211111",
+          "0211113"
+        ]
+      },
+      {
+        "codigo": "0212033",
+        "asignatura": "Bioquímica",
+        "prerrequisitos": [
+          "0101723"
+        ]
+      },
+      {
+        "codigo": "0212132",
+        "asignatura": "Introducción a la Producción Animal II",
+        "prerrequisitos": [
+          "0211322"
+        ]
+      },
+      {
+        "codigo": "0212134",
+        "asignatura": "Física",
+        "prerrequisitos": [
+          "0081724"
+        ]
+      },
+      {
+        "codigo": "0212533",
+        "asignatura": "Anatomia Animal General",
+        "prerrequisitos": [
+          "0211111",
+          "0211113"
+        ]
+      },
+      {
+        "codigo": "0212933",
+        "asignatura": "Zoología Agrícola",
+        "prerrequisitos": [
+          "0211111",
+          "0211113"
+        ]
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "0072742",
+        "asignatura": "Ingles Técnico",
+        "prerrequisitos": [
+          "0071723"
+        ]
+      },
+      {
+        "codigo": "0212943",
+        "asignatura": "Edafología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0212043",
+        "asignatura": "Estadística",
+        "prerrequisitos": [
+          "0081724"
+        ]
+      },
+      {
+        "codigo": "0212241",
+        "asignatura": "Informática",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0212543",
+        "asignatura": "Microbiología",
+        "prerrequisitos": [
+          "0212033"
+        ]
+      },
+      {
+        "codigo": "0212643",
+        "asignatura": "Topografia",
+        "prerrequisitos": [
+          "0211121"
+        ]
+      },
+      {
+        "codigo": "0212743",
+        "asignatura": "Nutricion Animal General",
+        "prerrequisitos": [
+          "0212033"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "0203153",
+        "asignatura": "Economía y Mercadeo Agrícola",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0213053",
+        "asignatura": "Construcciones Rurales",
+        "prerrequisitos": [
+          "0212643"
+        ]
+      },
+      {
+        "codigo": "0213653",
+        "asignatura": "Nutricion y Alimentacion No Rumiantes",
+        "prerrequisitos": [
+          "0212743"
+        ]
+      },
+      {
+        "codigo": "0213753",
+        "asignatura": "Genética",
+        "prerrequisitos": [
+          "0212043"
+        ]
+      },
+      {
+        "codigo": "0213853",
+        "asignatura": "Fisiología Animal General",
+        "prerrequisitos": [
+          "0212533"
+        ]
+      },
+      {
+        "codigo": "0213952",
+        "asignatura": "Metodologia de La Investigación",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "0213163",
+        "asignatura": "Diseño de Experimentos",
+        "prerrequisitos": [
+          "0212043"
+        ]
+      },
+      {
+        "codigo": "0213263",
+        "asignatura": "Mejoramiento Animal",
+        "prerrequisitos": [
+          "0213753"
+        ]
+      },
+      {
+        "codigo": "0213462",
+        "asignatura": "Fertilidad de Suelos",
+        "prerrequisitos": [
+          "0212943"
+        ]
+      },
+      {
+        "codigo": "0213763",
+        "asignatura": "Nutrición y Alimentación de Rumiantes",
+        "prerrequisitos": [
+          "0212743"
+        ]
+      },
+      {
+        "codigo": "0213963",
+        "asignatura": "Sanidad Animal",
+        "prerrequisitos": [
+          "0212543"
+        ]
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "0204274",
+        "asignatura": "Maquinaria Agrícola",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214073",
+        "asignatura": "Acuicultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214673",
+        "asignatura": "Forrajicultura General",
+        "prerrequisitos": [
+          "0213462"
+        ]
+      },
+      {
+        "codigo": "0214873",
+        "asignatura": "Fisiología de la Reproducción",
+        "prerrequisitos": [
+          "0213853"
+        ]
+      },
+      {
+        "codigo": "0214973",
+        "asignatura": "Parasitología",
+        "prerrequisitos": [
+          "0213963"
+        ]
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "0204183",
+        "asignatura": "Administración de Empresas Agrícolas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0204583",
+        "asignatura": "Sociología y Desarrollo Rural",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214083",
+        "asignatura": "Producción de Porcinos",
+        "prerrequisitos": [
+          "0213653"
+        ]
+      },
+      {
+        "codigo": "0214283",
+        "asignatura": "Forrajicultura Aplicada",
+        "prerrequisitos": [
+          "0214673"
+        ]
+      },
+      {
+        "codigo": "0214883",
+        "asignatura": "Producción de Ovinos y Caprinos",
+        "prerrequisitos": [
+          "0213763"
+        ]
+      },
+      {
+        "codigo": "0214983",
+        "asignatura": "Producción de Aves",
+        "prerrequisitos": [
+          "0213653"
+        ]
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "0205193",
+        "asignatura": "Extensión Rural",
+        "prerrequisitos": [
+          "0204583"
+        ]
+      },
+      {
+        "codigo": "0205392",
+        "asignatura": "Derecho y Legislación Agrícola",
+        "prerrequisitos": [
+          "0204583"
+        ]
+      },
+      {
+        "codigo": "0215091",
+        "asignatura": "Pasantía de Campo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0215193",
+        "asignatura": "Producción de Bovinos de Carne",
+        "prerrequisitos": [
+          "0214873"
+        ]
+      },
+      {
+        "codigo": "0215293",
+        "asignatura": "Producción de Bovinos de Leche",
+        "prerrequisitos": [
+          "0214873"
+        ]
+      },
+      {
+        "codigo": "0215693",
+        "asignatura": "Formulación y Evaluación de Proyectos Agrícolas",
+        "prerrequisitos": [
+          "0204183"
+        ]
+      },
+      {
+        "codigo": "0215791",
+        "asignatura": "Seminario Trabajo de Grado",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "0215209",
+        "asignatura": "Trabajo de Grado",
+        "prerrequisitos": [
+          "0215791"
+        ]
+      },
+      {
+        "codigo": "0214100",
+        "asignatura": "Servicio Comunitario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9099999",
+        "asignatura": "Áreas de Grado",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "0202633",
+        "asignatura": "Climatología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0203552",
+        "asignatura": "Hidráulica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0203662",
+        "asignatura": "Mecánica de Suelos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0204674",
+        "asignatura": "Riego y Drenaje",
+        "prerrequisitos": [
+          "0203552"
+        ]
+      },
+      {
+        "codigo": "0205932",
+        "asignatura": "Parques y Jardines",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0213362",
+        "asignatura": "Apicultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0213662",
+        "asignatura": "Piscicultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214272",
+        "asignatura": "Fisioclimatología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214372",
+        "asignatura": "Fisiología de la Lactancia",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214382",
+        "asignatura": "Cunicultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214472",
+        "asignatura": "Ectoparásitos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214572",
+        "asignatura": "Fisiología Digestiva de Rumiantes",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214822",
+        "asignatura": "Producción de Búfalos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0215592",
+        "asignatura": "Inseminación Articial",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2092512",
+        "asignatura": "Alimentos y Sociedad",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2093324",
+        "asignatura": "Tecnología de Productos Cárnicos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "2095314",
+        "asignatura": "Tecnología de Productos Lácteos",
+        "prerrequisitos": []
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0061222",
+        "asignatura": "Historia de la Cultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6812133",
+        "asignatura": "Introducción a la Gerencia de Recursos Humano",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6813453",
+        "asignatura": "Dinámica de Grupo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814182",
+        "asignatura": "Dirección de Reuniones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6814472",
+        "asignatura": "Liderazgo, Motivación y Comunicación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815393",
+        "asignatura": "Ética Profesional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "6815493",
+        "asignatura": "Toma de Decisiones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9032242",
+        "asignatura": "Educación Ambiental",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 85,
+    "asignaturas_en_semestres": 60,
+    "asignaturas_electivas": 25,
+    "prerrequisitos_no_encontrados": []
+  },
+  "correcciones_aplicadas": [
+    {
+      "seccion": "Semestre 6",
+      "codigo": "0213462",
+      "asignatura": "Fertilidad de Suelos",
+      "prerrequisito_original": "0202943",
+      "prerrequisito_corregido": "0212943",
+      "motivo": "0202943 es Edafología del pensum de Ingeniería Agronómica; el código correcto en este pensum es 0212943 (Edafología, Semestre 4)"
+    }
+  ]
+}

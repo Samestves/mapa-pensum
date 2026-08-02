@@ -23,7 +23,7 @@ function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto' }) {
 }
 
 function BarraSuperior({
-  meta,
+  carrera,
   tema,
   alternarTema,
   resumen,
@@ -53,7 +53,7 @@ function BarraSuperior({
           Mapa de Pensum
         </h1>
         <p className="hidden truncate text-[11px] leading-tight font-medium text-tinta-suave md:block">
-          {meta.carrera} · {meta.nucleo}
+          {carrera.nombre} · {carrera.nucleo}
         </p>
       </div>
       <div className="min-w-0 flex-1 sm:hidden" />
@@ -69,18 +69,29 @@ function BarraSuperior({
             : 'border-panel-borde hover:bg-panel-suave'
         }`}
       >
-        <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-          {resumen.porcentaje.toFixed(1)}%
-        </span>
-        <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
-          <span
-            className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-            style={{ width: `${resumen.porcentaje}%` }}
-          />
-        </span>
-        <span className="hidden font-mono text-[10px] font-semibold text-tinta-tenue lg:inline">
-          {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
-        </span>
+        {/* Sin creditos oficiales no hay porcentaje ni barra: el chip pasa a
+            contar materias, que es un dato que si tenemos. */}
+        {resumen.porcentaje != null ? (
+          <>
+            <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
+              {resumen.porcentaje.toFixed(1)}%
+            </span>
+            <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
+              <span
+                className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
+                style={{ width: `${resumen.porcentaje}%` }}
+              />
+            </span>
+            <span className="hidden font-mono text-[10px] font-semibold text-tinta-tenue lg:inline">
+              {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
+            </span>
+          </>
+        ) : (
+          <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
+            {resumen.aprobadas}
+            <span className="text-tinta-tenue">/{resumen.total}</span>
+          </span>
+        )}
       </button>
 
       {/* Cambiar de vista: en movil la lista es la util, el mapa es opcional */}

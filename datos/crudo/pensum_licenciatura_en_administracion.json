@@ -1,0 +1,475 @@
+{
+  "carrera": "Licenciatura en Administración",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumLicAdmin.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061922",
+        "asignatura": "Expresión Oral y Escrita",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071513",
+        "asignatura": "Inglés I para Ciencias Administrativas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081613",
+        "asignatura": "Matemáticas I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extraacadémica (Deportiva)",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0911013",
+        "asignatura": "Introd. a la Administración y Contaduría",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0071523",
+        "asignatura": "Inglés II para Ciencias Administrativas",
+        "prerrequisitos": [
+          "0071513"
+        ]
+      },
+      {
+        "codigo": "0081623",
+        "asignatura": "Matemáticas II",
+        "prerrequisitos": [
+          "0081613"
+        ]
+      },
+      {
+        "codigo": "0111623",
+        "asignatura": "Problematica del Desarrollo Socio-Económico de Vzla",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0911323",
+        "asignatura": "Contabilidad Básica I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0911822",
+        "asignatura": "Informática I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0921123",
+        "asignatura": "Planificación Administrativa",
+        "prerrequisitos": [
+          "0911013"
+        ]
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "0912333",
+        "asignatura": "Contabilidad Básica II",
+        "prerrequisitos": [
+          "0911323"
+        ]
+      },
+      {
+        "codigo": "0912833",
+        "asignatura": "Informática II",
+        "prerrequisitos": [
+          "0911822"
+        ]
+      },
+      {
+        "codigo": "0912933",
+        "asignatura": "Matemáticas Financieras I",
+        "prerrequisitos": [
+          "0081613"
+        ]
+      },
+      {
+        "codigo": "0922133",
+        "asignatura": "Organización Administrativa",
+        "prerrequisitos": [
+          "0921123"
+        ]
+      },
+      {
+        "codigo": "0922633",
+        "asignatura": "Fundamentos del Derecho",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0922733",
+        "asignatura": "Economía I",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "0912343",
+        "asignatura": "Contabilidad Avanzada I",
+        "prerrequisitos": [
+          "0912333"
+        ]
+      },
+      {
+        "codigo": "0912943",
+        "asignatura": "Matemáticas Financieras II",
+        "prerrequisitos": [
+          "0912933"
+        ]
+      },
+      {
+        "codigo": "0922143",
+        "asignatura": "Dirección Administrativa",
+        "prerrequisitos": [
+          "0922133"
+        ]
+      },
+      {
+        "codigo": "0922643",
+        "asignatura": "Derecho Mercantil",
+        "prerrequisitos": [
+          "0922633"
+        ]
+      },
+      {
+        "codigo": "0922743",
+        "asignatura": "Economía II",
+        "prerrequisitos": [
+          "0922733"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "0913353",
+        "asignatura": "Contabilidad Avanzada II",
+        "prerrequisitos": [
+          "0912343"
+        ]
+      },
+      {
+        "codigo": "0913853",
+        "asignatura": "Estadística I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0923153",
+        "asignatura": "Control Administrativo",
+        "prerrequisitos": [
+          "0922143"
+        ]
+      },
+      {
+        "codigo": "0923253",
+        "asignatura": "Administración de Recursos Humanos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0923653",
+        "asignatura": "Derecho Laboral",
+        "prerrequisitos": [
+          "0922633"
+        ]
+      },
+      {
+        "codigo": "0923753",
+        "asignatura": "Moneda, Banca y Crédito",
+        "prerrequisitos": [
+          "0922743"
+        ]
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "0913563",
+        "asignatura": "Contabilidad de Costos I",
+        "prerrequisitos": [
+          "0913353"
+        ]
+      },
+      {
+        "codigo": "0913863",
+        "asignatura": "Estadística II",
+        "prerrequisitos": [
+          "0913853"
+        ]
+      },
+      {
+        "codigo": "0923062",
+        "asignatura": "Metodología de la Investigación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0923162",
+        "asignatura": "Administración Pública",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0923763",
+        "asignatura": "Finanzas Públicas",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "0914373",
+        "asignatura": "Tributos I",
+        "prerrequisitos": [
+          "0923763"
+        ]
+      },
+      {
+        "codigo": "0914573",
+        "asignatura": "Contabilidad de Costos II",
+        "prerrequisitos": [
+          "0913563"
+        ]
+      },
+      {
+        "codigo": "0914873",
+        "asignatura": "Análisis de los Estados Financieros",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924173",
+        "asignatura": "Comportamiento Organizacional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924972",
+        "asignatura": "Presupuesto Público",
+        "prerrequisitos": [
+          "0923763"
+        ]
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "0914383",
+        "asignatura": "Tributos II",
+        "prerrequisitos": [
+          "0914373"
+        ]
+      },
+      {
+        "codigo": "0924183",
+        "asignatura": "Sistemas y Procedimientos Administrativos y Contables",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924282",
+        "asignatura": "Responsabilidad Social y Ética",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924783",
+        "asignatura": "Mercadeo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924883",
+        "asignatura": "Métodos Cuantitativos",
+        "prerrequisitos": [
+          "0913863"
+        ]
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "0915393",
+        "asignatura": "Tributos III",
+        "prerrequisitos": [
+          "0914373"
+        ]
+      },
+      {
+        "codigo": "0915992",
+        "asignatura": "Presupuesto de las Empresas",
+        "prerrequisitos": [
+          "0914573"
+        ]
+      },
+      {
+        "codigo": "0915993",
+        "asignatura": "Finanzas Corporativas",
+        "prerrequisitos": [
+          "0914873"
+        ]
+      },
+      {
+        "codigo": "0925293",
+        "asignatura": "Administración de la Producción",
+        "prerrequisitos": [
+          "0924883"
+        ]
+      },
+      {
+        "codigo": "0925593",
+        "asignatura": "Contabilidad Gerencial",
+        "prerrequisitos": [
+          "0914573"
+        ]
+      },
+      {
+        "codigo": "0925793",
+        "asignatura": "Preparación y Evaluación de Proyectos",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "0925009",
+        "asignatura": "Trabajo de Grado",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925103",
+        "asignatura": "Análisis de Gestión Administrativa",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925202",
+        "asignatura": "Seminario de Gerencia Estratégica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0214100",
+        "asignatura": "Servicio Comunitario",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9099999",
+        "asignatura": "Areas de Grado",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "0913362",
+        "asignatura": "Ajuste por Inflación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0913852",
+        "asignatura": "Telemática",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0915302",
+        "asignatura": "Política Tributaria",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0923662",
+        "asignatura": "Seminario de Contratos Bancarios",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0924682",
+        "asignatura": "Seminario de Instituciones Financieras",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925092",
+        "asignatura": "Seminario de Trabajo de Grado",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925392",
+        "asignatura": "Legislación Industrial",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925502",
+        "asignatura": "Higiene y Seguridad Industrial",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0925602",
+        "asignatura": "Problemas Especiales de Derecho Mercantil",
+        "prerrequisitos": []
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0061183",
+        "asignatura": "Etica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061222",
+        "asignatura": "Historia de la Cultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061822",
+        "asignatura": "Sexología Básica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062052",
+        "asignatura": "Dinámica de Grupos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062062",
+        "asignatura": "Introducción a la Literatura Contemporánea",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071112",
+        "asignatura": "Inglés Instrumental I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0112832",
+        "asignatura": "Grupo y Liderazgo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0112943",
+        "asignatura": "Introducción a la Filosofía de la Ciencia",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113053",
+        "asignatura": "Dirección de Reuniones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113183",
+        "asignatura": "Sociología Urbana",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9032242",
+        "asignatura": "Educación Ambiental",
+        "prerrequisitos": []
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 76,
+    "asignaturas_en_semestres": 56,
+    "asignaturas_electivas": 20,
+    "prerrequisitos_no_encontrados": []
+  }
+}

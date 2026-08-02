@@ -32,54 +32,45 @@ export function mesEstimadoGrado(semestres, desde = new Date()) {
  *
  * Es una funcion pura: mismas marcas y mismo tope, mismo plan.
  */
-export function planificar(
-  asignaturas,
-  marcas,
-  estados,
-  pesos,
-  ucPorSemestre,
-  electivas = [],
-  cuotas = null,
-) {
+export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, grupos = []) {
+  const electivas = grupos.flatMap((g) =>
+    g.asignaturas.map((a) => ({ ...a, grupo: g.clave, esElectiva: true })),
+  )
   const todas = [...asignaturas, ...electivas]
   const aprobadas = new Set(
     todas.filter((a) => marcas[a.codigo] === ESTADO.APROBADA).map((a) => a.codigo),
   )
 
-  // Cuanta electiva falta por cubrir de cada cuota. Solo se planifican las
-  // que hagan falta: meter las 39 daria un plan absurdo de 20 semestres.
-  const faltaCuota = {
-    tecnica: Math.max(
-      0,
-      (cuotas?.electivasTecnicas ?? 0) -
-        electivas
-          .filter((e) => e.tipo === 'tecnica' && aprobadas.has(e.codigo))
-          .reduce((s, e) => s + e.uc, 0),
-    ),
-    humanistica: Math.max(
-      0,
-      (cuotas?.electivasHumanisticas ?? 0) -
-        electivas
-          .filter((e) => e.tipo === 'humanistica' && aprobadas.has(e.codigo))
-          .reduce((s, e) => s + e.uc, 0),
-    ),
-  }
-
-  // Se eligen las electivas mas baratas y sin prerrequisitos primero: son
-  // las que cubren la cuota estorbando lo menos posible.
+  // Solo se planifican las electivas que hagan falta para cubrir cuota: meter
+  // las 39 de Sistemas daria un plan absurdo de 20 semestres.
+  //
+  // Un grupo sin cuota no aporta nada al plan. Pasa en las carreras de las
+  // que no tenemos los creditos oficiales, y en las secciones informativas
+  // como Areas de Grado, donde nadie sabe cuantas hay que elegir. Inventar
+  // un numero seria peor que omitirlas.
   const sugeridas = []
-  for (const tipo of ['tecnica', 'humanistica']) {
-    let falta = faltaCuota[tipo]
-    const candidatas = electivas
-      .filter((e) => e.tipo === tipo && !aprobadas.has(e.codigo))
+  for (const g of grupos) {
+    if (g.cuota == null) continue
+
+    const yaCubierto = g.asignaturas
+      .filter((e) => aprobadas.has(e.codigo))
+      .reduce((s, e) => s + (e.uc ?? 0), 0)
+    let falta = Math.max(0, g.cuota - yaCubierto)
+
+    // Las mas baratas y sin prerrequisitos primero: cubren la cuota
+    // estorbando lo menos posible.
+    const candidatas = g.asignaturas
+      .filter((e) => !aprobadas.has(e.codigo))
       .sort(
         (a, b) =>
-          (a.prerrequisitos?.length ?? 0) - (b.prerrequisitos?.length ?? 0) || b.uc - a.uc,
+          (a.prerrequisitos?.length ?? 0) - (b.prerrequisitos?.length ?? 0) ||
+          (b.uc ?? 0) - (a.uc ?? 0),
       )
+
     for (const e of candidatas) {
       if (falta <= 0) break
-      sugeridas.push(e)
-      falta -= e.uc
+      sugeridas.push({ ...e, grupo: g.clave, esElectiva: true })
+      falta -= e.uc ?? 0
     }
   }
 
@@ -113,12 +104,12 @@ export function planificar(
       if (pesoA !== pesoB) return pesoB - pesoA
 
       // Las electivas van al final: son de relleno, no marcan el camino
-      const electivaA = a.tipo ? 1 : 0
-      const electivaB = b.tipo ? 1 : 0
+      const electivaA = a.esElectiva ? 1 : 0
+      const electivaB = b.esElectiva ? 1 : 0
       if (electivaA !== electivaB) return electivaA - electivaB
 
       if (a.semestre !== b.semestre) return (a.semestre ?? 99) - (b.semestre ?? 99)
-      return b.uc - a.uc
+      return (b.uc ?? 0) - (a.uc ?? 0)
     })
 
     const elegidas = []
@@ -126,9 +117,9 @@ export function planificar(
     for (const a of inscribibles) {
       // Siempre entra al menos una, aunque su UC supere el tope: si no, una
       // materia de 6 UC con tope 4 dejaria el plan atascado para siempre.
-      if (!elegidas.length || uc + a.uc <= ucPorSemestre) {
+      if (!elegidas.length || uc + (a.uc ?? 0) <= ucPorSemestre) {
         elegidas.push(a)
-        uc += a.uc
+        uc += a.uc ?? 0
       }
     }
 
@@ -141,7 +132,7 @@ export function planificar(
     semestres,
     // Si algo queda fuera es que sus prerrequisitos no se pueden satisfacer
     sinUbicar: restantes,
-    ucRestantes: pendientes.reduce((s, a) => s + a.uc, 0),
+    ucRestantes: pendientes.reduce((s, a) => s + (a.uc ?? 0), 0),
     materiasRestantes: pendientes.length,
   }
 }

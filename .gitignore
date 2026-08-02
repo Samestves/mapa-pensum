@@ -28,3 +28,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generado por scripts/normalizar.js desde datos/crudo + datos/overlay.
+# No se commitea: el JSON sale minificado y su diff es una sola linea gigante,
+# asi que versionarlo no aporta revisabilidad, solo ruido.
+src/data/carreras/

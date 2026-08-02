@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run datos && vite",
+    "datos": "node scripts/normalizar.js",
     "validar": "node scripts/validar-pensum.js",
-    "build": "npm run validar && vite build",
+    "build": "npm run datos && npm run validar && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
