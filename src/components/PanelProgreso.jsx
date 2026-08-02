@@ -1,4 +1,14 @@
-import { ChevronsRight, CircleDot, GraduationCap, ListChecks, LockOpen } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  ChevronsRight,
+  CircleDot,
+  GraduationCap,
+  ListChecks,
+  LockOpen,
+  RotateCcw,
+  SlidersHorizontal,
+  TriangleAlert,
+} from 'lucide-react'
 import { colorArea, etiquetaArea } from '../theme/areas'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 
@@ -17,10 +27,6 @@ function Dato({ icono: Icono, valor, de, etiqueta, color }) {
   )
 }
 
-/**
- * Fila de avance por area. Al pulsarla se aisla esa area en el grafo, que es
- * la razon de que este aqui: no es solo una estadistica, es un filtro.
- */
 function FilaArea({ fila, activa, alPulsar }) {
   const color = colorArea(fila.area)
   const pct = fila.uc ? (fila.ucAprobadas / fila.uc) * 100 : 0
@@ -30,10 +36,8 @@ function FilaArea({ fila, activa, alPulsar }) {
       type="button"
       onClick={alPulsar}
       title={`Aislar ${etiquetaArea(fila.area)} en el mapa`}
-      className={`w-full rounded-lg border px-2.5 py-2 text-left transition-colors ${
-        activa ? 'border-transparent bg-panel-suave' : 'border-transparent hover:bg-panel-suave'
-      }`}
-      style={activa ? { borderColor: color } : undefined}
+      className="w-full rounded-lg border px-2.5 py-2 text-left transition-colors hover:bg-panel-suave"
+      style={{ borderColor: activa ? color : 'transparent' }}
     >
       <div className="flex items-center gap-2">
         <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
@@ -54,8 +58,102 @@ function FilaArea({ fila, activa, alPulsar }) {
   )
 }
 
-function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerrar }) {
-  const { ucAprobadas, ucTotales, aprobadas, cursando, disponibles, total } = progreso
+function CuotaElectiva({ etiqueta, avance }) {
+  const pct = avance.meta ? Math.min(100, (avance.uc / avance.meta) * 100) : 0
+  const color = avance.completa ? 'var(--estado-aprobada)' : 'var(--estado-cursando)'
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[11px] font-semibold text-tinta">{etiqueta}</span>
+        <span className="font-mono text-[10px] font-bold" style={{ color }}>
+          {avance.uc}/{avance.meta} UC
+        </span>
+      </div>
+      <div className="mt-1 h-1 overflow-hidden rounded-full bg-lienzo">
+        <div
+          className="h-full rounded-full transition-[width] duration-500 ease-out"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function BotonReinicio({ reiniciar, hayMarcas }) {
+  const [confirmando, setConfirmando] = useState(false)
+  const caja = useRef(null)
+
+  useEffect(() => {
+    if (!confirmando) return
+    const fuera = (e) => {
+      if (!caja.current?.contains(e.target)) setConfirmando(false)
+    }
+    const tecla = (e) => e.key === 'Escape' && setConfirmando(false)
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', tecla)
+    }
+  }, [confirmando])
+
+  return (
+    <div ref={caja}>
+      {confirmando ? (
+        <div className="transicion-tema surgir rounded-lg border border-panel-borde bg-panel-suave p-3">
+          <p className="flex items-start gap-2 text-[11px] leading-snug text-tinta">
+            <TriangleAlert size={14} className="mt-0.5 shrink-0 text-cursando" />
+            Se borrarán todas tus marcas. No se puede deshacer.
+          </p>
+          <div className="mt-2.5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmando(false)}
+              className="flex-1 rounded-lg border border-panel-borde px-2 py-1.5 text-[11px] font-semibold text-tinta-suave hover:text-tinta"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                reiniciar()
+                setConfirmando(false)
+              }}
+              className="flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold text-white"
+              style={{ backgroundColor: 'var(--estado-rojo)' }}
+            >
+              Sí, borrar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirmando(true)}
+          disabled={!hayMarcas}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-panel-borde px-3 py-2 text-[11px] font-semibold text-tinta-suave hover:text-tinta disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <RotateCcw size={14} />
+          Reiniciar mi avance
+        </button>
+      )}
+    </div>
+  )
+}
+
+function PanelProgreso({
+  progreso,
+  avanceElectivas,
+  areaFiltrada,
+  alFiltrarArea,
+  alAbrirElectivas,
+  reiniciar,
+  hayMarcas,
+  abierto,
+  alCerrar,
+}) {
+  const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } =
+    progreso
   const porcentaje = useNumeroAnimado(progreso.porcentaje)
 
   return (
@@ -66,7 +164,6 @@ function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerra
     >
       <div className="flex items-center justify-between border-b border-panel-borde px-4 py-3">
         <h2 className="text-sm font-bold text-tinta">Mi avance</h2>
-        {/* La flecha apunta a donde se va a esconder el panel */}
         <button
           type="button"
           onClick={alCerrar}
@@ -86,7 +183,7 @@ function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerra
         <div>
           <div className="flex items-end justify-between">
             <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Carrera completada
+              Título completado
             </span>
             <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
               {porcentaje.toFixed(1)}%
@@ -99,16 +196,16 @@ function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerra
             />
           </div>
           <p className="mt-1.5 text-[10px] text-tinta-tenue">
-            Sobre unidades crédito, no sobre número de materias.
+            {ucAprobadas + ucElectivas} de {ucTitulo} UC, contando obligatorias y electivas.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <Dato
             icono={GraduationCap}
-            etiqueta="UC"
+            etiqueta="UC oblig."
             valor={ucAprobadas}
-            de={ucTotales}
+            de={progreso.ucTotales}
             color="var(--estado-aprobada)"
           />
           <Dato
@@ -132,6 +229,26 @@ function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerra
           />
         </div>
 
+        <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+              Electivas
+            </h3>
+            <button
+              type="button"
+              onClick={alAbrirElectivas}
+              className="flex items-center gap-1 text-[10px] font-bold text-aprobada"
+            >
+              <SlidersHorizontal size={12} />
+              Elegir
+            </button>
+          </div>
+          <div className="flex flex-col gap-2">
+            <CuotaElectiva etiqueta="Técnicas" avance={avanceElectivas.tecnica} />
+            <CuotaElectiva etiqueta="Humanísticas" avance={avanceElectivas.humanistica} />
+          </div>
+        </div>
+
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
@@ -147,21 +264,22 @@ function PanelProgreso({ progreso, areaFiltrada, alFiltrarArea, abierto, alCerra
               </button>
             )}
           </div>
-          <p className="mb-2 text-[10px] leading-snug text-tinta-tenue">
-            Pulsa un área para aislarla en el mapa.
-          </p>
           <div className="flex flex-col gap-0.5">
             {progreso.porArea.map((fila) => (
               <FilaArea
                 key={fila.area}
                 fila={fila}
                 activa={areaFiltrada === fila.area}
-                alPulsar={() =>
-                  alFiltrarArea(areaFiltrada === fila.area ? null : fila.area)
-                }
+                alPulsar={() => alFiltrarArea(areaFiltrada === fila.area ? null : fila.area)}
               />
             ))}
           </div>
+        </div>
+
+        {/* Reiniciar vive aqui, junto a los datos que borra, y no en la
+            cabecera entre acciones que se usan a diario. */}
+        <div className="mt-2 border-t border-panel-borde pt-4">
+          <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
         </div>
       </div>
     </aside>

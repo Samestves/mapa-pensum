@@ -6,7 +6,13 @@
     "totalSemestres": 10,
     "totalAsignaturas": 49,
     "totalUC": 132,
-    "notaUC": "Las unidades crédito (uc) fueron inferidas del último dígito del código de cada asignatura. VERIFICAR contra el pensum oficial antes de usarlas en cálculos de progreso.",
+    "notaUC": "Las uc salen del último dígito del código. Verificado contra INTRADACE: 132 (obligatorias) + 15 (electivas técnicas) + 6 (electivas humanísticas) = 153 créditos de la especialidad.",
+    "creditos": {
+      "obligatorias": 132,
+      "electivasTecnicas": 15,
+      "electivasHumanisticas": 6,
+      "total": 153
+    },
     "areas": {
       "generales": "Formación general, idiomas y metodología",
       "ciencias-basicas": "Matemáticas, física y química",
@@ -77,5 +83,53 @@
     { "codigo": "0715112", "nombre": "Planificación Estratégica", "semestre": 9, "uc": 2, "area": "gestion", "prerrequisitos": ["0714123"] },
 
     { "codigo": "0715116", "nombre": "Trabajo de Grado", "semestre": 10, "uc": 6, "area": "tesis", "prerrequisitos": ["0714133", "0715112"] }
+  ],
+
+  "electivas": [
+    { "codigo": "0714303", "nombre": "Programación No Lineal", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": ["0713663"] },
+    { "codigo": "0714353", "nombre": "Problemas y Proyectos Especiales", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": [] },
+    { "codigo": "0714363", "nombre": "Sistemas de Control Discreto", "tipo": "tecnica", "uc": 3, "area": "electronica", "prerrequisitos": ["0714643"] },
+    { "codigo": "0714373", "nombre": "Instrumentación y Control de Procesos", "tipo": "tecnica", "uc": 3, "area": "electronica", "prerrequisitos": ["0714363"] },
+    { "codigo": "0714383", "nombre": "Procesos Estocásticos", "tipo": "tecnica", "uc": 3, "area": "estadistica", "prerrequisitos": ["0713122"] },
+    { "codigo": "0714393", "nombre": "Teoría de Colas", "tipo": "tecnica", "uc": 3, "area": "estadistica", "prerrequisitos": ["0714383"] },
+    { "codigo": "0714903", "nombre": "Teoría de Sobrevivencia", "tipo": "tecnica", "uc": 3, "area": "estadistica", "prerrequisitos": ["0714383"] },
+    { "codigo": "0714933", "nombre": "Seminario de Ingeniería de Sistemas", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": ["0713633"] },
+    { "codigo": "0714943", "nombre": "Sistemología Interpretativa", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": ["0713633"] },
+    { "codigo": "0714953", "nombre": "Dinámica de Sistemas", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": ["0714643"] },
+    { "codigo": "0714963", "nombre": "Sistemas Inteligentes", "tipo": "tecnica", "uc": 3, "area": "computacion", "prerrequisitos": ["0714323", "0714612", "0714642"] },
+    { "codigo": "0714973", "nombre": "Gestión Empresarial II", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0714123"] },
+    { "codigo": "0714983", "nombre": "Cuadro de Mando Integral", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0715112"] },
+    { "codigo": "0714993", "nombre": "Simulación de Sistemas", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": [] },
+    { "codigo": "0715123", "nombre": "Gerencia de Mantenimiento", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": [] },
+    { "codigo": "0715333", "nombre": "Gerencia Logística", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0714133"] },
+    { "codigo": "0715903", "nombre": "Stmas. de Ctrol. de Espacios de Estado", "tipo": "tecnica", "uc": 3, "area": "electronica", "prerrequisitos": ["0714363"] },
+    { "codigo": "0715933", "nombre": "Control de Proyectos", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0714153"] },
+    { "codigo": "0715943", "nombre": "Comportamiento Organizacional", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0714973"] },
+    { "codigo": "0715953", "nombre": "Administración de Recursos Humanos", "tipo": "tecnica", "uc": 3, "area": "gestion", "prerrequisitos": ["0714123"] },
+    { "codigo": "0715963", "nombre": "Dirección de Operaciones", "tipo": "tecnica", "uc": 3, "area": "sistemas", "prerrequisitos": ["0714633"] },
+    { "codigo": "0723123", "nombre": "Estructura de Datos", "tipo": "tecnica", "uc": 3, "area": "computacion", "prerrequisitos": ["0722123"] },
+    { "codigo": "0723131", "nombre": "Taller de Estructura de Datos", "tipo": "tecnica", "uc": 1, "area": "computacion", "prerrequisitos": ["0722131"] },
+    { "codigo": "0723373", "nombre": "Lenguaje de Programación", "tipo": "tecnica", "uc": 3, "area": "computacion", "prerrequisitos": ["0723123"] },
+    { "codigo": "0724713", "nombre": "Desarrollo de Software", "tipo": "tecnica", "uc": 3, "area": "computacion", "prerrequisitos": ["0714612"] },
+
+    { "codigo": "0061183", "nombre": "Ética", "tipo": "humanistica", "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0061222", "nombre": "Historia de la Cultura", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0061822", "nombre": "Sexología Básica", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0061922", "nombre": "Expresión Oral y Escrita", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0062032", "nombre": "Expresión Escrita", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0062052", "nombre": "Dinámica de Grupos", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": ["0061013"] },
+    { "codigo": "0062122", "nombre": "Comunicación y Sociedad", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": ["0061013"] },
+    { "codigo": "0071112", "nombre": "Inglés Instrumental I", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0071222", "nombre": "Inglés Instrumental II", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": ["0071112"] },
+    { "codigo": "0112832", "nombre": "Grupo y Liderazgo", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0112943", "nombre": "Introd. a la Filosofía de la Ciencia", "tipo": "humanistica", "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0113053", "nombre": "Dirección de Reuniones", "tipo": "humanistica", "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "0113183", "nombre": "Sociología Urbana", "tipo": "humanistica", "uc": 3, "area": "generales", "prerrequisitos": [] },
+    { "codigo": "9032242", "nombre": "Educación Ambiental", "tipo": "humanistica", "uc": 2, "area": "generales", "prerrequisitos": [] }
+  ],
+
+  "requisitos": [
+    { "codigo": "0214100", "nombre": "Servicio Comunitario", "uc": 0, "nota": "Requisito de grado sin unidades crédito" },
+    { "codigo": "0151111", "nombre": "Extraacadémica (Deportiva)", "uc": 1, "nota": "Extraacadémica deportiva, aparte de la 0021111 del primer semestre" }
   ]
 }

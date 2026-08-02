@@ -17,8 +17,9 @@
   --nodo: #121d2c;
   --nodo-borde: #2a3a52;
   --tinta: #eaf1fa;
-  --tinta-suave: #9db0c9;
-  --tinta-tenue: #62748e;
+  --tinta-suave: #b3c4da;
+  /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
+  --tinta-tenue: #8497b1;
 
   --area-generales: #9aa8bd;
   --area-ciencias-basicas: #46c8f5;
@@ -54,8 +55,9 @@
   --nodo: #ffffff;
   --nodo-borde: #c6d1e0;
   --tinta: #0c1725;
-  --tinta-suave: #45566e;
-  --tinta-tenue: #75859c;
+  --tinta-suave: #3a4a61;
+  /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
+  --tinta-tenue: #5b6b82;
 
   --area-generales: #56677e;
   --area-ciencias-basicas: #0b7aa8;
@@ -308,28 +310,47 @@ body {
   animation: dibujar-check 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Boton de ficha: asoma al pasar el cursor. En pantallas tactiles, donde
-   no hay hover, se queda siempre visible. */
-.boton-ficha {
+/* La franja inferior de la tarjeta muestra UC y area en reposo, y los
+   controles de estado al pasar el cursor. Se cruzan con un fundido en el
+   mismo sitio, asi que no se solapan ni mueven nada. */
+.solo-reposo,
+.solo-activo {
+  transition: opacity 160ms ease;
+}
+
+.solo-activo {
   opacity: 0;
-  transition:
-    opacity 160ms ease,
-    transform 160ms ease;
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: scale(0.75);
+  pointer-events: none;
 }
 
-.grupo-nodo:hover .boton-ficha,
-.grupo-nodo.activo .boton-ficha {
+.grupo-nodo:hover .solo-reposo,
+.grupo-nodo.activo .solo-reposo {
+  opacity: 0;
+}
+
+.grupo-nodo:hover .solo-activo,
+.grupo-nodo.activo .solo-activo {
   opacity: 1;
-  transform: scale(1);
+  pointer-events: auto;
 }
 
+.segmento {
+  cursor: pointer;
+}
+
+.segmento:hover rect {
+  fill-opacity: 0.32;
+  stroke-opacity: 1;
+}
+
+/* Sin hover no hay forma de sacar la barra: se deja siempre puesta */
 @media (hover: none) {
-  .boton-ficha {
+  .solo-reposo {
+    opacity: 0;
+  }
+  .solo-activo {
     opacity: 1;
-    transform: none;
+    pointer-events: auto;
   }
 }
 

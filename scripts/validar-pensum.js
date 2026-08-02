@@ -131,14 +131,73 @@ for (let s = 1; s <= maxSemestre; s++) {
 }
 if (semestresVacios.length) avisar(`Semestres sin asignaturas: ${semestresVacios.join(', ')}`)
 
+// --- 7. Electivas y requisitos -------------------------------------------
+// Las electivas no tienen semestre fijo: el estudiante elige cuales cursa.
+// Solo se comprueba que no choquen con las obligatorias y que sus
+// prerrequisitos apunten a materias que existan.
+const electivas = pensum.electivas ?? []
+const tipos = new Set(['tecnica', 'humanistica'])
+const codigosElectivas = new Set()
+
+for (const e of electivas) {
+  const ref = e?.codigo ?? '(sin codigo)'
+  if (porCodigo.has(e.codigo)) err(`[${ref}] electiva con el mismo codigo que una obligatoria`)
+  if (codigosElectivas.has(e.codigo)) err(`[${ref}] electiva duplicada`)
+  codigosElectivas.add(e.codigo)
+
+  if (!tipos.has(e.tipo)) err(`[${ref}] tipo de electiva invalido: ${e.tipo}`)
+  if (!Number.isInteger(e.uc) || e.uc < 0) err(`[${ref}] uc invalido: ${e.uc}`)
+  if (areasDeclaradas.size && !areasDeclaradas.has(e.area)) {
+    err(`[${ref}] area "${e.area}" no esta declarada en meta.areas`)
+  }
+
+  for (const pre of e.prerrequisitos ?? []) {
+    if (!porCodigo.has(pre) && !electivas.some((o) => o.codigo === pre)) {
+      err(`[${ref}] prerrequisito inexistente: ${pre}`)
+    }
+  }
+}
+
+const cuotas = meta?.creditos
+if (cuotas) {
+  if (cuotas.obligatorias !== ucSumadas) {
+    err(`meta.creditos.obligatorias dice ${cuotas.obligatorias} pero las uc suman ${ucSumadas}`)
+  }
+  const suma = cuotas.obligatorias + cuotas.electivasTecnicas + cuotas.electivasHumanisticas
+  if (suma !== cuotas.total) {
+    err(`meta.creditos.total dice ${cuotas.total} pero las partes suman ${suma}`)
+  }
+
+  // Sin oferta suficiente, la cuota seria imposible de cumplir
+  for (const [tipo, clave] of [
+    ['tecnica', 'electivasTecnicas'],
+    ['humanistica', 'electivasHumanisticas'],
+  ]) {
+    const disponible = electivas
+      .filter((e) => e.tipo === tipo)
+      .reduce((s, e) => s + e.uc, 0)
+    if (disponible < cuotas[clave]) {
+      err(`Las electivas ${tipo}s ofrecen ${disponible} UC pero la cuota pide ${cuotas[clave]}`)
+    }
+  }
+}
+
 // --- Reporte -------------------------------------------------------------
 const sinSalida = new Set(asignaturas.map((a) => a.codigo))
 for (const a of asignaturas) for (const p of a.prerrequisitos ?? []) sinSalida.delete(p)
 
+const ucElectiva = (tipo) =>
+  electivas.filter((e) => e.tipo === tipo).reduce((s, e) => s + e.uc, 0)
+
 console.log('Validacion del pensum')
 console.log(`  Asignaturas .......... ${asignaturas.length}`)
 console.log(`  Semestres ............ ${maxSemestre}`)
-console.log(`  UC totales ........... ${ucSumadas}`)
+console.log(`  UC obligatorias ...... ${ucSumadas}`)
+console.log(
+  `  Electivas ............ ${electivas.length} ` +
+    `(${ucElectiva('tecnica')} UC tecnicas, ${ucElectiva('humanistica')} UC humanisticas ofertadas)`,
+)
+if (cuotas) console.log(`  Creditos del titulo .. ${cuotas.total}`)
 console.log(`  Sin prerrequisitos ... ${asignaturas.filter((a) => !a.prerrequisitos?.length).length}`)
 console.log(`  Hojas (no desbloquean nada) ... ${sinSalida.size}`)
 console.log('')

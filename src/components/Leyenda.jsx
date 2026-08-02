@@ -18,7 +18,7 @@ function Leyenda({ abierta, alAlternar, areaFiltrada, alFiltrarArea }) {
         onClick={alAlternar}
         title="Mostrar leyenda"
         aria-label="Mostrar leyenda"
-        className="transicion-tema group absolute top-4 left-4 z-20 flex h-9 items-center gap-1.5 rounded-lg border border-panel-borde bg-panel/85 px-2.5 text-[10px] font-bold text-tinta-suave backdrop-blur hover:text-tinta"
+        className="transicion-tema group absolute bottom-4 left-4 z-20 flex h-9 items-center gap-1.5 rounded-xl border border-panel-borde bg-panel/85 px-2.5 text-[10px] font-bold text-tinta-suave backdrop-blur hover:text-tinta"
       >
         <Info size={15} />
         <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-24">
@@ -29,7 +29,7 @@ function Leyenda({ abierta, alAlternar, areaFiltrada, alFiltrarArea }) {
   }
 
   return (
-    <div className="surgir transicion-tema absolute top-4 left-4 z-20 w-56 rounded-xl border border-panel-borde bg-panel/90 backdrop-blur">
+    <div className="surgir transicion-tema absolute bottom-4 left-4 z-20 max-h-[calc(100%-2rem)] w-56 overflow-y-auto rounded-xl border border-panel-borde bg-panel/90 backdrop-blur">
       <button
         type="button"
         onClick={alAlternar}

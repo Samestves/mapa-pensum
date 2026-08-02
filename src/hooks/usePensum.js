@@ -45,10 +45,12 @@ function leerGuardadas(codigosValidos) {
  * Fuente de verdad del avance. Solo se persisten las marcas del usuario
  * (aprobada / cursando); disponible y bloqueada se derivan siempre.
  */
-export function usePensum(asignaturas) {
+export function usePensum(asignaturas, electivas = [], cuotas = null) {
+  // Las electivas comparten el mismo mapa de marcas que las obligatorias:
+  // para el usuario "aprobada" significa lo mismo en las dos.
   const codigosValidos = useMemo(
-    () => new Set(asignaturas.map((a) => a.codigo)),
-    [asignaturas],
+    () => new Set([...asignaturas, ...electivas].map((a) => a.codigo)),
+    [asignaturas, electivas],
   )
 
   const [marcas, setMarcas] = useState(() => leerGuardadas(codigosValidos))
@@ -77,7 +79,7 @@ export function usePensum(asignaturas) {
 
   const estados = useMemo(() => {
     const mapa = {}
-    for (const a of asignaturas) {
+    for (const a of [...asignaturas, ...electivas]) {
       const marca = marcas[a.codigo]
       if (marca) {
         mapa[a.codigo] = marca
@@ -90,7 +92,34 @@ export function usePensum(asignaturas) {
       mapa[a.codigo] = libre ? ESTADO.DISPONIBLE : ESTADO.BLOQUEADA
     }
     return mapa
-  }, [asignaturas, marcas])
+  }, [asignaturas, electivas, marcas])
+
+  /**
+   * Avance de las electivas. No cuenta cuantas escogiste sino cuantas UC
+   * llevas de cada cuota: las tecnicas van de 1 a 3 UC, asi que contarlas
+   * por cabeza daria un numero equivocado.
+   */
+  const avanceElectivas = useMemo(() => {
+    const porTipo = (tipo, meta) => {
+      const elegidas = electivas.filter(
+        (e) => e.tipo === tipo && marcas[e.codigo] === ESTADO.APROBADA,
+      )
+      const uc = elegidas.reduce((s, e) => s + e.uc, 0)
+      return {
+        tipo,
+        elegidas,
+        uc,
+        meta,
+        completa: uc >= meta,
+        // Lo que sobra no suma para el titulo, pero se muestra igual
+        excedente: Math.max(0, uc - meta),
+      }
+    }
+    return {
+      tecnica: porTipo('tecnica', cuotas?.electivasTecnicas ?? 0),
+      humanistica: porTipo('humanistica', cuotas?.electivasHumanisticas ?? 0),
+    }
+  }, [electivas, marcas, cuotas])
 
   const progreso = useMemo(() => {
     let ucAprobadas = 0
@@ -123,17 +152,28 @@ export function usePensum(asignaturas) {
     }
 
     const ucTotales = asignaturas.reduce((s, a) => s + a.uc, 0)
+
+    // El porcentaje del titulo se mide sobre los 153 creditos completos, no
+    // solo sobre las obligatorias: las electivas tambien hacen falta.
+    const ucTitulo = cuotas?.total ?? ucTotales
+    const ucElectivasValidas =
+      Math.min(avanceElectivas.tecnica.uc, avanceElectivas.tecnica.meta) +
+      Math.min(avanceElectivas.humanistica.uc, avanceElectivas.humanistica.meta)
+
     return {
       ucAprobadas,
       ucTotales,
-      porcentaje: ucTotales ? (ucAprobadas / ucTotales) * 100 : 0,
+      ucTitulo,
+      ucElectivas: ucElectivasValidas,
+      porcentaje: ucTitulo ? ((ucAprobadas + ucElectivasValidas) / ucTitulo) * 100 : 0,
+      porcentajeObligatorias: ucTotales ? (ucAprobadas / ucTotales) * 100 : 0,
       aprobadas,
       cursando,
       disponibles,
       total: asignaturas.length,
       porArea: [...areas.values()].sort((a, b) => b.uc - a.uc),
     }
-  }, [asignaturas, estados])
+  }, [asignaturas, estados, cuotas, avanceElectivas])
 
   // Fija una marca concreta. marca === null desmarca.
   const marcar = useCallback((codigo, marca) => {
@@ -178,6 +218,7 @@ export function usePensum(asignaturas) {
     marcas,
     estados,
     progreso,
+    avanceElectivas,
     descarga,
     toque,
     marcar,

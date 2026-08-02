@@ -22,9 +22,13 @@ medida que apruebas lo que va antes.
   *Disponible* y *bloqueada* se recalculan siempre a partir de los prerrequisitos.
 - **Cadena completa**: al señalar una materia se ilumina todo lo que necesita hacia atrás
   y todo lo que abre hacia adelante.
+- **Electivas**: catálogo de las 39 electivas técnicas y humanísticas, con las cuotas de
+  15 y 6 UC que exige el título.
 - **Planificador de ruta**: calcula en cuántos semestres terminas según la carga que puedas
   llevar, respetando todas las prelaciones, y te lo lleva en PDF o Markdown.
 - **Avance por área**, con filtro para aislar cada área en el mapa.
+- **Vista de lista** para móvil: el mismo contenido en un formato que se lee con el pulgar,
+  porque el mapa completo mide 3200 px y en un teléfono solo cabe a escala 0.10.
 - Tema claro/oscuro, pan y zoom, y todo el progreso guardado en el navegador.
 
 ## Correr en local
@@ -104,15 +108,24 @@ pasillo libre que queda entre dos tarjetas de la columna intermedia.
 Un `feGaussianBlur` con `objectBoundingBox` no pinta nada sobre una línea perfectamente
 horizontal, porque la región del filtro queda con altura cero.
 
-## Pendiente
+## Los créditos
 
-Las unidades crédito de `pensum.json` se dedujeron del último dígito del código de cada
-asignatura y suman 132 UC. **El pensum oficial vigente no declara las UC en ninguna parte**:
-solo lista código, asignatura y prelación. Códigos y prelaciones sí están verificados contra
-él; las UC siguen siendo una inferencia.
+El título son **153 unidades crédito**, según INTRADACE:
 
-El pensum oficial incluye además **8 asignaturas electivas** (3 socio-humanísticas y 5
-técnicas) que este mapa todavía no modela.
+| | UC |
+|---|---|
+| 49 asignaturas obligatorias | 132 |
+| Electivas técnicas | 15 |
+| Electivas humanísticas | 6 |
+| **Total** | **153** |
+
+Los códigos y las prelaciones están verificados contra el pensum oficial vigente
+(resolución CU-021/2013). Las UC de cada asignatura salen del último dígito de su código;
+el documento oficial no las declara, pero la suma cuadra exactamente con el total de
+INTRADACE, así que el criterio es correcto.
+
+Aparte quedan dos requisitos de grado sin peso en esos 153: el **Servicio Comunitario**
+(`0214100`) y la **Extraacadémica Deportiva** (`0151111`).
 
 ## Licencia
 

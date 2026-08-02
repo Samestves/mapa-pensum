@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react'
+import { Check, CircleDot, Info } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorArea, etiquetaArea } from '../theme/areas'
@@ -16,7 +16,12 @@ const ESTILO = {
 
 // Casilla del checklist, arriba a la derecha de la tarjeta
 const CASILLA = { cx: NODO.ancho - NODO.padDer - 9, cy: 22, lado: 18 }
-const BOTON_FICHA = { cx: CASILLA.cx - 28, cy: CASILLA.cy }
+
+// Barra de acciones. Ocupa la franja inferior de la tarjeta, la misma donde
+// en reposo van las UC y el area: son datos secundarios, asi que se cambian
+// por los controles al pasar el cursor. Nada se superpone al nombre.
+const BARRA = { y: 74, alto: 20, x: NODO.padIzq, ancho: NODO.ancho - NODO.padIzq - NODO.padDer }
+const SEGMENTO = BARRA.ancho / 3
 
 /** Casilla que se marca y desmarca. El check se dibuja trazando la linea. */
 function Casilla({ estado, color }) {
@@ -62,6 +67,47 @@ function Casilla({ estado, color }) {
   )
 }
 
+/** Un segmento de la barra de acciones */
+function Segmento({ indice, icono: Icono, etiqueta, activo, color, alPulsar }) {
+  const x = BARRA.x + indice * SEGMENTO
+  const cx = x + SEGMENTO / 2
+
+  return (
+    <g
+      onClick={(e) => {
+        // Sin esto el click subiria a la tarjeta y la marcaria tambien
+        e.stopPropagation()
+        alPulsar()
+      }}
+      className="segmento"
+    >
+      <title>{etiqueta}</title>
+      <rect
+        x={x + 1}
+        y={BARRA.y}
+        width={SEGMENTO - 2}
+        height={BARRA.alto}
+        rx={6}
+        fill={color}
+        fillOpacity={activo ? 0.22 : 0}
+        stroke={color}
+        strokeOpacity={activo ? 0.9 : 0.25}
+        strokeWidth="1"
+        style={{ transition: 'fill-opacity 160ms ease, stroke-opacity 160ms ease' }}
+      />
+      <Icono
+        x={cx - 6.5}
+        y={BARRA.y + BARRA.alto / 2 - 6.5}
+        width={13}
+        height={13}
+        color={color}
+        opacity={activo ? 1 : 0.75}
+        strokeWidth={2.4}
+      />
+    </g>
+  )
+}
+
 function NodoAsignatura({
   nodo,
   estado,
@@ -72,6 +118,7 @@ function NodoAsignatura({
   claveDestello,
   tocado,
   claveToque,
+  alMarcar,
   alAlternar,
   alVerFicha,
   alEntrar,
@@ -217,61 +264,60 @@ function NodoAsignatura({
         </text>
       ))}
 
-      <text
-        x={NODO.padIzq}
-        y={86}
-        fontSize={TEXTO.meta}
-        fill="var(--tinta-tenue)"
-        className="font-mono"
-      >
-        {uc} UC
-      </text>
+      {/* En reposo: UC y area. Al pasar el cursor se cambian por la barra. */}
+      <g className="solo-reposo">
+        <text
+          x={NODO.padIzq}
+          y={86}
+          fontSize={TEXTO.meta}
+          fill="var(--tinta-tenue)"
+          className="font-mono"
+        >
+          {uc} UC
+        </text>
+        <text
+          x={NODO.ancho - NODO.padDer}
+          y={86}
+          textAnchor="end"
+          fontSize={TEXTO.meta}
+          fill={acento}
+          fillOpacity={estilo.acento}
+          className="font-medium"
+        >
+          {etiquetaArea(area)}
+        </text>
+      </g>
 
-      <text
-        x={NODO.ancho - NODO.padDer}
-        y={86}
-        textAnchor="end"
-        fontSize={TEXTO.meta}
-        fill={acento}
-        fillOpacity={estilo.acento}
-        className="font-medium"
-      >
-        {etiquetaArea(area)}
-      </text>
-
-      <Casilla estado={estado} color={colorCasilla} />
-
-      {/* Ficha con prerrequisitos y opcion de "cursando". Va en el hueco
-          libre entre el codigo y la casilla: no pisa ningun texto. */}
-      <g
-        className="boton-ficha"
-        onClick={(e) => {
-          // Sin esto el click subiria a la tarjeta y ademas la marcaria
-          e.stopPropagation()
-          alVerFicha()
-        }}
-      >
-        <title>Ver ficha de la materia</title>
-        <circle cx={BOTON_FICHA.cx} cy={BOTON_FICHA.cy} r="10" fill="var(--nodo)" />
-        <circle
-          cx={BOTON_FICHA.cx}
-          cy={BOTON_FICHA.cy}
-          r="9.5"
-          fill="var(--tinta-suave)"
-          fillOpacity="0.12"
-          stroke="var(--tinta-suave)"
-          strokeOpacity="0.5"
-          strokeWidth="1"
+      <g className="solo-activo">
+        <Segmento
+          indice={0}
+          icono={Check}
+          etiqueta="Aprobada"
+          activo={aprobada}
+          color="var(--estado-aprobada)"
+          alPulsar={() => alMarcar(codigo, aprobada ? null : ESTADO.APROBADA)}
         />
-        <Info
-          x={BOTON_FICHA.cx - 6}
-          y={BOTON_FICHA.cy - 6}
-          width={12}
-          height={12}
+        <Segmento
+          indice={1}
+          icono={CircleDot}
+          etiqueta="Cursando"
+          activo={estado === ESTADO.CURSANDO}
+          color="var(--estado-cursando)"
+          alPulsar={() =>
+            alMarcar(codigo, estado === ESTADO.CURSANDO ? null : ESTADO.CURSANDO)
+          }
+        />
+        <Segmento
+          indice={2}
+          icono={Info}
+          etiqueta="Ver prerrequisitos y detalle"
+          activo={seleccionado}
           color="var(--tinta-suave)"
-          strokeWidth={2.4}
+          alPulsar={alVerFicha}
         />
       </g>
+
+      <Casilla estado={estado} color={colorCasilla} />
     </g>
   )
 }

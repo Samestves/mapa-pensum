@@ -9,17 +9,29 @@ import Arista from './Arista'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 
-function BotonVista({ icono: Icono, titulo, alPulsar }) {
+/* Los controles del lienzo van juntos en un solo bloque con separadores,
+   no como botones sueltos flotando: se leen como un mando, no como ruido. */
+function BotonDock({ icono: Icono, titulo, alPulsar }) {
   return (
     <button
       type="button"
       title={titulo}
       aria-label={titulo}
       onClick={alPulsar}
-      className="transicion-tema grid size-9 place-items-center rounded-lg border border-panel-borde bg-panel/85 text-tinta-suave backdrop-blur hover:text-tinta"
+      className="grid size-9 place-items-center text-tinta-suave transition-colors hover:text-tinta"
     >
       <Icono size={16} />
     </button>
+  )
+}
+
+function Dock({ children, clase }) {
+  return (
+    <div
+      className={`transicion-tema absolute z-20 flex overflow-hidden rounded-xl border border-panel-borde bg-panel/85 backdrop-blur ${clase}`}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -204,6 +216,7 @@ function GrafoPensum({
               claveDestello={descarga?.n}
               tocado={toque?.codigo === nodo.codigo}
               claveToque={toque?.n}
+              alMarcar={alMarcar}
               alEntrar={() => alSenalar(nodo.codigo)}
               alSalir={() => alSenalar(null)}
               alAlternar={() => {
@@ -233,11 +246,11 @@ function GrafoPensum({
         />
       )}
 
-      <div className="absolute right-4 bottom-4 flex flex-col gap-2">
-        <BotonVista icono={Plus} titulo="Acercar" alPulsar={acercar} />
-        <BotonVista icono={Minus} titulo="Alejar" alPulsar={alejar} />
-        <BotonVista icono={Maximize} titulo="Encajar en pantalla" alPulsar={encajar} />
-      </div>
+      <Dock clase="right-4 bottom-4 flex-col divide-y divide-panel-borde">
+        <BotonDock icono={Plus} titulo="Acercar" alPulsar={acercar} />
+        <BotonDock icono={Minus} titulo="Alejar" alPulsar={alejar} />
+        <BotonDock icono={Maximize} titulo="Encajar en pantalla" alPulsar={encajar} />
+      </Dock>
     </div>
   )
 }

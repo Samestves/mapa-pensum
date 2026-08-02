@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronsLeft } from 'lucide-react'
 import pensum from './data/pensum.json'
 import { calcularLayout } from './layout/calcularLayout'
@@ -8,33 +8,47 @@ import BarraSuperior from './components/BarraSuperior'
 import GrafoPensum from './components/GrafoPensum'
 import Leyenda from './components/Leyenda'
 import PanelProgreso from './components/PanelProgreso'
+import PanelElectivas from './components/PanelElectivas'
 import PlanRuta from './components/PlanRuta'
+import VistaLista from './components/VistaLista'
+
+const CLAVE_VISTA = 'mapa-pensum:vista'
 
 function App() {
-  const { meta, asignaturas } = pensum
+  const { meta, asignaturas, electivas } = pensum
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
   const layout = useMemo(() => calcularLayout(asignaturas), [asignaturas])
 
-  const { marcas, estados, progreso, descarga, toque, marcar, alternarAprobada, reiniciar, hayMarcas } =
-    usePensum(asignaturas)
+  const {
+    marcas,
+    estados,
+    progreso,
+    avanceElectivas,
+    descarga,
+    toque,
+    marcar,
+    alternarAprobada,
+    reiniciar,
+    hayMarcas,
+  } = usePensum(asignaturas, electivas, meta.creditos)
   const { tema, alternarTema } = useTema()
 
-  // El panel arranca abierto solo si hay sitio; la leyenda, plegada en movil
+  // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
+  const [vista, setVista] = useState(
+    () => localStorage.getItem(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
+  )
+  useEffect(() => {
+    localStorage.setItem(CLAVE_VISTA, vista)
+  }, [vista])
+
   const [panelAbierto, setPanelAbierto] = useState(() => window.innerWidth >= 1024)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
   const [planAbierto, setPlanAbierto] = useState(false)
+  const [electivasAbiertas, setElectivasAbiertas] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
-
-  const totales = useMemo(
-    () => ({
-      asignaturas: asignaturas.length,
-      uc: asignaturas.reduce((s, a) => s + a.uc, 0),
-    }),
-    [asignaturas],
-  )
 
   // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
   // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
@@ -53,15 +67,11 @@ function App() {
     <div className="flex h-full flex-col">
       <BarraSuperior
         meta={meta}
-        totales={totales}
         tema={tema}
         alternarTema={alternarTema}
-        reiniciar={() => {
-          reiniciar()
-          setSeleccionado(null)
-        }}
-        hayMarcas={hayMarcas}
         resumen={progreso}
+        vista={vista}
+        alCambiarVista={setVista}
         panelAbierto={panelAbierto}
         alAlternarPanel={() => setPanelAbierto((v) => !v)}
         alPlanificar={() => setPlanAbierto(true)}
@@ -79,27 +89,43 @@ function App() {
         />
       )}
 
-      <div className="relative flex flex-1 overflow-hidden">
-        <GrafoPensum
-          layout={layout}
+      {electivasAbiertas && (
+        <PanelElectivas
+          electivas={electivas}
           estados={estados}
-          descarga={descarga}
-          toque={toque}
-          areaFiltrada={areaFiltrada}
-          seleccionado={seleccionado}
-          senalado={senalado}
-          alSenalar={setSenalado}
-          alSeleccionar={seleccionar}
-          alAlternarAprobada={alternarAprobada}
+          marcas={marcas}
+          avance={avanceElectivas}
           alMarcar={marcar}
+          alCerrar={() => setElectivasAbiertas(false)}
         />
+      )}
 
-        <Leyenda
-          abierta={leyendaAbierta}
-          alAlternar={() => setLeyendaAbierta((v) => !v)}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={filtrarArea}
-        />
+      <div className="relative flex flex-1 overflow-hidden">
+        {vista === 'mapa' ? (
+          <>
+            <GrafoPensum
+              layout={layout}
+              estados={estados}
+              descarga={descarga}
+              toque={toque}
+              areaFiltrada={areaFiltrada}
+              seleccionado={seleccionado}
+              senalado={senalado}
+              alSenalar={setSenalado}
+              alSeleccionar={seleccionar}
+              alAlternarAprobada={alternarAprobada}
+              alMarcar={marcar}
+            />
+            <Leyenda
+              abierta={leyendaAbierta}
+              alAlternar={() => setLeyendaAbierta((v) => !v)}
+              areaFiltrada={areaFiltrada}
+              alFiltrarArea={filtrarArea}
+            />
+          </>
+        ) : (
+          <VistaLista layout={layout} estados={estados} alMarcar={marcar} />
+        )}
 
         {/* Pestana en el borde: deja claro de donde sale el panel */}
         {!panelAbierto && (
@@ -124,8 +150,12 @@ function App() {
 
         <PanelProgreso
           progreso={progreso}
+          avanceElectivas={avanceElectivas}
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
+          alAbrirElectivas={() => setElectivasAbiertas(true)}
+          reiniciar={reiniciar}
+          hayMarcas={hayMarcas}
           abierto={panelAbierto}
           alCerrar={() => setPanelAbierto(false)}
         />
