@@ -48,3 +48,16 @@ export function cadenaDe(codigo, relaciones) {
     ...alcanzables(codigo, relaciones.adelante),
   ])
 }
+
+/**
+ * Cuantas asignaturas depende de cada una, directa o indirectamente.
+ * Es la medida de "cuanto te traba" dejarla para despues, y con eso el
+ * planificador decide que conviene adelantar.
+ */
+export function pesoDesbloqueo(relaciones) {
+  const peso = new Map()
+  for (const codigo of relaciones.adelante.keys()) {
+    peso.set(codigo, alcanzables(codigo, relaciones.adelante).size)
+  }
+  return peso
+}

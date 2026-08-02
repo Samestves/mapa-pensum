@@ -4,6 +4,7 @@ import {
   Moon,
   PanelRight,
   RotateCcw,
+  Route,
   Sun,
   TriangleAlert,
 } from 'lucide-react'
@@ -18,6 +19,7 @@ function BarraSuperior({
   resumen,
   panelAbierto,
   alAlternarPanel,
+  alPlanificar,
 }) {
   const [confirmando, setConfirmando] = useState(false)
   const caja = useRef(null)
@@ -67,6 +69,16 @@ function BarraSuperior({
           {resumen.ucAprobadas}/{resumen.ucTotales} UC
         </span>
       </div>
+
+      <button
+        type="button"
+        onClick={alPlanificar}
+        title="Planificar mi ruta y exportarla"
+        className="transicion-tema flex shrink-0 items-center gap-2 rounded-lg border border-panel-borde px-3 py-2 text-xs font-semibold text-tinta-suave hover:text-tinta"
+      >
+        <Route size={15} />
+        <span className="hidden sm:inline">Mi ruta</span>
+      </button>
 
       <div ref={caja} className="relative">
         <button

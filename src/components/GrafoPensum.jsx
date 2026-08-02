@@ -172,7 +172,11 @@ function GrafoPensum({
                 x2={arista.x2}
                 y2={arista.y2}
                 area={arista.area}
-                retardo={(i % 6) * 0.5}
+                // Retardo y velocidad distintos por cable: sincronizados
+                // todos se veria como un metronomo. Se calculan del indice,
+                // asi que son estables y no reinician la animacion.
+                retardo={(i % 7) * 0.55}
+                velocidad={3.8 + (i % 5) * 0.35}
                 viva={estados[arista.origen] === ESTADO.APROBADA}
                 resaltada={
                   cadena != null && cadena.has(arista.origen) && cadena.has(arista.destino)

@@ -151,14 +151,20 @@ body {
 /* Cometa: varias capas con el MISMO guion corto, desfasadas unas centesimas
    entre si. La de delante va fina y brillante y las de atras mas anchas y
    tenues, asi se lee como una luz con estela y no como un guion deslizandose.
-   El guion suma 100 con su hueco, asi que el bucle cierra sin salto. */
+   El guion suma 100 con su hueco, asi que el bucle cierra sin salto.
+
+   --vel se fija una vez por cable y nunca cambia: variar la velocidad entre
+   cables quita el aire mecanico, pero cambiarla en caliente reiniciaria la
+   animacion y se veria un tiron. */
 .cometa {
   stroke-dasharray: 2.5 97.5;
-  animation: viajar 4.2s linear infinite;
+  animation: viajar var(--vel, 4.2s) linear infinite;
 }
 
-/* Particula que viaja por el trazado real del cable. offset-path acepta el
-   mismo path que dibuja la arista, asi que sigue la curva exacta. */
+/* Perla de luz que viaja por el trazado real del cable. offset-path acepta
+   el mismo path que dibuja la arista, asi que sigue la curva exacta.
+   Va ligeramente adelantada respecto a la estela para quedar justo en su
+   cabeza: la estela es la cola, esta es la bola. */
 @keyframes recorrer {
   from {
     offset-distance: 0%;
@@ -171,7 +177,7 @@ body {
 .particula {
   offset-path: var(--ruta);
   offset-rotate: 0deg;
-  animation: recorrer 4.2s linear infinite;
+  animation: recorrer var(--vel, 4.2s) linear infinite;
 }
 
 /* currentColor es el color del area, que se fija en el <g> de cada arista */
@@ -356,6 +362,49 @@ body {
 
 .surgir {
   animation: surgir 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* ------------------------------------------------------------------
+   Impresion. Se oculta todo con visibility en vez de display: asi la
+   hoja conserva su maquetacion en lugar de recolocarse al imprimir.
+   ------------------------------------------------------------------ */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    overflow: visible;
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .hoja,
+  .hoja * {
+    visibility: visible;
+  }
+
+  .hoja {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  /* Que un semestre no se parta a la mitad entre dos hojas */
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

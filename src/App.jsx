@@ -8,6 +8,7 @@ import BarraSuperior from './components/BarraSuperior'
 import GrafoPensum from './components/GrafoPensum'
 import Leyenda from './components/Leyenda'
 import PanelProgreso from './components/PanelProgreso'
+import PlanRuta from './components/PlanRuta'
 
 function App() {
   const { meta, asignaturas } = pensum
@@ -15,13 +16,14 @@ function App() {
   // El layout es geometria pura y no depende del avance: se calcula una vez
   const layout = useMemo(() => calcularLayout(asignaturas), [asignaturas])
 
-  const { estados, progreso, descarga, toque, marcar, alternarAprobada, reiniciar, hayMarcas } =
+  const { marcas, estados, progreso, descarga, toque, marcar, alternarAprobada, reiniciar, hayMarcas } =
     usePensum(asignaturas)
   const { tema, alternarTema } = useTema()
 
   // El panel arranca abierto solo si hay sitio; la leyenda, plegada en movil
   const [panelAbierto, setPanelAbierto] = useState(() => window.innerWidth >= 1024)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
+  const [planAbierto, setPlanAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
@@ -62,7 +64,20 @@ function App() {
         resumen={progreso}
         panelAbierto={panelAbierto}
         alAlternarPanel={() => setPanelAbierto((v) => !v)}
+        alPlanificar={() => setPlanAbierto(true)}
       />
+
+      {planAbierto && (
+        <PlanRuta
+          asignaturas={asignaturas}
+          marcas={marcas}
+          estados={estados}
+          progreso={progreso}
+          relaciones={layout.relaciones}
+          meta={meta}
+          alCerrar={() => setPlanAbierto(false)}
+        />
+      )}
 
       <div className="relative flex flex-1 overflow-hidden">
         <GrafoPensum
