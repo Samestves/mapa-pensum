@@ -31,16 +31,18 @@ function Enlace({ href, icono: Icono, children }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="group/enlace inline-flex items-center gap-2 rounded-xl border border-panel-borde bg-panel px-3.5 py-2.5 text-xs font-bold whitespace-nowrap text-tinta-suave transition-[transform,border-color,background-color,color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-tinta-tenue hover:bg-panel-suave hover:text-tinta hover:shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)] focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none"
+      className="group/enlace flex min-h-11 w-full items-center gap-2 rounded-xl border border-panel-borde bg-panel px-3.5 py-2.5 text-xs font-bold whitespace-nowrap text-tinta-suave transition-[transform,border-color,background-color,color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-tinta-tenue hover:bg-panel-suave hover:text-tinta hover:shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)] focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none sm:inline-flex sm:min-h-0 sm:w-auto"
     >
       <Icono
         size={14}
         className="shrink-0 text-tinta-tenue transition-[transform,color] duration-300 ease-out group-hover/enlace:scale-110 group-hover/enlace:text-tinta"
       />
       {children}
+      {/* En movil la flecha se va al borde derecho, que es donde se espera en
+          una fila a lo ancho. En escritorio vuelve a pegarse al texto. */}
       <ArrowUpRight
         size={13}
-        className="shrink-0 text-tinta-tenue transition-transform duration-300 ease-out group-hover/enlace:-translate-y-0.5 group-hover/enlace:translate-x-0.5"
+        className="ml-auto shrink-0 text-tinta-tenue transition-transform duration-300 ease-out group-hover/enlace:-translate-y-0.5 group-hover/enlace:translate-x-0.5 sm:ml-0"
       />
     </a>
   )
@@ -80,12 +82,16 @@ function PieSelector() {
           antes de tomar cualquier decisión.
         </p>
 
-        {/* Los enlaces se ajustan a su texto en vez de repartirse el ancho:
-            estirados a media pantalla parecerian botones de formulario, y
-            esto es un pie. Cada uno en una linea, sin subtitulo: a 10px el
-            subtitulo tenia el mismo problema de legibilidad que acabamos de
-            arreglar en las tarjetas. */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {/* En escritorio cada enlace se ajusta a su texto: estirados a media
+            pantalla parecerian botones de formulario, y esto es un pie.
+
+            En movil no cabe esa fila. Los dos juntos miden 340 px y a 360 se
+            partian en dos lineas desalineadas; a 390 entraban por tres
+            pixeles, o sea que cualquier diferencia de renderizado los volvia
+            a partir. Y a 38 px de alto quedaban por debajo de los 44 que pide
+            un objetivo tactil. Apilados a lo ancho el reparto es explicito en
+            vez de depender de si cabe. */}
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <Enlace href={enlaceReporte()} icono={Flag}>
             Reportar un error
           </Enlace>
