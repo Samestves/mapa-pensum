@@ -18,7 +18,7 @@ const GIRO = 7
  * por dos palabras no se justificaba.
  *
  * tabular-nums mantiene las cifras en columna: sin eso, 49 y 10 ocupan anchos
- * distintos y las ocho tarjetas quedan desalineadas entre si.
+ * distintos y las tarjetas quedan desalineadas entre si.
  */
 function Cifra({ valor, etiqueta }) {
   return (

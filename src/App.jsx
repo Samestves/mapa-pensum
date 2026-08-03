@@ -16,7 +16,7 @@ function ponerMeta(carrera) {
     ? `Mapa interactivo del pensum de ${carrera.nombre} en la UDO Núcleo de Monagas: ` +
       `${carrera.asignaturas} materias en ${carrera.semestres} semestres, con sus prelaciones.`
     : 'Mapa interactivo de los pensums de la Universidad de Oriente, Núcleo de Monagas. ' +
-      'Ocho carreras con sus materias, prelaciones y avance.'
+      'Nueve carreras con sus materias, prelaciones y avance.'
 
   document.querySelector('meta[name="description"]')?.setAttribute('content', descripcion)
   document

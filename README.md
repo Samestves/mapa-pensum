@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="public/og.png" alt="Mapa de Pensum — las ocho carreras del Núcleo de Monagas" width="820">
+<img src="public/og.png" alt="Mapa de Pensum — las nueve carreras del Núcleo de Monagas" width="820">
 
 # Mapa de Pensum
 
 **Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto te falta.**
 
-Las ocho carreras de la Universidad de Oriente, Núcleo de Monagas, dibujadas como el grafo de prelaciones que en realidad son.
+Las nueve carreras de la Universidad de Oriente, Núcleo de Monagas, dibujadas como el grafo de prelaciones que en realidad son.
 
 [**Abrir la aplicación →**](https://mapa-pensum.vercel.app)
 
@@ -32,14 +32,15 @@ Un pensum **no es una lista: es un grafo dirigido**. Esta herramienta lo dibuja 
 | **Cadena al señalar** | Pasa el cursor sobre una materia y se ilumina todo lo que necesita y todo lo que habilita |
 | **Planificador** | Dice en cuántos semestres terminas según la carga que puedas llevar, y lo exporta a PDF o Markdown |
 | **Vista de lista** | En el teléfono el mapa completo se vería a escala 0,10. La lista es la vista principal en móvil |
-| **Ocho carreras** | Cada una con su color, su ruta y su propia vista previa al compartir |
+| **Nueve carreras** | Cada una con su color, su ruta y su propia vista previa al compartir |
 
-## Las ocho carreras
+## Las nueve carreras
 
 | Carrera | Obligatorias | Electivas | UC oblig. | Cadena más larga | Créditos del título |
 |---|---:|---:|---:|---:|---:|
 | [Gerencia de Recursos Humanos](https://mapa-pensum.vercel.app/gerencia-de-recursos-humanos) | 49 | 16 | 149 | 6 | — |
 | [Ingeniería Agronómica](https://mapa-pensum.vercel.app/ingenieria-agronomica) | 58 | 49 | 150 | 6 | — |
+| [Ingeniería Ambiental](https://mapa-pensum.vercel.app/ingenieria-ambiental) | 55 | 22 | 153 | 5 | — |
 | [Ingeniería de Petróleo](https://mapa-pensum.vercel.app/ingenieria-de-petroleo) | 53 | 25 | 150 | **9** | — |
 | [Ingeniería de Sistemas](https://mapa-pensum.vercel.app/ingenieria-de-sistemas) | 49 | 39 | 132 | **9** | **153** |
 | [Ingeniería en Producción Animal](https://mapa-pensum.vercel.app/ingenieria-en-produccion-animal) | 60 | 25 | 160 | 6 | — |
@@ -47,7 +48,7 @@ Un pensum **no es una lista: es un grafo dirigido**. Esta herramienta lo dibuja 
 | [Licenciatura en Contaduría Pública](https://mapa-pensum.vercel.app/licenciatura-en-contaduria-publica) | 56 | 23 | 155 | 8 | — |
 | [Licenciatura en Tecnología de los Alimentos](https://mapa-pensum.vercel.app/licenciatura-en-tecnologia-de-los-alimentos) | 45 | 36 | 140 | 4 | — |
 
-**659 materias** en total. La *cadena más larga* es el número mínimo de semestres que impone la estructura de prelaciones: en Petróleo hay nueve materias encadenadas una detrás de otra, así que **no hay carga académica que permita terminar en menos de nueve semestres**. Es el tipo de cosa que la tabla original no te dice.
+**736 materias** en total. La *cadena más larga* es el número mínimo de semestres que impone la estructura de prelaciones: en Petróleo hay nueve materias encadenadas una detrás de otra, así que **no hay carga académica que permita terminar en menos de nueve semestres**. Es el tipo de cosa que la tabla original no te dice.
 
 Solo Sistemas tiene los créditos del título confirmados. Ver [Honestidad con los datos](#honestidad-con-los-datos).
 
@@ -272,7 +273,7 @@ node scripts/validar-pensum.js ruta/a/otra/carpeta
 ## Rutas y SEO
 
 ```
-/           Selector: las ocho carreras
+/           Selector: las nueve carreras
 /<slug>     Mapa de una carrera
 ```
 
@@ -280,7 +281,7 @@ Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y q
 
 ## Se guarda en el teléfono y abre sin internet
 
-La aplicación se puede instalar. Una vez instalada **abre sin conexión y no vuelve a gastar datos** para consultar el pensum: el service worker guarda las ocho carreras completas, la tipografía y los iconos, unos 780 kB una sola vez.
+La aplicación se puede instalar. Una vez instalada **abre sin conexión y no vuelve a gastar datos** para consultar el pensum: el service worker guarda las nueve carreras completas, la tipografía y los iconos, unos 780 kB una sola vez.
 
 Eso importa aquí más que en otros sitios. El público objetivo mira su pensum muchas veces, desde teléfonos modestos y con datos que paga por megabyte.
 

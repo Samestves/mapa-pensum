@@ -80,10 +80,21 @@ for (let x = (ANCHO - anchoTexto) / 2; x < (ANCHO + anchoTexto) / 2; x++) {
   for (let y = 272; y < 275; y++) punto(Math.round(x), y, ACENTO, 0.9)
 }
 
-// Siluetas reales de las ocho carreras
+// Siluetas reales de todas las carreras del indice
 const indice = JSON.parse(readFileSync('src/data/carreras/indice.json', 'utf8'))
-const PASO_PUNTO = 12
-const SEPARACION = 22
+
+// El paso se calcula, no se fija. Con ocho carreras cabian doce pixeles por
+// columna; al entrar la novena la fila se salio del lienzo y se cortaron la
+// primera y la ultima. Ahora se busca el paso mas grande que quepa, asi que
+// la imagen sigue saliendo bien cuando entre la decima.
+const MARGEN_LADO = 60
+const SEPARACION_RELATIVA = 1.85 // el hueco entre carreras, en pasos
+const columnasTotales = indice.reduce((s, c) => s + c.silueta.length, 0)
+const huecos = (indice.length - 1) * SEPARACION_RELATIVA
+const PASO_PUNTO = Math.min(12, (ANCHO - MARGEN_LADO * 2) / (columnasTotales + huecos))
+const SEPARACION = PASO_PUNTO * SEPARACION_RELATIVA
+const RADIO_PUNTO = PASO_PUNTO * 0.325
+
 const anchoCarrera = (c) => c.silueta.length * PASO_PUNTO
 const anchoTotal =
   indice.reduce((s, c) => s + anchoCarrera(c), 0) + (indice.length - 1) * SEPARACION
@@ -98,7 +109,7 @@ for (const carrera of indice) {
       circulo(
         x + columna * PASO_PUNTO + PASO_PUNTO / 2,
         yBase + fila * PASO_PUNTO + PASO_PUNTO / 2,
-        3.9,
+        RADIO_PUNTO,
         color,
         // Las de abajo se apagan: da profundidad y deja leer la columna
         0.95 - (fila / 9) * 0.45,

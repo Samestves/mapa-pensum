@@ -17,7 +17,7 @@ const CLAVE_VISTA = 'mapa-pensum:vista'
 
 /**
  * El mapa de una carrera. Recibe el pensum ya normalizado y no sabe de donde
- * salio: es lo que permite que la misma vista sirva para las ocho.
+ * salio: es lo que permite que la misma vista sirva para las nueve.
  *
  * La clave de React debe ser el slug. Al cambiar de carrera se remonta entero
  * y el estado de vista (zoom, seleccion, paneles abiertos) arranca limpio, que

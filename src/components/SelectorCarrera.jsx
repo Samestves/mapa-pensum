@@ -7,7 +7,7 @@ import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
 
 /**
- * Portada y selector. Es la primera impresion del proyecto, asi que las ocho
+ * Portada y selector. Es la primera impresion del proyecto, asi que las nueve
  * carreras se ven a la vez sin scroll en escritorio.
  *
  * La carrera vista por ultima vez se marca con "Continuar" en vez de saltar
@@ -57,7 +57,13 @@ function SelectorCarrera({ alElegir }) {
           </button>
         </header>
 
-        <p className="mt-6 max-w-xl text-[13px] leading-relaxed text-tinta-suave sm:mt-8 xl:max-w-2xl xl:text-[15px]">
+        {/* Esta frase estaba a la vista y ocupaba una banda entera que las
+            tarjetas aprovechan mejor. No se borra, se esconde: sigue siendo
+            la primera orientacion que oye quien entra con lector de pantalla,
+            y la siguen leyendo los rastreadores que ejecutan JavaScript. Lo
+            que ven los que no lo ejecutan es la meta description, que dice lo
+            mismo y no depende de esto. */}
+        <p className="sr-only">
           Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y
           cuánto te falta. Elige la tuya.
         </p>
