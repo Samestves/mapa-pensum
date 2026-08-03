@@ -66,22 +66,12 @@ function PieSelector() {
   // mt-auto no puede garantizar por si solo.
   return (
     <footer className="mt-auto border-t border-panel-borde pt-5 xl:pt-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <p className="max-w-2xl text-[11px] leading-relaxed text-tinta-suave xl:text-xs">
-          Datos tomados de los pensums publicados por la{' '}
-          <a
-            href="http://dacemonagas.udo.edu.ve"
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-tinta underline decoration-panel-borde underline-offset-2 transition-colors duration-200 hover:decoration-current"
-          >
-            DACE del Núcleo de Monagas
-          </a>
-          . Pueden contener errores o estar desactualizados:{' '}
-          <strong className="font-bold text-tinta">confirma con control de estudios</strong>{' '}
-          antes de tomar cualquier decisión.
-        </p>
-
+      {/* Los enlaces van PRIMERO en el marcado y el aviso despues, que es el
+          orden en que se leen en movil. En escritorio se invierte la fila:
+          asi el aviso vuelve a la izquierda y los enlaces a la derecha sin
+          tener que duplicar nada ni pelearse con el orden del foco en la
+          pantalla donde mas gente entra. */}
+      <div className="flex flex-col gap-5 lg:flex-row-reverse lg:items-start lg:justify-between lg:gap-10">
         {/* En escritorio cada enlace se ajusta a su texto: estirados a media
             pantalla parecerian botones de formulario, y esto es un pie.
 
@@ -99,6 +89,25 @@ function PieSelector() {
             Código abierto
           </Enlace>
         </div>
+
+        {/* Justificado, con guionado automatico. Justificar sin partir
+            palabras en una columna estrecha abre rios de espacio entre
+            palabras; el navegador solo sabe donde partir en español porque
+            el <html> declara lang="es". */}
+        <p className="max-w-2xl hyphens-auto text-justify text-[11px] leading-relaxed text-tinta-suave xl:text-xs">
+          Datos tomados de los pensums publicados por la{' '}
+          <a
+            href="http://dacemonagas.udo.edu.ve"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-tinta underline decoration-panel-borde underline-offset-2 transition-colors duration-200 hover:decoration-current"
+          >
+            DACE del Núcleo de Monagas
+          </a>
+          . Pueden contener errores o estar desactualizados:{' '}
+          <strong className="font-bold text-tinta">confirma con control de estudios</strong>{' '}
+          antes de tomar cualquier decisión.
+        </p>
       </div>
     </footer>
   )

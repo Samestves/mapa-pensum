@@ -22,9 +22,14 @@ function SelectorCarrera({ alElegir }) {
   return (
     <div className="h-full overflow-y-auto">
       {/* El ancho crece con la pantalla en vez de quedarse clavado en 1024px:
-          en un monitor grande ocho tarjetas apretadas al centro dejan medio
-          lienzo vacio y se ven de juguete. */}
-      <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 xl:max-w-[min(100rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
+          en un monitor grande unas tarjetas apretadas al centro dejan medio
+          lienzo vacio y se ven de juguete.
+
+          El tope baja de 1600 a 1360 px al pasar a tres columnas: con cuatro
+          hacia falta ese ancho para que las tarjetas no salieran pequeñas,
+          con tres a 1600 saldrian de 520 px y la silueta, que nunca llena a
+          lo ancho, quedaria nadando en hueco. */}
+      <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <span
@@ -73,7 +78,10 @@ function SelectorCarrera({ alElegir }) {
             en 1920x1440 la tarjeta media 510 px para 198 px de contenido, o
             sea 156 px muertos. Ahora las tarjetas miden lo que miden y quien
             baja el pie es su propio mt-auto. */}
-        <div className="mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:mt-8 xl:mb-12 xl:gap-5 2xl:gap-6">
+        {/* Tres columnas y no cuatro: son nueve carreras, asi que 3x3 cierra
+            exacto. Con cuatro la ultima fila se quedaba con una tarjeta sola
+            y la cuadricula parecia rota por abajo. */}
+        <div className="mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-8 xl:mb-12 xl:gap-5 2xl:gap-6">
           {CARRERAS.map((carrera) => (
             <TarjetaCarrera
               key={carrera.slug}
