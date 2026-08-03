@@ -5,6 +5,18 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import './index.css'
 import App from './App.jsx'
 
+/* El service worker guarda la app para que abra sin conexion. Solo en
+   produccion: en desarrollo se quedaria con una copia del servidor de Vite y
+   dejarias de ver tus propios cambios. Se registra despues de load para no
+   competir por el ancho de banda con el primer pintado. */
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Sin service worker la app funciona igual, solo que pidiendo red
+    })
+  })
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

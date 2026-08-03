@@ -2,6 +2,7 @@ import { Moon, Sun, Waypoints } from 'lucide-react'
 import { CARRERAS } from '../data/carreras'
 import { ultimaCarrera } from '../data/ultimaCarrera'
 import { useTema } from '../hooks/useTema'
+import AvisoInstalar from './AvisoInstalar'
 import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
 
@@ -75,6 +76,10 @@ function SelectorCarrera({ alElegir }) {
 
         <PieSelector />
       </div>
+
+      {/* Solo aqui y no dentro de una carrera: quien esta leyendo su mapa
+          esta haciendo algo, y no es el momento de interrumpirlo. */}
+      <AvisoInstalar />
     </div>
   )
 }

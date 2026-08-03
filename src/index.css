@@ -424,6 +424,40 @@ body {
   animation: entrar-mapa 280ms ease-out;
 }
 
+/* ---- Aviso de instalar -------------------------------------------------
+   Sube desde fuera de la pantalla en vez de aparecer: algo que se materializa
+   encima del contenido sobresalta, algo que entra deslizandose se lee como
+   que llego solo y se puede ignorar. */
+@keyframes subir-aviso {
+  from {
+    opacity: 0;
+    transform: translateY(130%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bajar-aviso {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(130%);
+  }
+}
+
+.aviso-entrando {
+  animation: subir-aviso 480ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.aviso-saliendo {
+  animation: bajar-aviso 260ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 /* La silueta que ocupa el sitio del mapa mientras el mapa llega. Late flojo a
    proposito: tiene que leerse como "esto viene en camino", no competir con lo
    que va a aparecer encima. La opacidad base va aparte de la animacion para
@@ -570,9 +604,13 @@ body {
   .entrada-vista,
   .salida-vista,
   .entrada-mapa,
-  .esqueleto-mapa {
+  .esqueleto-mapa,
+  .aviso-entrando {
     animation: none;
   }
+
+  /* La de salida se deja: sin ella el aviso se quedaria en pantalla los
+     260 ms que tarda en desmontarse, pero congelado y sin irse nunca. */
 
   /* Estas se mueven con transition, no con animation: hay que apagarlas
      aparte o siguen deslizandose. */

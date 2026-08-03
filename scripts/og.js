@@ -1,10 +1,10 @@
 /**
- * Genera dist/og.png: la miniatura que sale al pegar el enlace en WhatsApp,
+ * Genera public/og.png: la miniatura que sale al pegar el enlace en WhatsApp,
  * Telegram, Discord, X o cualquier sitio que lea Open Graph.
  *
- * Se dibuja a mano en Node y se codifica el PNG con zlib, que ya viene en la
- * plataforma. La alternativa era traer sharp o resvg para rasterizar un SVG,
- * y son decenas de megas de binario por una imagen que no cambia nunca.
+ * Se dibuja a mano con el lienzo de png.js, que no trae dependencias. La
+ * alternativa era sharp o resvg para rasterizar un SVG, y son decenas de
+ * megas de binario por una imagen que no cambia nunca.
  *
  * El texto va en matriz de puntos, con una fuente de 5x7 escrita aqui mismo
  * que solo tiene las ocho letras que hacen falta. No es una limitacion que
@@ -13,117 +13,14 @@
  * son las de las carreras de verdad, sacadas del indice, asi que la imagen
  * se actualiza sola cuando se agrega una carrera.
  */
-import { deflateSync } from 'node:zlib'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { crearLienzo, hexARgb } from './png.js'
 
 const ANCHO = 1200
 const ALTO = 630
 
-/* ------------------------------------------------------------------ *
- * Codificacion PNG
- * ------------------------------------------------------------------ */
-
-const TABLA_CRC = (() => {
-  const t = new Uint32Array(256)
-  for (let n = 0; n < 256; n++) {
-    let c = n
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-    t[n] = c >>> 0
-  }
-  return t
-})()
-
-function crc32(buf) {
-  let c = 0xffffffff
-  for (const b of buf) c = TABLA_CRC[(c ^ b) & 0xff] ^ (c >>> 8)
-  return (c ^ 0xffffffff) >>> 0
-}
-
-function trozo(tipo, datos) {
-  const largo = Buffer.alloc(4)
-  largo.writeUInt32BE(datos.length)
-  const cuerpo = Buffer.concat([Buffer.from(tipo, 'ascii'), datos])
-  const crc = Buffer.alloc(4)
-  crc.writeUInt32BE(crc32(cuerpo))
-  return Buffer.concat([largo, cuerpo, crc])
-}
-
-function codificarPng(ancho, alto, rgba) {
-  // Cada fila lleva delante su byte de filtro; 0 = sin filtro
-  const crudo = Buffer.alloc((ancho * 4 + 1) * alto)
-  for (let y = 0; y < alto; y++) {
-    const destino = y * (ancho * 4 + 1)
-    crudo[destino] = 0
-    rgba.copy(crudo, destino + 1, y * ancho * 4, (y + 1) * ancho * 4)
-  }
-
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(ancho, 0)
-  ihdr.writeUInt32BE(alto, 4)
-  ihdr[8] = 8 // bits por canal
-  ihdr[9] = 6 // color RGBA
-  ihdr[10] = 0
-  ihdr[11] = 0
-  ihdr[12] = 0
-
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    trozo('IHDR', ihdr),
-    trozo('IDAT', deflateSync(crudo, { level: 9 })),
-    trozo('IEND', Buffer.alloc(0)),
-  ])
-}
-
-/* ------------------------------------------------------------------ *
- * Lienzo
- * ------------------------------------------------------------------ */
-
-const lienzo = Buffer.alloc(ANCHO * ALTO * 4)
-
-const hexARgb = (hex) => {
-  const n = hex.replace('#', '')
-  return [
-    parseInt(n.slice(0, 2), 16),
-    parseInt(n.slice(2, 4), 16),
-    parseInt(n.slice(4, 6), 16),
-  ]
-}
-
-function punto(x, y, [r, g, b], alfa = 1) {
-  if (x < 0 || y < 0 || x >= ANCHO || y >= ALTO) return
-  const i = (y * ANCHO + x) * 4
-  // Mezcla sobre lo que ya hay: los circulos se suavizan por los bordes
-  lienzo[i] = lienzo[i] * (1 - alfa) + r * alfa
-  lienzo[i + 1] = lienzo[i + 1] * (1 - alfa) + g * alfa
-  lienzo[i + 2] = lienzo[i + 2] * (1 - alfa) + b * alfa
-  lienzo[i + 3] = 255
-}
-
-function rellenar(color) {
-  const [r, g, b] = color
-  for (let i = 0; i < ANCHO * ALTO; i++) {
-    lienzo[i * 4] = r
-    lienzo[i * 4 + 1] = g
-    lienzo[i * 4 + 2] = b
-    lienzo[i * 4 + 3] = 255
-  }
-}
-
-/** Circulo con borde suavizado por cobertura del pixel */
-function circulo(cx, cy, radio, color, alfa = 1) {
-  const desde = Math.floor(cx - radio - 1)
-  const hasta = Math.ceil(cx + radio + 1)
-  const arriba = Math.floor(cy - radio - 1)
-  const abajo = Math.ceil(cy + radio + 1)
-
-  for (let y = arriba; y <= abajo; y++) {
-    for (let x = desde; x <= hasta; x++) {
-      const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy)
-      const cobertura = Math.min(1, Math.max(0, radio + 0.5 - d))
-      if (cobertura > 0) punto(x, y, color, cobertura * alfa)
-    }
-  }
-}
+const lienzo = crearLienzo(ANCHO, ALTO)
+const { punto, rellenar, circulo } = lienzo
 
 /* ------------------------------------------------------------------ *
  * Fuente de 5x7, solo las letras de "MAPA DE PENSUM"
@@ -213,6 +110,6 @@ for (const carrera of indice) {
 
 // Va en public/ y no en dist/: asi Vite la copia sola al compilar, queda
 // versionada y el README puede usarla de portada sin duplicarla.
-const png = codificarPng(ANCHO, ALTO, lienzo)
+const png = lienzo.codificar()
 writeFileSync('public/og.png', png)
 console.log(`  og.png  ${ANCHO}x${ALTO}  ${(png.length / 1024).toFixed(1)} kB`)

@@ -196,6 +196,32 @@ Así que el build escribe un HTML por carrera con su `<title>`, canonical, Open 
 </details>
 
 <details>
+<summary><b>El service worker se genera, no se escribe</b></summary>
+
+<br>
+
+Los archivos del build llevan hash en el nombre. Una lista de precarga escrita a mano se quedaría vieja en el primer despliegue y el service worker seguiría sirviendo la versión anterior **para siempre**, que es la forma clásica de romper esto. Así que `scripts/serviceworker.js` lee `dist/` cuando ya está construido y emite la lista real, con una versión sacada del hash de todo el contenido.
+
+Se prefirió a `vite-plugin-pwa` por lo de siempre en este proyecto: son setenta líneas legibles frente a una dependencia con su propio runtime. Y sobre todo, **la política de caché aquí hay que entenderla, no heredarla**: servir un pensum viejo sin avisar sería exactamente lo que este proyecto promete no hacer. Por eso navegar va a la red primero.
+
+Un detalle que solo se ve al probarlo: la precarga usa `cache.add` uno por uno y no `addAll`, porque `addAll` es atómico — si un solo recurso falla, tira toda la instalación y el usuario se queda sin nada guardado.
+
+</details>
+
+<details>
+<summary><b>El favicon no era del proyecto</b></summary>
+
+<br>
+
+Era un rayo morado `#863bff` con dieciséis filtros de desenfoque y 9,5 kB, resto de una plantilla. Junto a él viajaba un `icons.svg` de 5 kB con iconos de Bluesky, Discord y X **que no se usaba en ninguna parte**.
+
+Ahora la marca es la misma que preside el selector: `waypoints` de Lucide, tres nodos y sus enlaces, que es literalmente de lo que va la aplicación. La geometría está copiada del propio Lucide para que el icono de la pestaña y el logotipo de la cabecera sean el mismo dibujo y no dos parecidos, y los PNG de la app instalable se rasterizan en el build con el mismo lienzo que hace la miniatura de compartir.
+
+El favicon pasó de 9.522 a 749 bytes.
+
+</details>
+
+<details>
 <summary><b>La miniatura al compartir se dibuja en Node, sin dependencias</b></summary>
 
 <br>
@@ -252,6 +278,23 @@ node scripts/validar-pensum.js ruta/a/otra/carpeta
 
 Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y que **se empieza a bajar al pasar el cursor por su tarjeta**, décimas de segundo antes del click. El click no lo espera: con el dedo no hay *hover*, y un botón que se queda pulsado sin que pase nada se lee como que la web se colgó. El build genera además `sitemap.xml` y `robots.txt`.
 
+## Se guarda en el teléfono y abre sin internet
+
+La aplicación se puede instalar. Una vez instalada **abre sin conexión y no vuelve a gastar datos** para consultar el pensum: el service worker guarda las ocho carreras completas, la tipografía y los iconos, unos 780 kB una sola vez.
+
+Eso importa aquí más que en otros sitios. El público objetivo mira su pensum muchas veces, desde teléfonos modestos y con datos que paga por megabyte.
+
+| | Estrategia | Por qué |
+|---|---|---|
+| Navegación (`/`, `/<slug>`) | Red primero, caché de respaldo | Con conexión siempre se ve el pensum publicado hoy. La copia es la red de emergencia, no la fuente. |
+| Assets (`/assets/*`) | Caché primero | Llevan hash en el nombre: un nombre concreto no cambia nunca de contenido. |
+| Telemetría (`/_vercel/*`) | Nunca se toca | O llega a la red o no llega. |
+
+El aviso de instalar sale abajo, a los dos segundos y medio, y se cierra para siempre. En iPhone no existe `beforeinstallprompt`, así que ahí se explica el gesto de *Compartir → Añadir a inicio*.
+
+> [!NOTE]
+> **La analítica sigue funcionando.** Instalada, la app manda sus datos a Vercel igual que en el navegador. Lo único que no se cuenta son las visitas hechas **sin conexión**, porque no hay red por la que enviarlas — eso es inherente a estar sin internet, no a la instalación.
+
 ## Estructura
 
 ```
@@ -262,7 +305,10 @@ scripts/
 ├── normalizar.js           crudo + overlay → modelo único
 ├── validar-pensum.js       Puerta de calidad del build
 ├── prerenderizar.js        Un HTML por carrera, con contenido rastreable
-└── og.js                   La miniatura al compartir, píxel a píxel
+├── png.js                  Lienzo de píxeles y codificador PNG, sin dependencias
+├── og.js                   La miniatura al compartir, píxel a píxel
+├── iconos.js               Los iconos de la app instalable
+└── serviceworker.js        Genera dist/sw.js con la lista de precarga
 src/
 ├── data/carreras.js        Índice, caché y carga por carrera
 ├── layout/

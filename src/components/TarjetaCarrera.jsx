@@ -8,6 +8,32 @@ import MiniMapa from './MiniMapa'
 const GIRO = 7
 
 /**
+ * Una cifra del encabezado de la tarjeta.
+ *
+ * El numero va en JetBrains Mono y la palabra en versalita apretada. No es un
+ * capricho: la versalita de 10px en negrita es exactamente el estilo de
+ * etiqueta que ya usan el panel de avance y la leyenda, asi que la tarjeta
+ * habla el mismo idioma que el resto de la app sin traer una tercera fuente.
+ * Y en un proyecto que presume de no gastarle datos a nadie, una fuente mas
+ * por dos palabras no se justificaba.
+ *
+ * tabular-nums mantiene las cifras en columna: sin eso, 49 y 10 ocupan anchos
+ * distintos y las ocho tarjetas quedan desalineadas entre si.
+ */
+function Cifra({ valor, etiqueta }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span className="font-mono text-[13px] leading-none font-bold text-tinta tabular-nums xl:text-[15px]">
+        {valor}
+      </span>
+      <span className="text-[10px] leading-none font-bold tracking-[0.09em] text-tinta-tenue uppercase">
+        {etiqueta}
+      </span>
+    </span>
+  )
+}
+
+/**
  * Tarjeta de una carrera en el selector.
  *
  * El 3D es solo de escritorio y solo con puntero fino: en un telefono no hay
@@ -91,15 +117,16 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
           <h2 className="text-[15px] leading-tight font-extrabold text-tinta xl:text-lg">
             {carrera.nombreCorto}
           </h2>
-          {/* La cifra manda y la palabra acompaña. Antes iba toda la linea en
-              tinta-tenue a 10px: el contraste cumplia AA de sobra, pero a ese
-              cuerpo y en peso normal el trazo es tan fino que igual no se
-              leia. Se arregla con tamaño y grosor, no bajando el color. */}
-          <p className="mt-1 font-mono text-[11px] leading-none font-medium text-tinta-tenue xl:text-xs">
-            <span className="font-bold text-tinta-suave">{carrera.asignaturas}</span> materias
-            <span className="mx-1.5 opacity-50">·</span>
-            <span className="font-bold text-tinta-suave">{carrera.semestres}</span> semestres
-          </p>
+          {/* Antes esto era una frase corrida en 10px tinta-tenue. El
+              contraste cumplia AA de sobra -medido: 5.43 en claro, 6.40 en
+              oscuro-, pero a ese cuerpo y en peso normal el trazo es tan fino
+              que igual no se leia. La cifra sube a tinta plena y la palabra
+              se queda de etiqueta: se lee el dato antes que el texto. */}
+          <div className="mt-2 flex items-center gap-2.5">
+            <Cifra valor={carrera.asignaturas} etiqueta="materias" />
+            <span aria-hidden="true" className="h-3 w-px shrink-0 bg-panel-borde" />
+            <Cifra valor={carrera.semestres} etiqueta="semestres" />
+          </div>
         </div>
         <ArrowUpRight
           size={16}
