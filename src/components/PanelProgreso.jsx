@@ -8,6 +8,7 @@ import {
   TriangleAlert,
 } from 'lucide-react'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
+import { colorArea, etiquetaArea } from '../theme/areas'
 
 function Dato({ icono: Icono, valor, de, etiqueta, color }) {
   return (
@@ -114,12 +115,77 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
 }
 
 /**
+ * Filtro por area. Vivia en la leyenda flotante del mapa, que se quito por
+ * estorbar: era un panel permanente sobre el lienzo y solo aparecia en
+ * Sistemas, la unica carrera con las areas clasificadas.
+ *
+ * El filtro si era una funcion de verdad -el unico sitio desde donde se podia
+ * aislar un area-, asi que se muda aqui en vez de perderse. Y encaja: el
+ * desglose por area ya se calculaba en usePensum y no se pintaba en ningun
+ * sitio, o sea que era dato muerto.
+ */
+function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
+  if (!areas.length) return null
+
+  return (
+    <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+      <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">Áreas</h3>
+      <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
+        Toca una para aislarla en el mapa.
+      </p>
+      <div className="flex flex-col gap-1">
+        {areas.map((a) => {
+          const activa = areaFiltrada === a.area
+          const apagada = areaFiltrada && !activa
+          return (
+            <button
+              key={a.area}
+              type="button"
+              onClick={() => alFiltrarArea(activa ? null : a.area)}
+              title={`Aislar ${etiquetaArea(a.area)}`}
+              aria-pressed={activa}
+              className={`flex items-center gap-2 rounded px-1 py-1 text-left transition-opacity ${
+                apagada ? 'opacity-40 hover:opacity-75' : ''
+              }`}
+            >
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colorArea(a.area) }}
+              />
+              <span
+                className={`min-w-0 flex-1 truncate text-[11px] ${
+                  activa ? 'font-bold text-tinta' : 'text-tinta-suave'
+                }`}
+              >
+                {etiquetaArea(a.area)}
+              </span>
+              <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
+                {a.aprobadas}/{a.total}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/**
  * Popover de detalle del avance, anclado al chip de progreso de la cabecera.
  * Solo trae lo que NO esta ya a la vista en otro sitio: el desglose en
  * numeros, las cuotas de electivas y el reinicio. El porcentaje vive en el
- * chip y el filtro por area en la leyenda.
+ * chip. El filtro por area vive aqui desde que se quito la leyenda flotante.
  */
-function PanelProgreso({ progreso, avanceGrupos, reiniciar, hayMarcas, abierto, alCerrar }) {
+function PanelProgreso({
+  progreso,
+  avanceGrupos,
+  reiniciar,
+  hayMarcas,
+  abierto,
+  alCerrar,
+  areaFiltrada,
+  alFiltrarArea,
+}) {
   const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } =
     progreso
   // Sin creditos oficiales no hay porcentaje: se muestran materias y UC sueltas
@@ -206,6 +272,12 @@ function PanelProgreso({ progreso, avanceGrupos, reiniciar, hayMarcas, abierto, 
             color="var(--tinta-suave)"
           />
         </div>
+
+        <FiltroAreas
+          areas={progreso.porArea}
+          areaFiltrada={areaFiltrada}
+          alFiltrarArea={alFiltrarArea}
+        />
 
         {grupos.length > 0 && (
           <div className="transicion-tema rounded-lg border border-panel-borde p-3">

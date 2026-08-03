@@ -8,7 +8,6 @@ import PanelAvisos from './AvisosCarrera'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
-import Leyenda from './Leyenda'
 import PanelProgreso from './PanelProgreso'
 import PlanRuta from './PlanRuta'
 import VistaLista from './VistaLista'
@@ -59,7 +58,6 @@ function VistaCarrera({ carrera, alVolver }) {
   const [avisosAbiertos, setAvisosAbiertos] = useState(false)
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
-  const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
   const [planAbierto, setPlanAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -166,30 +164,18 @@ function VistaCarrera({ carrera, alVolver }) {
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />
         ) : vista === 'mapa' ? (
-          <>
-            <GrafoPensum
-              layout={layout}
-              estados={estados}
-              descarga={descarga}
-              toque={toque}
-              areaFiltrada={areaFiltrada}
-              seleccionado={seleccionado}
-              senalado={senalado}
-              alSenalar={setSenalado}
-              alSeleccionar={seleccionar}
-              alMarcar={marcar}
-            />
-            {/* La leyenda de areas solo tiene sentido donde hay areas
-                clasificadas. Hoy eso es solo Sistemas. */}
-            {carrera.tieneAreas && (
-              <Leyenda
-                abierta={leyendaAbierta}
-                alAlternar={() => setLeyendaAbierta((v) => !v)}
-                areaFiltrada={areaFiltrada}
-                alFiltrarArea={filtrarArea}
-              />
-            )}
-          </>
+          <GrafoPensum
+            layout={layout}
+            estados={estados}
+            descarga={descarga}
+            toque={toque}
+            areaFiltrada={areaFiltrada}
+            seleccionado={seleccionado}
+            senalado={senalado}
+            alSenalar={setSenalado}
+            alSeleccionar={seleccionar}
+            alMarcar={marcar}
+          />
         ) : (
           <VistaLista
             layout={layout}
@@ -215,6 +201,8 @@ function VistaCarrera({ carrera, alVolver }) {
           hayMarcas={hayMarcas}
           abierto={panelAbierto}
           alCerrar={() => setPanelAbierto(false)}
+          areaFiltrada={areaFiltrada}
+          alFiltrarArea={filtrarArea}
         />
       </div>
     </div>
