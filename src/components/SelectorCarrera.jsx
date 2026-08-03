@@ -2,6 +2,7 @@ import { Moon, Sun, Waypoints } from 'lucide-react'
 import { CARRERAS } from '../data/carreras'
 import { ultimaCarrera } from '../data/ultimaCarrera'
 import { useTema } from '../hooks/useTema'
+import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
 
 /**
@@ -72,24 +73,7 @@ function SelectorCarrera({ alElegir }) {
           ))}
         </div>
 
-        {/* Aviso de fuente. Va en tinta-suave y no en tinta-tenue porque es
-            informacion que el estudiante tiene que poder leer de verdad, no
-            letra pequeña de relleno. Se limita el ancho: una linea de texto
-            de 1600px de largo no se lee. */}
-        <footer className="mt-10 max-w-3xl border-t border-panel-borde pt-4 text-[11px] leading-relaxed text-tinta-suave xl:mt-12 xl:text-[12px]">
-          Datos tomados de los pensums publicados por la{' '}
-          <a
-            href="http://dacemonagas.udo.edu.ve"
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-tinta underline decoration-panel-borde underline-offset-2 transition-colors hover:decoration-current"
-          >
-            DACE del Núcleo de Monagas
-          </a>
-          . Pueden contener errores o estar desactualizados:{' '}
-          <strong className="font-bold text-tinta">confirma con control de estudios</strong>{' '}
-          antes de tomar cualquier decisión.
-        </footer>
+        <PieSelector />
       </div>
     </div>
   )

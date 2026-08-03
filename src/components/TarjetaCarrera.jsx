@@ -91,8 +91,14 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
           <h2 className="text-[15px] leading-tight font-extrabold text-tinta xl:text-lg">
             {carrera.nombreCorto}
           </h2>
-          <p className="mt-0.5 font-mono text-[10px] text-tinta-tenue xl:text-[11px]">
-            {carrera.asignaturas} materias · {carrera.semestres} semestres
+          {/* La cifra manda y la palabra acompaña. Antes iba toda la linea en
+              tinta-tenue a 10px: el contraste cumplia AA de sobra, pero a ese
+              cuerpo y en peso normal el trazo es tan fino que igual no se
+              leia. Se arregla con tamaño y grosor, no bajando el color. */}
+          <p className="mt-1 font-mono text-[11px] leading-none font-medium text-tinta-tenue xl:text-xs">
+            <span className="font-bold text-tinta-suave">{carrera.asignaturas}</span> materias
+            <span className="mx-1.5 opacity-50">·</span>
+            <span className="font-bold text-tinta-suave">{carrera.semestres}</span> semestres
           </p>
         </div>
         <ArrowUpRight
@@ -111,7 +117,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
         <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />
       </div>
 
-      <p className="relative mt-3 truncate text-[10px] text-tinta-tenue xl:mt-4 xl:text-[11px]">
+      <p className="relative mt-3 truncate text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-4 xl:text-xs">
         {carrera.nombre}
       </p>
     </button>

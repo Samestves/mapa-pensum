@@ -326,6 +326,12 @@ gitGraph
 
 Navegación por teclado en los controles, `<title>` descriptivo en cada nodo del SVG, contraste AA verificado en ambos temas y `prefers-reduced-motion` respetado en todas las animaciones, incluidas las transiciones de página y el efecto 3D del selector.
 
+## ¿Ves un dato mal?
+
+Repórtalo. El pie de la página abre un [issue con el formulario ya redactado](../../issues/new): carrera, materia, qué dice el pensum oficial y de dónde lo sacas. Con esos cuatro datos se corrige; sin ellos no.
+
+Es la contrapartida de la sección anterior. Si el proyecto promete no inventar lo que no sabe, tiene que dar la vía para corregir lo que sí dice.
+
 ## Créditos y aviso
 
 Datos tomados de los pensums publicados por la [DACE del Núcleo de Monagas](http://dacemonagas.udo.edu.ve).
