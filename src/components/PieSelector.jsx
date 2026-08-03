@@ -59,8 +59,11 @@ function Enlace({ href, icono: Icono, children }) {
  * datos seria justo lo contrario.
  */
 function PieSelector() {
+  // mt-auto: el pie baja hasta el fondo cuando sobra alto. La separacion
+  // minima con las tarjetas la pone el margen inferior de la rejilla, que
+  // mt-auto no puede garantizar por si solo.
   return (
-    <footer className="mt-10 border-t border-panel-borde pt-5 xl:mt-12 xl:pt-6">
+    <footer className="mt-auto border-t border-panel-borde pt-5 xl:pt-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
         <p className="max-w-2xl text-[11px] leading-relaxed text-tinta-suave xl:text-xs">
           Datos tomados de los pensums publicados por la{' '}

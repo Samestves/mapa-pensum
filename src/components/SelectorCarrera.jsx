@@ -62,7 +62,12 @@ function SelectorCarrera({ alElegir }) {
           cuánto te falta. Elige la tuya.
         </p>
 
-        <div className="mt-6 grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:mt-8 xl:gap-5 2xl:gap-6">
+        {/* Sin flex-1. Lo tenia para empujar el pie hasta abajo, pero de paso
+            la rejilla se quedaba todo el alto sobrante y estiraba sus filas:
+            en 1920x1440 la tarjeta media 510 px para 198 px de contenido, o
+            sea 156 px muertos. Ahora las tarjetas miden lo que miden y quien
+            baja el pie es su propio mt-auto. */}
+        <div className="mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:mt-8 xl:mb-12 xl:gap-5 2xl:gap-6">
           {CARRERAS.map((carrera) => (
             <TarjetaCarrera
               key={carrera.slug}

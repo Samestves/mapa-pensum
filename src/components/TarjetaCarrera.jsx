@@ -82,7 +82,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       onFocus={() => precargarCarrera(carrera.slug)}
       onPointerLeave={() => setGiro(null)}
       onClick={entrar}
-      className="tarjeta-carrera group transicion-tema relative block w-full rounded-2xl border border-panel-borde bg-panel p-4 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none sm:p-5 xl:p-6"
+      className="tarjeta-carrera group transicion-tema relative block w-full rounded-2xl border border-panel-borde bg-panel p-5 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none xl:p-6"
       style={{
         '--acento': color,
         transform: giro
@@ -103,17 +103,6 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          {esUltima && (
-            <span
-              className="mb-1.5 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wide uppercase"
-              style={{
-                color,
-                backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)`,
-              }}
-            >
-              Continuar
-            </span>
-          )}
           <h2 className="text-[15px] leading-tight font-extrabold text-tinta xl:text-lg">
             {carrera.nombreCorto}
           </h2>
@@ -128,23 +117,47 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
             <Cifra valor={carrera.semestres} etiqueta="semestres" />
           </div>
         </div>
-        <ArrowUpRight
-          size={16}
-          className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-          style={{ color: giro ? color : undefined }}
-        />
+        {/* La insignia va aqui arriba y no encima del titulo porque ahi
+            empujaba el contenido hacia abajo: la tarjeta con "Continuar"
+            crecia treinta pixeles y la rejilla estiraba a las otras tres de
+            su fila, que es exactamente el defecto que veniamos a corregir.
+            Al lado de la flecha, el alto de la fila lo sigue mandando el
+            bloque del titulo y ninguna tarjeta cambia de tamaño. */}
+        <div className="flex shrink-0 items-center gap-2">
+          {esUltima && (
+            <span
+              className="rounded-full px-2 py-0.5 text-[9px] leading-none font-bold tracking-wide uppercase"
+              style={{
+                color,
+                backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)`,
+              }}
+            >
+              Continuar
+            </span>
+          )}
+          <ArrowUpRight
+            size={16}
+            className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            style={{ color: giro ? color : undefined }}
+          />
+        </div>
       </div>
 
       {/* La miniatura flota sobre el fondo de la tarjeta: es lo que le da
-          volumen sin recurrir a sombras falsas. */}
+          volumen sin recurrir a sombras falsas. Es tambien lo que distingue a
+          una carrera de otra de un vistazo, asi que se lleva el sitio bueno y
+          crece con la pantalla en vez de quedarse en su franja fija. */}
       <div
-        className="relative mt-4 h-16 xl:mt-6 xl:h-24"
+        className="relative mt-6 h-20 xl:mt-8 xl:h-28"
         style={{ transform: giro ? 'translateZ(28px)' : undefined }}
       >
         <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />
       </div>
 
-      <p className="relative mt-3 truncate text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-4 xl:text-xs">
+      {/* El nombre completo cierra la tarjeta detras de una regla fina. Antes
+          iba suelto a tres pixeles de la miniatura y parecia un sobrante; con
+          la regla se lee como pie, que es lo que es. */}
+      <p className="relative mt-6 truncate border-t border-panel-borde pt-3.5 text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-8 xl:text-xs">
         {carrera.nombre}
       </p>
     </button>
