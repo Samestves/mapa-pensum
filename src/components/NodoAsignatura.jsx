@@ -2,6 +2,7 @@ import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { codigoVisible } from '../data/codigoVisible'
 
 /**
  * Los cuatro estados se distinguen por relleno, borde y trazo de la propia
@@ -38,7 +39,7 @@ function NodoAsignatura({
   alEntrar,
   alSalir,
 }) {
-  const { x, y, codigo, nombre, uc, lineasNombre } = nodo
+  const { x, y, nombre, uc, lineasNombre } = nodo
   const acento = colorNodo(nodo)
   const estilo = ESTILO[estado]
 
@@ -65,7 +66,7 @@ function NodoAsignatura({
     >
       {/* Etiqueta accesible. El area solo existe donde esta clasificada */}
       <title>
-        {[codigo, '—', nombre, nodo.area && `· ${etiquetaArea(nodo.area)}`, `· ${estado}`]
+        {[codigoVisible(nodo), '—', nombre, nodo.area && `· ${etiquetaArea(nodo.area)}`, `· ${estado}`]
           .filter(Boolean)
           .join(' ')}
       </title>
@@ -162,7 +163,7 @@ function NodoAsignatura({
         fill="var(--tinta-tenue)"
         className="font-mono tracking-wider"
       >
-        {codigo}
+        {codigoVisible(nodo)}
       </text>
 
       {lineasNombre.map((linea, i) => (

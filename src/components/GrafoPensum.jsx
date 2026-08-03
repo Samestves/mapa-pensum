@@ -6,6 +6,7 @@ import { cadenaDe } from '../layout/relaciones'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
+import NodoHueco from './NodoHueco'
 import Arista from './Arista'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
@@ -202,7 +203,14 @@ function GrafoPensum({
             ))}
           </g>
 
-          {nodos.map((nodo) => (
+          {/* Los huecos de electiva no son materias: ni estado, ni marca, ni
+              ficha. Se dibujan aparte para no meter ese caso dentro del nodo
+              normal, que ya tiene cuatro estados que atender. */}
+          {nodos.filter((nodo) => nodo.esHueco).map((nodo) => (
+            <NodoHueco key={nodo.codigo} nodo={nodo} atenuado={atenuado(nodo.codigo)} />
+          ))}
+
+          {nodos.filter((nodo) => !nodo.esHueco).map((nodo) => (
             <NodoAsignatura
               key={nodo.codigo}
               nodo={nodo}

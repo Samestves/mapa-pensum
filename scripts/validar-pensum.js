@@ -52,8 +52,12 @@ for (const archivo of archivos) {
     // reales. Quien decide que es comodin es el normalizador: si la regla se
     // repitiera aqui, las dos copias acabarian discrepando.
     if (a.uc != null && (!Number.isInteger(a.uc) || a.uc < 0)) err(`[${ref}] uc invalido: ${a.uc}`)
-    if (a.uc == null && !a.esComodin) err(`[${ref}] uc nula en una materia real`)
+    // Un hueco es la casilla "aqui va una electiva que tu eliges": tampoco es
+    // una materia, asi que tampoco tiene UC propia.
+    if (a.uc == null && !a.esComodin && !a.esHueco) err(`[${ref}] uc nula en una materia real`)
     if (a.esComodin && a.uc != null) err(`[${ref}] comodin con uc: ${a.uc}`)
+    if (a.esHueco && a.uc != null) err(`[${ref}] hueco con uc: ${a.uc}`)
+    if (a.esHueco && a.prerrequisitos?.length) err(`[${ref}] un hueco no puede tener prerrequisitos`)
     if (!Array.isArray(a.prerrequisitos)) err(`[${ref}] prerrequisitos debe ser un arreglo`)
   }
   for (const a of c.asignaturas) {
@@ -63,10 +67,23 @@ for (const archivo of archivos) {
   }
 
   // --- 2. Codigos duplicados ---------------------------------------------
+  // Despues del normalizador esto tiene que estar limpio: si algo sigue
+  // repetido es que la desambiguacion fallo, y eso si es error, porque la app
+  // usa el codigo como identidad.
   const porCodigo = new Map()
   for (const a of todas) {
     if (porCodigo.has(a.codigo)) err(`Codigo duplicado: ${a.codigo} (${a.nombre})`)
     else porCodigo.set(a.codigo, a)
+  }
+
+  // Que la FUENTE los trajera repetidos no es error nuestro y no debe tumbar
+  // el build: es un dato de mala calidad que hay que ver, no que ocultar.
+  const desambiguadas = todas.filter((a) => a.codigoFuente)
+  for (const a of desambiguadas) {
+    avisar(
+      `La fuente repite el codigo ${a.codigoFuente} en "${a.nombre}". ` +
+        `Se publica como ${a.codigo} para poder marcarla aparte.`,
+    )
   }
 
   // --- 3 y 4. Prerrequisitos existen y van antes en el tiempo ------------

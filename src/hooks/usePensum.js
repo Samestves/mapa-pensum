@@ -62,7 +62,16 @@ function leerGuardadas(slug, codigosValidos) {
  * carrera sin que le ensucie la suya.
  */
 export function usePensum(carrera) {
-  const { slug, asignaturas, grupos, creditos } = carrera
+  const { slug, grupos, creditos } = carrera
+
+  // Los huecos ("aqui va una electiva que tu eliges") se dibujan en su
+  // semestre pero no son materias: no se marcan, no cuentan y no aparecen en
+  // ningun total. La electiva de verdad se marca en su grupo, y contarla dos
+  // veces inflaria el avance.
+  const asignaturas = useMemo(
+    () => carrera.asignaturas.filter((a) => !a.esHueco),
+    [carrera.asignaturas],
+  )
 
   // Las electivas comparten el mapa de marcas con las obligatorias: para el
   // estudiante "aprobada" significa lo mismo en las dos.

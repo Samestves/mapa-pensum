@@ -9,6 +9,7 @@ import {
   HORAS_POR_UC,
 } from '../layout/planificador'
 import { pesoDesbloqueo } from '../layout/relaciones'
+import { codigoVisible } from '../data/codigoVisible'
 import HojaPlan from './HojaPlan'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
@@ -132,7 +133,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) 
       ...plan.semestres.flatMap((s) => [
         `## Semestre ${s.numero} — ${s.materias.length} materias · ${s.uc} UC`,
         ``,
-        ...s.materias.map((a) => `- [ ] \`${a.codigo}\` ${a.nombre} (${a.uc} UC)`),
+        ...s.materias.map((a) => `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc} UC)`),
         ``,
       ]),
       `---`,

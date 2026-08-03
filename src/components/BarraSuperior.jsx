@@ -1,4 +1,5 @@
 import { ArrowLeft, ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
+import { BotonAvisos } from './AvisosCarrera'
 
 /** Boton de icono del sistema: todos los de la cabecera miden y pesan igual.
     En movil bajan a 32px, que sigue siendo objetivo tactil comodo. */
@@ -31,6 +32,8 @@ function BarraSuperior({
   alCambiarVista,
   avanceAbierto,
   alAlternarAvance,
+  avisosAbiertos,
+  alAlternarAvisos,
   alPlanificar,
   alOcultarBarra,
   alVolver,
@@ -124,6 +127,14 @@ function BarraSuperior({
           variante="segmento"
         />
       </div>
+
+      {/* Solo aparece donde hay algo que advertir, o sea en las carreras cuya
+          fuente tiene huecos o dudas. En las demas no ocupa sitio. */}
+      <BotonAvisos
+        cantidad={carrera.avisos?.length ?? 0}
+        abierto={avisosAbiertos}
+        alPulsar={alAlternarAvisos}
+      />
 
       <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
 

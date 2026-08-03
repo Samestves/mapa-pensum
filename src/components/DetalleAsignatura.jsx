@@ -1,7 +1,8 @@
-import { Check, CircleDot, Lock, RotateCcw, X } from 'lucide-react'
+import { Check, CircleDot, Info, Lock, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
+import { codigoVisible } from '../data/codigoVisible'
 
 const ANCHO = 300
 
@@ -102,7 +103,7 @@ function DetalleAsignatura({
           />
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] tracking-wider text-tinta-suave">
-              {nodo.codigo}
+              {codigoVisible(nodo)}
               {nodo.semestre ? ` · Semestre ${nodo.semestre}` : ' · Electiva'}
             </p>
             <h3 className="text-[15px] leading-tight font-extrabold text-tinta">
@@ -159,7 +160,7 @@ function DetalleAsignatura({
         <p className="mb-1.5 text-[10px] font-bold tracking-wider text-tinta-tenue uppercase">
           Requiere ({prerrequisitos.length})
         </p>
-        {prerrequisitos.length === 0 ? (
+        {prerrequisitos.length === 0 && !nodo.requisitoEspecial ? (
           <p className="text-[11px] text-tinta-tenue">Nada: puedes verla desde el inicio.</p>
         ) : (
           <ul className="flex flex-col gap-1">
@@ -167,6 +168,19 @@ function DetalleAsignatura({
               <Fila key={p.asignatura.codigo} {...p} />
             ))}
           </ul>
+        )}
+
+        {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
+            del mapa ni una fila con su punto de color. Es una condicion, y se
+            dice con palabras para que no se confunda con una prelacion. */}
+        {nodo.requisitoEspecial && (
+          <p className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-panel-suave px-2.5 py-2 text-[11px] leading-snug text-tinta-suave">
+            <Info size={12} className="mt-0.5 shrink-0" />
+            <span>
+              Además: <strong className="font-bold text-tinta">{nodo.requisitoEspecial}</strong>.
+              Es una condición del pensum, no una materia.
+            </span>
+          </p>
         )}
 
         <p className="mt-3 mb-1.5 text-[10px] font-bold tracking-wider text-tinta-tenue uppercase">

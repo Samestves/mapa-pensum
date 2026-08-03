@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, ChevronDown, CircleDot, Lock } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { codigoVisible } from '../data/codigoVisible'
 
 const COLOR_ESTADO = {
   [ESTADO.APROBADA]: 'var(--estado-aprobada)',
@@ -81,7 +82,7 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
             {/* El area solo existe donde esta clasificada a mano. Sin ella
                 no se pinta el separador, o quedaria un "· undefined". */}
             <span className="block font-mono text-[10px] text-tinta-tenue">
-              {nodo.codigo}
+              {codigoVisible(nodo)}
               {nodo.uc != null && ` · ${nodo.uc} UC`}
               {nodo.area && ` · ${etiquetaArea(nodo.area)}`}
             </span>
@@ -176,7 +177,11 @@ function VistaLista({ layout, estados, avanceGrupos, alMarcar }) {
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex max-w-2xl flex-col gap-5 p-4">
         {columnas.map((columna) => {
-          const materias = porSemestre.get(columna.semestre) ?? []
+          const todas = porSemestre.get(columna.semestre) ?? []
+          // Los huecos de electiva se listan al final del semestre, pero no
+          // cuentan en el marcador: no son materias que se puedan aprobar.
+          const materias = todas.filter((n) => !n.esHueco)
+          const huecos = todas.filter((n) => n.esHueco)
           const aprobadas = materias.filter((m) => estados[m.codigo] === ESTADO.APROBADA).length
 
           return (
@@ -206,6 +211,17 @@ function VistaLista({ layout, estados, avanceGrupos, alMarcar }) {
                     estados={estados}
                     alMarcar={alMarcar}
                   />
+                ))}
+                {huecos.map((nodo) => (
+                  <li
+                    key={nodo.codigo}
+                    className="rounded-xl border border-dashed border-panel-borde px-3 py-2.5 text-[12px] font-semibold text-tinta-suave"
+                  >
+                    {nodo.nombre}
+                    <span className="mt-0.5 block text-[10px] font-medium text-tinta-tenue">
+                      Elígela abajo, en la zona de electivas
+                    </span>
+                  </li>
                 ))}
               </ul>
             </section>

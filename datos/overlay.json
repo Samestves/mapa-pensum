@@ -7,10 +7,14 @@
     "Todo aqui es opcional. Una carrera sin entrada en este archivo carga igual,",
     "solo que sin color propio, sin cuotas y sin % de avance.",
     "",
-    "Los colores viven juntos a proposito: el requisito es que las 8 se lean como",
-    "una familia, y eso solo se puede juzgar viendolas una al lado de la otra.",
+    "Los colores viven juntos a proposito: el requisito es que las nueve se lean",
+    "como una familia, y eso solo se puede juzgar viendolas una al lado de la otra.",
     "Cada par es (tema oscuro, tema claro) y los tonos estan repartidos por el",
-    "circulo cromatico con croma parecido para que ninguna grite mas que otra."
+    "circulo cromatico con croma parecido para que ninguna grite mas que otra.",
+    "",
+    "Matices ocupados hoy, en grados: 8 Alimentos, 34 Petroleo, 72 Produccion",
+    "Animal, 142 Agronomica, 172 Contaduria, 194 Ambiental, 222 Sistemas,",
+    "250 Administracion, 330 Recursos Humanos."
   ],
 
   "ingenieria-de-sistemas": {
@@ -27,6 +31,22 @@
   "ingenieria-agronomica": {
     "nombreCorto": "Agronómica",
     "color": { "oscuro": "#3fcb74", "claro": "#1b7a44" }
+  },
+
+  "ingenieria-ambiental": {
+    "nombreCorto": "Ambiental",
+    "comment_color": [
+      "Cian, ~194 grados. Cae en el hueco mas ancho del circulo, entre el verde",
+      "azulado de Contaduria (172) y el azul violeta de Sistemas (222), y queda",
+      "a 52 grados del verde de Agronomica, que era el riesgo real de confusion.",
+      "Ademas agua y aire es de lo que va la carrera."
+    ],
+    "color": { "oscuro": "#34c6ea", "claro": "#0b7391" },
+    "avisos": [
+      "Este pensum no viene del sitio de la DACE como los demas, sino de un documento oficial escaneado (DR / Abril 2023) suministrado por un usuario. No se ha podido contrastar contra una fuente en linea.",
+      "El reparto de las 22 electivas entre Tecnicas y Sociohumanisticas se infirio del contenido de cada materia, porque el encabezado de esa seccion en la imagen era ambiguo. Confirmar con control de estudios antes de planificar en base a esa division.",
+      "Las cinco casillas de electiva dentro de los semestres 5, 7, 8 y 9 se dibujan como huecos a rellenar. No cuentan para el avance: la materia que elijas se marca en su grupo de electivas."
+    ]
   },
 
   "ingenieria-en-produccion-animal": {

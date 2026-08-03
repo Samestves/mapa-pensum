@@ -4,6 +4,7 @@ import { calcularLayout } from '../layout/calcularLayout'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
+import PanelAvisos from './AvisosCarrera'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
@@ -55,6 +56,7 @@ function VistaCarrera({ carrera, alVolver }) {
 
   // El avance ya no ocupa columna: se abre desde el chip de la cabecera
   const [panelAbierto, setPanelAbierto] = useState(false)
+  const [avisosAbiertos, setAvisosAbiertos] = useState(false)
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => window.innerWidth >= 640)
@@ -110,7 +112,15 @@ function VistaCarrera({ carrera, alVolver }) {
             vista={vista}
             alCambiarVista={setVista}
             avanceAbierto={panelAbierto}
-            alAlternarAvance={() => setPanelAbierto((v) => !v)}
+            alAlternarAvance={() => {
+              setPanelAbierto((v) => !v)
+              setAvisosAbiertos(false)
+            }}
+            avisosAbiertos={avisosAbiertos}
+            alAlternarAvisos={() => {
+              setAvisosAbiertos((v) => !v)
+              setPanelAbierto(false)
+            }}
             alPlanificar={() => setPlanAbierto(true)}
             alOcultarBarra={() => {
               setBarraOculta(true)
@@ -188,6 +198,15 @@ function VistaCarrera({ carrera, alVolver }) {
             alMarcar={marcar}
           />
         )}
+
+        {/* Los dos paneles cuelgan de aqui y no de la cabecera: sus hijos
+            llevan overflow:hidden para la animacion de plegado y recortarian
+            cualquier cosa que asomara por debajo. */}
+        <PanelAvisos
+          avisos={carrera.avisos}
+          abierto={avisosAbiertos}
+          alCerrar={() => setAvisosAbiertos(false)}
+        />
 
         <PanelProgreso
           progreso={progreso}

@@ -1,4 +1,5 @@
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { codigoVisible } from '../data/codigoVisible'
 
 const HOY = () =>
   new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -98,7 +99,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
                       style={{ borderColor: colorNodo(a) }}
                     />
                     <span className="w-14 shrink-0 font-mono text-[9px] text-tinta-tenue sm:w-16">
-                      {a.codigo}
+                      {codigoVisible(a)}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-semibold">{a.nombre}</span>
                     <span className="solo-ancho hidden shrink-0 text-[9px] text-tinta-tenue sm:inline">

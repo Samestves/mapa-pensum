@@ -36,6 +36,44 @@ const REQUISITOS_SIN_UC = new Set(['9099999'])
 
 const esComodin = (codigo) => /^9{7}$/.test(codigo) || REQUISITOS_SIN_UC.has(codigo)
 
+/**
+ * Desambigua codigos repetidos.
+ *
+ * El pensum de Ambiental viene de una imagen escaneada, no del HTML de la
+ * DACE, y trae dos pares de materias distintas con el mismo codigo. El propio
+ * documento lo declara como probable error de transcripcion. Ademas usa un
+ * codigo comodin repetido para las casillas de electiva.
+ *
+ * No se puede forzar la unicidad borrando materias, pero tampoco se puede
+ * dejar el codigo repetido: la app usa el codigo como identidad -claves de
+ * React, mapa de marcas, estados-, y con dos materias compartiendolo, marcar
+ * una marcaria la otra y el porcentaje mentiria.
+ *
+ * La solucion es local: la PRIMERA aparicion conserva su codigo intacto, para
+ * que cualquier prerrequisito que apunte ahi siga resolviendo, y las
+ * siguientes reciben un sufijo. El codigo tal como esta impreso en la fuente
+ * se guarda en codigoFuente para poder mostrarlo, porque es el que el
+ * estudiante va a ver en su documento.
+ */
+function desambiguarCodigos(todas) {
+  const vistos = new Map()
+  const repetidos = []
+
+  for (const a of todas) {
+    const n = (vistos.get(a.codigo) ?? 0) + 1
+    vistos.set(a.codigo, n)
+    if (n === 1) continue
+
+    // Que los huecos compartan comodin es lo normal y no le interesa a nadie:
+    // solo se reportan las materias de verdad que colisionan.
+    if (!a.esHueco) repetidos.push({ codigo: a.codigo, nombre: a.nombre })
+    a.codigoFuente = a.codigo
+    a.codigo = `${a.codigo}-${n}`
+  }
+
+  return repetidos
+}
+
 const slugificar = (texto) =>
   texto
     .normalize('NFD')
@@ -65,12 +103,20 @@ function desdeDace(crudo) {
   for (const [clave, lista] of Object.entries(crudo.semestres ?? {})) {
     const semestre = Number(clave.replace(/\D/g, ''))
     for (const a of lista) {
+      // Un hueco no es una materia: es una casilla que dice "aqui va una
+      // electiva que tu eliges". No debe contar para el avance ni poder
+      // marcarse, porque la materia de verdad se marca en su grupo. Su UC
+      // seria la del codigo comodin, que no significa nada: va a null.
+      const hueco = a.placeholder === true
       asignaturas.push({
         codigo: a.codigo,
         nombre: a.asignatura,
         semestre,
-        uc: esComodin(a.codigo) ? null : ucDeCodigo(a.codigo),
-        ...(esComodin(a.codigo) ? { esComodin: true } : {}),
+        uc: hueco || esComodin(a.codigo) ? null : ucDeCodigo(a.codigo),
+        ...(hueco ? { esHueco: true } : esComodin(a.codigo) ? { esComodin: true } : {}),
+        // "120 UC aprobadas" no es un codigo de materia: no puede ser una
+        // arista del grafo, asi que viaja aparte y se enseña como texto.
+        ...(a.requisito_especial ? { requisitoEspecial: a.requisito_especial } : {}),
         prerrequisitos: a.prerrequisitos ?? [],
       })
     }
@@ -209,7 +255,10 @@ function normalizar(crudo, overlayTodo) {
     cuota: ov.cuotas?.[g.clave] ?? null,
   }))
 
+  // Antes de derivar nada: si la fuente repitio codigos hay que separarlos, o
+  // los mapas por codigo de aqui en adelante perderian materias por el camino.
   const todas = [...base.asignaturas, ...grupos.flatMap((g) => g.asignaturas)]
+  const repetidos = desambiguarCodigos(todas)
   const profundidadMaxima = calcularProfundidades(todas)
 
   const porSemestre = new Map()
@@ -217,13 +266,21 @@ function normalizar(crudo, overlayTodo) {
     if (!porSemestre.has(a.semestre)) porSemestre.set(a.semestre, [])
     porSemestre.get(a.semestre).push(a)
   }
+  // Los huecos se dibujan en su columna pero no se cuentan: "7 materias" tiene
+  // que ser siete materias. El comodin de Areas de Grado si se sigue contando
+  // como hasta ahora, para no cambiar de numeros a las siete carreras que ya
+  // estaban publicadas.
   const semestres = [...porSemestre.entries()]
     .sort((a, b) => a[0] - b[0])
-    .map(([numero, lista]) => ({
-      numero,
-      cantidad: lista.length,
-      uc: lista.reduce((s, a) => s + (a.uc ?? 0), 0),
-    }))
+    .map(([numero, lista]) => {
+      const reales = lista.filter((a) => !a.esHueco)
+      return {
+        numero,
+        cantidad: reales.length,
+        uc: reales.reduce((s, a) => s + (a.uc ?? 0), 0),
+        ...(reales.length !== lista.length ? { huecos: lista.length - reales.length } : {}),
+      }
+    })
 
   const ucObligatorias = semestres.reduce((s, x) => s + x.uc, 0)
 
@@ -248,7 +305,19 @@ function normalizar(crudo, overlayTodo) {
     creditos: ov.creditos ?? null,
     ucObligatorias,
     profundidadMaxima,
-    avisos: ov.avisos ?? [],
+    // A los avisos escritos a mano se suman los que detecta el propio
+    // normalizador, para que no dependan de que alguien se acuerde de
+    // anotarlos cuando entra un pensum nuevo.
+    avisos: [
+      ...(ov.avisos ?? []),
+      ...repetidos.map(
+        (r) =>
+          `El código ${r.codigo} aparece en más de una materia de la fuente ` +
+          `(una de ellas, "${r.nombre}"). Es probable que sea un error de ` +
+          'transcripción del documento escaneado. Aquí se separan para poder ' +
+          'marcarlas por separado, pero confirma el código con control de estudios.',
+      ),
+    ],
     correcciones: base.correcciones,
     semestres,
     asignaturas: base.asignaturas,
@@ -278,7 +347,8 @@ for (const archivo of readdirSync(CRUDO).filter((f) => f.endsWith('.json'))) {
     nombreCorto: carrera.nombreCorto,
     color: carrera.color,
     semestres: carrera.semestres.length,
-    asignaturas: carrera.asignaturas.length,
+    // Sin los huecos: la tarjeta dice "N materias" y un hueco no lo es
+    asignaturas: carrera.asignaturas.filter((a) => !a.esHueco).length,
     electivas,
     conCreditos: carrera.creditos != null,
     // Silueta para la miniatura del selector: cuantas materias por semestre.

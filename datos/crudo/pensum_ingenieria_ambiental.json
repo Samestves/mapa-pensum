@@ -1,0 +1,544 @@
+{
+  "carrera": "Ingeniería Ambiental",
+  "institucion": "Universidad de Oriente - Núcleo de Monagas",
+  "escuela": "Escuela de Ciencias del Agro y del Ambiente",
+  "departamento": "Departamento de Ingeniería Ambiental",
+  "fuente": "Documento oficial escaneado (DR /Abril 2023), suministrado por el usuario como imagen",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0081714",
+        "asignatura": "Matemática I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0101714",
+        "asignatura": "Química General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211113",
+        "asignatura": "Biología General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061013",
+        "asignatura": "Comprensión y expresión lingüística",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de destrezas para el aprendizaje",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0211111",
+        "asignatura": "Laboratorio Biología General",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0021111",
+        "asignatura": "Extra-académica cultural o",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0151111",
+        "asignatura": "Extra-académica deportiva",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0081724",
+        "asignatura": "Matemática II",
+        "prerrequisitos": [
+          "0081714"
+        ]
+      },
+      {
+        "codigo": "0101724",
+        "asignatura": "Química Orgánica",
+        "prerrequisitos": [
+          "0101714"
+        ]
+      },
+      {
+        "codigo": "0101721",
+        "asignatura": "Laboratorio Química Orgánica",
+        "prerrequisitos": [
+          "0101714"
+        ]
+      },
+      {
+        "codigo": "0051814",
+        "asignatura": "Física I",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0891322",
+        "asignatura": "Dibujo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0891722",
+        "asignatura": "Introducción a la Ing. Ambiental",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "0212043",
+        "asignatura": "Estadística",
+        "prerrequisitos": [
+          "0081724"
+        ]
+      },
+      {
+        "codigo": "0202633",
+        "asignatura": "Climatología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0202731",
+        "asignatura": "Informática",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892232",
+        "asignatura": "Resistencia de Materiales",
+        "prerrequisitos": [
+          "0051814"
+        ]
+      },
+      {
+        "codigo": "0892332",
+        "asignatura": "Sociedad y Ambiente",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892534",
+        "asignatura": "Química Analítica",
+        "prerrequisitos": [
+          "0101714"
+        ]
+      },
+      {
+        "codigo": "0892632",
+        "asignatura": "Ingles Instrumental I",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "0202943",
+        "asignatura": "Edafología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892142",
+        "asignatura": "Metodología de la Investigación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892243",
+        "asignatura": "Hidrología",
+        "prerrequisitos": [
+          "0202633"
+        ]
+      },
+      {
+        "codigo": "0892343",
+        "asignatura": "Química Ambiental",
+        "prerrequisitos": [
+          "0101724"
+        ]
+      },
+      {
+        "codigo": "0892442",
+        "asignatura": "Ecología",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892543",
+        "asignatura": "Hidráulica",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0892642",
+        "asignatura": "Ingles Instrumental II",
+        "prerrequisitos": [
+          "0892632"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "0893053",
+        "asignatura": "Microbiología Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0893253",
+        "asignatura": "Contaminación de aguas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0893453",
+        "asignatura": "Contaminación de Suelos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0893553",
+        "asignatura": "Sistema Atmosférico",
+        "prerrequisitos": [
+          "0202633"
+        ]
+      },
+      {
+        "codigo": "0893753",
+        "asignatura": "Topografía",
+        "prerrequisitos": [
+          "0891322"
+        ]
+      },
+      {
+        "codigo": "0890003",
+        "asignatura": "Electiva Socio Humanística",
+        "prerrequisitos": [],
+        "placeholder": true
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "0893163",
+        "asignatura": "Contaminación Atmosférica",
+        "prerrequisitos": [
+          "0893553"
+        ]
+      },
+      {
+        "codigo": "0893262",
+        "asignatura": "Laboratorio de Suelo y Agua",
+        "prerrequisitos": [
+          "0893253",
+          "0893453"
+        ]
+      },
+      {
+        "codigo": "0893363",
+        "asignatura": "Cartografía",
+        "prerrequisitos": [
+          "0893753"
+        ]
+      },
+      {
+        "codigo": "0893463",
+        "asignatura": "Política y Legislación Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0893563",
+        "asignatura": "Ingeniería Sanitaria",
+        "prerrequisitos": [
+          "0892543"
+        ]
+      },
+      {
+        "codigo": "0893663",
+        "asignatura": "Manejo y conserv. de Recursos Naturales",
+        "prerrequisitos": [
+          "0202943"
+        ]
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "0894173",
+        "asignatura": "Tratamientos de Aguas",
+        "prerrequisitos": [
+          "0893262"
+        ]
+      },
+      {
+        "codigo": "0894272",
+        "asignatura": "Laboratorio de Calidad Ambiental",
+        "prerrequisitos": [
+          "0893262"
+        ]
+      },
+      {
+        "codigo": "0894373",
+        "asignatura": "Manejo de Residuos y Desechos Sólidos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894573",
+        "asignatura": "Sistemas de Información Geográfica",
+        "prerrequisitos": [
+          "0893363"
+        ]
+      },
+      {
+        "codigo": "0890003",
+        "asignatura": "Electiva Técnica",
+        "prerrequisitos": [],
+        "placeholder": true
+      },
+      {
+        "codigo": "0890003",
+        "asignatura": "Electiva Socio Humanística",
+        "prerrequisitos": [],
+        "placeholder": true
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "0894183",
+        "asignatura": "Impacto Ambiental y Sociocultural",
+        "prerrequisitos": [
+          "0893463"
+        ]
+      },
+      {
+        "codigo": "0894283",
+        "asignatura": "Prevención y Control de Riesgos Ambientales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894383",
+        "asignatura": "Valoración Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894483",
+        "asignatura": "Sistema de Abastecimiento de Agua Potable",
+        "prerrequisitos": [
+          "0894173"
+        ]
+      },
+      {
+        "codigo": "0894583",
+        "asignatura": "Sistemas Ambientales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0890003",
+        "asignatura": "Electiva Técnica",
+        "prerrequisitos": [],
+        "placeholder": true
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "0895193",
+        "asignatura": "Protección y Seguridad Ambiental",
+        "prerrequisitos": [
+          "0894283"
+        ]
+      },
+      {
+        "codigo": "0895293",
+        "asignatura": "Gestión Ambiental",
+        "prerrequisitos": [
+          "0894183"
+        ]
+      },
+      {
+        "codigo": "0895393",
+        "asignatura": "Diseño de Planta de Trat. Aguas Residuales",
+        "prerrequisitos": [
+          "0894483"
+        ]
+      },
+      {
+        "codigo": "0895493",
+        "asignatura": "Sustentabilidad y Desarrollo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0895593",
+        "asignatura": "Proyecto de Trabajo de Grado",
+        "prerrequisitos": [],
+        "requisito_especial": "120 UC aprobadas"
+      },
+      {
+        "codigo": "0890003",
+        "asignatura": "Electiva Técnica",
+        "prerrequisitos": [],
+        "placeholder": true
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "0895203",
+        "asignatura": "Auditoría Ambiental",
+        "prerrequisitos": [
+          "0895293"
+        ]
+      },
+      {
+        "codigo": "0895006",
+        "asignatura": "Presentación y Disc. Trab. de Grado",
+        "prerrequisitos": [
+          "0895593"
+        ]
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "0895683",
+        "asignatura": "Teledetección",
+        "prerrequisitos": [
+          "0894573"
+        ]
+      },
+      {
+        "codigo": "0894673",
+        "asignatura": "Hidrogeología",
+        "prerrequisitos": [
+          "0892243"
+        ]
+      },
+      {
+        "codigo": "0894773",
+        "asignatura": "Recuperación de Áreas Degradadas",
+        "prerrequisitos": [
+          "0893663"
+        ]
+      },
+      {
+        "codigo": "0895893",
+        "asignatura": "Manejo Sostenible de Ecosistemas",
+        "prerrequisitos": [
+          "0894583"
+        ]
+      },
+      {
+        "codigo": "0894973",
+        "asignatura": "Ordenación del Territorio",
+        "prerrequisitos": [
+          "0893363"
+        ]
+      },
+      {
+        "codigo": "0894883",
+        "asignatura": "Energías Alternativas",
+        "prerrequisitos": [
+          "0893563"
+        ]
+      },
+      {
+        "codigo": "0894983",
+        "asignatura": "Biorremediación",
+        "prerrequisitos": [
+          "0893453"
+        ]
+      },
+      {
+        "codigo": "0895683",
+        "asignatura": "Manejo de desechos tóxicos y peligrosos",
+        "prerrequisitos": [
+          "0892343"
+        ]
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0894693",
+        "asignatura": "Desarrollo Rural Sustentable",
+        "prerrequisitos": [
+          "0892332"
+        ]
+      },
+      {
+        "codigo": "0894153",
+        "asignatura": "Ciencias Sociales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894253",
+        "asignatura": "Historia de la Cultura",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894353",
+        "asignatura": "Ética Profesional",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894453",
+        "asignatura": "Antropología Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894553",
+        "asignatura": "Gestión de Recursos Humanos",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894653",
+        "asignatura": "Dinámica de Grupo",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894753",
+        "asignatura": "Dirección de Reuniones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894853",
+        "asignatura": "Liderazgo, Motivación y Comunicación",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0894953",
+        "asignatura": "Toma de decisiones",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0895173",
+        "asignatura": "Desarrollo Urbano y Ambiente",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0895283",
+        "asignatura": "Educación Ambiental",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0895193",
+        "asignatura": "Extensión Ambiental",
+        "prerrequisitos": [
+          "0892332"
+        ]
+      },
+      {
+        "codigo": "0895373",
+        "asignatura": "Manejo de Conflictos Ambientales",
+        "prerrequisitos": [
+          "0893663"
+        ]
+      }
+    ]
+  },
+  "resumen": {
+    "total_asignaturas": 82,
+    "asignaturas_en_semestres": 60,
+    "asignaturas_electivas": 22,
+    "prerrequisitos_no_encontrados": [],
+    "codigos_duplicados": [
+      "0890003",
+      "0895193",
+      "0895683"
+    ]
+  },
+  "advertencias_calidad_datos": [
+    "Código 0895683 aparece en dos materias distintas de Electivas Técnicas: 'Teledetección' y 'Manejo de desechos tóxicos y peligrosos'. Probable error de transcripción en el documento fuente (uno de los dos códigos reales es distinto). Verificar contra el PDF oficial de la DACE antes de usar este código para enlazar programas.",
+    "Código 0895193 aparece tanto en 'Protección y Seguridad Ambiental' (Semestre 9) como en 'Extensión Ambiental' (Electiva Sociohumanística). Mismo tipo de inconsistencia, mismo tratamiento recomendado.",
+    "El código 0890003 se usa como comodín para 5 casillas de 'Electiva Técnica' / 'Electiva Socio Humanística' dentro de semestres 5, 7, 8 y 9 -- no identifica una materia real, sino un cupo a llenar con cualquier materia de las listas de electivas. Se marcó con \"placeholder\": true en cada ocurrencia; no debe tratarse como nodo único en el grafo.",
+    "El agrupamiento de las 22 electivas en 'Técnicas' (8) vs 'Sociohumanísticas' (14) se infirió del contenido temático y por comparación con el patrón de otras carreras UDO, porque el encabezado de esa sección en la imagen fuente era ambiguo entre columna izquierda y derecha. Recomendado verificar contra el documento oficial.",
+    "'Proyecto de Trabajo de Grado' (0895593) tiene como requisito real '120 UC aprobadas', no un código de materia -- se guardó en el campo 'requisito_especial' en vez de en 'prerrequisitos'."
+  ]
+}

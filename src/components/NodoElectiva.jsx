@@ -2,6 +2,7 @@ import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo } from '../theme/areas'
+import { codigoVisible } from '../data/codigoVisible'
 
 /**
  * Tarjeta compacta de la zona de electivas. Mas baja que la de una materia
@@ -22,7 +23,7 @@ function NodoElectiva({
   alEntrar,
   alSalir,
 }) {
-  const { x, y, codigo, nombre, uc, lineasNombre } = nodo
+  const { x, y, nombre, uc, lineasNombre } = nodo
   const acento = colorNodo(nodo)
   const aprobada = estado === ESTADO.APROBADA
   const cursando = estado === ESTADO.CURSANDO
@@ -35,7 +36,7 @@ function NodoElectiva({
     : (nodo.prerrequisitos ?? []).length === 0
       ? 'Libre · sin requisitos'
       : aprobada || cursando
-        ? `${codigo} · ${uc} UC`
+        ? `${codigoVisible(nodo)} · ${uc} UC`
         : 'Disponible · requisitos cumplidos'
   const colorPie = bloqueada
     ? 'var(--tinta-tenue)'
@@ -61,7 +62,7 @@ function NodoElectiva({
       className="grupo-nodo cursor-pointer"
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
-      <title>{`${codigo} — ${nombre} · ${uc} UC · ${estado}`}</title>
+      <title>{`${codigoVisible(nodo)} — ${nombre} · ${uc} UC · ${estado}`}</title>
 
       <rect width={NODO.ancho} height={ELECTIVAS.alto} rx={10} fill="var(--nodo)" />
       <rect
