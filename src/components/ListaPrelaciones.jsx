@@ -3,6 +3,9 @@ import { ESTADO } from '../hooks/usePensum'
 import { colorNodo } from '../theme/areas'
 import { ETIQUETA_ESTADO } from '../theme/estados'
 
+/** La misma frase la usan la ficha y la lista: vive aqui para que no deriven */
+export const SIN_PRELACIONES = 'Nada: puedes verla desde el inicio.'
+
 /**
  * Una materia dentro de una lista de prelaciones: su punto de color, su
  * nombre y en que estado la tienes.
@@ -43,9 +46,6 @@ function Fila({ asignatura, estado }) {
  * No lleva margenes propios: los pone quien la coloca, porque la ficha y la
  * lista tienen ritmos distintos.
  */
-/** La misma frase la usan la ficha y la lista: vive aqui para que no deriven */
-export const SIN_PRELACIONES = 'Nada: puedes verla desde el inicio.'
-
 function ListaPrelaciones({ titulo, materias, vacio }) {
   return (
     <>
