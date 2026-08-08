@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
@@ -28,8 +29,8 @@ function NodoAsignatura({
   tocado,
   claveToque,
   alVerFicha,
-  alEntrar,
-  alSalir,
+  alSenalar,
+  alDejarDeSenalar,
 }) {
   const { x, y, nombre, uc, lineasNombre } = nodo
   const acento = colorNodo(nodo)
@@ -50,9 +51,9 @@ function NodoAsignatura({
     <g
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
-      onClick={alVerFicha}
-      onPointerEnter={alEntrar}
-      onPointerLeave={alSalir}
+      onClick={() => alVerFicha(nodo.codigo)}
+      onPointerEnter={() => alSenalar(nodo.codigo)}
+      onPointerLeave={alDejarDeSenalar}
       className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
@@ -206,4 +207,14 @@ function NodoAsignatura({
   )
 }
 
-export default NodoAsignatura
+/**
+ * memo porque son hasta ciento siete de estos en pantalla y todos cuelgan de
+ * un estado que vive arriba: sin el, señalar UNA materia repintaba el mapa
+ * entero -medido: 413 mutaciones del DOM en 337 elementos por cada hover-.
+ * Con el, solo se repintan los nodos cuyo resaltado o atenuacion cambian.
+ *
+ * Todas las props son valores simples menos las tres funciones, y esas vienen
+ * fijadas con useCallback desde GrafoPensum. Si alguna volviera a crearse en
+ * cada render, esto dejaria de servir en silencio.
+ */
+export default memo(NodoAsignatura)

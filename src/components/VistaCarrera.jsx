@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { calcularLayout } from '../layout/calcularLayout'
 import { usePensum } from '../hooks/usePensum'
@@ -86,15 +86,23 @@ function VistaCarrera({ carrera, alVolver }) {
   // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
   // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
   // cada una apaga la otra.
-  const filtrarArea = (area) => {
+  //
+  // Los dos van en useCallback y sin dependencias, y eso no es adorno: son las
+  // funciones que acaban en manos de los mil seiscientos elementos del grafo.
+  // Si cambiaran de identidad en cada render, el memo de los nodos no serviria
+  // de nada porque siempre verian una prop distinta.
+  const filtrarArea = useCallback((area) => {
     setAreaFiltrada(area)
-    if (area) setSeleccionado(null)
-  }
+    setSeleccionado(null)
+  }, [])
 
-  const seleccionar = (codigo) => {
-    setSeleccionado(codigo)
-    if (codigo) setAreaFiltrada(null)
-  }
+  // El alternar vive aqui y no en el nodo para que la funcion no dependa de
+  // que hay seleccionado: con la forma de actualizacion, React le pasa el
+  // valor previo y la identidad se mantiene estable para siempre.
+  const alternarSeleccion = useCallback((codigo) => {
+    setSeleccionado((previo) => (previo === codigo ? null : codigo))
+    setAreaFiltrada(null)
+  }, [])
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
@@ -173,7 +181,7 @@ function VistaCarrera({ carrera, alVolver }) {
             seleccionado={seleccionado}
             senalado={senalado}
             alSenalar={setSenalado}
-            alSeleccionar={seleccionar}
+            alSeleccionar={alternarSeleccion}
             alMarcar={marcar}
           />
         ) : (

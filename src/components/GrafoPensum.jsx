@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
@@ -46,6 +47,22 @@ function GrafoPensum({
     porCodigo,
     vista,
   })
+
+  // Los nodos estan memoizados, asi que lo que reciben tiene que mantener su
+  // identidad entre renders o el memo no sirve de nada. Estas tres funciones
+  // son las unicas props de los nodos que no son valores simples, y por eso
+  // son las unicas que hay que fijar. Reciben el codigo en vez de venir ya
+  // atadas a un nodo concreto: una funcion por mapa, no una por materia.
+  const senalar = useCallback((codigo) => alSenalar(codigo), [alSenalar])
+  const dejarDeSenalar = useCallback(() => alSenalar(null), [alSenalar])
+  const verFicha = useCallback(
+    (codigo) => {
+      // Si el puntero se movio, fue un arrastre del lienzo, no un click
+      if (huboMovimiento.current) return
+      alSeleccionar(codigo)
+    },
+    [alSeleccionar, huboMovimiento],
+  )
 
   return (
     <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
@@ -174,13 +191,9 @@ function GrafoPensum({
               tocado={toque?.codigo === nodo.codigo}
               claveToque={toque?.n}
               alMarcar={alMarcar}
-              alEntrar={() => alSenalar(nodo.codigo)}
-              alSalir={() => alSenalar(null)}
-              alVerFicha={() => {
-                // Si el puntero se movio, fue un arrastre del lienzo, no un click
-                if (huboMovimiento.current) return
-                alSeleccionar(seleccionado === nodo.codigo ? null : nodo.codigo)
-              }}
+              alSenalar={senalar}
+              alDejarDeSenalar={dejarDeSenalar}
+              alVerFicha={verFicha}
             />
           ))}
 
@@ -240,12 +253,9 @@ function GrafoPensum({
               seleccionado={seleccionado === nodo.codigo}
               resaltado={cadena != null && cadena.has(nodo.codigo)}
               atenuado={atenuado(nodo.codigo)}
-              alEntrar={() => alSenalar(nodo.codigo)}
-              alSalir={() => alSenalar(null)}
-              alHacerClick={() => {
-                if (huboMovimiento.current) return
-                alSeleccionar(seleccionado === nodo.codigo ? null : nodo.codigo)
-              }}
+              alSenalar={senalar}
+              alDejarDeSenalar={dejarDeSenalar}
+              alHacerClick={verFicha}
             />
           ))}
         </g>
