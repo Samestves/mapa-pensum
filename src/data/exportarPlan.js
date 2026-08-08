@@ -1,4 +1,5 @@
 import { codigoVisible } from './codigoVisible'
+import { etiquetaSemestre } from '../layout/planificador'
 
 const MES = (fecha) => {
   const texto = fecha?.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
@@ -27,7 +28,7 @@ export function descargarMarkdown({ carrera, nombre, progreso, plan, ucPorSemest
     grado ? `- Grado aproximado: ${MES(grado)}` : null,
     ``,
     ...plan.semestres.flatMap((s) => [
-      `## Semestre ${s.numero} — ${s.materias.length} materias · ${s.uc} UC`,
+      `## ${etiquetaSemestre(s.numero)} — ${s.materias.length} materias · ${s.uc} UC`,
       ``,
       ...s.materias.map((a) => `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc} UC)`),
       ``,

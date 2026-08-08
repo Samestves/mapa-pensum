@@ -1,4 +1,5 @@
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { etiquetaSemestre } from '../layout/planificador'
 import { codigoVisible } from '../data/codigoVisible'
 
 const HOY = () =>
@@ -82,10 +83,19 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
         </p>
       ) : (
         <div className="mt-4 flex flex-col gap-3">
+          {/* Encabezado que enmarca toda la lista: deja claro de entrada que
+              lo que viene son los semestres QUE FALTAN, no el pensum entero. */}
+          <h3 className="border-b-2 border-tinta pb-1 text-[11px] font-extrabold tracking-wide uppercase">
+            Tus siguientes {plan.semestres.length} semestres
+          </h3>
           {plan.semestres.map((s) => (
             <section key={s.numero} className="break-inside-avoid">
               <div className="flex items-baseline justify-between gap-2 border-b border-panel-borde pb-1">
-                <h3 className="text-xs font-extrabold tracking-wide">SEMESTRE {s.numero}</h3>
+                {/* Nunca "SEMESTRE 1": ese numero es un paso desde hoy, no el
+                    semestre 1 del pensum, que quien lea esto ya aprobo. */}
+                <h3 className="text-xs font-extrabold tracking-wide uppercase">
+                  {etiquetaSemestre(s.numero)}
+                </h3>
                 <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
                   {s.materias.length} materias · {s.uc} UC
                 </span>
@@ -105,8 +115,10 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
                     <span className="solo-ancho hidden shrink-0 text-[9px] text-tinta-tenue sm:inline">
                       {a.area ? etiquetaArea(a.area) : ''}
                     </span>
+                    {/* Los comodines -"Areas de Grado"- no tienen UC. Sin
+                        esta guarda la hoja imprimia un "UC" suelto. */}
                     <span className="w-9 shrink-0 text-right font-mono text-[9px] text-tinta-tenue">
-                      {a.uc} UC
+                      {a.uc != null ? `${a.uc} UC` : '—'}
                     </span>
                   </li>
                 ))}
