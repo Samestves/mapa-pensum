@@ -1,0 +1,695 @@
+{
+  "carrera": "Ingeniería de Sistemas",
+  "institucion": "Universidad de Oriente (UDO)",
+  "nucleo": "Núcleo de Monagas — Maturín",
+  "fuente": "http://dacemonagas.udo.edu.ve/PensumIngSist.php",
+  "semestres": {
+    "Semestre 1": [
+      {
+        "codigo": "0021111",
+        "asignatura": "Extraacadémica",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061013",
+        "asignatura": "Comprensión y Expresión Lingüística I",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071823",
+        "asignatura": "Inglés Instrumental",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0081814",
+        "asignatura": "Matemáticas I",
+        "area": "ciencias-basicas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0091012",
+        "asignatura": "Desarrollo de Destrezas para el Aprendizaje",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0101214",
+        "asignatura": "Química General",
+        "area": "ciencias-basicas",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 2": [
+      {
+        "codigo": "0051324",
+        "asignatura": "Física I",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0081814"
+        ]
+      },
+      {
+        "codigo": "0061023",
+        "asignatura": "Comprensión y Expresión Lingüística II",
+        "area": "generales",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0071121",
+        "asignatura": "Inglés Técnico I",
+        "area": "generales",
+        "prerrequisitos": [
+          "0071823"
+        ]
+      },
+      {
+        "codigo": "0081824",
+        "asignatura": "Matemáticas II",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0081814"
+        ]
+      },
+      {
+        "codigo": "0721162",
+        "asignatura": "Intr. a la Lógica Formal y Algoritmos",
+        "area": "computacion",
+        "prerrequisitos": []
+      }
+    ],
+    "Semestre 3": [
+      {
+        "codigo": "0052131",
+        "asignatura": "Laboratorio de Física I",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0051324"
+        ]
+      },
+      {
+        "codigo": "0052134",
+        "asignatura": "Física II",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0051324"
+        ]
+      },
+      {
+        "codigo": "0082814",
+        "asignatura": "Matemáticas III",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0081824"
+        ]
+      },
+      {
+        "codigo": "0712642",
+        "asignatura": "Introducción a la Ingeniería de Sistemas",
+        "area": "sistemas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0722103",
+        "asignatura": "Programación Orientada a Objetos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0081824",
+          "0721162"
+        ]
+      },
+      {
+        "codigo": "0722111",
+        "asignatura": "Taller de Program. Orientada a Objetos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0721162"
+        ]
+      }
+    ],
+    "Semestre 4": [
+      {
+        "codigo": "0073023",
+        "asignatura": "Metodología de la Investigación",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0082824",
+        "asignatura": "Matemáticas IV",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0082814"
+        ]
+      },
+      {
+        "codigo": "0623313",
+        "asignatura": "Estadística I",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0082814"
+        ]
+      },
+      {
+        "codigo": "0712142",
+        "asignatura": "Introducción a la Economía",
+        "area": "gestion",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0722123",
+        "asignatura": "Objetos y Abstracción de Datos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0722103",
+          "0722111"
+        ]
+      },
+      {
+        "codigo": "0722131",
+        "asignatura": "Taller de Objet. y Abstracción de Datos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0722111"
+        ]
+      }
+    ],
+    "Semestre 5": [
+      {
+        "codigo": "0624622",
+        "asignatura": "Estadística II",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0623313"
+        ]
+      },
+      {
+        "codigo": "0713122",
+        "asignatura": "Inferencia y Diseño de Experimentos",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0623313"
+        ]
+      },
+      {
+        "codigo": "0713172",
+        "asignatura": "Sistemas de Costo",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0712142"
+        ]
+      },
+      {
+        "codigo": "0713463",
+        "asignatura": "Circuitos y Sistemas",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0052134",
+          "0082824"
+        ]
+      },
+      {
+        "codigo": "0713632",
+        "asignatura": "Teoría de Sistemas",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0712642"
+        ]
+      },
+      {
+        "codigo": "0713643",
+        "asignatura": "Sistemas de Operación",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0722123"
+        ]
+      },
+      {
+        "codigo": "0723913",
+        "asignatura": "Métodos Numéricos",
+        "area": "ciencias-basicas",
+        "prerrequisitos": [
+          "0082824",
+          "0722103"
+        ]
+      }
+    ],
+    "Semestre 6": [
+      {
+        "codigo": "0713113",
+        "asignatura": "Economía de Empresas",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0713172"
+        ]
+      },
+      {
+        "codigo": "0713622",
+        "asignatura": "Admón. de Stmas. de Base de Datos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0713643"
+        ]
+      },
+      {
+        "codigo": "0713633",
+        "asignatura": "Enfoque Sistémico",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713632"
+        ]
+      },
+      {
+        "codigo": "0713653",
+        "asignatura": "Análisis de Decisiones",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713122"
+        ]
+      },
+      {
+        "codigo": "0713663",
+        "asignatura": "Optimización de Operaciones",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0723913"
+        ]
+      },
+      {
+        "codigo": "0723533",
+        "asignatura": "Electrónica",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0713463"
+        ]
+      }
+    ],
+    "Semestre 7": [
+      {
+        "codigo": "0714153",
+        "asignatura": "Prepar., Eval. y Control de Proyectos",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0713113"
+        ]
+      },
+      {
+        "codigo": "0714323",
+        "asignatura": "Anál. y Diseño de Stms. de Información",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0713622"
+        ]
+      },
+      {
+        "codigo": "0714633",
+        "asignatura": "Modelos de Operaciones I",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713663"
+        ]
+      },
+      {
+        "codigo": "0714643",
+        "asignatura": "Sistemas Dinámicos",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0723533"
+        ]
+      },
+      {
+        "codigo": "0724641",
+        "asignatura": "Laboratorio de Circuitos y Electrónica",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0723533"
+        ]
+      }
+    ],
+    "Semestre 8": [
+      {
+        "codigo": "0625613",
+        "asignatura": "Administración Financiera de Empresas",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0713113"
+        ]
+      },
+      {
+        "codigo": "0714123",
+        "asignatura": "Gestión Empresarial I",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714153"
+        ]
+      },
+      {
+        "codigo": "0714133",
+        "asignatura": "Modelos de Operaciones II",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0714633"
+        ]
+      },
+      {
+        "codigo": "0714612",
+        "asignatura": "Aplicación y Audit. de Stmas. de Inform.",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0714323"
+        ]
+      },
+      {
+        "codigo": "0714642",
+        "asignatura": "Sistemas de Comunicación Industrial",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0713622"
+        ]
+      }
+    ],
+    "Semestre 9": [
+      {
+        "codigo": "0625822",
+        "asignatura": "Leyes y Deontología",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0715112",
+        "asignatura": "Planificación Estratégica",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714123"
+        ]
+      }
+    ],
+    "Semestre 10": [
+      {
+        "codigo": "0715116",
+        "asignatura": "Trabajo de Grado",
+        "area": "tesis",
+        "prerrequisitos": [
+          "0714133",
+          "0715112"
+        ]
+      }
+    ]
+  },
+  "electivas": {
+    "Electivas Técnicas": [
+      {
+        "codigo": "0714303",
+        "asignatura": "Programación No Lineal",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713663"
+        ]
+      },
+      {
+        "codigo": "0714353",
+        "asignatura": "Problemas y Proyectos Especiales",
+        "area": "sistemas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0714363",
+        "asignatura": "Sistemas de Control Discreto",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0714643"
+        ]
+      },
+      {
+        "codigo": "0714373",
+        "asignatura": "Instrumentación y Control de Procesos",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0714363"
+        ]
+      },
+      {
+        "codigo": "0714383",
+        "asignatura": "Procesos Estocásticos",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0713122"
+        ]
+      },
+      {
+        "codigo": "0714393",
+        "asignatura": "Teoría de Colas",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0714383"
+        ]
+      },
+      {
+        "codigo": "0714903",
+        "asignatura": "Teoría de Sobrevivencia",
+        "area": "estadistica",
+        "prerrequisitos": [
+          "0714383"
+        ]
+      },
+      {
+        "codigo": "0714933",
+        "asignatura": "Seminario de Ingeniería de Sistemas",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713633"
+        ]
+      },
+      {
+        "codigo": "0714943",
+        "asignatura": "Sistemología Interpretativa",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0713633"
+        ]
+      },
+      {
+        "codigo": "0714953",
+        "asignatura": "Dinámica de Sistemas",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0714643"
+        ]
+      },
+      {
+        "codigo": "0714963",
+        "asignatura": "Sistemas Inteligentes",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0714323",
+          "0714612",
+          "0714642"
+        ]
+      },
+      {
+        "codigo": "0714973",
+        "asignatura": "Gestión Empresarial II",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714123"
+        ]
+      },
+      {
+        "codigo": "0714983",
+        "asignatura": "Cuadro de Mando Integral",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0715112"
+        ]
+      },
+      {
+        "codigo": "0714993",
+        "asignatura": "Simulación de Sistemas",
+        "area": "sistemas",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0715123",
+        "asignatura": "Gerencia de Mantenimiento",
+        "area": "gestion",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0715333",
+        "asignatura": "Gerencia Logística",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714133"
+        ]
+      },
+      {
+        "codigo": "0715903",
+        "asignatura": "Stmas. de Ctrol. de Espacios de Estado",
+        "area": "electronica",
+        "prerrequisitos": [
+          "0714363"
+        ]
+      },
+      {
+        "codigo": "0715933",
+        "asignatura": "Control de Proyectos",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714153"
+        ]
+      },
+      {
+        "codigo": "0715943",
+        "asignatura": "Comportamiento Organizacional",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714973"
+        ]
+      },
+      {
+        "codigo": "0715953",
+        "asignatura": "Administración de Recursos Humanos",
+        "area": "gestion",
+        "prerrequisitos": [
+          "0714123"
+        ]
+      },
+      {
+        "codigo": "0715963",
+        "asignatura": "Dirección de Operaciones",
+        "area": "sistemas",
+        "prerrequisitos": [
+          "0714633"
+        ]
+      },
+      {
+        "codigo": "0723123",
+        "asignatura": "Estructura de Datos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0722123"
+        ]
+      },
+      {
+        "codigo": "0723131",
+        "asignatura": "Taller de Estructura de Datos",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0722131"
+        ]
+      },
+      {
+        "codigo": "0723373",
+        "asignatura": "Lenguaje de Programación",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0723123"
+        ]
+      },
+      {
+        "codigo": "0724713",
+        "asignatura": "Desarrollo de Software",
+        "area": "computacion",
+        "prerrequisitos": [
+          "0714612"
+        ]
+      }
+    ],
+    "Electivas Sociohumanísticas": [
+      {
+        "codigo": "0061183",
+        "asignatura": "Ética",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061222",
+        "asignatura": "Historia de la Cultura",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061822",
+        "asignatura": "Sexología Básica",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0061922",
+        "asignatura": "Expresión Oral y Escrita",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062032",
+        "asignatura": "Expresión Escrita",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0062052",
+        "asignatura": "Dinámica de Grupos",
+        "area": "generales",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0062122",
+        "asignatura": "Comunicación y Sociedad",
+        "area": "generales",
+        "prerrequisitos": [
+          "0061013"
+        ]
+      },
+      {
+        "codigo": "0071112",
+        "asignatura": "Inglés Instrumental I",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0071222",
+        "asignatura": "Inglés Instrumental II",
+        "area": "generales",
+        "prerrequisitos": [
+          "0071112"
+        ]
+      },
+      {
+        "codigo": "0112832",
+        "asignatura": "Grupo y Liderazgo",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0112943",
+        "asignatura": "Introd. a la Filosofía de la Ciencia",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113053",
+        "asignatura": "Dirección de Reuniones",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "0113183",
+        "asignatura": "Sociología Urbana",
+        "area": "generales",
+        "prerrequisitos": []
+      },
+      {
+        "codigo": "9032242",
+        "asignatura": "Educación Ambiental",
+        "area": "generales",
+        "prerrequisitos": []
+      }
+    ]
+  }
+}

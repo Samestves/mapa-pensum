@@ -1,7 +1,7 @@
-import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
 
 /**
@@ -11,18 +11,10 @@ import { codigoVisible } from '../data/codigoVisible'
  * el mapa se pueda leer de un vistazo desde lejos.
  */
 const ESTILO = {
-  [ESTADO.BLOQUEADA]: { borde: null, opacidadBorde: 0.4, grosor: 1.25, guiones: '5 4', tinte: 0, acento: 0.4 },
-  [ESTADO.DISPONIBLE]: { borde: null, opacidadBorde: 0.85, grosor: 1.5, guiones: null, tinte: 0.05, acento: 1 },
-  [ESTADO.CURSANDO]: { borde: 'var(--estado-cursando)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.14, acento: 1 },
-  [ESTADO.APROBADA]: { borde: 'var(--estado-aprobada)', opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.22, acento: 1 },
-}
-
-// Icono de estado, arriba a la derecha. Informa, no es un boton.
-const ICONO = {
-  [ESTADO.APROBADA]: Check,
-  [ESTADO.CURSANDO]: CircleDot,
-  [ESTADO.BLOQUEADA]: Lock,
-  [ESTADO.DISPONIBLE]: null,
+  [ESTADO.BLOQUEADA]: { opacidadBorde: 0.4, grosor: 1.25, guiones: '5 4', tinte: 0, acento: 0.4 },
+  [ESTADO.DISPONIBLE]: { opacidadBorde: 0.85, grosor: 1.5, guiones: null, tinte: 0.05, acento: 1 },
+  [ESTADO.CURSANDO]: { opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.14, acento: 1 },
+  [ESTADO.APROBADA]: { opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.22, acento: 1 },
 }
 
 function NodoAsignatura({
@@ -43,12 +35,12 @@ function NodoAsignatura({
   const acento = colorNodo(nodo)
   const estilo = ESTILO[estado]
 
-  const colorBorde = estilo.borde ?? acento
+  const colorBorde = colorBordeEstado(estado, acento)
   const colorTinte =
     estado === ESTADO.CURSANDO ? 'var(--estado-cursando)' : 'var(--estado-aprobada)'
 
   const aprobada = estado === ESTADO.APROBADA
-  const Icono = ICONO[estado]
+  const Icono = ICONO_ESTADO[estado]
 
   // El bloque de nombre se centra: 1, 2 o 3 lineas quedan siempre equilibradas
   const primeraLinea =

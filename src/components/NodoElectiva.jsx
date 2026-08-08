@@ -1,7 +1,7 @@
-import { Check, CircleDot, Lock } from 'lucide-react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo } from '../theme/areas'
+import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
 
 /**
@@ -44,13 +44,9 @@ function NodoElectiva({
       ? 'var(--estado-aprobada)'
       : 'var(--tinta-tenue)'
 
-  const colorBorde = aprobada
-    ? 'var(--estado-aprobada)'
-    : cursando
-      ? 'var(--estado-cursando)'
-      : acento
+  const colorBorde = colorBordeEstado(estado, acento)
 
-  const Icono = aprobada ? Check : cursando ? CircleDot : bloqueada ? Lock : null
+  const Icono = ICONO_ESTADO[estado]
 
   return (
     <g

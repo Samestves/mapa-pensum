@@ -1,28 +1,11 @@
 import { useEffect, useState } from 'react'
 import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
+import { ponerMeta } from './data/seo'
 import { useRuta } from './hooks/useRuta'
 import EsqueletoMapa from './components/EsqueletoMapa'
 import SelectorCarrera from './components/SelectorCarrera'
 import VistaCarrera from './components/VistaCarrera'
-
-/** El <title> y la descripcion cambian por carrera: cada una es su pagina */
-function ponerMeta(carrera) {
-  document.title = carrera
-    ? `Pensum de ${carrera.nombre} — UDO Núcleo de Monagas`
-    : 'Mapa de Pensum — UDO Núcleo de Monagas'
-
-  const descripcion = carrera
-    ? `Mapa interactivo del pensum de ${carrera.nombre} en la UDO Núcleo de Monagas: ` +
-      `${carrera.asignaturas} materias en ${carrera.semestres} semestres, con sus prelaciones.`
-    : 'Mapa interactivo de los pensums de la Universidad de Oriente, Núcleo de Monagas. ' +
-      'Nueve carreras con sus materias, prelaciones y avance.'
-
-  document.querySelector('meta[name="description"]')?.setAttribute('content', descripcion)
-  document
-    .querySelector('link[rel="canonical"]')
-    ?.setAttribute('href', `https://mapa-pensum.vercel.app/${carrera?.slug ?? ''}`)
-}
 
 /**
  * Raiz: decide entre el selector y el mapa de una carrera.
