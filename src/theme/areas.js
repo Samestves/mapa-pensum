@@ -2,7 +2,7 @@ import { TONOS } from './paleta'
 
 // Etiquetas y color de acento por area. El color apunta a la variable CSS,
 // asi que cambia solo al alternar tema claro/oscuro.
-export const AREAS = {
+const AREAS = {
   generales: { etiqueta: 'Generales', color: 'var(--area-generales)' },
   'ciencias-basicas': { etiqueta: 'Ciencias básicas', color: 'var(--area-ciencias-basicas)' },
   estadistica: { etiqueta: 'Estadística', color: 'var(--area-estadistica)' },
