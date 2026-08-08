@@ -2,14 +2,8 @@ import { useMemo, useState } from 'react'
 import { Check, ChevronDown, CircleDot, Lock } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
+import { COLOR_ESTADO } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
-
-const COLOR_ESTADO = {
-  [ESTADO.APROBADA]: 'var(--estado-aprobada)',
-  [ESTADO.CURSANDO]: 'var(--estado-cursando)',
-  [ESTADO.DISPONIBLE]: 'var(--tinta-suave)',
-  [ESTADO.BLOQUEADA]: 'var(--tinta-tenue)',
-}
 
 function Boton({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
