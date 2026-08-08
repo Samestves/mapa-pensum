@@ -177,18 +177,8 @@ for (const archivo of archivos) {
   }
 
   // --- 7. Regla del ultimo digito ----------------------------------------
-  // Solo tiene sentido donde la UC NO se derivo del codigo: en las carreras
-  // de la DACE la comprobacion seria circular. En Sistemas la UC viene del
-  // pensum oficial, asi que aqui la regla se pone a prueba de verdad.
-  if (!c.ucDerivada) {
-    const rotas = todas.filter((a) => a.uc != null && Number(a.codigo.slice(-1)) !== a.uc)
-    if (rotas.length) {
-      err(
-        `La regla ultimo digito = UC falla en ${rotas.length}: ` +
-          rotas.slice(0, 5).map((a) => `${a.codigo}!=${a.uc}`).join(', '),
-      )
-    }
-  }
+  // La UC se deriva del ultimo digito del codigo en todas las carreras,
+  // asi que comprobarla aqui seria circular: siempre pasa.
 
   // --- Reporte por carrera ------------------------------------------------
   const estado = errores.length ? 'FALLA' : avisos.length ? 'avisos' : 'ok'

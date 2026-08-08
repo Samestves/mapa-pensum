@@ -9,18 +9,11 @@ import {
   HORAS_POR_UC,
 } from '../layout/planificador'
 import { pesoDesbloqueo } from '../layout/relaciones'
-import { codigoVisible } from '../data/codigoVisible'
+import { descargarMarkdown, MES } from '../data/exportarPlan'
 import HojaPlan from './HojaPlan'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
 const CLAVE_UC = 'mapa-pensum:uc-semestre'
-
-// Solo la inicial: capitalize de CSS pone mayuscula en cada palabra y en
-// español deja cosas como "Agosto De 2031".
-const MES = (fecha) => {
-  const texto = fecha?.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
-  return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : ''
-}
 
 function Control({ etiqueta, valor, sufijo, min, max, alCambiar, ayuda }) {
   return (
@@ -115,45 +108,14 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) 
   const totalSemestres = plan.semestres.length
   const grado = mesEstimadoGrado(totalSemestres)
 
-  const descargarMarkdown = () => {
-    const lineas = [
-      `# Mi ruta hasta el grado`,
-      ``,
-      `${carrera.nombre} — ${carrera.nucleo}`,
-      nombre ? `Estudiante: ${nombre}` : null,
-      `Generado el ${new Date().toLocaleDateString('es-VE')}`,
-      ``,
-      progreso.porcentaje != null
-        ? `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas}/${progreso.ucTotales} UC)`
-        : `- Avance: ${progreso.aprobadas}/${progreso.total} materias (${progreso.ucAprobadas} UC)`,
-      `- Materias pendientes: ${plan.materiasRestantes}`,
-      `- Semestres estimados: ${totalSemestres} con ${ucPorSemestre} UC por semestre`,
-      grado ? `- Grado aproximado: ${MES(grado)}` : null,
-      ``,
-      ...plan.semestres.flatMap((s) => [
-        `## Semestre ${s.numero} — ${s.materias.length} materias · ${s.uc} UC`,
-        ``,
-        ...s.materias.map((a) => `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc} UC)`),
-        ``,
-      ]),
-      `---`,
-      `Generado con Mapa de Pensum · https://mapa-pensum.vercel.app`,
-      `Las unidades crédito no están verificadas contra el pensum oficial.`,
-    ].filter((l) => l !== null)
-
-    const blob = new Blob([lineas.join('\n')], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'mi-ruta-pensum.md'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   const acciones = (
     <>
       <Boton icono={Printer} texto="Imprimir o PDF" principal alPulsar={() => window.print()} />
-      <Boton icono={Download} texto="Descargar .md" alPulsar={descargarMarkdown} />
+      <Boton
+        icono={Download}
+        texto="Descargar .md"
+        alPulsar={() => descargarMarkdown({ carrera, nombre, progreso, plan, ucPorSemestre, grado })}
+      />
     </>
   )
 

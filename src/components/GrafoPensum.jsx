@@ -1,41 +1,14 @@
-import { useMemo } from 'react'
-import { Maximize, Minus, Plus } from 'lucide-react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
-import { cadenaDe } from '../layout/relaciones'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
+import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'
 import Arista from './Arista'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
-
-/* Los controles del lienzo van juntos en un solo bloque con separadores,
-   no como botones sueltos flotando: se leen como un mando, no como ruido. */
-function BotonDock({ icono: Icono, titulo, alPulsar }) {
-  return (
-    <button
-      type="button"
-      title={titulo}
-      aria-label={titulo}
-      onClick={alPulsar}
-      className="grid size-9 place-items-center text-tinta-suave transition-colors hover:text-tinta"
-    >
-      <Icono size={16} />
-    </button>
-  )
-}
-
-function Dock({ children, clase }) {
-  return (
-    <div
-      className={`transicion-tema absolute z-20 flex overflow-hidden rounded-xl border border-panel-borde bg-panel/85 backdrop-blur ${clase}`}
-    >
-      {children}
-    </div>
-  )
-}
+import ControlesZoom from './ControlesZoom'
 
 function GrafoPensum({
   layout,
@@ -64,41 +37,15 @@ function GrafoPensum({
     controlesArrastre,
   } = useVistaGrafo(ancho, alto)
 
-  // Manda la seleccion; el hover solo resalta si no hay nada seleccionado
-  const foco = seleccionado ?? senalado
-
-  const cadena = useMemo(
-    () => (foco ? cadenaDe(foco, relaciones) : null),
-    [foco, relaciones],
-  )
-
-  // Un nodo se apaga si hay una cadena en foco y no entra, o si hay un area
-  // filtrada desde el panel y no es la suya.
-  const atenuado = (codigo) => {
-    if (areaFiltrada && porCodigo.get(codigo)?.area !== areaFiltrada) return true
-    return cadena != null && !cadena.has(codigo)
-  }
-
-  const nodoSeleccionado = seleccionado ? porCodigo.get(seleccionado) : null
-
-  const detalle = useMemo(() => {
-    if (!nodoSeleccionado) return null
-    const relacionadas = (codigos) =>
-      codigos
-        .map((c) => porCodigo.get(c))
-        .filter(Boolean)
-        .map((asignatura) => ({ asignatura, estado: estados[asignatura.codigo] }))
-
-    return {
-      prerrequisitos: relacionadas(relaciones.atras.get(seleccionado) ?? []),
-      desbloquea: relacionadas(relaciones.adelante.get(seleccionado) ?? []),
-      posicion: {
-        x: vista.x + (nodoSeleccionado.x + NODO.ancho) * vista.escala,
-        y: vista.y + nodoSeleccionado.y * vista.escala,
-        ancho: NODO.ancho * vista.escala,
-      },
-    }
-  }, [nodoSeleccionado, seleccionado, relaciones, porCodigo, estados, vista])
+  const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
+    seleccionado,
+    senalado,
+    areaFiltrada,
+    estados,
+    relaciones,
+    porCodigo,
+    vista,
+  })
 
   return (
     <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
@@ -317,11 +264,7 @@ function GrafoPensum({
         />
       )}
 
-      <Dock clase="right-4 bottom-4 flex-col divide-y divide-panel-borde">
-        <BotonDock icono={Plus} titulo="Acercar" alPulsar={acercar} />
-        <BotonDock icono={Minus} titulo="Alejar" alPulsar={alejar} />
-        <BotonDock icono={Maximize} titulo="Encajar en pantalla" alPulsar={encajar} />
-      </Dock>
+      <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} />
     </div>
   )
 }
