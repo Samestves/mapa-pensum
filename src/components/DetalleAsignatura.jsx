@@ -3,15 +3,9 @@ import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
 import { codigoVisible } from '../data/codigoVisible'
+import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
 
 const ANCHO = 300
-
-const ETIQUETA_ESTADO = {
-  [ESTADO.APROBADA]: 'Aprobada',
-  [ESTADO.CURSANDO]: 'Cursando',
-  [ESTADO.DISPONIBLE]: 'Disponible',
-  [ESTADO.BLOQUEADA]: 'Bloqueada',
-}
 
 function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
@@ -28,28 +22,6 @@ function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
       <Icono size={16} />
       {texto}
     </button>
-  )
-}
-
-function Fila({ asignatura, estado }) {
-  const aprobada = estado === ESTADO.APROBADA
-  return (
-    <li className="flex items-center gap-2">
-      <span
-        className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: colorNodo(asignatura) }}
-      />
-      <span className="min-w-0 flex-1 truncate text-[11px] text-tinta-suave">
-        {asignatura.nombre}
-      </span>
-      {aprobada ? (
-        <Check size={12} className="shrink-0 text-aprobada" />
-      ) : (
-        <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
-          {ETIQUETA_ESTADO[estado]?.slice(0, 4)}
-        </span>
-      )}
-    </li>
   )
 }
 
@@ -157,18 +129,12 @@ function DetalleAsignatura({
       )}
 
       <div className="max-h-52 overflow-y-auto border-t border-panel-borde px-3.5 py-3">
-        <p className="mb-1.5 text-[10px] font-bold tracking-wider text-tinta-tenue uppercase">
-          Requiere ({prerrequisitos.length})
-        </p>
-        {prerrequisitos.length === 0 && !nodo.requisitoEspecial ? (
-          <p className="text-[11px] text-tinta-tenue">Nada: puedes verla desde el inicio.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {prerrequisitos.map((p) => (
-              <Fila key={p.asignatura.codigo} {...p} />
-            ))}
-          </ul>
-        )}
+        <ListaPrelaciones
+          titulo="Requiere"
+          materias={prerrequisitos}
+          // Con requisito especial no se dice "nada": abajo viene la condicion
+          vacio={nodo.requisitoEspecial ? '' : SIN_PRELACIONES}
+        />
 
         {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
             del mapa ni una fila con su punto de color. Es una condicion, y se
@@ -183,18 +149,13 @@ function DetalleAsignatura({
           </p>
         )}
 
-        <p className="mt-3 mb-1.5 text-[10px] font-bold tracking-wider text-tinta-tenue uppercase">
-          Desbloquea ({desbloquea.length})
-        </p>
-        {desbloquea.length === 0 ? (
-          <p className="text-[11px] text-tinta-tenue">Nada: es final de rama.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {desbloquea.map((p) => (
-              <Fila key={p.asignatura.codigo} {...p} />
-            ))}
-          </ul>
-        )}
+        <div className="mt-3">
+          <ListaPrelaciones
+            titulo="Desbloquea"
+            materias={desbloquea}
+            vacio="Nada: es final de rama."
+          />
+        </div>
       </div>
     </div>
   )

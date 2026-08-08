@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { colorNodo } from '../theme/areas'
@@ -20,8 +21,8 @@ function NodoElectiva({
   atenuado,
   seleccionado,
   alHacerClick,
-  alEntrar,
-  alSalir,
+  alSenalar,
+  alDejarDeSenalar,
 }) {
   const { x, y, nombre, uc, lineasNombre } = nodo
   const acento = colorNodo(nodo)
@@ -52,9 +53,9 @@ function NodoElectiva({
     <g
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
-      onClick={alHacerClick}
-      onPointerEnter={alEntrar}
-      onPointerLeave={alSalir}
+      onClick={() => alHacerClick(nodo.codigo)}
+      onPointerEnter={() => alSenalar(nodo.codigo)}
+      onPointerLeave={alDejarDeSenalar}
       className="grupo-nodo cursor-pointer"
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
@@ -128,4 +129,5 @@ function NodoElectiva({
   )
 }
 
-export default NodoElectiva
+// Mismo motivo que NodoAsignatura: Sistemas trae 39 de estas.
+export default memo(NodoElectiva)

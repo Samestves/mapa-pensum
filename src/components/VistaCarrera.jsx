@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { calcularLayout } from '../layout/calcularLayout'
+import { usePaneles } from '../hooks/usePaneles'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
@@ -53,9 +54,9 @@ function VistaCarrera({ carrera, alVolver }) {
     localStorage.setItem(CLAVE_VISTA, vista)
   }, [vista])
 
-  // El avance ya no ocupa columna: se abre desde el chip de la cabecera
-  const [panelAbierto, setPanelAbierto] = useState(false)
-  const [avisosAbiertos, setAvisosAbiertos] = useState(false)
+  // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
+  // un solo valor en vez de un booleano por panel, y no hay que apagar nada.
+  const { abierto, alternar, cerrar } = usePaneles()
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
   const [planAbierto, setPlanAbierto] = useState(false)
@@ -86,15 +87,23 @@ function VistaCarrera({ carrera, alVolver }) {
   // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
   // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
   // cada una apaga la otra.
-  const filtrarArea = (area) => {
+  //
+  // Los dos van en useCallback y sin dependencias, y eso no es adorno: son las
+  // funciones que acaban en manos de los mil seiscientos elementos del grafo.
+  // Si cambiaran de identidad en cada render, el memo de los nodos no serviria
+  // de nada porque siempre verian una prop distinta.
+  const filtrarArea = useCallback((area) => {
     setAreaFiltrada(area)
-    if (area) setSeleccionado(null)
-  }
+    setSeleccionado(null)
+  }, [])
 
-  const seleccionar = (codigo) => {
-    setSeleccionado(codigo)
-    if (codigo) setAreaFiltrada(null)
-  }
+  // El alternar vive aqui y no en el nodo para que la funcion no dependa de
+  // que hay seleccionado: con la forma de actualizacion, React le pasa el
+  // valor previo y la identidad se mantiene estable para siempre.
+  const alternarSeleccion = useCallback((codigo) => {
+    setSeleccionado((previo) => (previo === codigo ? null : codigo))
+    setAreaFiltrada(null)
+  }, [])
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
@@ -109,20 +118,14 @@ function VistaCarrera({ carrera, alVolver }) {
             resumen={progreso}
             vista={vista}
             alCambiarVista={setVista}
-            avanceAbierto={panelAbierto}
-            alAlternarAvance={() => {
-              setPanelAbierto((v) => !v)
-              setAvisosAbiertos(false)
-            }}
-            avisosAbiertos={avisosAbiertos}
-            alAlternarAvisos={() => {
-              setAvisosAbiertos((v) => !v)
-              setPanelAbierto(false)
-            }}
+            avanceAbierto={abierto === 'avance'}
+            alAlternarAvance={() => alternar('avance')}
+            avisosAbiertos={abierto === 'avisos'}
+            alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
             alOcultarBarra={() => {
               setBarraOculta(true)
-              setPanelAbierto(false)
+              cerrar()
             }}
             alVolver={alVolver}
           />
@@ -173,7 +176,7 @@ function VistaCarrera({ carrera, alVolver }) {
             seleccionado={seleccionado}
             senalado={senalado}
             alSenalar={setSenalado}
-            alSeleccionar={seleccionar}
+            alSeleccionar={alternarSeleccion}
             alMarcar={marcar}
           />
         ) : (
@@ -188,19 +191,15 @@ function VistaCarrera({ carrera, alVolver }) {
         {/* Los dos paneles cuelgan de aqui y no de la cabecera: sus hijos
             llevan overflow:hidden para la animacion de plegado y recortarian
             cualquier cosa que asomara por debajo. */}
-        <PanelAvisos
-          avisos={carrera.avisos}
-          abierto={avisosAbiertos}
-          alCerrar={() => setAvisosAbiertos(false)}
-        />
+        <PanelAvisos avisos={carrera.avisos} abierto={abierto === 'avisos'} alCerrar={cerrar} />
 
         <PanelProgreso
           progreso={progreso}
           avanceGrupos={avanceGrupos}
           reiniciar={reiniciar}
           hayMarcas={hayMarcas}
-          abierto={panelAbierto}
-          alCerrar={() => setPanelAbierto(false)}
+          abierto={abierto === 'avance'}
+          alCerrar={cerrar}
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
         />

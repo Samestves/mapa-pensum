@@ -23,7 +23,7 @@ function anchoAproximado(texto, fontSize) {
  * Parte un nombre en lineas que quepan dentro del nodo.
  * Si no cabe en maxLineas, recorta la ultima y le pone puntos suspensivos.
  */
-export function partirEnLineas(texto, anchoDisponible, fontSize, maxLineas) {
+function partirEnLineas(texto, anchoDisponible, fontSize, maxLineas) {
   const lineas = []
   let actual = ''
 

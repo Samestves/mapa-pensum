@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { colorNodo } from '../theme/areas'
 
 const OPACIDAD = { viva: 0.9, resaltada: 1, normal: 0.42, atenuada: 0.07 }
@@ -184,4 +185,6 @@ function Arista({
   )
 }
 
-export default Arista
+// Todas sus props son valores simples, asi que el memo compara barato.
+// Son mas de cien cables y cada uno lleva su estela animada.
+export default memo(Arista)

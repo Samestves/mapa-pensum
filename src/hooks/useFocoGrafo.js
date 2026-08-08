@@ -55,5 +55,7 @@ export function useFocoGrafo({
     }
   }, [nodoSeleccionado, seleccionado, relaciones, porCodigo, estados, vista])
 
-  return { foco, cadena, atenuado, nodoSeleccionado, detalle }
+  // foco no sale: es un paso intermedio para calcular la cadena, no algo
+  // que el componente necesite. Devolverlo invitaba a depender de el.
+  return { cadena, atenuado, nodoSeleccionado, detalle }
 }

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
 
 /**
@@ -60,4 +61,4 @@ function NodoHueco({ nodo, atenuado }) {
   )
 }
 
-export default NodoHueco
+export default memo(NodoHueco)

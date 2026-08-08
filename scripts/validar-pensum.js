@@ -12,7 +12,11 @@
  *  4. Ningun prerrequisito esta en semestre igual o posterior
  *  5. No hay ciclos en el grafo de prerrequisitos
  *  6. Coherencia de creditos y que las cuotas sean alcanzables
- *  7. La regla del ultimo digito = UC, solo donde no es tautologica
+ *
+ * Lo que NO comprueba, y a proposito: que el ultimo digito del codigo sea la
+ * UC. La UC se deriva de ese digito en el normalizador, asi que compararlos
+ * aqui seria preguntarle a un dato si es igual a si mismo. La regla no es una
+ * suposicion del proyecto sino una convencion de la UDO.
  */
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
@@ -175,10 +179,6 @@ for (const archivo of archivos) {
       err(`El grupo "${g.titulo}" ofrece ${ofertado} UC pero su cuota pide ${g.cuota}`)
     }
   }
-
-  // --- 7. Regla del ultimo digito ----------------------------------------
-  // La UC se deriva del ultimo digito del codigo en todas las carreras,
-  // asi que comprobarla aqui seria circular: siempre pasa.
 
   // --- Reporte por carrera ------------------------------------------------
   const estado = errores.length ? 'FALLA' : avisos.length ? 'avisos' : 'ok'

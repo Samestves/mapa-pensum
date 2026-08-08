@@ -2,7 +2,7 @@
  * Convierte los pensums crudos al unico modelo que consume la app.
  *
  * Entra: datos/crudo/*.json (scrape de la DACE, todos con la misma estructura:
- *        semestres y electivas como objetos, con uc y area opcionales) +
+ *        semestres y electivas como objetos, con area opcional) +
  *        datos/overlay.json (lo que sabemos y la DACE no dice).
  * Sale:  src/data/carreras/<slug>.json, uno por carrera, compacto.
  *
@@ -21,8 +21,8 @@ const SALIDA = 'src/data/carreras'
  * Reglas de codigo
  * ------------------------------------------------------------------ */
 
-// El ultimo digito del codigo son las unidades credito. Verificado 88/88
-// contra el pensum oficial de Sistemas, que es el unico con UC confirmadas.
+// El ultimo digito del codigo son las unidades credito. Es una convencion de
+// la propia UDO, no una inferencia nuestra: vale para todas las carreras.
 //
 // El PENULTIMO digito NO es el semestre. Parece serlo en algunas carreras
 // (96-98% en Administracion y Contaduria) pero se cae al 27-34% en Sistemas,
@@ -99,9 +99,9 @@ const claveGrupo = (titulo) => {
  * ------------------------------------------------------------------ */
 
 /** Formato unico: semestres/electivas/otras_secciones como objetos.
- *  Los campos uc y area son opcionales: donde no vienen (la mayoria de las
- *  carreras) la UC se deriva del ultimo digito del codigo y el area queda
- *  en null. Sistemas los trae explicitos porque su pensum los publica. */
+ *  La UC no viene nunca en el crudo: sale del ultimo digito del codigo, que
+ *  es convencion de la UDO. El area si es opcional y hoy solo la trae
+ *  Sistemas, que es la unica carrera con las areas clasificadas. */
 function desdeCrudo(crudo) {
   const asignaturas = []
   for (const [clave, lista] of Object.entries(crudo.semestres ?? {})) {
@@ -116,7 +116,7 @@ function desdeCrudo(crudo) {
         codigo: a.codigo,
         nombre: a.asignatura,
         semestre,
-        uc: hueco || esComodin(a.codigo) ? null : (a.uc ?? ucDeCodigo(a.codigo)),
+        uc: hueco || esComodin(a.codigo) ? null : ucDeCodigo(a.codigo),
         ...(a.area ? { area: a.area } : {}),
         ...(hueco ? { esHueco: true } : esComodin(a.codigo) ? { esComodin: true } : {}),
         // "120 UC aprobadas" no es un codigo de materia: no puede ser una
@@ -136,7 +136,7 @@ function desdeCrudo(crudo) {
       asignaturas: lista.map((a) => ({
         codigo: a.codigo,
         nombre: a.asignatura,
-        uc: a.uc ?? ucDeCodigo(a.codigo),
+        uc: ucDeCodigo(a.codigo),
         ...(a.area ? { area: a.area } : {}),
         prerrequisitos: a.prerrequisitos ?? [],
       })),
@@ -153,7 +153,7 @@ function desdeCrudo(crudo) {
       asignaturas: lista.map((a) => ({
         codigo: a.codigo,
         nombre: a.asignatura,
-        uc: a.uc ?? ucDeCodigo(a.codigo),
+        uc: ucDeCodigo(a.codigo),
         prerrequisitos: a.prerrequisitos ?? [],
       })),
     })
@@ -261,8 +261,6 @@ function normalizar(crudo, overlayTodo) {
     // color por profundidad, que sale del grafo y no de una clasificacion
     // que no tenemos.
     tieneAreas: base.asignaturas.some((a) => a.area),
-    // La UC sale del ultimo digito del codigo en todas las carreras.
-    ucDerivada: true,
     // Sin creditos oficiales no se muestra porcentaje. Preferimos no decir
     // nada a inventar un denominador.
     creditos: ov.creditos ?? null,

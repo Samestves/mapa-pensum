@@ -80,7 +80,7 @@ function hslAHex(h, s, l) {
  * Devuelve `niveles` colores repartidos en arco alrededor de `hexBase`.
  * El indice 0 corresponde a profundidad 1.
  */
-export function tonosDeCarrera(hexBase, niveles) {
+function tonosDeCarrera(hexBase, niveles) {
   const [h, s, l] = hexAHsl(hexBase)
   if (niveles <= 1) return [hexBase]
 
