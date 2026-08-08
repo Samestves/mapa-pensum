@@ -239,14 +239,16 @@ Los pensums vienen de lo que publica la DACE y pueden tener errores o estar desa
 
 **1. Lo que no se sabe, no se muestra.** Solo Sistemas tiene los créditos del título confirmados (153, contra INTRADACE). En las otras siete **no aparece el porcentaje de avance**, porque no hay denominador honesto. El chip de la cabecera cuenta materias en vez de inventar un total. Si algún día llegan los créditos oficiales de una carrera, se llenan en su overlay y esa carrera sube de nivel sola.
 
-**2. Las reglas se verifican antes de usarse.** Los códigos parecen codificar información y en parte lo hacen:
+**2. Las reglas se verifican antes de usarse.** Los códigos parecen codificar información. Una de las dos aguanta:
 
-| Regla | Resultado | Uso |
+| Regla | Situación | Uso |
 |---|---|---|
-| Último dígito = unidades crédito | **88/88** contra el pensum oficial de Sistemas | Se deriva |
+| Último dígito = unidades crédito | Convención de la UDO, no una inferencia nuestra | **Se deriva** |
 | Penúltimo dígito = semestre | **Falla el 73 %** en Sistemas, 66 % en Petróleo, 71 % en Alimentos | **Descartada** |
 
-El semestre sale de las claves del JSON y de ningún otro sitio. La segunda regla parecía cierta mirando un solo pensum; generalizarla habría corrompido la mitad de los datos en silencio.
+El semestre sale de las claves del JSON y de ningún otro sitio. La segunda parecía cierta mirando un solo pensum; generalizarla habría corrompido la mitad de los datos en silencio.
+
+El validador **no** comprueba la primera. La UC se deriva de ese dígito en el normalizador, así que compararlos sería preguntarle a un dato si es igual a sí mismo. Se documenta aquí para que nadie la eche de menos y la vuelva a añadir.
 
 **3. Lo que huele raro se avisa, no se corrige a mano.** En Administración y Contaduría **ninguna materia del semestre 10 declara prelaciones**, ni siquiera el Trabajo de Grado, cuando en las otras seis carreras siempre cuelga del seminario previo. Es casi seguro un hueco de la fuente, pero inventar la prelación sería peor. El validador lo marca como aviso y en el mapa se ve tal cual: sin cables.
 
@@ -254,7 +256,7 @@ El semestre sale de las claves del JSON y de ningún otro sitio. La segunda regl
 
 `npm run validar` corre sobre los pensums normalizados —lo mismo que lee la aplicación— y sale con código 1 si algo no cuadra, así que **un scrape malo rompe el build en vez de llegar a producción**.
 
-Por carrera comprueba códigos duplicados, prelaciones que apunten a materias inexistentes, prelaciones en semestre igual o posterior, ciclos en el grafo (DFS con marcado tricolor), coherencia de créditos, cuotas alcanzables con la oferta real y la regla del último dígito donde no es tautológica.
+Por carrera comprueba códigos duplicados, prelaciones que apunten a materias inexistentes, prelaciones en semestre igual o posterior, ciclos en el grafo (DFS con marcado tricolor), coherencia de créditos y cuotas alcanzables con la oferta real.
 
 ```
 ok      gerencia-de-recursos-humanos       49 oblig   16 en 2 grupos  149 UC  (sin creditos oficiales)
