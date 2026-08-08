@@ -15,6 +15,18 @@ export const COLOR_ESTADO = {
 }
 
 /**
+ * Como se llama cada estado de cara al usuario. Vivia dentro de la ficha
+ * flotante, pero en cuanto una segunda vista tuvo que nombrar estados dejo
+ * de ser asunto de un componente.
+ */
+export const ETIQUETA_ESTADO = {
+  [ESTADO.APROBADA]: 'Aprobada',
+  [ESTADO.CURSANDO]: 'Cursando',
+  [ESTADO.DISPONIBLE]: 'Disponible',
+  [ESTADO.BLOQUEADA]: 'Bloqueada',
+}
+
+/**
  * Icono de Lucide que representa cada estado, o null si no lleva.
  * Aprobada → check, cursando → punto, bloqueada → candado, disponible → nada.
  */

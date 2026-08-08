@@ -4,6 +4,7 @@ import { ESTADO } from '../hooks/usePensum'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { COLOR_ESTADO } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
+import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
 
 function Boton({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
@@ -32,6 +33,7 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
   const prerrequisitos = (relaciones.atras.get(nodo.codigo) ?? [])
     .map((c) => porCodigo.get(c))
     .filter(Boolean)
+    .map((asignatura) => ({ asignatura, estado: estados[asignatura.codigo] }))
 
   return (
     <li className="transicion-tema overflow-hidden rounded-xl border border-panel-borde bg-panel">
@@ -107,29 +109,13 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
             />
           </div>
 
-          <p className="mt-3 text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-            Requiere ({prerrequisitos.length})
-          </p>
-          {prerrequisitos.length === 0 ? (
-            <p className="text-[11px] text-tinta-tenue">Nada: puedes verla desde el inicio.</p>
-          ) : (
-            <ul className="mt-1 flex flex-col gap-1">
-              {prerrequisitos.map((p) => (
-                <li key={p.codigo} className="flex items-center gap-2 text-[11px]">
-                  <span
-                    className="size-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: colorNodo(p) }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-tinta-suave">{p.nombre}</span>
-                  {estados[p.codigo] === ESTADO.APROBADA ? (
-                    <Check size={12} className="shrink-0 text-aprobada" />
-                  ) : (
-                    <span className="shrink-0 text-[9px] text-tinta-tenue">pendiente</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="mt-3">
+            <ListaPrelaciones
+              titulo="Requiere"
+              materias={prerrequisitos}
+              vacio={SIN_PRELACIONES}
+            />
+          </div>
         </div>
       )}
     </li>
