@@ -1,8 +1,9 @@
 /**
  * Convierte los pensums crudos al unico modelo que consume la app.
  *
- * Entra: datos/crudo/*.json (scrape de la DACE tal cual, o el formato propio
- *        de Sistemas) + datos/overlay.json (lo que sabemos y la DACE no dice).
+ * Entra: datos/crudo/*.json (scrape de la DACE, todos con la misma estructura:
+ *        semestres y electivas como objetos, con uc y area opcionales) +
+ *        datos/overlay.json (lo que sabemos y la DACE no dice).
  * Sale:  src/data/carreras/<slug>.json, uno por carrera, compacto.
  *
  * Se normaliza en build y no en runtime por dos motivos: el cliente no paga el
@@ -97,8 +98,11 @@ const claveGrupo = (titulo) => {
  * Adaptadores: cada formato de entrada a la forma comun
  * ------------------------------------------------------------------ */
 
-/** Formato de la DACE: semestres/electivas/otras_secciones como objetos */
-function desdeDace(crudo) {
+/** Formato unico: semestres/electivas/otras_secciones como objetos.
+ *  Los campos uc y area son opcionales: donde no vienen (la mayoria de las
+ *  carreras) la UC se deriva del ultimo digito del codigo y el area queda
+ *  en null. Sistemas los trae explicitos porque su pensum los publica. */
+function desdeCrudo(crudo) {
   const asignaturas = []
   for (const [clave, lista] of Object.entries(crudo.semestres ?? {})) {
     const semestre = Number(clave.replace(/\D/g, ''))
@@ -112,7 +116,8 @@ function desdeDace(crudo) {
         codigo: a.codigo,
         nombre: a.asignatura,
         semestre,
-        uc: hueco || esComodin(a.codigo) ? null : ucDeCodigo(a.codigo),
+        uc: hueco || esComodin(a.codigo) ? null : (a.uc ?? ucDeCodigo(a.codigo)),
+        ...(a.area ? { area: a.area } : {}),
         ...(hueco ? { esHueco: true } : esComodin(a.codigo) ? { esComodin: true } : {}),
         // "120 UC aprobadas" no es un codigo de materia: no puede ser una
         // arista del grafo, asi que viaja aparte y se enseña como texto.
@@ -131,7 +136,8 @@ function desdeDace(crudo) {
       asignaturas: lista.map((a) => ({
         codigo: a.codigo,
         nombre: a.asignatura,
-        uc: ucDeCodigo(a.codigo),
+        uc: a.uc ?? ucDeCodigo(a.codigo),
+        ...(a.area ? { area: a.area } : {}),
         prerrequisitos: a.prerrequisitos ?? [],
       })),
     })
@@ -147,7 +153,7 @@ function desdeDace(crudo) {
       asignaturas: lista.map((a) => ({
         codigo: a.codigo,
         nombre: a.asignatura,
-        uc: ucDeCodigo(a.codigo),
+        uc: a.uc ?? ucDeCodigo(a.codigo),
         prerrequisitos: a.prerrequisitos ?? [],
       })),
     })
@@ -156,52 +162,11 @@ function desdeDace(crudo) {
   return {
     nombre: crudo.carrera,
     institucion: crudo.institucion,
+    nucleo: crudo.nucleo,
     fuente: crudo.fuente,
     asignaturas,
     grupos,
     correcciones: crudo.correcciones_aplicadas ?? [],
-  }
-}
-
-/** Formato propio de Sistemas: ya trae area, uc y tipo de electiva */
-function desdeSistemas(crudo) {
-  const grupos = []
-  for (const [clave, titulo] of [
-    ['tecnica', 'Electivas Técnicas'],
-    ['humanistica', 'Electivas Humanísticas'],
-  ]) {
-    const items = crudo.electivas.filter((e) => e.tipo === clave)
-    if (items.length) {
-      grupos.push({
-        clave,
-        titulo,
-        tipo: 'electiva',
-        asignaturas: items.map(({ codigo, nombre, uc, area, prerrequisitos }) => ({
-          codigo,
-          nombre,
-          uc,
-          area,
-          prerrequisitos: prerrequisitos ?? [],
-        })),
-      })
-    }
-  }
-
-  return {
-    nombre: crudo.meta.carrera,
-    institucion: 'Universidad de Oriente',
-    nucleo: crudo.meta.nucleo,
-    fuente: crudo.meta.fuente ?? null,
-    asignaturas: crudo.asignaturas.map((a) => ({
-      codigo: a.codigo,
-      nombre: a.nombre,
-      semestre: a.semestre,
-      uc: a.uc,
-      area: a.area,
-      prerrequisitos: a.prerrequisitos ?? [],
-    })),
-    grupos,
-    correcciones: [],
   }
 }
 
@@ -243,7 +208,7 @@ function calcularProfundidades(todas) {
  * ------------------------------------------------------------------ */
 
 function normalizar(crudo, overlayTodo) {
-  const base = crudo.meta ? desdeSistemas(crudo) : desdeDace(crudo)
+  const base = desdeCrudo(crudo)
   const slug = slugificar(base.nombre)
   const ov = overlayTodo[slug] ?? {}
 
@@ -296,10 +261,8 @@ function normalizar(crudo, overlayTodo) {
     // color por profundidad, que sale del grafo y no de una clasificacion
     // que no tenemos.
     tieneAreas: base.asignaturas.some((a) => a.area),
-    // En las carreras de la DACE la UC sale del ultimo digito, asi que
-    // comprobar la regla ahi seria tautologico. En Sistemas viene del pensum
-    // oficial, y ahi si es una prueba de verdad: el validador la exige.
-    ucDerivada: !crudo.meta,
+    // La UC sale del ultimo digito del codigo en todas las carreras.
+    ucDerivada: true,
     // Sin creditos oficiales no se muestra porcentaje. Preferimos no decir
     // nada a inventar un denominador.
     creditos: ov.creditos ?? null,
