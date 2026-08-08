@@ -1,26 +1,45 @@
 import { ArrowLeft, ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
 import { BotonAvisos } from './AvisosCarrera'
 
-/** Boton de icono del sistema: todos los de la cabecera miden y pesan igual.
-    En movil bajan a 32px, que sigue siendo objetivo tactil comodo. */
-function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto' }) {
-  const medida = variante === 'segmento' ? 'size-8' : 'size-8 sm:size-9'
-  const borde = variante === 'segmento' ? 'border-0' : 'border'
+/**
+ * Boton de la cabecera. Todos miden y pesan igual; en movil bajan a 32px,
+ * que sigue siendo objetivo tactil comodo.
+ *
+ * 'etiqueta' saca el texto a la vista a partir del ancho que se le diga. El
+ * title solo aparece al dejar el raton quieto un segundo, y en un telefono
+ * no aparece nunca: una barra entera de iconos pelados no se entiende, y de
+ * hecho no se entendio. Donde hay sitio, la palabra se ve.
+ */
+function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar, variante = 'suelto' }) {
+  const segmento = variante === 'segmento'
+  const alto = segmento ? 'h-8' : 'h-8 sm:h-9'
+  const borde = segmento ? 'border-0' : 'border'
+  // Con etiqueta deja de ser cuadrado y crece con el texto
+  const ancho = etiqueta ? 'px-2 sm:px-2.5' : segmento ? 'w-8' : 'w-8 sm:w-9'
+  const visible =
+    desde === 'xl' ? 'hidden xl:inline' : desde === 'lg' ? 'hidden lg:inline' : 'hidden sm:inline'
+
   return (
     <button
       type="button"
       onClick={alPulsar}
       title={titulo}
       aria-label={titulo}
-      className={`transicion-tema grid shrink-0 place-items-center rounded-lg ${medida} ${borde} ${
+      className={`transicion-tema flex shrink-0 items-center justify-center gap-1.5 rounded-lg ${alto} ${ancho} ${borde} ${
         activo
           ? 'border-transparent bg-panel-suave text-tinta'
           : 'border-panel-borde text-tinta-suave hover:text-tinta'
       }`}
     >
-      <Ico size={16} />
+      <Ico size={16} className="shrink-0" />
+      {etiqueta && <span className={`${visible} text-[12px] font-bold`}>{etiqueta}</span>}
     </button>
   )
+}
+
+/** Separador fino: agrupa la barra en bloques en vez de una fila plana */
+function Division() {
+  return <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-panel-borde sm:block" />
 }
 
 function BarraSuperior({
@@ -115,6 +134,8 @@ function BarraSuperior({
         <Icono
           icono={Waypoints}
           titulo="Ver el mapa"
+          etiqueta="Mapa"
+          desde="xl"
           activo={vista === 'mapa'}
           alPulsar={() => alCambiarVista('mapa')}
           variante="segmento"
@@ -122,11 +143,15 @@ function BarraSuperior({
         <Icono
           icono={LayoutList}
           titulo="Ver como lista"
+          etiqueta="Lista"
+          desde="xl"
           activo={vista === 'lista'}
           alPulsar={() => alCambiarVista('lista')}
           variante="segmento"
         />
       </div>
+
+      <Division />
 
       {/* Solo aparece donde hay algo que advertir, o sea en las carreras cuya
           fuente tiene huecos o dudas. En las demas no ocupa sitio. */}
@@ -136,15 +161,26 @@ function BarraSuperior({
         alPulsar={alAlternarAvisos}
       />
 
-      <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
+      {/* Con etiqueta a partir de lg: es una funcion completa -calcula tu
+          ruta hasta el grado y la exporta- y con solo el icono no la
+          encontraba nadie, ni quien propuso la idea. */}
+      <Icono
+        icono={Route}
+        titulo="Planificar mi ruta hasta el grado y exportarla"
+        etiqueta="Planificar"
+        alPulsar={alPlanificar}
+      />
 
+      <Division />
+
+      {/* Sol y luna se entienden sin palabra en cualquier idioma */}
       <Icono
         icono={tema === 'oscuro' ? Sun : Moon}
         titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
         alPulsar={alternarTema}
       />
 
-      <Icono icono={ChevronUp} titulo="Ocultar la barra" alPulsar={alOcultarBarra} />
+      <Icono icono={ChevronUp} titulo="Ocultar esta barra" alPulsar={alOcultarBarra} />
     </header>
   )
 }
