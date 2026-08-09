@@ -32,6 +32,7 @@ function GrafoPensum({
     vista,
     medida,
     arrastrando,
+    enGesto,
     huboMovimiento,
     encajar,
     acercar,
@@ -73,10 +74,16 @@ function GrafoPensum({
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
+      {/* lienzo-en-gesto congela las estelas mientras el mapa se mueve. Son
+          doscientas y pico animaciones que el navegador no puede componer en
+          la GPU, y repintarlas ademas de mover el mapa es lo que hace que en
+          un telefono el arrastre vaya a tirones. */}
       <svg
         width="100%"
         height="100%"
-        className={`select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`select-none ${enGesto ? 'lienzo-en-gesto' : ''} ${
+          arrastrando ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
         style={{ touchAction: 'none' }}
         {...controlesArrastre}
         onPointerMoveCapture={despertar}

@@ -194,6 +194,48 @@ body {
   animation: recorrer var(--vel, 4.2s) linear infinite;
 }
 
+/* ---- El coste real de los cables ----------------------------------------
+   Ni stroke-dashoffset ni offset-distance los puede componer la GPU: cada
+   fotograma el navegador vuelve a rasterizar el elemento en el hilo
+   principal. Medido en Sistemas: 43 cables por cinco animaciones cada uno
+   son 215 animaciones perpetuas. En un escritorio sobra musculo; en un
+   telefono de gama media eso solo se paga bajando a veinte o treinta
+   cuadros por segundo. De ahi las tres podas que siguen. */
+
+/* 1. Mientras se arrastra o se hace zoom, las animaciones se congelan.
+      Es el momento en el que el tiron se nota, y es justo cuando nadie esta
+      mirando la corriente: se esta mirando a donde va el mapa. Pausar no
+      reinicia nada, asi que al soltar siguen donde estaban. */
+.lienzo-en-gesto .cometa,
+.lienzo-en-gesto .particula {
+  animation-play-state: paused;
+}
+
+/* 2. En pantallas tactiles se va la perla y quedan solo dos capas de estela.
+      La perla es lo mas caro de las dos -offset-path recalcula la posicion
+      sobre la curva en cada cuadro- y es tambien lo mas pequeño: a la escala
+      a la que se ve un mapa entero en un telefono, casi no se distingue.
+      El cable no pierde su color, ni su brillo, ni su punto de soldadura. */
+@media (hover: none) and (pointer: coarse) {
+  .particula {
+    display: none;
+  }
+
+  .cometa[data-capa='2'] {
+    display: none;
+  }
+
+  /* 3. Y solo se anima el cable que lleva corriente. Un cable apagado con
+        una luz corriendo por dentro nunca significo nada -era decoracion en
+        los ciento y pico cables a la vez-; que la estela salga solo de lo
+        que ya aprobaste es ademas lo que el efecto queria decir. Se quita
+        con display y no con animation:none, que dejaria el guion parado a
+        mitad del cable como una mancha. */
+  g:not([data-encendida]) > .cometa {
+    display: none;
+  }
+}
+
 /* currentColor es el color del area, que se fija en el <g> de cada arista */
 .filamento {
   stroke: color-mix(in oklab, var(--nucleo) var(--nucleo-fuerza), currentColor);

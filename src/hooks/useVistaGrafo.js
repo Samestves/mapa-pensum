@@ -16,6 +16,21 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   const [medida, setMedida] = useState({ ancho: 0, alto: 0 })
   const [arrastrando, setArrastrando] = useState(false)
 
+  /* Cierto mientras se mueve el mapa: arrastre, pellizco o rueda. Sirve para
+     congelar las animaciones de los cables durante el gesto, que es cuando el
+     tiron se nota y cuando a nadie le importa la corriente. La rueda no tiene
+     un "he terminado", asi que se apaga sola un cuarto de segundo despues del
+     ultimo evento. `arrastrando` no vale para esto: el pellizco lo pone en
+     falso a proposito, para no enseñar el cursor de agarre con dos dedos. */
+  const [enGesto, setEnGesto] = useState(false)
+  const relojGesto = useRef(null)
+  const marcarGesto = useCallback(() => {
+    setEnGesto(true)
+    clearTimeout(relojGesto.current)
+    relojGesto.current = setTimeout(() => setEnGesto(false), 250)
+  }, [])
+  useEffect(() => () => clearTimeout(relojGesto.current), [])
+
   // El contenedor se re-mide solo: sirve para el encaje inicial y para
   // que cambiar el tamano de la ventana no rompa nada.
   useLayoutEffect(() => {
@@ -71,17 +86,21 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   }, [medida, encajar])
 
   // Zoom manteniendo fijo el punto bajo el cursor
-  const zoomEn = useCallback((factor, puntoX, puntoY) => {
-    setVista((v) => {
-      const escala = acotar(v.escala * factor, ZOOM.min, ZOOM.max)
-      const k = escala / v.escala
-      return {
-        escala,
-        x: puntoX - (puntoX - v.x) * k,
-        y: puntoY - (puntoY - v.y) * k,
-      }
-    })
-  }, [])
+  const zoomEn = useCallback(
+    (factor, puntoX, puntoY) => {
+      marcarGesto()
+      setVista((v) => {
+        const escala = acotar(v.escala * factor, ZOOM.min, ZOOM.max)
+        const k = escala / v.escala
+        return {
+          escala,
+          x: puntoX - (puntoX - v.x) * k,
+          y: puntoY - (puntoY - v.y) * k,
+        }
+      })
+    },
+    [marcarGesto],
+  )
 
   const zoomAlCentro = useCallback(
     (factor) => zoomEn(factor, medida.ancho / 2, medida.alto / 2),
@@ -167,6 +186,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     }
     if (!inicio.capturado) return
 
+    marcarGesto()
     setVista((v) => ({ ...v, x: inicio.vx + dx, y: inicio.vy + dy }))
   }
 
@@ -187,6 +207,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     vista,
     medida,
     arrastrando,
+    enGesto,
     huboMovimiento,
     encajar,
     acercar: () => zoomAlCentro(ZOOM.paso),
