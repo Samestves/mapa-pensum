@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
+import { ArrowLeft, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
 import { BotonAvisos } from './AvisosCarrera'
 
 /**
@@ -54,7 +54,6 @@ function BarraSuperior({
   avisosAbiertos,
   alAlternarAvisos,
   alPlanificar,
-  alOcultarBarra,
   alVolver,
 }) {
   return (
@@ -129,27 +128,22 @@ function BarraSuperior({
         )}
       </button>
 
-      {/* Cambiar de vista: en movil la lista es la util, el mapa es opcional */}
-      <div className="transicion-tema flex shrink-0 items-center gap-0.5 rounded-lg border border-panel-borde p-0.5">
-        <Icono
-          icono={Waypoints}
-          titulo="Ver el mapa"
-          etiqueta="Mapa"
-          desde="xl"
-          activo={vista === 'mapa'}
-          alPulsar={() => alCambiarVista('mapa')}
-          variante="segmento"
-        />
-        <Icono
-          icono={LayoutList}
-          titulo="Ver como lista"
-          etiqueta="Lista"
-          desde="xl"
-          activo={vista === 'lista'}
-          alPulsar={() => alCambiarVista('lista')}
-          variante="segmento"
-        />
-      </div>
+      {/* Un solo boton que alterna, no un segmentado de dos.
+          La lista no sobra en escritorio aunque lo parezca: marcar una
+          materia son dos clicks en el mapa -abrir la ficha y pulsar- y uno
+          solo en la lista. Quien entra por primera vez tiene cuarenta
+          materias que marcar, y ahi la lista gana de calle. Ademas es HTML
+          de verdad, no un lienzo SVG, que es lo unico que puede recorrer un
+          lector de pantalla.
+          Lo que sobraba era el peso visual: competia con Planificar. Ahora
+          es un boton mas, y ensena a donde te lleva, no donde estas. */}
+      <Icono
+        icono={vista === 'mapa' ? LayoutList : Map}
+        titulo={vista === 'mapa' ? 'Ver como lista' : 'Ver el mapa'}
+        etiqueta={vista === 'mapa' ? 'Lista' : 'Mapa'}
+        desde="xl"
+        alPulsar={() => alCambiarVista(vista === 'mapa' ? 'lista' : 'mapa')}
+      />
 
       <Division />
 
@@ -180,7 +174,7 @@ function BarraSuperior({
         alPulsar={alternarTema}
       />
 
-      <Icono icono={ChevronUp} titulo="Ocultar esta barra" alPulsar={alOcultarBarra} />
+
     </header>
   )
 }

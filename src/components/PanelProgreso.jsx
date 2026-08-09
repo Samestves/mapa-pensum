@@ -197,13 +197,30 @@ function PanelProgreso({
 
   return (
     <>
+      {/* El velo solo oscurece en movil, donde la hoja tapa el mapa. En
+          escritorio el panel va al lado y el mapa se sigue viendo y usando:
+          atenuarlo ahi seria fingir que hay un modal donde no lo hay. */}
       <button
         type="button"
         aria-label="Cerrar"
         onClick={alCerrar}
-        className="fixed inset-0 z-30 cursor-default"
+        className="fixed inset-0 z-30 cursor-default bg-black/40 backdrop-blur-[2px] md:bg-transparent md:backdrop-blur-none"
       />
-      <div className="surgir transicion-tema absolute top-2 right-3 z-40 flex max-h-[calc(100%-1rem)] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
+
+      {/* Antes era un globo flotando arriba a la derecha. En movil ocupaba
+          casi toda la pantalla flotando en el aire, sin quedar anclado a
+          ningun borde, y eso es lo que se siente raro: un panel de ese
+          tamaño tiene que apoyarse en algo.
+          Ahora se apoya. En movil sube desde abajo, que es de donde se
+          esperan las hojas y donde llega el pulgar; en escritorio se pega al
+          borde derecho a lo alto, como un cajon. Mismo contenido, dos formas
+          que si tienen sitio propio. */}
+      <div className="hoja-avance transicion-tema absolute inset-x-0 bottom-0 z-40 flex max-h-[85%] flex-col gap-4 overflow-y-auto rounded-t-2xl border border-b-0 border-panel-borde bg-panel/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-xl md:inset-x-auto md:top-0 md:right-0 md:bottom-0 md:max-h-none md:w-[20rem] md:rounded-t-none md:rounded-l-2xl md:border-b md:border-r-0 md:p-5">
+        {/* Asa: en movil dice "esto se arrastra o se cierra tocando fuera" */}
+        <span
+          aria-hidden="true"
+          className="mx-auto -mt-1 mb-1 h-1 w-10 shrink-0 rounded-full bg-panel-borde md:hidden"
+        />
         {/* El porcentaje necesita un denominador oficial. Donde no lo hay se
             dice lo acumulado sin inventar un total. */}
         {hayPorcentaje ? (

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../hooks/usePensum'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
+import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
@@ -38,6 +39,9 @@ function GrafoPensum({
     controlesArrastre,
   } = useVistaGrafo(ancho, alto)
 
+  // El dock se apaga si nadie toca el mapa en dos segundos
+  const { quieto, despertar } = useInactividad(2000)
+
   const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
     senalado,
@@ -66,12 +70,18 @@ function GrafoPensum({
 
   return (
     <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
+      {/* Los *Capture avisan de actividad en fase de captura, antes de que
+          corran los manejadores de arrastre de controlesArrastre: asi
+          despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
       <svg
         width="100%"
         height="100%"
         className={`select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{ touchAction: 'none' }}
         {...controlesArrastre}
+        onPointerMoveCapture={despertar}
+        onPointerDownCapture={despertar}
+        onWheelCapture={despertar}
       >
         <DefsGrafo />
 
@@ -274,7 +284,7 @@ function GrafoPensum({
         />
       )}
 
-      <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} />
+      <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
     </div>
   )
 }
