@@ -108,7 +108,7 @@ function BarraSuperior({
         {resumen.porcentaje != null ? (
           <>
             <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-              {resumen.porcentaje.toFixed(1)}%
+              {Math.round(resumen.porcentaje)}%
             </span>
             <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
               <span

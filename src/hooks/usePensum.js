@@ -161,7 +161,9 @@ export function usePensum(carrera) {
     let ucAprobadas = 0
     let aprobadas = 0
     let cursando = 0
-    let disponibles = 0
+    // Las disponibles se guardan enteras, no solo contadas: saber que tienes
+    // once por inscribir no sirve de nada si no sabes cuales son.
+    const paraInscribir = []
 
     // Desglose por area. Solo tiene sentido donde las areas estan
     // clasificadas; en las demas carreras queda vacio.
@@ -190,7 +192,7 @@ export function usePensum(carrera) {
       } else if (estado === ESTADO.CURSANDO) {
         cursando += 1
       } else if (estado === ESTADO.DISPONIBLE) {
-        disponibles += 1
+        paraInscribir.push(a)
       }
     }
 
@@ -216,7 +218,12 @@ export function usePensum(carrera) {
       porcentajeObligatorias: ucTotales ? (ucAprobadas / ucTotales) * 100 : 0,
       aprobadas,
       cursando,
-      disponibles,
+      disponibles: paraInscribir.length,
+      // Por semestre: lo primero que ofrece es lo que llevas mas atrasado
+      paraInscribir: [...paraInscribir].sort(
+        (a, b) => (a.semestre ?? 99) - (b.semestre ?? 99) || a.nombre.localeCompare(b.nombre, 'es'),
+      ),
+      bloqueadas: asignaturas.length - aprobadas - cursando - paraInscribir.length,
       total: asignaturas.length,
       porArea: [...areas.values()].sort((a, b) => b.uc - a.uc),
     }
