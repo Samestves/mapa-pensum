@@ -1,4 +1,5 @@
 import { ArrowLeft, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
+import AnilloAvance from './AnilloAvance'
 import { BotonAvisos } from './AvisosCarrera'
 
 /**
@@ -56,6 +57,21 @@ function BarraSuperior({
   alPlanificar,
   alVolver,
 }) {
+  /* El anillo siempre enseña un porcentaje. Donde hay creditos oficiales es
+     el de UC, que es el que cuenta para graduarse; donde el pensum no los
+     trae, el de materias, que es lo unico que se puede saber. El title dice
+     cual de los dos es, para que el numero no signifique dos cosas distintas
+     sin avisar. */
+  const conCreditos = resumen.porcentaje != null
+  const avance = conCreditos
+    ? resumen.porcentaje
+    : resumen.total
+      ? (resumen.aprobadas / resumen.total) * 100
+      : 0
+  const detalleAvance = conCreditos
+    ? `Tu avance: ${Math.round(avance)}% · ${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC. Pulsa para ver el detalle.`
+    : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`
+
   return (
     <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
       {/* Volver al selector. Antes esto era el logo, y nadie lo encontraba:
@@ -92,40 +108,21 @@ function BarraSuperior({
       </div>
       <div className="min-w-0 flex-1 sm:hidden" />
 
-      {/* El chip de progreso es el acceso al detalle del avance */}
+      {/* El anillo de avance es el acceso al detalle.
+          Sin creditos oficiales no hay porcentaje de UC, pero si de materias:
+          el anillo se llena igual y el detalle lo aclara al pasar por encima.
+          Antes ahi habia un numero, una barra de ochenta pixeles y un
+          contador de UC, tres formas de decir lo mismo en fila. */}
       <button
         type="button"
         onClick={alAlternarAvance}
-        title="Ver el detalle de mi avance"
-        className={`transicion-tema flex shrink-0 items-center gap-2.5 rounded-lg border px-2 py-1.5 sm:px-3 ${
-          avanceAbierto
-            ? 'border-transparent bg-panel-suave'
-            : 'border-panel-borde hover:bg-panel-suave'
+        title={detalleAvance}
+        aria-label={detalleAvance}
+        className={`transicion-tema grid shrink-0 place-items-center rounded-full p-1 ${
+          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
         }`}
       >
-        {/* Sin creditos oficiales no hay porcentaje ni barra: el chip pasa a
-            contar materias, que es un dato que si tenemos. */}
-        {resumen.porcentaje != null ? (
-          <>
-            <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-              {Math.round(resumen.porcentaje)}%
-            </span>
-            <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
-              <span
-                className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-                style={{ width: `${resumen.porcentaje}%` }}
-              />
-            </span>
-            <span className="hidden font-mono text-[10px] font-semibold text-tinta-tenue lg:inline">
-              {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
-            </span>
-          </>
-        ) : (
-          <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-            {resumen.aprobadas}
-            <span className="text-tinta-tenue">/{resumen.total}</span>
-          </span>
-        )}
+        <AnilloAvance valor={avance} activo={avanceAbierto} />
       </button>
 
       {/* Un solo boton que alterna, no un segmentado de dos.
