@@ -61,14 +61,15 @@ function Horario({ carrera, estados }) {
 
   return (
     <div className="transicion-tema flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
-      <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
-        <RejillaHorario
-          porDia={porDia}
-          porCodigo={porCodigo}
-          alPulsarHueco={abrirEnHueco}
-          alEditar={editar}
-        />
-      </div>
+      {/* La rejilla es su propio contenedor de desplazamiento: necesita medir
+          la altura que le queda para repartirla entre las horas, y esa altura
+          solo la conoce quien tiene el overflow. */}
+      <RejillaHorario
+        porDia={porDia}
+        porCodigo={porCodigo}
+        alPulsarHueco={abrirEnHueco}
+        alEditar={editar}
+      />
 
       {enEdicion && (
         <PopoverClase

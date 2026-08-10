@@ -2,11 +2,11 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import {
   ABRE,
+  ALTO_MAX,
+  ALTO_MIN,
   ANCHO_HORAS_PX,
   CIERRA,
   DIAS,
-  LADO_MAX,
-  LADO_MIN,
   acotar,
   etiquetaHora,
   franjaPropuesta,
@@ -15,57 +15,60 @@ import {
 import BloqueClase from './BloqueClase'
 
 const LINEA = 'border-[var(--horario-linea)]'
+const HORAS_JORNADA = (CIERRA - ABRE) / 60
 
 /**
- * Cuanto mide el lado de una celda de una hora.
+ * Cuanto mide de alto una fila de hora.
  *
- * La celda es un cuadrado de verdad: el alto de una fila es el ancho de una
- * columna. Para eso hay que medir, porque el ancho depende de la ventana.
+ * Se reparte la altura disponible entre las catorce horas de la jornada, para
+ * que quepa en pantalla la mayor parte del dia posible. El ancho no entra en
+ * la cuenta: las columnas se estiran a lo que haya, que es lo que se quiere.
  *
- * Y hay que acotarlo por arriba. Sin tope, en un monitor ancho la columna se
- * va a trescientos cincuenta pixeles, la fila con ella, y las catorce horas
- * de la jornada se convierten en cinco mil pixeles de desplazamiento para
- * enseñar lo mismo. Con el tope la rejilla deja de estirarse y se queda
- * centrada, que es como se ve en una tablet -que es donde ya gustaba-.
+ * Depende solo de la ventana, no del contenido: el numero de horas es fijo,
+ * asi que agregar una clase no reescala nunca la rejilla bajo el cursor.
  */
-function useLadoCelda() {
-  const refMedida = useRef(null)
-  const [lado, setLado] = useState(LADO_MIN)
+function useAltoHora(refVista) {
+  const [alto, setAlto] = useState(ALTO_MIN)
 
   useLayoutEffect(() => {
-    const el = refMedida.current
+    const el = refVista.current
     if (!el) return
-    const medir = ([entrada]) => {
-      const disponible = entrada.contentRect.width - ANCHO_HORAS_PX
-      setLado(acotar(Math.floor(disponible / DIAS.length), LADO_MIN, LADO_MAX))
-    }
-    const ro = new ResizeObserver(medir)
+    const ro = new ResizeObserver(([entrada]) => {
+      // Lo que queda tras la cabecera de dias, que mide poco mas de cincuenta
+      const util = entrada.contentRect.height - 54
+      setAlto(acotar(Math.floor(util / HORAS_JORNADA), ALTO_MIN, ALTO_MAX))
+    })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [refVista])
 
-  return { refMedida, lado }
+  return alto
 }
 
 /**
  * La cuadricula de la semana, con sus clases.
  *
- * Las clases NO viven en celdas de la rejilla. Se colocan en posicion
- * absoluta a partir de sus minutos, que es lo unico que permite dibujar una
- * clase de 08:15 a 09:50 en su sitio exacto y que dos seguidas -una acaba a
- * las nueve, la otra empieza a las nueve- queden pegadas sin hueco.
+ * Ocupa todo el ancho: los cinco dias se reparten en columnas de flex-1, que
+ * miden exactamente lo mismo y llegan a los dos bordes. La semana es lo que
+ * se viene a mirar, y una rejilla centrada con doscientos pixeles de margen a
+ * cada lado desperdicia justo el sitio donde iba a leerse.
+ *
+ * Las clases NO viven en celdas. Se colocan en posicion absoluta a partir de
+ * sus minutos, que es lo unico que permite dibujar una clase de 08:15 a 09:50
+ * en su sitio exacto y que dos seguidas -una acaba a las nueve, la otra
+ * empieza a las nueve- queden pegadas sin hueco.
  *
  * Las lineas de hora son un degradado repetido y no un div por hora: cinco
  * columnas por catorce horas serian setenta nodos que no aportan nada.
  */
 function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
-  const { refMedida, lado } = useLadoCelda()
+  const refVista = useRef(null)
   const refDias = useRef(null)
   const [fantasma, setFantasma] = useState(null)
 
-  const pxPorMinuto = lado / 60
+  const altoHora = useAltoHora(refVista)
+  const pxPorMinuto = altoHora / 60
   const aY = (min) => (min - ABRE) * pxPorMinuto
-  const altoRejilla = (CIERRA - ABRE) * pxPorMinuto
 
   /* De un punto de la pantalla al dia y la hora que hay debajo. Un unico
      sitio hace esta traduccion; el resto del componente habla en minutos. */
@@ -95,7 +98,7 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
     [porDia],
   )
 
-  /** La caja en pantalla de una franja, para que el popover cuelgue de ella */
+  /** La caja en pantalla de una franja, para que la ficha cuelgue de ella */
   const cajaDe = (celda) => {
     const caja = refDias.current.getBoundingClientRect()
     const ancho = caja.width / DIAS.length
@@ -127,97 +130,89 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
     alPulsarHueco(celda, cajaDe(celda))
   }
 
-  /* La rejilla mide lo que necesita para que sus celdas sean cuadradas, y se
-     centra en lo que sobre. Estirarla llenaria el monitor a costa de
-     convertir cada cuadrado en una tira. */
-  const anchoRejilla = ANCHO_HORAS_PX + lado * DIAS.length
-
   return (
-    <div ref={refMedida} className="min-w-[46rem] px-4">
-      <div className="mx-auto" style={{ width: anchoRejilla }}>
-        {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
-            las clases pasen por debajo sin transparentarse. */}
-        <div
-          className={`transicion-tema sticky top-0 z-20 flex border-b ${LINEA} bg-panel-suave`}
-        >
-          <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
-          {DIAS.map((dia) => (
+    <div
+      ref={refVista}
+      className="min-h-0 min-w-[46rem] flex-1 overflow-auto [scrollbar-gutter:stable]"
+    >
+      {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
+          las clases pasen por debajo sin transparentarse. */}
+      <div className={`transicion-tema sticky top-0 z-20 flex border-b ${LINEA} bg-panel-suave`}>
+        <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
+        {DIAS.map((dia) => (
+          <span
+            key={dia}
+            className={`flex flex-1 items-center justify-center border-l ${LINEA} py-4 text-[13.5px] font-extrabold tracking-[0.12em] text-tinta uppercase`}
+          >
+            {dia}
+          </span>
+        ))}
+      </div>
+
+      <div className={`flex border-b ${LINEA}`} style={{ height: HORAS_JORNADA * altoHora }}>
+        {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
+            en ella: centrada, la primera quedaria partida por la cabecera. */}
+        <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
+          {horasEnPunto().map((min, i, todas) => (
             <span
-              key={dia}
-              style={{ width: lado }}
-              className={`flex shrink-0 items-center justify-center border-l ${LINEA} py-4 text-[13.5px] font-extrabold tracking-[0.12em] text-tinta uppercase`}
+              key={min}
+              style={{ top: aY(min) }}
+              className={`absolute right-4 text-[12.5px] font-semibold tabular-nums text-tinta-tenue ${
+                // La ultima cierra la rejilla: debajo de su linea se saldria
+                i === todas.length - 1 ? '-translate-y-5' : 'translate-y-1.5'
+              }`}
             >
-              {dia}
+              {etiquetaHora(min)}
             </span>
           ))}
         </div>
 
-        <div className={`flex border-b ${LINEA}`} style={{ height: altoRejilla }}>
-          {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
-              en ella: centrada, la primera quedaria partida por la cabecera. */}
-          <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
-            {horasEnPunto().map((min, i, todas) => (
-              <span
-                key={min}
-                style={{ top: aY(min) }}
-                className={`absolute right-4 text-[12.5px] font-semibold tabular-nums text-tinta-tenue ${
-                  // La ultima cierra la rejilla: debajo de su linea se saldria
-                  i === todas.length - 1 ? '-translate-y-5' : 'translate-y-1.5'
-                }`}
-              >
-                {etiquetaHora(min)}
-              </span>
-            ))}
-          </div>
-
-          {/* Los cinco dias. El puntero se sigue aqui y no columna por
-              columna: el dia sale de una division, no de cinco manejadores. */}
-          <div
-            ref={refDias}
-            onPointerMove={seguirPuntero}
-            onPointerLeave={() => setFantasma(null)}
-            onClick={pulsar}
-            className="relative flex flex-1"
-          >
-            {DIAS.map((dia, i) => (
-              <div
-                key={dia}
-                style={{
-                  width: lado,
-                  backgroundImage: `repeating-linear-gradient(to bottom, var(--horario-linea) 0 1px, transparent 1px ${lado}px)`,
-                }}
-                className={`relative shrink-0 border-l ${LINEA}`}
-              >
-                {fantasma?.dia === i && (
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      top: aY(fantasma.inicio),
-                      height: (fantasma.fin - fantasma.inicio) * pxPorMinuto - 5,
-                    }}
-                    className="celda-fantasma pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-aprobada/40 bg-aprobada/[0.07]"
-                  >
-                    <span className="grid size-8 place-items-center rounded-full bg-aprobada text-[var(--lienzo)] shadow-[0_4px_14px_-4px_var(--estado-aprobada)]">
-                      <Plus size={17} strokeWidth={2.5} />
-                    </span>
-                    <span className="text-[11.5px] font-bold tracking-wide text-aprobada">
-                      Agregar materia
-                    </span>
+        {/* Los cinco dias. El puntero se sigue aqui y no columna por columna:
+            el dia sale de una division, no de cinco manejadores iguales. */}
+        <div
+          ref={refDias}
+          onPointerMove={seguirPuntero}
+          onPointerLeave={() => setFantasma(null)}
+          onClick={pulsar}
+          className="relative flex flex-1"
+        >
+          {DIAS.map((dia, i) => (
+            <div
+              key={dia}
+              style={{
+                backgroundImage: `repeating-linear-gradient(to bottom, var(--horario-linea) 0 1px, transparent 1px ${altoHora}px)`,
+              }}
+              className={`relative flex-1 border-l ${LINEA}`}
+            >
+              {fantasma?.dia === i && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    top: aY(fantasma.inicio),
+                    height: (fantasma.fin - fantasma.inicio) * pxPorMinuto - 5,
+                  }}
+                  className="celda-fantasma pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-aprobada/40 bg-aprobada/[0.07]"
+                >
+                  <span className="grid size-8 place-items-center rounded-full bg-aprobada text-[var(--lienzo)] shadow-[0_4px_14px_-4px_var(--estado-aprobada)]">
+                    <Plus size={17} strokeWidth={2.5} />
                   </span>
-                )}
+                  <span className="text-[11.5px] font-bold tracking-wide text-aprobada">
+                    Agregar materia
+                  </span>
+                </span>
+              )}
 
-                {porDia[i].map((sesion) => (
-                  <BloqueClase
-                    key={sesion.id}
-                    sesion={sesion}
-                    asignatura={porCodigo.get(sesion.codigo)}
-                    pxPorMinuto={pxPorMinuto}
-                    alEditar={alEditar}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
+              {porDia[i].map((sesion) => (
+                <BloqueClase
+                  key={sesion.id}
+                  sesion={sesion}
+                  asignatura={porCodigo.get(sesion.codigo)}
+                  pxPorMinuto={pxPorMinuto}
+                  alEditar={alEditar}
+                />
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>

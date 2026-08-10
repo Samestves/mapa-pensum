@@ -10,15 +10,29 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 21 * 60
 
-/* La celda de una hora es un cuadrado: su alto es su ancho. El lado no es
-   una constante -depende de la ventana- pero si lo son sus limites.
-   El minimo evita que en una ventana estrecha la fila se aplaste hasta que no
-   quepa el nombre de una materia. El maximo evita lo contrario: sin el, en un
-   monitor ancho la columna se va a trescientos cincuenta pixeles, la fila con
-   ella, y las catorce horas de la jornada se vuelven cinco mil pixeles de
-   desplazamiento para enseñar exactamente lo mismo. */
-export const LADO_MIN = 112
-export const LADO_MAX = 150
+/* Alto de una fila de hora. No es constante: se reparte la altura disponible
+   entre las catorce horas de la jornada, para que quepa en pantalla la mayor
+   parte del dia posible.
+
+   Aqui hay un limite que conviene tener escrito, porque se intento al reves y
+   no sale: celda cuadrada, ancho completo y jornada entera a la vista son
+   tres cosas que no caben juntas. En un monitor de 1440 la columna mide 270
+   px; con la fila igual de alta, las catorce horas suman 3780 px de
+   desplazamiento. Manda el ancho completo -la semana es lo que se viene a
+   mirar- y la fila se queda con el alto que le deje la pantalla.
+
+   El minimo esta puesto en 64 y no mas alto por una razon concreta: catorce
+   filas de 64 son 896 px, que es lo que deja libre una pantalla normal una
+   vez descontadas la barra de la aplicacion y la cabecera de dias. Con 72 la
+   jornada se pasaba por cien pixeles y habia que desplazarse para ver la
+   ultima hora de un dia que casi cabia. Por debajo de 64 la fila empieza a
+   no poder enseñar el nombre de una materia, y ahi si se desplaza.
+   El maximo evita que en un monitor muy alto una hora ocupe media pantalla.
+
+   El numero de horas es fijo, asi que este alto solo cambia si cambia la
+   ventana: agregar una clase no reescala nunca la rejilla. */
+export const ALTO_MIN = 64
+export const ALTO_MAX = 116
 
 /** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
 export const ANCHO_HORAS_PX = 88
