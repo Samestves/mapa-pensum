@@ -93,8 +93,10 @@ function Arista({
   const ritmo = { '--vel': `${velocidad}s`, '--ruta': `path("${d}")` }
 
   return (
-    // color fija currentColor para que .filamento pueda mezclarlo con el nucleo
-    <g color={color}>
+    // color fija currentColor para que .filamento pueda mezclarlo con el nucleo.
+    // data-encendida la usa el CSS para dejar corriendo en tactil solo los
+    // cables que llevan corriente de verdad; los apagados no se animan.
+    <g color={color} data-encendida={encendida || undefined}>
       <path
         {...comun}
         stroke={color}
@@ -118,9 +120,12 @@ function Arista({
         style={suave}
       />
 
+      {/* data-capa deja que el CSS quite la ultima capa en tactil sin que
+          este componente tenga que saber en que aparato se esta pintando. */}
       {ESTELA.map((capa, i) => (
         <path
           key={i}
+          data-capa={i}
           {...comun}
           pathLength="100"
           className={`cometa ${viva && !atenuada && i === 0 ? 'filamento' : ''}`}

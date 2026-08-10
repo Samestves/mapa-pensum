@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { calcularLayout } from '../layout/calcularLayout'
 import { usePaneles } from '../hooks/usePaneles'
 import { usePensum } from '../hooks/usePensum'
@@ -107,10 +107,14 @@ function VistaCarrera({ carrera, alVolver }) {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
-      {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
-          1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
-      <div className="barra-colapsable shrink-0" data-oculta={barraOculta}>
-        <div>
+      {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
+          ancla a su borde inferior con top-full, asi que al plegarse la barra
+          sube pegada a ella sin animar nada aparte. */}
+      <div className="relative z-40 shrink-0">
+        {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
+            1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
+        <div className="barra-colapsable" data-oculta={barraOculta}>
+          <div>
           <BarraSuperior
             carrera={carrera}
             tema={tema}
@@ -123,27 +127,29 @@ function VistaCarrera({ carrera, alVolver }) {
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
-            alOcultarBarra={() => {
-              setBarraOculta(true)
-              cerrar()
-            }}
-            alVolver={alVolver}
-          />
+              alVolver={alVolver}
+            />
+          </div>
         </div>
-      </div>
 
-      <button
-        type="button"
-        onClick={() => setBarraOculta(false)}
-        title="Mostrar la barra"
-        aria-label="Mostrar la barra"
-        aria-hidden={!barraOculta}
-        tabIndex={barraOculta ? 0 : -1}
-        data-visible={barraOculta}
-        className="pestana-barra transicion-tema absolute top-0 left-1/2 z-50 flex items-center gap-1.5 rounded-b-xl border border-t-0 border-panel-borde bg-panel/90 px-5 py-1.5 text-tinta-suave backdrop-blur hover:text-tinta"
-      >
-        <ChevronDown size={15} />
-      </button>
+        {/* Una sola pestaña que alterna, siempre centrada y siempre en el
+            mismo punto. Antes ocultar estaba arriba a la derecha y mostrar
+            reaparecia en el centro: el mismo gesto vivia en dos sitios y
+            habia que buscarlo la segunda vez. */}
+        <button
+          type="button"
+          onClick={() => {
+            setBarraOculta((v) => !v)
+            cerrar()
+          }}
+          title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+          aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+          aria-expanded={!barraOculta}
+          className="pestana-barra absolute top-full left-1/2 z-50 -translate-x-1/2 rounded-b-lg border border-t-0 border-panel-borde bg-panel/90 px-6 py-1 text-tinta-tenue backdrop-blur hover:text-tinta"
+        >
+          {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        </button>
+      </div>
 
       {planAbierto && (
         <PlanRuta

@@ -12,6 +12,21 @@ export const ucSugeridas = (horasSemana) =>
 export const horasDe = (uc) => uc * HORAS_POR_UC
 
 /**
+ * Como se llama el enesimo semestre de un plan.
+ *
+ * El plan numera sus semestres desde 1, pero ese 1 NO es el semestre 1 del
+ * pensum: es el primero que te queda por delante. Quien ya aprobo hasta
+ * cuarto veia "Semestre 1" encabezando su ruta y entendia que le tocaba
+ * repetir desde el principio.
+ *
+ * Tampoco vale numerarlos como semestres del pensum -"Semestre 5, 6, 7"-
+ * porque un semestre del plan mezcla materias de varios: puedes llevar a la
+ * vez algo de tercero y algo de quinto. Se nombran por lo unico que son de
+ * verdad, pasos hacia adelante desde hoy, y asi no se pueden confundir.
+ */
+export const etiquetaSemestre = (n) => (n === 1 ? 'Próximo semestre' : `En ${n} semestres`)
+
+/**
  * Mes aproximado de grado, contando dos semestres por año desde hoy.
  * Es aritmetica de calendario, no el cronograma oficial de la UDO: no
  * contempla retrasos de inicio, intensivos ni semestres perdidos.

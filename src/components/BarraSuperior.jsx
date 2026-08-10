@@ -1,26 +1,46 @@
-import { ArrowLeft, ChevronUp, LayoutList, Moon, Route, Sun, Waypoints } from 'lucide-react'
+import { ArrowLeft, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
+import AnilloAvance from './AnilloAvance'
 import { BotonAvisos } from './AvisosCarrera'
 
-/** Boton de icono del sistema: todos los de la cabecera miden y pesan igual.
-    En movil bajan a 32px, que sigue siendo objetivo tactil comodo. */
-function Icono({ icono: Ico, titulo, activo, alPulsar, variante = 'suelto' }) {
-  const medida = variante === 'segmento' ? 'size-8' : 'size-8 sm:size-9'
-  const borde = variante === 'segmento' ? 'border-0' : 'border'
+/**
+ * Boton de la cabecera. Todos miden y pesan igual; en movil bajan a 32px,
+ * que sigue siendo objetivo tactil comodo.
+ *
+ * 'etiqueta' saca el texto a la vista a partir del ancho que se le diga. El
+ * title solo aparece al dejar el raton quieto un segundo, y en un telefono
+ * no aparece nunca: una barra entera de iconos pelados no se entiende, y de
+ * hecho no se entendio. Donde hay sitio, la palabra se ve.
+ */
+function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar, variante = 'suelto' }) {
+  const segmento = variante === 'segmento'
+  const alto = segmento ? 'h-8' : 'h-8 sm:h-9'
+  const borde = segmento ? 'border-0' : 'border'
+  // Con etiqueta deja de ser cuadrado y crece con el texto
+  const ancho = etiqueta ? 'px-2 sm:px-2.5' : segmento ? 'w-8' : 'w-8 sm:w-9'
+  const visible =
+    desde === 'xl' ? 'hidden xl:inline' : desde === 'lg' ? 'hidden lg:inline' : 'hidden sm:inline'
+
   return (
     <button
       type="button"
       onClick={alPulsar}
       title={titulo}
       aria-label={titulo}
-      className={`transicion-tema grid shrink-0 place-items-center rounded-lg ${medida} ${borde} ${
+      className={`transicion-tema flex shrink-0 items-center justify-center gap-1.5 rounded-lg ${alto} ${ancho} ${borde} ${
         activo
           ? 'border-transparent bg-panel-suave text-tinta'
           : 'border-panel-borde text-tinta-suave hover:text-tinta'
       }`}
     >
-      <Ico size={16} />
+      <Ico size={16} className="shrink-0" />
+      {etiqueta && <span className={`${visible} text-[12px] font-bold`}>{etiqueta}</span>}
     </button>
   )
+}
+
+/** Separador fino: agrupa la barra en bloques en vez de una fila plana */
+function Division() {
+  return <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-panel-borde sm:block" />
 }
 
 function BarraSuperior({
@@ -35,9 +55,23 @@ function BarraSuperior({
   avisosAbiertos,
   alAlternarAvisos,
   alPlanificar,
-  alOcultarBarra,
   alVolver,
 }) {
+  /* El anillo siempre enseña un porcentaje. Donde hay creditos oficiales es
+     el de UC, que es el que cuenta para graduarse; donde el pensum no los
+     trae, el de materias, que es lo unico que se puede saber. El title dice
+     cual de los dos es, para que el numero no signifique dos cosas distintas
+     sin avisar. */
+  const conCreditos = resumen.porcentaje != null
+  const avance = conCreditos
+    ? resumen.porcentaje
+    : resumen.total
+      ? (resumen.aprobadas / resumen.total) * 100
+      : 0
+  const detalleAvance = conCreditos
+    ? `Tu avance: ${Math.round(avance)}% · ${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC. Pulsa para ver el detalle.`
+    : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`
+
   return (
     <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
       {/* Volver al selector. Antes esto era el logo, y nadie lo encontraba:
@@ -74,59 +108,41 @@ function BarraSuperior({
       </div>
       <div className="min-w-0 flex-1 sm:hidden" />
 
-      {/* El chip de progreso es el acceso al detalle del avance */}
+      {/* El anillo de avance es el acceso al detalle.
+          Sin creditos oficiales no hay porcentaje de UC, pero si de materias:
+          el anillo se llena igual y el detalle lo aclara al pasar por encima.
+          Antes ahi habia un numero, una barra de ochenta pixeles y un
+          contador de UC, tres formas de decir lo mismo en fila. */}
       <button
         type="button"
         onClick={alAlternarAvance}
-        title="Ver el detalle de mi avance"
-        className={`transicion-tema flex shrink-0 items-center gap-2.5 rounded-lg border px-2 py-1.5 sm:px-3 ${
-          avanceAbierto
-            ? 'border-transparent bg-panel-suave'
-            : 'border-panel-borde hover:bg-panel-suave'
+        title={detalleAvance}
+        aria-label={detalleAvance}
+        className={`transicion-tema grid shrink-0 place-items-center rounded-full p-1 ${
+          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
         }`}
       >
-        {/* Sin creditos oficiales no hay porcentaje ni barra: el chip pasa a
-            contar materias, que es un dato que si tenemos. */}
-        {resumen.porcentaje != null ? (
-          <>
-            <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-              {resumen.porcentaje.toFixed(1)}%
-            </span>
-            <span className="hidden h-1.5 w-20 overflow-hidden rounded-full bg-lienzo sm:block">
-              <span
-                className="block h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-                style={{ width: `${resumen.porcentaje}%` }}
-              />
-            </span>
-            <span className="hidden font-mono text-[10px] font-semibold text-tinta-tenue lg:inline">
-              {resumen.ucAprobadas + resumen.ucElectivas}/{resumen.ucTitulo} UC
-            </span>
-          </>
-        ) : (
-          <span className="font-mono text-[13px] font-bold text-aprobada sm:text-sm">
-            {resumen.aprobadas}
-            <span className="text-tinta-tenue">/{resumen.total}</span>
-          </span>
-        )}
+        <AnilloAvance valor={avance} activo={avanceAbierto} />
       </button>
 
-      {/* Cambiar de vista: en movil la lista es la util, el mapa es opcional */}
-      <div className="transicion-tema flex shrink-0 items-center gap-0.5 rounded-lg border border-panel-borde p-0.5">
-        <Icono
-          icono={Waypoints}
-          titulo="Ver el mapa"
-          activo={vista === 'mapa'}
-          alPulsar={() => alCambiarVista('mapa')}
-          variante="segmento"
-        />
-        <Icono
-          icono={LayoutList}
-          titulo="Ver como lista"
-          activo={vista === 'lista'}
-          alPulsar={() => alCambiarVista('lista')}
-          variante="segmento"
-        />
-      </div>
+      {/* Un solo boton que alterna, no un segmentado de dos.
+          La lista no sobra en escritorio aunque lo parezca: marcar una
+          materia son dos clicks en el mapa -abrir la ficha y pulsar- y uno
+          solo en la lista. Quien entra por primera vez tiene cuarenta
+          materias que marcar, y ahi la lista gana de calle. Ademas es HTML
+          de verdad, no un lienzo SVG, que es lo unico que puede recorrer un
+          lector de pantalla.
+          Lo que sobraba era el peso visual: competia con Planificar. Ahora
+          es un boton mas, y ensena a donde te lleva, no donde estas. */}
+      <Icono
+        icono={vista === 'mapa' ? LayoutList : Map}
+        titulo={vista === 'mapa' ? 'Ver como lista' : 'Ver el mapa'}
+        etiqueta={vista === 'mapa' ? 'Lista' : 'Mapa'}
+        desde="xl"
+        alPulsar={() => alCambiarVista(vista === 'mapa' ? 'lista' : 'mapa')}
+      />
+
+      <Division />
 
       {/* Solo aparece donde hay algo que advertir, o sea en las carreras cuya
           fuente tiene huecos o dudas. En las demas no ocupa sitio. */}
@@ -136,15 +152,26 @@ function BarraSuperior({
         alPulsar={alAlternarAvisos}
       />
 
-      <Icono icono={Route} titulo="Planificar mi ruta y exportarla" alPulsar={alPlanificar} />
+      {/* Con etiqueta a partir de lg: es una funcion completa -calcula tu
+          ruta hasta el grado y la exporta- y con solo el icono no la
+          encontraba nadie, ni quien propuso la idea. */}
+      <Icono
+        icono={Route}
+        titulo="Planificar mi ruta hasta el grado y exportarla"
+        etiqueta="Planificar"
+        alPulsar={alPlanificar}
+      />
 
+      <Division />
+
+      {/* Sol y luna se entienden sin palabra en cualquier idioma */}
       <Icono
         icono={tema === 'oscuro' ? Sun : Moon}
         titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
         alPulsar={alternarTema}
       />
 
-      <Icono icono={ChevronUp} titulo="Ocultar la barra" alPulsar={alOcultarBarra} />
+
     </header>
   )
 }

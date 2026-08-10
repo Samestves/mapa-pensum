@@ -110,7 +110,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) 
 
   const acciones = (
     <>
-      <Boton icono={Printer} texto="Imprimir o PDF" principal alPulsar={() => window.print()} />
+      <Boton icono={Printer} texto="Guardar PDF" principal alPulsar={() => window.print()} />
       <Boton
         icono={Download}
         texto="Descargar .md"
@@ -260,6 +260,10 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) 
             {/* En escritorio las acciones cierran el rail */}
             <div className="hidden gap-2 border-t border-panel-borde px-5 py-4 md:flex md:flex-col">
               {acciones}
+              <p className="text-[10px] leading-snug text-tinta-tenue">
+                Se abre el diálogo de impresión: elige <strong>Guardar como PDF</strong> como
+                destino.
+              </p>
             </div>
           </div>
 

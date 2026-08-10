@@ -1,29 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  CircleDot,
-  GraduationCap,
-  ListChecks,
-  LockOpen,
-  RotateCcw,
-  TriangleAlert,
-} from 'lucide-react'
+import { ChevronDown, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import { colorArea, etiquetaArea } from '../theme/areas'
-
-function Dato({ icono: Icono, valor, de, etiqueta, color }) {
-  return (
-    <div className="transicion-tema rounded-lg border border-panel-borde bg-panel-suave px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-        <Icono size={12} color={color} />
-        {etiqueta}
-      </div>
-      <div className="mt-1.5 font-mono text-lg leading-none font-bold text-tinta">
-        {valor}
-        {de != null && <span className="text-xs text-tinta-tenue"> / {de}</span>}
-      </div>
-    </div>
-  )
-}
+import { colorArea, colorNodo, etiquetaArea } from '../theme/areas'
 
 /** Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado. */
 function CuotaGrupo({ avance }) {
@@ -115,6 +93,92 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
 }
 
 /**
+ * Barra de composicion de la carrera.
+ *
+ * Antes era una barra de un solo color que solo decia el porcentaje, o sea
+ * lo mismo que el numero de al lado. Esta reparte los cuatro estados en sus
+ * colores, asi que de un vistazo se ve la forma de la carrera: cuanto llevas
+ * hecho, cuanto tienes en marcha, cuanto se te ha abierto y cuanto sigue
+ * cerrado. Es la misma tinta que usa el mapa, asi que no hay que aprender
+ * una leyenda nueva.
+ */
+function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total }) {
+  if (!total) return null
+
+  const tramos = [
+    { clave: 'aprobadas', n: aprobadas, color: 'var(--estado-aprobada)', texto: 'aprobadas' },
+    { clave: 'cursando', n: cursando, color: 'var(--estado-cursando)', texto: 'cursando' },
+    { clave: 'disponibles', n: disponibles, color: 'var(--tinta-suave)', texto: 'puedes inscribir' },
+    { clave: 'bloqueadas', n: bloqueadas, color: 'var(--panel-borde)', texto: 'aun bloqueadas' },
+  ].filter((t) => t.n > 0)
+
+  return (
+    <div>
+      <div className="flex h-2 gap-0.5 overflow-hidden rounded-full">
+        {tramos.map((t) => (
+          <span
+            key={t.clave}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+            style={{ width: `${(t.n / total) * 100}%`, backgroundColor: t.color }}
+          />
+        ))}
+      </div>
+      <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1">
+        {tramos.map((t) => (
+          <li key={t.clave} className="flex items-center gap-1.5 text-[11px] text-tinta-suave">
+            <span
+              className="size-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: t.color }}
+            />
+            <span className="font-mono font-bold text-tinta">{t.n}</span>
+            <span className="min-w-0 truncate">{t.texto}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/**
+ * Lo que puedes inscribir ahora mismo.
+ *
+ * Es la razon de abrir este panel. Antes aqui solo habia un numero suelto
+ * -"Disponibles: 11"- que no se puede usar para nada: lo que el estudiante
+ * quiere saber es CUALES son esas once, y eso obligaba a ir a buscarlas al
+ * mapa una por una.
+ */
+function ParaInscribir({ materias }) {
+  if (!materias.length) return null
+
+  return (
+    <div>
+      <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+        Puedes inscribir ahora ({materias.length})
+      </h3>
+      <ul className="mt-1.5 flex flex-col gap-1">
+        {materias.map((a) => (
+          <li
+            key={a.codigo}
+            className="flex items-center gap-2 rounded-lg border border-panel-borde px-2.5 py-1.5"
+          >
+            <span
+              className="size-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: colorNodo(a) }}
+            />
+            <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-tinta">
+              {a.nombre}
+            </span>
+            <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
+              {a.semestre ? `S${a.semestre}` : ''} · {a.uc} UC
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/**
  * Filtro por area. Vivia en la leyenda flotante del mapa, que se quito por
  * estorbar: era un panel permanente sobre el lienzo y solo aparecia en
  * Sistemas, la unica carrera con las areas clasificadas.
@@ -197,107 +261,106 @@ function PanelProgreso({
 
   return (
     <>
+      {/* El velo solo oscurece en movil, donde la hoja tapa el mapa. En
+          escritorio el panel va al lado y el mapa se sigue viendo y usando:
+          atenuarlo ahi seria fingir que hay un modal donde no lo hay. */}
       <button
         type="button"
         aria-label="Cerrar"
         onClick={alCerrar}
-        className="fixed inset-0 z-30 cursor-default"
+        className="fixed inset-0 z-30 cursor-default bg-black/40 backdrop-blur-[2px] md:bg-transparent md:backdrop-blur-none"
       />
-      <div className="surgir transicion-tema absolute top-2 right-3 z-40 flex max-h-[calc(100%-1rem)] w-[19rem] max-w-[calc(100vw-1.5rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
-        {/* El porcentaje necesita un denominador oficial. Donde no lo hay se
-            dice lo acumulado sin inventar un total. */}
-        {hayPorcentaje ? (
-          <div>
-            <div className="flex items-end justify-between">
-              <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-                Título completado
-              </span>
-              <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
-                {porcentaje.toFixed(1)}%
-              </span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-lienzo">
-              <div
-                className="h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
-                style={{ width: `${porcentaje}%` }}
-              />
-            </div>
-            <p className="mt-1.5 text-[10px] text-tinta-tenue">
-              {ucAprobadas + ucElectivas} de {ucTitulo} UC, contando obligatorias y electivas.
+
+      {/* Antes era un globo flotando arriba a la derecha. En movil ocupaba
+          casi toda la pantalla flotando en el aire, sin quedar anclado a
+          ningun borde, y eso es lo que se siente raro: un panel de ese
+          tamaño tiene que apoyarse en algo.
+          Ahora se apoya. En movil sube desde abajo, que es de donde se
+          esperan las hojas y donde llega el pulgar; en escritorio se pega al
+          borde derecho a lo alto, como un cajon. Mismo contenido, dos formas
+          que si tienen sitio propio. */}
+      <div className="hoja-avance transicion-tema absolute inset-x-0 bottom-0 z-40 flex max-h-[85%] flex-col gap-4 overflow-y-auto rounded-t-2xl border border-b-0 border-panel-borde bg-panel/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-xl md:inset-x-auto md:top-0 md:right-0 md:bottom-0 md:max-h-none md:w-[20rem] md:rounded-t-none md:rounded-l-2xl md:border-b md:border-r-0 md:p-5">
+        {/* Asa: en movil dice "esto se arrastra o se cierra tocando fuera" */}
+        <span
+          aria-hidden="true"
+          className="mx-auto -mt-1 mb-1 h-1 w-10 shrink-0 rounded-full bg-panel-borde md:hidden"
+        />
+        {/* El panel no decia en ningun sitio que era. Ahora se presenta. */}
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-[13px] leading-tight font-extrabold text-tinta">Tu avance</h2>
+            <p className="mt-0.5 text-[11px] text-tinta-suave">
+              {hayPorcentaje
+                ? `${ucAprobadas + ucElectivas} de ${ucTitulo} UC del título`
+                : `${ucAprobadas} UC de ${progreso.ucTotales} en obligatorias`}
             </p>
           </div>
-        ) : (
-          <div>
-            <div className="flex items-end justify-between">
-              <span className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-                Materias aprobadas
-              </span>
-              <span className="font-mono text-2xl leading-none font-extrabold text-aprobada">
-                {aprobadas}
-                <span className="text-sm text-tinta-tenue">/{total}</span>
-              </span>
-            </div>
-            <p className="mt-1.5 text-[10px] leading-snug text-tinta-tenue">
-              Llevas {ucAprobadas} UC. No mostramos porcentaje del título porque no tenemos
-              los créditos oficiales de esta carrera.
-            </p>
+          {/* Entero, no un decimal. "0.0%" se lee como un error de calculo, y
+              nadie planifica su carrera por decimas. */}
+          <div className="shrink-0 text-right">
+            <span className="font-mono text-3xl leading-none font-extrabold text-aprobada">
+              {hayPorcentaje ? `${Math.round(porcentaje)}%` : aprobadas}
+            </span>
+            {!hayPorcentaje && (
+              <span className="font-mono text-sm text-tinta-tenue">/{total}</span>
+            )}
           </div>
-        )}
+        </header>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Dato
-            icono={GraduationCap}
-            etiqueta="UC oblig."
-            valor={ucAprobadas}
-            de={progreso.ucTotales}
-            color="var(--estado-aprobada)"
-          />
-          <Dato
-            icono={ListChecks}
-            etiqueta="Materias"
-            valor={aprobadas}
-            de={total}
-            color="var(--estado-aprobada)"
-          />
-          <Dato
-            icono={CircleDot}
-            etiqueta="Cursando"
-            valor={cursando}
-            color="var(--estado-cursando)"
-          />
-          <Dato
-            icono={LockOpen}
-            etiqueta="Disponibles"
-            valor={disponibles}
-            color="var(--tinta-suave)"
-          />
-        </div>
-
-        <FiltroAreas
-          areas={progreso.porArea}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={alFiltrarArea}
+        <BarraComposicion
+          aprobadas={aprobadas}
+          cursando={cursando}
+          disponibles={disponibles}
+          bloqueadas={progreso.bloqueadas}
+          total={total}
         />
 
-        {grupos.length > 0 && (
-          <div className="transicion-tema rounded-lg border border-panel-borde p-3">
-            <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Electivas
-            </h3>
-            {/* Solo informa. Se marcan donde estan dibujadas: en la zona de
-                electivas del mapa o al final de la lista. */}
-            <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
-              Elígelas en el mapa o al final de la lista.
-            </p>
-            <div className="flex flex-col gap-2">
-              {grupos.map((g) => (
-                <CuotaGrupo key={g.clave} avance={g} />
-              ))}
+        {/* Lo unico accionable del panel va antes que cualquier resumen: es
+            lo que se viene a mirar. */}
+        <ParaInscribir materias={progreso.paraInscribir} />
+
+        {/* Electivas y areas bajan a un desplegable cerrado. Son utiles pero
+            no son lo que se busca al abrir el avance, y ocupando el sitio
+            bueno tapaban lo que si. */}
+        {(grupos.length > 0 || progreso.porArea.length > 0) && (
+          <details className="group/mas">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg border border-panel-borde px-3 py-2 text-[11px] font-bold text-tinta-suave hover:text-tinta">
+              Electivas y áreas
+              <ChevronDown
+                size={14}
+                className="transition-transform duration-300 group-open/mas:rotate-180"
+              />
+            </summary>
+
+            <div className="mt-2 flex flex-col gap-3">
+              {grupos.length > 0 && (
+                <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+                  <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+                    Electivas
+                  </h3>
+                  {/* Solo informa. Se marcan donde estan dibujadas: en la zona
+                      de electivas del mapa o al final de la lista. */}
+                  <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
+                    Elígelas en el mapa o al final de la lista.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {grupos.map((g) => (
+                      <CuotaGrupo key={g.clave} avance={g} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <FiltroAreas
+                areas={progreso.porArea}
+                areaFiltrada={areaFiltrada}
+                alFiltrarArea={alFiltrarArea}
+              />
             </div>
-          </div>
+          </details>
         )}
 
-        <div className="border-t border-panel-borde pt-3">
+        <div className="mt-auto border-t border-panel-borde pt-3">
           <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
         </div>
       </div>
