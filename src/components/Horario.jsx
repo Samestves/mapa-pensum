@@ -47,10 +47,11 @@ function Horario({ carrera, estados }) {
     setEnEdicion({ inicial: celda, ancla })
   }, [])
 
-  const editar = useCallback((sesion) => {
-    // La ficha se coloca al lado del bloque, asi que necesita su caja entera
-    // y no un punto: centrada sobre el, y sin taparlo.
-    const c = document.getElementById(`clase-${sesion.id}`)?.getBoundingClientRect()
+  /* Abrir la ficha de una clase. El elemento lo pasa el propio gesto, que ya
+     lo tenia: buscarlo otra vez por id seria preguntarle al DOM algo que ya
+     estaba en la mano. */
+  const editar = useCallback((sesion, elemento) => {
+    const c = elemento?.getBoundingClientRect()
     setEnEdicion({
       inicial: sesion,
       ancla: c
@@ -58,6 +59,13 @@ function Horario({ carrera, estados }) {
         : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight },
     })
   }, [])
+
+  /* Soltar una clase en otro sitio. Llega ya validada por el arrastre, asi
+     que aqui solo se persiste: el hueco legal se resolvio mientras se movia. */
+  const mover = useCallback(
+    (sesion) => guardar(sesion),
+    [guardar],
+  )
 
   return (
     <div className="transicion-tema flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
@@ -68,6 +76,7 @@ function Horario({ carrera, estados }) {
         porDia={porDia}
         porCodigo={porCodigo}
         alPulsarHueco={abrirEnHueco}
+        alMoverClase={mover}
         alEditar={editar}
       />
 

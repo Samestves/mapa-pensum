@@ -76,10 +76,74 @@ export const horasEnPunto = () =>
 
 export const acotar = (v, min, max) => Math.max(min, Math.min(max, v))
 
-/* Al arrastrar el puntero por la rejilla las horas se redondean al cuarto:
-   nadie inscribe una clase a las 08:07, pero si a las 08:15. */
+/* Al arrastrar, las horas se redondean al cuarto: nadie inscribe una clase a
+   las 08:07, pero si a las 08:15. */
 export const PASO = 15
 export const imantar = (min) => Math.round(min / PASO) * PASO
+
+/* Minutos alrededor del borde de otra clase donde el iman agarra */
+export const TOLERANCIA_IMAN = 9
+
+/**
+ * A donde va el inicio de una clase que se esta arrastrando.
+ *
+ * Ademas de la rejilla de quince minutos, atrae a los bordes de las clases
+ * que ya hay en ese dia: al final de cada una -para quedar pegada debajo- y a
+ * su inicio menos la duracion -para acabar justo donde la otra empieza-. Los
+ * extremos de la jornada iman igual.
+ *
+ * Los bordes GANAN a la rejilla dentro de la tolerancia, aunque la rejilla
+ * caiga mas cerca. Comparando solo por distancia, junto a una clase que acaba
+ * a las 09:50 el multiplo de las 09:45 ganaria por cinco minutos y encajar
+ * las dos seguidas seria imposible, que es justo el gesto que se busca.
+ */
+export function imantarInicio(minuto, duracion, sesionesDelDia) {
+  const bordes = [ABRE, CIERRA - duracion]
+  for (const s of sesionesDelDia) {
+    bordes.push(s.fin) // pegarse justo debajo
+    bordes.push(s.inicio - duracion) // acabar justo donde empieza
+  }
+
+  const cerca = bordes.filter((b) => Math.abs(b - minuto) <= TOLERANCIA_IMAN)
+  if (cerca.length) {
+    return cerca.reduce((a, b) => (Math.abs(b - minuto) < Math.abs(a - minuto) ? b : a))
+  }
+  return imantar(minuto)
+}
+
+/**
+ * La posicion legal mas cercana a la que se pide, o null si el dia esta lleno.
+ *
+ * Se usa mientras se arrastra, para que la vista previa NUNCA enseñe un sitio
+ * invalido: si el puntero lleva la clase encima de otra, la propuesta salta al
+ * hueco pegado -por arriba o por abajo, el que quede mas cerca- en vez de
+ * pintarse en rojo. Con eso soltar no puede fallar nunca y no hace falta un
+ * estado de error durante el gesto.
+ */
+export function posicionValida(sesionesDelDia, candidata) {
+  const duracion = candidata.fin - candidata.inicio
+  const otras = sesionesDelDia.filter((s) => s.id !== candidata.id)
+
+  const cabe = (inicio) =>
+    inicio >= ABRE &&
+    inicio + duracion <= CIERRA &&
+    !otras.some((o) => inicio < o.fin && o.inicio < inicio + duracion)
+
+  if (cabe(candidata.inicio)) return candidata
+
+  // Pegada al borde de alguna vecina: son los unicos sitios que ganan algo
+  const opciones = []
+  for (const o of otras) {
+    if (cabe(o.fin)) opciones.push(o.fin)
+    if (cabe(o.inicio - duracion)) opciones.push(o.inicio - duracion)
+  }
+  if (!opciones.length) return null
+
+  const inicio = opciones.reduce((a, b) =>
+    Math.abs(b - candidata.inicio) < Math.abs(a - candidata.inicio) ? b : a,
+  )
+  return { ...candidata, inicio, fin: inicio + duracion }
+}
 
 /* ---- Convivencia de clases -------------------------------------------- */
 

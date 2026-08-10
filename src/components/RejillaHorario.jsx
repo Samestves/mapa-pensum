@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import {
   ABRE,
+  enDoceHoras,
   ALTO_MAX,
   ALTO_MIN,
   ANCHO_HORAS_PX,
@@ -12,6 +13,7 @@ import {
   franjaPropuesta,
   horasEnPunto,
 } from '../layout/horario'
+import { useArrastreClase } from '../hooks/useArrastreClase'
 import BloqueClase from './BloqueClase'
 
 const LINEA = 'border-[var(--horario-linea)]'
@@ -61,7 +63,7 @@ function useAltoHora(refVista) {
  * Las lineas de hora son un degradado repetido y no un div por hora: cinco
  * columnas por catorce horas serian setenta nodos que no aportan nada.
  */
-function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
+function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEditar }) {
   const refVista = useRef(null)
   const refDias = useRef(null)
   const [fantasma, setFantasma] = useState(null)
@@ -87,6 +89,13 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
     [pxPorMinuto],
   )
 
+  const { agarrar, arrastrando } = useArrastreClase({
+    puntoADiaYMinuto,
+    porDia,
+    alMover: alMoverClase,
+    alPulsar: alEditar,
+  })
+
   /* La franja que se propone bajo el puntero, ya recortada contra las clases
      vecinas. La regla vive en franjaPropuesta; aqui solo se le añade el dia. */
   const celdaDe = useCallback(
@@ -111,8 +120,10 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
   }
 
   const seguirPuntero = (e) => {
-    // En tactil no hay puntero al que seguir: la previsualizacion no aplica
-    if (e.pointerType === 'touch') return
+    // En tactil no hay puntero al que seguir: la previsualizacion no aplica.
+    // Y mientras se arrastra manda la vista previa del arrastre, no la de
+    // crear: dos rectangulos punteados a la vez no dicen nada.
+    if (e.pointerType === 'touch' || arrastrando) return
     const { dia, minuto } = puntoADiaYMinuto(e.clientX, e.clientY)
     const celda = celdaDe(dia, minuto)
     setFantasma((previa) =>
@@ -184,7 +195,25 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
               }}
               className={`relative flex-1 border-l ${LINEA}`}
             >
-              {fantasma?.dia === i && (
+              {/* Donde caeria la clase que se esta arrastrando. Siempre es
+                  una posicion legal, asi que se pinta en verde y no hay caso
+                  de error que enseñar. */}
+              {arrastrando?.propuesta.dia === i && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    top: aY(arrastrando.propuesta.inicio),
+                    height:
+                      (arrastrando.propuesta.fin - arrastrando.propuesta.inicio) * pxPorMinuto - 4,
+                  }}
+                  className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-bold tabular-nums text-aprobada"
+                >
+                  {enDoceHoras(arrastrando.propuesta.inicio)} –{' '}
+                  {enDoceHoras(arrastrando.propuesta.fin)}
+                </span>
+              )}
+
+              {fantasma?.dia === i && !arrastrando && (
                 <span
                   aria-hidden="true"
                   style={{
@@ -208,7 +237,8 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alEditar }) {
                   sesion={sesion}
                   asignatura={porCodigo.get(sesion.codigo)}
                   pxPorMinuto={pxPorMinuto}
-                  alEditar={alEditar}
+                  arrastrando={arrastrando?.sesion.id === sesion.id}
+                  alAgarrar={agarrar}
                 />
               ))}
             </div>

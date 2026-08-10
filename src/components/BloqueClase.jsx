@@ -21,7 +21,7 @@ const CABE_PROFESOR = 136
  * formulario no deja guardar un solape, asi que en la practica siempre son
  * 0 y 1 y el bloque ocupa la columna entera.
  */
-function BloqueClase({ sesion, asignatura, pxPorMinuto, alEditar }) {
+function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }) {
   const color = colorClase(sesion, asignatura)
   const alto = (sesion.fin - sesion.inicio) * pxPorMinuto
   const nombre = asignatura?.nombre ?? sesion.codigo
@@ -31,7 +31,7 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, alEditar }) {
     <button
       type="button"
       id={`clase-${sesion.id}`}
-      onClick={() => alEditar(sesion)}
+      onPointerDown={(e) => alAgarrar(sesion, e)}
       title={`${nombre} · ${enDoceHoras(sesion.inicio)} a ${enDoceHoras(sesion.fin)}`}
       style={{
         top: (sesion.inicio - ABRE) * pxPorMinuto,
@@ -41,8 +41,11 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, alEditar }) {
         backgroundColor: `color-mix(in oklab, ${color} 12%, var(--panel))`,
         borderColor: `color-mix(in oklab, ${color} 28%, transparent)`,
         '--sombra': `color-mix(in oklab, ${color} 30%, transparent)`,
+        // Mientras viaja se queda su hueco marcado, tenue: sin el, la semana
+        // parece tener un agujero justo donde estaba la clase.
+        opacity: arrastrando ? 0.3 : undefined,
       }}
-      className={`bloque-clase absolute flex flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] ${
+      className={`bloque-clase absolute flex touch-none cursor-grab flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] active:cursor-grabbing ${
         alto < CABE_HORA ? 'justify-center py-1' : 'py-2'
       }`}
     >
