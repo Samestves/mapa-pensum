@@ -10,14 +10,18 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 21 * 60
 
-/* Alto de una fila de hora, en pixeles. Es lo que decide si la rejilla
-   respira o se apelmaza, asi que es una constante con nombre y no un numero
-   suelto perdido en una clase de Tailwind. */
-export const ALTO_HORA = 112
-export const PX_POR_MINUTO = ALTO_HORA / 60
+/* La celda de una hora es un cuadrado: su alto es su ancho. El lado no es
+   una constante -depende de la ventana- pero si lo son sus limites.
+   El minimo evita que en una ventana estrecha la fila se aplaste hasta que no
+   quepa el nombre de una materia. El maximo evita lo contrario: sin el, en un
+   monitor ancho la columna se va a trescientos cincuenta pixeles, la fila con
+   ella, y las catorce horas de la jornada se vuelven cinco mil pixeles de
+   desplazamiento para enseñar exactamente lo mismo. */
+export const LADO_MIN = 112
+export const LADO_MAX = 150
 
 /** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
-export const ANCHO_HORAS = '5.5rem'
+export const ANCHO_HORAS_PX = 88
 
 /* Una clase no puede durar menos de media hora ni crearse mas corta que una:
    pulsar un hueco propone una hora, que es lo que dura casi todo. */
@@ -49,8 +53,8 @@ export const enDoceHoras = (min) => {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${sufijo}`
 }
 
-/** Solo la hora en punto, para la columna de la izquierda */
-export const etiquetaHora = (min) => enDoceHoras(min).replace(':00', ':00')
+/** La hora en punto, para la columna de la izquierda */
+export const etiquetaHora = (min) => enDoceHoras(min)
 
 /** Las horas en punto dibujadas, de la apertura al cierre inclusive */
 export const horasEnPunto = () =>

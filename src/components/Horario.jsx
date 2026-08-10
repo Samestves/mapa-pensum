@@ -48,14 +48,14 @@ function Horario({ carrera, estados }) {
   }, [])
 
   const editar = useCallback((sesion) => {
-    // La ficha cuelga del bloque que se pulso, no del puntero: al editar
-    // interesa ver el bloque entero, no el punto exacto del click.
-    const caja = document.getElementById(`clase-${sesion.id}`)?.getBoundingClientRect()
+    // La ficha se coloca al lado del bloque, asi que necesita su caja entera
+    // y no un punto: centrada sobre el, y sin taparlo.
+    const c = document.getElementById(`clase-${sesion.id}`)?.getBoundingClientRect()
     setEnEdicion({
       inicial: sesion,
-      ancla: caja
-        ? { x: caja.left + caja.width / 2, y: caja.bottom }
-        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      ancla: c
+        ? { izquierda: c.left, derecha: c.right, arriba: c.top, abajo: c.bottom }
+        : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight },
     })
   }, [])
 

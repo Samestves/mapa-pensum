@@ -16,7 +16,16 @@ import {
 
 const MARGEN = 10
 const FLECHA = 7
-const ANCHO = 300
+const HUECO = 12
+const ANCHO = 312
+
+/* Las duraciones de verdad de un pensum: una hora, hora y media, dos y tres.
+   Poner "de 8 a 10" con dos relojes son ocho pulsaciones; con un atajo, una.
+   Los relojes se quedan igualmente, porque una seccion de 8:40 a 10:15 no
+   cabe en ningun atajo y ese caso tambien tiene que ser posible. */
+const DURACIONES = [60, 90, 120, 180]
+const etiquetaDuracion = (min) =>
+  min % 60 === 0 ? `${min / 60} h` : `${Math.floor(min / 60)} h ${min % 60}`
 
 const CAMPO =
   'seleccionable w-full rounded-lg border border-panel-borde bg-panel-suave px-2 py-1.5 text-[12px] text-tinta outline-none placeholder:text-tinta-tenue focus:border-aprobada'
@@ -73,21 +82,32 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
     return () => document.removeEventListener('keydown', tecla)
   }, [alCerrar])
 
-  /* Se mide despues de pintar y antes de que el navegador lo enseñe: si se
+  /* Se coloca AL LADO del cuadrado, no debajo del punto que se pulso.
+     Colgando del click, la ficha tapaba la propia franja sobre la que se
+     estaba decidiendo; al lado, el cuadrado y sus vecinos siguen a la vista
+     mientras se eligen las horas. A la derecha por defecto, y a la izquierda
+     cuando el dia es viernes y no queda sitio.
+
+     Se mide despues de pintar y antes de que el navegador lo enseñe: si se
      calculara durante el render no habria alto que medir y el panel daria un
      salto visible al recolocarse. */
   useLayoutEffect(() => {
     if (esTelefono || !refPanel.current) return
     const alto = refPanel.current.offsetHeight
-    const abajo = ancla.y + FLECHA + MARGEN
-    const arriba = ancla.y - FLECHA - MARGEN - alto
-    const cabeAbajo = abajo + alto <= window.innerHeight - MARGEN
-    setPos({
-      x: Math.max(MARGEN, Math.min(ancla.x - ANCHO / 2, window.innerWidth - ANCHO - MARGEN)),
-      y: cabeAbajo ? abajo : Math.max(MARGEN, arriba),
-      invertido: !cabeAbajo,
-    })
-  }, [ancla.x, ancla.y, esTelefono, codigo])
+    const centro = (ancla.arriba + ancla.abajo) / 2
+
+    const aLaDerecha = ancla.derecha + HUECO
+    const cabeDerecha = aLaDerecha + ANCHO <= window.innerWidth - MARGEN
+    const x = cabeDerecha ? aLaDerecha : Math.max(MARGEN, ancla.izquierda - HUECO - ANCHO)
+
+    // Centrado en el cuadrado, sin salirse por arriba ni por abajo
+    const y = Math.max(
+      MARGEN,
+      Math.min(centro - alto / 2, window.innerHeight - alto - MARGEN),
+    )
+
+    setPos({ x, y, aLaIzquierda: !cabeDerecha, flechaY: Math.max(16, Math.min(centro - y, alto - 16)) })
+  }, [ancla.izquierda, ancla.derecha, ancla.arriba, ancla.abajo, esTelefono, codigo])
 
   const elegida = codigo ? porCodigo.get(codigo) : null
 
@@ -251,6 +271,29 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
           />
         </label>
 
+        {/* Atajos de duracion. Se marca el que coincide con lo que hay
+            puesto, asi que tambien sirven para leer cuanto dura la clase sin
+            restar las dos horas de cabeza. */}
+        <div className="col-span-2 -mt-0.5 flex gap-1.5">
+          {DURACIONES.map((min) => {
+            const activo = minFin - minInicio === min
+            return (
+              <button
+                key={min}
+                type="button"
+                onClick={() => setFin(aTexto(Math.min(CIERRA, minInicio + min)))}
+                className={`flex-1 rounded-lg border py-1 text-[11px] font-bold transition-colors ${
+                  activo
+                    ? 'border-transparent bg-aprobada text-[var(--lienzo)]'
+                    : 'border-panel-borde text-tinta-suave hover:text-tinta'
+                }`}
+              >
+                {etiquetaDuracion(min)}
+              </button>
+            )
+          })}
+        </div>
+
         <label className="col-span-2 block">
           <span className={ROTULO}>Profesor</span>
           <input
@@ -377,11 +420,11 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
           <span
             aria-hidden="true"
             style={{
-              left: Math.max(14, Math.min(ancla.x - pos.x, ANCHO - 14)),
-              [pos.invertido ? 'bottom' : 'top']: -FLECHA + 1,
+              top: pos.flechaY,
+              [pos.aLaIzquierda ? 'right' : 'left']: -FLECHA + 1,
             }}
-            className={`absolute size-3 -translate-x-1/2 rotate-45 border-panel-borde bg-panel ${
-              pos.invertido ? 'border-r border-b' : 'border-t border-l'
+            className={`absolute size-3 -translate-y-1/2 rotate-45 border-panel-borde bg-panel ${
+              pos.aLaIzquierda ? 'border-t border-r' : 'border-b border-l'
             }`}
           />
         )}

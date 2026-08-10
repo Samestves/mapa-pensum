@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { colorClase } from '../theme/areas'
-import { ABRE, PX_POR_MINUTO, enDoceHoras } from '../layout/horario'
+import { ABRE, enDoceHoras } from '../layout/horario'
 
 /* A partir de que altura cabe cada cosa. En vez de encoger la letra hasta que
    no se lea, se deja de enseñar lo prescindible: una clase de media hora mide
@@ -21,9 +21,9 @@ const CABE_PROFESOR = 136
  * formulario no deja guardar un solape, asi que en la practica siempre son
  * 0 y 1 y el bloque ocupa la columna entera.
  */
-function BloqueClase({ sesion, asignatura, alEditar }) {
+function BloqueClase({ sesion, asignatura, pxPorMinuto, alEditar }) {
   const color = colorClase(sesion, asignatura)
-  const alto = (sesion.fin - sesion.inicio) * PX_POR_MINUTO
+  const alto = (sesion.fin - sesion.inicio) * pxPorMinuto
   const nombre = asignatura?.nombre ?? sesion.codigo
   const pie = [sesion.aula, sesion.seccion && `Sec. ${sesion.seccion}`].filter(Boolean)
 
@@ -34,7 +34,7 @@ function BloqueClase({ sesion, asignatura, alEditar }) {
       onClick={() => alEditar(sesion)}
       title={`${nombre} · ${enDoceHoras(sesion.inicio)} a ${enDoceHoras(sesion.fin)}`}
       style={{
-        top: (sesion.inicio - ABRE) * PX_POR_MINUTO,
+        top: (sesion.inicio - ABRE) * pxPorMinuto,
         height: Math.max(alto - 4, 22),
         left: `calc(${(sesion.carril / sesion.carriles) * 100}% + 4px)`,
         width: `calc(${(1 / sesion.carriles) * 100}% - 8px)`,

@@ -46,6 +46,13 @@
   --clase-7: #ffd93d;
   --clase-8: #9aa8bd;
 
+  /* Linea de la rejilla del horario. No vale --panel-borde: ese esta pensado
+     para el borde de una tarjeta suelta sobre el lienzo, y aqui la linea cae
+     sobre --panel-suave, que en oscuro esta casi al mismo nivel. Repetida
+     catorce veces por cinco columnas, esa diferencia de dos puntos hacia que
+     la cuadricula no se viera. */
+  --horario-linea: #26364e;
+
   /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
      tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
      blanco sobre lienzo claro seria invisible. */
@@ -92,6 +99,8 @@
   --clase-6: #c8650d;
   --clase-7: #9c7700;
   --clase-8: #56677e;
+
+  --horario-linea: #cfd9e6;
 
   --nucleo: #ffffff;
   --nucleo-fuerza: 14%;
