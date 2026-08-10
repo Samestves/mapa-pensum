@@ -34,6 +34,18 @@
   --estado-cursando: #ffb454;
   --estado-rojo: #ff6b7d;
 
+  /* Los colores que una clase del horario puede tomar. Son los ocho de area
+     reordenados: ya estan ajustados para los dos temas, asi que el horario no
+     inventa una paleta que no se parezca al resto de la aplicacion. */
+  --clase-1: #46c8f5;
+  --clase-2: #2fe8c6;
+  --clase-3: #6094ff;
+  --clase-4: #b781ff;
+  --clase-5: #ff6f9f;
+  --clase-6: #ffa94d;
+  --clase-7: #ffd93d;
+  --clase-8: #9aa8bd;
+
   /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
      tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
      blanco sobre lienzo claro seria invisible. */
@@ -71,6 +83,15 @@
   --estado-aprobada: #0a9781;
   --estado-cursando: #c8650d;
   --estado-rojo: #d92d45;
+
+  --clase-1: #0b7aa8;
+  --clase-2: #0a9781;
+  --clase-3: #2751cc;
+  --clase-4: #7434cb;
+  --clase-5: #c92f65;
+  --clase-6: #c8650d;
+  --clase-7: #9c7700;
+  --clase-8: #56677e;
 
   --nucleo: #ffffff;
   --nucleo-fuerza: 14%;
@@ -607,6 +628,56 @@ body {
   }
 }
 
+/* ---- Horario -----------------------------------------------------------
+   El bloque entra creciendo desde el 96%: al confirmar una clase el ojo la
+   sigue hasta su sitio en vez de tener que buscarla. */
+@keyframes asentar-bloque {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bloque-clase {
+  animation: asentar-bloque 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La celda que se previsualiza se funde en vez de aparecer de golpe: es una
+   pista, no una alarma, y a la velocidad que se recorre la semana con el
+   raton un parpadeo duro en cada cuadro seria ruido. */
+.celda-fantasma {
+  animation: aparecer-fantasma 130ms ease-out;
+}
+
+@keyframes aparecer-fantasma {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* El popover crece un pelin desde su flecha, que es de donde sale */
+.popover-clase {
+  animation: brotar-popover 150ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes brotar-popover {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 /* El dock del lienzo se atenua cuando nadie toca el mapa. Solo opacidad, que
    el compositor resuelve sin repintar, y con una salida lenta y una entrada
    rapida: apagarse puede ser gradual, encenderse tiene que ser inmediato
@@ -704,6 +775,9 @@ body {
   .salida-vista,
   .entrada-mapa,
   .esqueleto-mapa,
+  .bloque-clase,
+  .celda-fantasma,
+  .popover-clase,
   .aviso-entrando {
     animation: none;
   }

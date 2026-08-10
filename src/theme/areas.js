@@ -45,3 +45,19 @@ export const colorNodo = (nodo) => {
   if (!nodo?.codigo) return 'var(--tinta-suave)'
   return `var(--tono-${tonoDe(nodo.codigo)}, var(--tinta-suave))`
 }
+
+/**
+ * Los colores que una clase del horario puede tomar a mano.
+ *
+ * No son los --tono-N del mapa: esos solo existen en las carreras sin areas
+ * clasificadas, asi que en Sistemas la paleta habria salido entera del color
+ * de reserva. Son ocho variables propias con su valor en cada tema, y se
+ * guarda el numero -no el color-, para que al cambiar de tema el horario
+ * cambie con el resto de la aplicacion.
+ */
+export const COLORES_CLASE = [1, 2, 3, 4, 5, 6, 7, 8]
+export const colorIndice = (n) => `var(--clase-${n}, var(--tinta-suave))`
+
+/** El color de una clase: el que eligio el estudiante, o el de su area */
+export const colorClase = (sesion, asignatura) =>
+  sesion?.color ? colorIndice(sesion.color) : colorNodo(asignatura)

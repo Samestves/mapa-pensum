@@ -60,6 +60,15 @@ function VistaCarrera({ carrera, alVolver }) {
   const { abierto, alternar, cerrar } = usePaneles()
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
+  /* Si el raton esta sobre la cabecera. La zona sensible es la cabecera y
+     nada mas: una franja invisible extra por debajo haria aparecer el
+     circulo antes, pero a cambio robaria los clicks de esa franja al
+     horario, y el control no puede estorbar a lo que hay debajo. */
+  const [cercaCabecera, setCercaCabecera] = useState(false)
+  /* El circulo se enseña al rondar la cabecera, y siempre que la barra este
+     plegada: ahi es el unico camino de vuelta y esconderlo dejaria al
+     usuario sin salida. */
+  const visiblePestana = barraOculta || cercaCabecera
   const [planAbierto, setPlanAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -111,7 +120,11 @@ function VistaCarrera({ carrera, alVolver }) {
       {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
           ancla a su borde inferior con top-full, asi que al plegarse la barra
           sube pegada a ella sin animar nada aparte. */}
-      <div className="group/cabecera relative z-40 shrink-0">
+      <div
+        className="relative z-40 shrink-0"
+        onPointerEnter={() => setCercaCabecera(true)}
+        onPointerLeave={() => setCercaCabecera(false)}
+      >
         {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
             1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
         <div className="barra-colapsable" data-oculta={barraOculta}>
@@ -141,21 +154,29 @@ function VistaCarrera({ carrera, alVolver }) {
             Con la barra plegada se queda visible SIEMPRE. Escondido seria un
             callejon sin salida: no habria forma de saber que se puede
             recuperar, ni donde pulsar para hacerlo. */}
-        <button
-          type="button"
-          onClick={() => {
-            setBarraOculta((v) => !v)
-            cerrar()
-          }}
-          title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-          aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-          aria-expanded={!barraOculta}
-          className={`pestana-barra absolute top-full left-1/2 z-50 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-panel-borde bg-panel text-tinta-tenue shadow-sm transition-opacity duration-200 hover:text-tinta focus-visible:opacity-100 ${
-            barraOculta ? 'opacity-100' : 'opacity-0 group-hover/cabecera:opacity-100'
-          }`}
-        >
-          {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-        </button>
+        {/* El envoltorio solo centra; la animacion va en el boton, para que
+            escalar no pelee con el translate que lo coloca sobre la linea.
+            pointer-events-none mientras esta oculto: si no, seria un blanco
+            de click invisible plantado encima del horario. */}
+        <div className="pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
+          <button
+            type="button"
+            onClick={() => {
+              setBarraOculta((v) => !v)
+              cerrar()
+            }}
+            title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+            aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+            aria-expanded={!barraOculta}
+            className={`pestana-barra grid size-7 place-items-center rounded-full border border-panel-borde bg-panel text-tinta-tenue shadow-sm transition-[opacity,transform] duration-200 ease-out hover:text-tinta focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 ${
+              visiblePestana
+                ? 'pointer-events-auto scale-100 opacity-100'
+                : 'pointer-events-none scale-75 opacity-0'
+            }`}
+          >
+            {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+          </button>
+        </div>
       </div>
 
       {planAbierto && (
@@ -180,7 +201,7 @@ function VistaCarrera({ carrera, alVolver }) {
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />
         ) : vista === 'horario' ? (
-          <Horario />
+          <Horario carrera={carrera} estados={estados} />
         ) : vista === 'mapa' ? (
           <GrafoPensum
             layout={layout}
