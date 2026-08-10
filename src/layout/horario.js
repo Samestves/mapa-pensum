@@ -6,18 +6,20 @@
 export const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 
-/* La jornada que se dibuja: de siete de la mañana a seis de la tarde. Once
-   filas y doce etiquetas, la ultima de las cuales cierra la rejilla. No hay
-   una hora de mas por debajo: una etiqueta suelta bajo la ultima fila rompe
-   el ritmo de una en una y se lee como que el horario sigue, y no sigue. */
-export const ABRE = 7 * 60
-export const CIERRA = 18 * 60
+/* La jornada: de siete de la mañana a siete de la tarde. Doce filas y doce
+   etiquetas, una por fila, la ultima de las cuales dice 6:00 PM y ocupa su
+   propio cuadro. La linea de las siete cierra la rejilla y no lleva etiqueta:
+   una hora suelta bajo la ultima fila rompe el ritmo de una en una y se lee
+   como que el horario sigue.
 
-/* Hasta donde se ACEPTA una clase, que no es lo mismo que hasta donde se
-   dibuja por defecto. Alguien puede tener laboratorio a las siete y media de
-   la tarde, y bajar el cierre no puede significar que su clase deje de ser
-   valida y se pierda al leer el horario guardado. */
-export const LIMITE = 21 * 60
+   Esto es lo unico que define el final, para dibujar Y para validar. Antes
+   habia dos numeros -uno para pintar y otro para aceptar- y esa diferencia
+   era la que hacia el horario infinito: arrastrar una clase al fondo la
+   dejaba mas alla de lo dibujado, la rejilla crecia para cubrirla, y con la
+   rejilla mas larga se podia volver a arrastrar mas abajo. Un solo cierre
+   corta el bucle de raiz. */
+export const ABRE = 7 * 60
+export const CIERRA = 19 * 60
 
 /* Alto de una fila de hora. No es constante: se reparte la altura disponible
    entre las horas de la jornada.
@@ -78,21 +80,18 @@ export const enDoceHoras = (min) => {
 /** La hora en punto, para la columna de la izquierda */
 export const etiquetaHora = (min) => enDoceHoras(min)
 
-/**
- * Hasta que hora se dibuja.
- *
- * Las seis de la tarde salvo que alguien tenga algo mas tarde; entonces la
- * rejilla crece hasta cubrirlo. Una clase guardada que no se ve seria peor
- * que una fila de mas.
- */
-export const finVisible = (sesiones) => {
-  const ultima = sesiones.reduce((max, s) => Math.max(max, s.fin), CIERRA)
-  return Math.min(LIMITE, Math.ceil(ultima / 60) * 60)
-}
+/* Cuantas filas tiene la rejilla */
+export const FILAS = (CIERRA - ABRE) / 60
 
-/** Las horas en punto dibujadas, de la apertura al final inclusive */
-export const horasEnPunto = (hasta = CIERRA) =>
-  Array.from({ length: (hasta - ABRE) / 60 + 1 }, (_, i) => ABRE + i * 60)
+/**
+ * La hora con la que EMPIEZA cada fila.
+ *
+ * Una etiqueta por fila y ninguna suelta: la linea del cierre no se rotula,
+ * porque no abre ninguna fila y ponerla ahi metia dos horas en el mismo
+ * cuadro.
+ */
+export const horasEnPunto = () =>
+  Array.from({ length: FILAS }, (_, i) => ABRE + i * 60)
 
 export const acotar = (v, min, max) => Math.max(min, Math.min(max, v))
 
@@ -118,7 +117,7 @@ export const TOLERANCIA_IMAN = 9
  * las dos seguidas seria imposible, que es justo el gesto que se busca.
  */
 export function imantarInicio(minuto, duracion, sesionesDelDia) {
-  const bordes = [ABRE, LIMITE - duracion]
+  const bordes = [ABRE, CIERRA - duracion]
   for (const s of sesionesDelDia) {
     bordes.push(s.fin) // pegarse justo debajo
     bordes.push(s.inicio - duracion) // acabar justo donde empieza
@@ -146,7 +145,7 @@ export function posicionValida(sesionesDelDia, candidata) {
 
   const cabe = (inicio) =>
     inicio >= ABRE &&
-    inicio + duracion <= LIMITE &&
+    inicio + duracion <= CIERRA &&
     !otras.some((o) => inicio < o.fin && o.inicio < inicio + duracion)
 
   if (cabe(candidata.inicio)) return candidata
@@ -218,7 +217,7 @@ export function huecoEn(sesionesDelDia, minuto) {
       .reduce((max, s) => Math.max(max, s.fin), ABRE),
     hasta: sesionesDelDia
       .filter((s) => s.inicio >= minuto)
-      .reduce((min, s) => Math.min(min, s.inicio), LIMITE),
+      .reduce((min, s) => Math.min(min, s.inicio), CIERRA),
   }
 }
 

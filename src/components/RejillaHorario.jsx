@@ -3,12 +3,13 @@ import { Plus } from 'lucide-react'
 import {
   ABRE,
   ALTO_MIN,
+  CIERRA,
+  FILAS,
   ANCHO_HORAS_PX,
   DIAS,
   acotar,
   enDoceHoras,
   etiquetaHora,
-  finVisible,
   franjaPropuesta,
   horasEnPunto,
 } from '../layout/horario'
@@ -30,7 +31,7 @@ const ALTO_CABECERA = 54
  * Depende de la ventana y del numero de filas, no de las clases: mover o
  * agregar una clase no reescala la rejilla bajo el cursor.
  */
-function useAltoHora(refVista, filas) {
+function useAltoHora(refVista) {
   const [util, setUtil] = useState(0)
 
   useLayoutEffect(() => {
@@ -41,7 +42,7 @@ function useAltoHora(refVista, filas) {
     return () => ro.disconnect()
   }, [refVista])
 
-  return Math.max(ALTO_MIN, Math.floor(util / filas) || ALTO_MIN)
+  return Math.max(ALTO_MIN, Math.floor(util / FILAS) || ALTO_MIN)
 }
 
 /**
@@ -65,11 +66,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
   const refDias = useRef(null)
   const [fantasma, setFantasma] = useState(null)
 
-  /* La jornada llega a las seis salvo que alguien tenga algo mas tarde. Una
-     clase guardada que no se ve seria peor que una fila de mas. */
-  const hasta = finVisible(porDia.flat())
-  const filas = (hasta - ABRE) / 60
-  const altoHora = useAltoHora(refVista, filas)
+  const altoHora = useAltoHora(refVista)
   const pxPorMinuto = altoHora / 60
   const aY = (min) => (min - ABRE) * pxPorMinuto
 
@@ -100,11 +97,11 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
      vecinas. La regla vive en franjaPropuesta; aqui solo se le añade el dia. */
   const celdaDe = useCallback(
     (dia, minuto) => {
-      if (minuto < ABRE || minuto >= hasta) return null
+      if (minuto < ABRE || minuto >= CIERRA) return null
       const franja = franjaPropuesta(porDia[dia], minuto)
       return franja && { dia, ...franja }
     },
-    [porDia, hasta],
+    [porDia],
   )
 
   /** La caja en pantalla de una franja, para que la ficha cuelgue de ella */
@@ -142,13 +139,15 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
   }
 
   return (
-    <div
-      ref={refVista}
-      className="min-h-0 min-w-[46rem] flex-1 overflow-auto [scrollbar-gutter:stable]"
-    >
+    /* Sin scrollbar-gutter: la rejilla se dimensiona para caber en alto, asi
+       que reservar sitio para una barra que no aparece era dejar una franja
+       muerta a la derecha, justo donde deberia acabar el viernes. */
+    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
           las clases pasen por debajo sin transparentarse. */}
-      <div className={`transicion-tema sticky top-0 z-20 flex border-b ${LINEA} bg-panel-suave`}>
+      <div
+        className={`transicion-tema sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave`}
+      >
         <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
         {DIAS.map((dia) => (
           <span
@@ -160,18 +159,21 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
         ))}
       </div>
 
-      <div className={`flex border-b ${LINEA}`} style={{ height: filas * altoHora }}>
+      {/* El borde derecho cierra el viernes: las columnas solo llevan borde a
+          la izquierda, asi que sin el la rejilla se quedaba abierta por ese
+          lado y las lineas parecian cortarse antes de tiempo. */}
+      <div
+        className={`flex border-r border-b ${LINEA}`}
+        style={{ height: FILAS * altoHora }}
+      >
         {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
             en ella: centrada, la primera quedaria partida por la cabecera. */}
         <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
-          {horasEnPunto(hasta).map((min, i, todas) => (
+          {horasEnPunto().map((min) => (
             <span
               key={min}
               style={{ top: aY(min) }}
-              className={`absolute right-4 text-[12.5px] font-semibold tabular-nums text-tinta-tenue ${
-                // La ultima cierra la rejilla: debajo de su linea se saldria
-                i === todas.length - 1 ? '-translate-y-5' : 'translate-y-1.5'
-              }`}
+              className="absolute right-4 translate-y-1.5 text-[12.5px] font-semibold tabular-nums text-tinta-tenue"
             >
               {etiquetaHora(min)}
             </span>

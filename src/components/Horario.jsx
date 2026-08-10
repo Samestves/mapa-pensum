@@ -110,7 +110,7 @@ function Horario({ carrera, estados }) {
           className="transicion-tema absolute right-5 bottom-5 z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-bold text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
         >
           {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-          Descargar PNG
+          Descargar Horario
         </button>
       )}
 

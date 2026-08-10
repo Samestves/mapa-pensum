@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { imantarInicio, posicionValida } from '../layout/horario'
+import { ABRE, CIERRA, acotar, imantarInicio, posicionValida } from '../layout/horario'
 
 /* Pixeles que hay que mover el puntero para que un click pase a ser arrastre.
    Sin este margen, un pulso tembloroso moveria la clase en vez de abrirla. */
@@ -63,7 +63,16 @@ export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover }) {
       const duracion = g.sesion.fin - g.sesion.inicio
       const vecinas = porDia[dia].filter((s) => s.id !== g.sesion.id)
 
-      const inicio = imantarInicio(minuto - g.pinza, duracion, vecinas)
+      /* Se acota a la jornada ANTES de buscar hueco. Sin esto, al tirar por
+         debajo del final la propuesta se salia del rango, posicionValida no
+         encontraba nada y el bloque se quedaba donde estuvo bien por ultima
+         vez: parecia que el arrastre se colgaba. Acotado, se topa con las
+         siete y se queda pegado al fondo, que es lo que se espera. */
+      const inicio = acotar(
+        imantarInicio(minuto - g.pinza, duracion, vecinas),
+        ABRE,
+        CIERRA - duracion,
+      )
       const legal = posicionValida(porDia[dia], {
         ...g.sesion,
         dia,
