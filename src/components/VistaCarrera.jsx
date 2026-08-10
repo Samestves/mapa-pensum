@@ -10,6 +10,7 @@ import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
 import PanelProgreso from './PanelProgreso'
+import Horario from './Horario'
 import PlanRuta from './PlanRuta'
 import VistaLista from './VistaLista'
 
@@ -60,6 +61,7 @@ function VistaCarrera({ carrera, alVolver }) {
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
   const [planAbierto, setPlanAbierto] = useState(false)
+  const [horarioAbierto, setHorarioAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
@@ -127,6 +129,7 @@ function VistaCarrera({ carrera, alVolver }) {
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
+            alAbrirHorario={() => setHorarioAbierto(true)}
               alVolver={alVolver}
             />
           </div>
@@ -150,6 +153,8 @@ function VistaCarrera({ carrera, alVolver }) {
           {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </button>
       </div>
+
+      {horarioAbierto && <Horario alCerrar={() => setHorarioAbierto(false)} />}
 
       {planAbierto && (
         <PlanRuta

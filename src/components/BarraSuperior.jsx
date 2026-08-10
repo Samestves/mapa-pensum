@@ -1,4 +1,4 @@
-import { ArrowLeft, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
+import { ArrowLeft, CalendarRange, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
 import { BotonAvisos } from './AvisosCarrera'
 
@@ -55,6 +55,7 @@ function BarraSuperior({
   avisosAbiertos,
   alAlternarAvisos,
   alPlanificar,
+  alAbrirHorario,
   alVolver,
 }) {
   /* El anillo siempre enseña un porcentaje. Donde hay creditos oficiales es
@@ -150,6 +151,16 @@ function BarraSuperior({
         cantidad={carrera.avisos?.length ?? 0}
         abierto={avisosAbiertos}
         alPulsar={alAlternarAvisos}
+      />
+
+      {/* El horario abre una capa a pantalla completa, no otra vista del
+          mapa: por eso no se marca activo como Lista o Mapa. */}
+      <Icono
+        icono={CalendarRange}
+        titulo="Abrir mi horario de la semana"
+        etiqueta="Mi Horario"
+        desde="lg"
+        alPulsar={alAbrirHorario}
       />
 
       {/* Con etiqueta a partir de lg: es una funcion completa -calcula tu
