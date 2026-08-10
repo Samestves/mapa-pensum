@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { NODO } from '../layout/constantes'
 import { cadenaDe } from '../layout/relaciones'
 
@@ -27,12 +27,20 @@ export function useFocoGrafo({
     [foco, relaciones],
   )
 
-  // Un nodo se apaga si hay una cadena en foco y no entra, o si hay un area
-  // filtrada desde el panel y no es la suya.
-  const atenuado = (codigo) => {
-    if (areaFiltrada && porCodigo.get(codigo)?.area !== areaFiltrada) return true
-    return cadena != null && !cadena.has(codigo)
-  }
+  /* Un nodo se apaga si hay una cadena en foco y no entra, o si hay un area
+     filtrada desde el panel y no es la suya.
+     Va en useCallback y eso no es adorno: esta funcion baja como prop hasta
+     el contenido memoizado del grafo. Si cambiara de identidad en cada
+     render, el memo veria siempre una prop distinta y no ahorraria nada;
+     mover el mapa volveria a costar el diff de ciento treinta componentes
+     por fotograma, que es justo lo que el memo esta ahi para evitar. */
+  const atenuado = useCallback(
+    (codigo) => {
+      if (areaFiltrada && porCodigo.get(codigo)?.area !== areaFiltrada) return true
+      return cadena != null && !cadena.has(codigo)
+    },
+    [areaFiltrada, porCodigo, cadena],
+  )
 
   const nodoSeleccionado = seleccionado ? porCodigo.get(seleccionado) : null
 

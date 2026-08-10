@@ -202,14 +202,19 @@ body {
    telefono de gama media eso solo se paga bajando a veinte o treinta
    cuadros por segundo. De ahi las tres podas que siguen. */
 
-/* 1. Mientras se arrastra o se hace zoom, las animaciones se congelan.
-      Es el momento en el que el tiron se nota, y es justo cuando nadie esta
-      mirando la corriente: se esta mirando a donde va el mapa. Pausar no
-      reinicia nada, asi que al soltar siguen donde estaban. */
-.lienzo-en-gesto .cometa,
-.lienzo-en-gesto .particula {
-  animation-play-state: paused;
-}
+/* 1. En tactil, mientras se arrastra o se hace zoom, las animaciones se
+      congelan. Es el momento en el que el tiron se nota, y es justo cuando
+      nadie esta mirando la corriente: se esta mirando a donde va el mapa.
+      Pausar no reinicia nada, asi que al soltar siguen donde estaban.
+
+      Solo en tactil, y esto se aprendio en caliente: en escritorio pausar
+      cuesta mas de lo que ahorra. Cambiar la clase del <svg> obliga a
+      recalcular el estilo de las doscientas quince animaciones de golpe, y
+      ese recalculo cae entero en el primer fotograma del gesto -se notaba
+      como un tiron justo al empezar a mover, y solo al empezar-. En un
+      escritorio el arrastre ya iba sobrado sin pausar nada; en el telefono
+      quedan como mucho veintitantas animaciones que recalcular, asi que ahi
+      el cambio sale barato y el ahorro es real. */
 
 /* 2. En pantallas tactiles se va la perla y quedan solo dos capas de estela.
       La perla es lo mas caro de las dos -offset-path recalcula la posicion
@@ -217,6 +222,11 @@ body {
       a la que se ve un mapa entero en un telefono, casi no se distingue.
       El cable no pierde su color, ni su brillo, ni su punto de soldadura. */
 @media (hover: none) and (pointer: coarse) {
+  .lienzo-en-gesto .cometa,
+  .lienzo-en-gesto .particula {
+    animation-play-state: paused;
+  }
+
   .particula {
     display: none;
   }
