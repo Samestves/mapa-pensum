@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ABRE, CIERRA, DIAS, repartirEnCarriles } from '../layout/horario'
+import { ABRE, CIERRA, DIAS, posicionValida, repartirEnCarriles } from '../layout/horario'
 
 const CLAVE = 'mapa-pensum:horario'
 const claveDe = (slug) => `${CLAVE}:${slug}`
@@ -86,6 +86,25 @@ export function useHorario(slug) {
     setSesiones((previas) => previas.filter((s) => s.id !== id))
   }, [])
 
+  /**
+   * Copia una clase al primer hueco libre de su dia.
+   *
+   * Es la accion mas util del menu: casi toda materia se dicta dos o tres
+   * veces por semana, y duplicar y cambiar el dia es mas rapido que volver a
+   * escribir materia, seccion, aula y profesor. Si el dia esta lleno no se
+   * duplica: mejor no hacer nada que crear un solape.
+   */
+  const duplicar = useCallback((id) => {
+    setSesiones((previas) => {
+      const original = previas.find((s) => s.id === id)
+      if (!original) return previas
+      const delDia = previas.filter((s) => s.dia === original.dia)
+      const sitio = posicionValida(delDia, { ...original, id: null })
+      if (!sitio) return previas
+      return [...previas, { ...original, ...sitio, id: `${original.codigo}-${Date.now()}` }]
+    })
+  }, [])
+
   /** Cambia unos campos sueltos sin tocar el resto */
   const retocar = useCallback((id, cambios) => {
     setSesiones((previas) => previas.map((s) => (s.id === id ? { ...s, ...cambios } : s)))
@@ -98,5 +117,5 @@ export function useHorario(slug) {
     [sesiones],
   )
 
-  return { sesiones, porDia, guardar, quitar, retocar }
+  return { sesiones, porDia, guardar, quitar, retocar, duplicar }
 }

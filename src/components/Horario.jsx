@@ -1,8 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
+import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { useHorario } from '../hooks/useHorario'
+import { descargarHorario } from '../data/exportarHorario'
 import RejillaHorario from './RejillaHorario'
 import PopoverClase from './PopoverClase'
+import MenuClase from './MenuClase'
+
+/* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
+   para firmar la imagen en vez de volver a preguntarlo. */
+const CLAVE_NOMBRE = 'mapa-pensum:nombre'
 
 /**
  * Mi horario.
@@ -12,22 +19,18 @@ import PopoverClase from './PopoverClase'
  * sentarse a hacerlo, no una consulta de paso, y una capa flotante obliga a
  * cerrarla para volver a cualquier otra cosa.
  *
- * El fondo va en el gris suave del tema y no en el blanco de la cabecera: sin
- * ese escalon, la rejilla y la barra se leerian como una sola superficie.
- *
- * Este componente es el unico que sabe de las tres piezas a la vez -los datos
- * del horario, el pensum y el formulario-, y su unico trabajo es conectarlas.
- * Ni dibuja la rejilla ni valida nada: eso vive en RejillaHorario y en
- * PopoverClase.
+ * Este componente es el unico que sabe de las piezas a la vez -los datos del
+ * horario, el pensum, el formulario y el menu-, y su unico trabajo es
+ * conectarlas. Ni dibuja la rejilla ni valida nada.
  */
 function Horario({ carrera, estados }) {
-  const { porDia, sesiones, guardar, quitar } = useHorario(carrera.slug)
+  const { porDia, sesiones, guardar, quitar, duplicar } = useHorario(carrera.slug)
 
-  /* Que hay abierto: null, o la clase que se esta creando o editando junto al
-     punto de la pantalla del que cuelga su popover. Un solo valor en vez de
-     un booleano de "abierto" mas otro de "editando": asi no existe el estado
-     imposible de estar abierto sin clase. */
+  /* Que hay abierto. Un solo valor por cosa en vez de booleanos sueltos, para
+     que no exista el estado imposible de tener el menu y la ficha a la vez. */
   const [enEdicion, setEnEdicion] = useState(null)
+  const [menu, setMenu] = useState(null)
+  const [bajando, setBajando] = useState(false)
 
   const todas = useMemo(
     () => [...carrera.asignaturas, ...carrera.grupos.flatMap((g) => g.asignaturas)],
@@ -43,32 +46,45 @@ function Horario({ carrera, estados }) {
     [todas, estados],
   )
 
+  const cajaDe = (elemento) => {
+    const c = elemento?.getBoundingClientRect()
+    return c
+      ? { izquierda: c.left, derecha: c.right, arriba: c.top, abajo: c.bottom }
+      : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight }
+  }
+
   const abrirEnHueco = useCallback((celda, ancla) => {
     setEnEdicion({ inicial: celda, ancla })
   }, [])
 
-  /* Abrir la ficha de una clase. El elemento lo pasa el propio gesto, que ya
-     lo tenia: buscarlo otra vez por id seria preguntarle al DOM algo que ya
-     estaba en la mano. */
-  const editar = useCallback((sesion, elemento) => {
-    const c = elemento?.getBoundingClientRect()
-    setEnEdicion({
-      inicial: sesion,
-      ancla: c
-        ? { izquierda: c.left, derecha: c.right, arriba: c.top, abajo: c.bottom }
-        : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight },
-    })
+  /* Pulsar una clase abre su menu, no el formulario. Editar es una de tres
+     cosas que se le pueden hacer, y de las tres la que menos se usa. */
+  const abrirMenu = useCallback((sesion, elemento) => {
+    const c = elemento.getBoundingClientRect()
+    setMenu({ sesion, elemento, ancla: { x: c.left + c.width / 2, y: c.bottom } })
   }, [])
 
   /* Soltar una clase en otro sitio. Llega ya validada por el arrastre, asi
      que aqui solo se persiste: el hueco legal se resolvio mientras se movia. */
-  const mover = useCallback(
-    (sesion) => guardar(sesion),
-    [guardar],
-  )
+  const mover = useCallback((sesion) => guardar(sesion), [guardar])
+
+  const bajar = async () => {
+    setBajando(true)
+    try {
+      let nombre = ''
+      try {
+        nombre = localStorage.getItem(CLAVE_NOMBRE) ?? ''
+      } catch {
+        // Sin nombre guardado la imagen sale igual, solo que sin firmar
+      }
+      await descargarHorario({ carrera, sesiones, porCodigo, nombre })
+    } finally {
+      setBajando(false)
+    }
+  }
 
   return (
-    <div className="transicion-tema flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
+    <div className="transicion-tema relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
       {/* La rejilla es su propio contenedor de desplazamiento: necesita medir
           la altura que le queda para repartirla entre las horas, y esa altura
           solo la conoce quien tiene el overflow. */}
@@ -77,8 +93,54 @@ function Horario({ carrera, estados }) {
         porCodigo={porCodigo}
         alPulsarHueco={abrirEnHueco}
         alMoverClase={mover}
-        alEditar={editar}
+        alEditar={abrirMenu}
       />
+
+      {/* Descargar vive dentro del horario y flotando sobre su esquina, no en
+          la barra de la aplicacion: es una accion de esta vista y solo de
+          esta. Flotando no le quita alto a la semana. Aparece solo si hay
+          algo que bajar. */}
+      {sesiones.length > 0 && (
+        <button
+          type="button"
+          onClick={bajar}
+          disabled={bajando}
+          title="Descargar el horario como imagen PNG"
+          className="transicion-tema absolute right-5 bottom-5 z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-bold text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
+        >
+          {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          Descargar PNG
+        </button>
+      )}
+
+      {menu && (
+        <MenuClase
+          ancla={menu.ancla}
+          alCerrar={() => setMenu(null)}
+          opciones={[
+            {
+              id: 'editar',
+              etiqueta: 'Editar',
+              icono: Pencil,
+              alPulsar: () =>
+                setEnEdicion({ inicial: menu.sesion, ancla: cajaDe(menu.elemento) }),
+            },
+            {
+              id: 'duplicar',
+              etiqueta: 'Duplicar',
+              icono: Copy,
+              alPulsar: () => duplicar(menu.sesion.id),
+            },
+            {
+              id: 'quitar',
+              etiqueta: 'Eliminar',
+              icono: Trash2,
+              peligro: true,
+              alPulsar: () => quitar(menu.sesion.id),
+            },
+          ]}
+        />
+      )}
 
       {enEdicion && (
         <PopoverClase

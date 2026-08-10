@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { calcularLayout } from '../layout/calcularLayout'
+import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
@@ -65,10 +66,12 @@ function VistaCarrera({ carrera, alVolver }) {
      circulo antes, pero a cambio robaria los clicks de esa franja al
      horario, y el control no puede estorbar a lo que hay debajo. */
   const [cercaCabecera, setCercaCabecera] = useState(false)
-  /* El circulo se enseña al rondar la cabecera, y siempre que la barra este
-     plegada: ahi es el unico camino de vuelta y esconderlo dejaria al
-     usuario sin salida. */
-  const visiblePestana = barraOculta || cercaCabecera
+  /* Con la barra plegada no queda cabecera sobre la que hacer hover, asi que
+     ahi la señal es la cercania al borde de arriba de la ventana. Antes el
+     circulo se quedaba encendido permanentemente en ese caso -era el unico
+     camino de vuelta- y estorbaba justo encima del horario. */
+  const cercaDelBorde = useCercaDelBorde(barraOculta)
+  const visiblePestana = barraOculta ? cercaDelBorde : cercaCabecera
   const [planAbierto, setPlanAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -151,9 +154,8 @@ function VistaCarrera({ carrera, alVolver }) {
             aparece al acercar el raton a la cabecera: es un control que se
             usa una vez cada mucho, y teniendolo siempre encendido en el
             centro de la pantalla competia con el mapa.
-            Con la barra plegada se queda visible SIEMPRE. Escondido seria un
-            callejon sin salida: no habria forma de saber que se puede
-            recuperar, ni donde pulsar para hacerlo. */}
+            Con la barra plegada tampoco se queda encendido: ahi la señal es
+            acercar el raton al borde de arriba de la ventana. */}
         {/* El envoltorio solo centra; la animacion va en el boton, para que
             escalar no pelee con el translate que lo coloca sobre la linea.
             pointer-events-none mientras esta oculto: si no, seria un blanco

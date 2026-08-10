@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { MoreHorizontal } from 'lucide-react'
 import { colorClase } from '../theme/areas'
 import { ABRE, enDoceHoras } from '../layout/horario'
 
@@ -45,7 +46,7 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }
         // parece tener un agujero justo donde estaba la clase.
         opacity: arrastrando ? 0.3 : undefined,
       }}
-      className={`bloque-clase absolute flex touch-none cursor-grab flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] active:cursor-grabbing ${
+      className={`bloque-clase group absolute flex touch-none cursor-grab flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] active:cursor-grabbing ${
         alto < CABE_HORA ? 'justify-center py-1' : 'py-2'
       }`}
     >
@@ -59,6 +60,18 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }
         }`}
       >
         {nombre}
+      </span>
+
+      {/* Los tres puntos no son un boton aparte: pulsar el bloque en
+          cualquier sitio abre el mismo menu. Estan para que se vea que hay
+          algo que hacer con la clase, que es lo que un bloque mudo no dice.
+          Por eso no reciben puntero: se los queda el bloque, y asi el gesto
+          de arrastrar tampoco se corta al pasar por encima de ellos. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1.5 right-1.5 text-tinta-tenue opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+      >
+        <MoreHorizontal size={15} />
       </span>
 
       {alto >= CABE_HORA && (

@@ -220,12 +220,18 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEdit
                     top: aY(fantasma.inicio),
                     height: (fantasma.fin - fantasma.inicio) * pxPorMinuto - 5,
                   }}
-                  className="celda-fantasma pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-aprobada/40 bg-aprobada/[0.07]"
+                  className="celda-fantasma pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
                 >
-                  <span className="grid size-8 place-items-center rounded-full bg-aprobada text-[var(--lienzo)] shadow-[0_4px_14px_-4px_var(--estado-aprobada)]">
-                    <Plus size={17} strokeWidth={2.5} />
+                  {/* Neutro y de trazo fino, no un boton verde relleno. Esto
+                      es una pista de que ahi se puede crear algo, no una
+                      accion consumada: si pesa mas que las clases que ya
+                      estan puestas, compite con lo unico que importa. El
+                      color sale de la tinta del tema, asi que sirve igual en
+                      claro y en oscuro sin definir nada aparte. */}
+                  <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
+                    <Plus size={13} strokeWidth={1.75} />
                   </span>
-                  <span className="text-[11.5px] font-bold tracking-wide text-aprobada">
+                  <span className="text-[11px] font-semibold tracking-wide text-tinta-tenue">
                     Agregar materia
                   </span>
                 </span>
