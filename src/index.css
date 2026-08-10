@@ -607,24 +607,6 @@ body {
   }
 }
 
-/* La capa del horario entra fundiendose y subiendo un pelo. Es a pantalla
-   completa: aparecer de golpe se lee como un corte de video, no como abrir
-   algo. */
-.entrada-horario {
-  animation: entrar-horario 200ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@keyframes entrar-horario {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* El dock del lienzo se atenua cuando nadie toca el mapa. Solo opacidad, que
    el compositor resuelve sin repintar, y con una salida lenta y una entrada
    rapida: apagarse puede ser gradual, encenderse tiene que ser inmediato
@@ -722,7 +704,6 @@ body {
   .salida-vista,
   .entrada-mapa,
   .esqueleto-mapa,
-  .entrada-horario,
   .aviso-entrando {
     animation: none;
   }

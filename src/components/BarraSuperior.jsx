@@ -55,7 +55,6 @@ function BarraSuperior({
   avisosAbiertos,
   alAlternarAvisos,
   alPlanificar,
-  alAbrirHorario,
   alVolver,
 }) {
   /* El anillo siempre enseña un porcentaje. Donde hay creditos oficiales es
@@ -153,14 +152,16 @@ function BarraSuperior({
         alPulsar={alAlternarAvisos}
       />
 
-      {/* El horario abre una capa a pantalla completa, no otra vista del
-          mapa: por eso no se marca activo como Lista o Mapa. */}
+      {/* El horario es una vista mas, como el mapa y la lista: se marca
+          activa cuando la estas viendo y vuelve al mapa al pulsarla otra
+          vez. La etiqueta se ve desde sm y no desde lg: es la unica pieza
+          nueva de la barra y con solo el icono no se encontraba. */}
       <Icono
         icono={CalendarRange}
-        titulo="Abrir mi horario de la semana"
+        titulo={vista === 'horario' ? 'Volver al mapa' : 'Ver mi horario de la semana'}
         etiqueta="Mi Horario"
-        desde="lg"
-        alPulsar={alAbrirHorario}
+        activo={vista === 'horario'}
+        alPulsar={() => alCambiarVista(vista === 'horario' ? 'mapa' : 'horario')}
       />
 
       {/* Con etiqueta a partir de lg: es una funcion completa -calcula tu

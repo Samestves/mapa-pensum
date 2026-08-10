@@ -61,7 +61,6 @@ function VistaCarrera({ carrera, alVolver }) {
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
   const [planAbierto, setPlanAbierto] = useState(false)
-  const [horarioAbierto, setHorarioAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
@@ -112,7 +111,7 @@ function VistaCarrera({ carrera, alVolver }) {
       {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
           ancla a su borde inferior con top-full, asi que al plegarse la barra
           sube pegada a ella sin animar nada aparte. */}
-      <div className="relative z-40 shrink-0">
+      <div className="group/cabecera relative z-40 shrink-0">
         {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
             1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
         <div className="barra-colapsable" data-oculta={barraOculta}>
@@ -129,16 +128,19 @@ function VistaCarrera({ carrera, alVolver }) {
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
-            alAbrirHorario={() => setHorarioAbierto(true)}
-              alVolver={alVolver}
-            />
+            alVolver={alVolver}
+          />
           </div>
         </div>
 
-        {/* Una sola pestaña que alterna, siempre centrada y siempre en el
-            mismo punto. Antes ocultar estaba arriba a la derecha y mostrar
-            reaparecia en el centro: el mismo gesto vivia en dos sitios y
-            habia que buscarlo la segunda vez. */}
+        {/* Un circulo montado justo encima de la linea que separa la barra
+            del contenido, no una pestaña colgando de ella. Va invisible y
+            aparece al acercar el raton a la cabecera: es un control que se
+            usa una vez cada mucho, y teniendolo siempre encendido en el
+            centro de la pantalla competia con el mapa.
+            Con la barra plegada se queda visible SIEMPRE. Escondido seria un
+            callejon sin salida: no habria forma de saber que se puede
+            recuperar, ni donde pulsar para hacerlo. */}
         <button
           type="button"
           onClick={() => {
@@ -148,13 +150,13 @@ function VistaCarrera({ carrera, alVolver }) {
           title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
           aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
           aria-expanded={!barraOculta}
-          className="pestana-barra absolute top-full left-1/2 z-50 -translate-x-1/2 rounded-b-lg border border-t-0 border-panel-borde bg-panel/90 px-6 py-1 text-tinta-tenue backdrop-blur hover:text-tinta"
+          className={`pestana-barra absolute top-full left-1/2 z-50 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-panel-borde bg-panel text-tinta-tenue shadow-sm transition-opacity duration-200 hover:text-tinta focus-visible:opacity-100 ${
+            barraOculta ? 'opacity-100' : 'opacity-0 group-hover/cabecera:opacity-100'
+          }`}
         >
           {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </button>
       </div>
-
-      {horarioAbierto && <Horario alCerrar={() => setHorarioAbierto(false)} />}
 
       {planAbierto && (
         <PlanRuta
@@ -177,6 +179,8 @@ function VistaCarrera({ carrera, alVolver }) {
       >
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />
+        ) : vista === 'horario' ? (
+          <Horario />
         ) : vista === 'mapa' ? (
           <GrafoPensum
             layout={layout}

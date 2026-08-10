@@ -18,6 +18,12 @@ const COLUMNAS = `${ANCHO_HORAS} repeat(${DIAS.length}, minmax(0, 1fr))`
    plena opacidad la rejilla grita; a la mitad se lee como papel pautado. */
 const LINEA = 'border-panel-borde/55'
 
+/* Cabecera y celdas comparten el gris del fondo de la vista. El contraste
+   que separa el horario de la cabecera de la aplicacion ya lo pone ese gris
+   contra el blanco de arriba; repetirlo aqui dentro con una banda mas clara
+   solo añadiria una segunda linea de division que no separa nada. */
+const FONDO = 'bg-panel-suave'
+
 /**
  * La cuadricula vacia de la semana.
  *
@@ -31,12 +37,12 @@ function RejillaHorario() {
       {/* Esquina vacia sobre la columna de las horas. Existe para ocupar su
           celda: sin ella, la colocacion automatica correria los dias una
           posicion a la izquierda. */}
-      <div className="transicion-tema sticky top-0 z-10 bg-panel" />
+      <div className={`transicion-tema sticky top-0 z-10 ${FONDO}`} />
 
       {DIAS.map((dia) => (
         <div
           key={dia}
-          className={`transicion-tema sticky top-0 z-10 flex items-center justify-center border-b border-l ${LINEA} bg-panel py-4 text-[14.5px] font-extrabold tracking-[0.13em] text-tinta uppercase`}
+          className={`transicion-tema sticky top-0 z-10 flex items-center justify-center border-b border-l ${LINEA} ${FONDO} py-4 text-[14.5px] font-extrabold tracking-[0.13em] text-tinta uppercase`}
         >
           {dia}
         </div>
@@ -58,7 +64,7 @@ function RejillaHorario() {
             <div
               key={dia}
               style={{ height: ALTO_HORA }}
-              className={`transicion-tema border-b border-l ${LINEA} bg-panel-suave/40`}
+              className={`border-b border-l ${LINEA}`}
             />
           ))}
         </Fragment>
