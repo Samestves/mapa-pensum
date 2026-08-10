@@ -19,7 +19,7 @@ const UMBRAL = 5
  * pointercancel y por perder el foco de la ventana; sin lo ultimo, un alt-tab
  * a mitad de gesto dejaria la clase pegada al raton para siempre.
  */
-export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover, alPulsar }) {
+export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover }) {
   const [gesto, setGesto] = useState(null)
 
   /* El gesto vive tambien en una ref. Los manejadores de la ventana leen de
@@ -38,7 +38,6 @@ export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover, alPulsar }
       const { minuto } = puntoADiaYMinuto(e.clientX, e.clientY)
       cambiar({
         sesion,
-        elemento: e.currentTarget,
         // Por donde se agarro dentro del bloque, para que no de un salto
         pinza: minuto - sesion.inicio,
         origen: { x: e.clientX, y: e.clientY },
@@ -79,11 +78,9 @@ export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover, alPulsar }
     const alSoltar = () => {
       const g = ref.current
       cambiar(null)
-      if (!g) return
-      if (!g.movido) {
-        alPulsar(g.sesion, g.elemento)
-        return
-      }
+      // Sin movimiento no hay nada que hacer: el cuerpo del bloque solo
+      // arrastra, y las acciones viven en los tres puntos.
+      if (!g?.movido) return
       // Soltar donde ya estaba no es un cambio: no se reescribe el horario
       const p = g.propuesta
       const igual =
@@ -107,7 +104,7 @@ export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover, alPulsar }
       window.removeEventListener('blur', abandonar)
       window.removeEventListener('keydown', alTeclear)
     }
-  }, [gesto, cambiar, porDia, puntoADiaYMinuto, alMover, alPulsar])
+  }, [gesto, cambiar, porDia, puntoADiaYMinuto, alMover])
 
   return {
     agarrar,

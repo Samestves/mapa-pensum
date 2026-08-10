@@ -57,11 +57,11 @@ function Horario({ carrera, estados }) {
     setEnEdicion({ inicial: celda, ancla })
   }, [])
 
-  /* Pulsar una clase abre su menu, no el formulario. Editar es una de tres
-     cosas que se le pueden hacer, y de las tres la que menos se usa. */
-  const abrirMenu = useCallback((sesion, elemento) => {
-    const c = elemento.getBoundingClientRect()
-    setMenu({ sesion, elemento, ancla: { x: c.left + c.width / 2, y: c.bottom } })
+  /* El menu cuelga del boton de los tres puntos, no del bloque: es de donde
+     sale, y anclarlo ahi es lo que permite que se coloque solo hacia el lado
+     que tenga sitio sin taparle la clase al de al lado. */
+  const abrirMenu = useCallback((sesion, boton) => {
+    setMenu({ sesion, boton, ancla: boton.getBoundingClientRect() })
   }, [])
 
   /* Soltar una clase en otro sitio. Llega ya validada por el arrastre, asi
@@ -92,8 +92,9 @@ function Horario({ carrera, estados }) {
         porDia={porDia}
         porCodigo={porCodigo}
         alPulsarHueco={abrirEnHueco}
+        idMenuAbierto={menu?.sesion.id}
         alMoverClase={mover}
-        alEditar={abrirMenu}
+        alAbrirMenu={abrirMenu}
       />
 
       {/* Descargar vive dentro del horario y flotando sobre su esquina, no en
@@ -123,7 +124,12 @@ function Horario({ carrera, estados }) {
               etiqueta: 'Editar',
               icono: Pencil,
               alPulsar: () =>
-                setEnEdicion({ inicial: menu.sesion, ancla: cajaDe(menu.elemento) }),
+                setEnEdicion({
+                  inicial: menu.sesion,
+                  // La ficha si cuelga del bloque entero: es grande y quiere
+                  // colocarse a su lado, no a la de un boton de 24 px.
+                  ancla: cajaDe(document.getElementById(`clase-${menu.sesion.id}`)),
+                }),
             },
             {
               id: 'duplicar',

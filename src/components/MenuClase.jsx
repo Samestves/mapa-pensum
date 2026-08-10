@@ -2,16 +2,52 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 const MARGEN = 10
-const ANCHO = 176
+const HUECO = 6
+const ANCHO = 178
+
+/**
+ * Donde cabe el menu respecto al boton que lo abrio.
+ *
+ * Dos decisiones, cada una en su eje, y las dos con la misma regla: se
+ * intenta el lado natural y solo se cambia si no cabe.
+ *
+ * En vertical, debajo del boton; arriba si abajo se sale. En horizontal se
+ * alinea por el borde DERECHO del boton, no por el izquierdo: los tres puntos
+ * viven en la esquina superior derecha de su bloque, asi que un menu que
+ * creciera hacia la derecha se saldria de la columna y taparia el dia
+ * siguiente. Creciendo hacia la izquierda se queda sobre su propia clase.
+ * Solo cuando eso lo sacaria por el borde izquierdo de la ventana -lunes muy
+ * pegado- se voltea.
+ *
+ * El origen de la transformacion sigue a la esquina elegida, que es lo que
+ * hace que el menu parezca salir del boton y no aparecer en un sitio.
+ */
+function colocar(ancla, alto) {
+  const abajo = ancla.bottom + HUECO
+  const cabeAbajo = abajo + alto <= window.innerHeight - MARGEN
+  const y = cabeAbajo ? abajo : Math.max(MARGEN, ancla.top - HUECO - alto)
+
+  const aLaIzquierda = ancla.right - ANCHO
+  const cabeIzquierda = aLaIzquierda >= MARGEN
+  const x = cabeIzquierda
+    ? aLaIzquierda
+    : Math.min(ancla.left, window.innerWidth - ANCHO - MARGEN)
+
+  return {
+    x,
+    y,
+    origen: `${cabeIzquierda ? 'right' : 'left'} ${cabeAbajo ? 'top' : 'bottom'}`,
+  }
+}
 
 /**
  * El menu de una clase ya puesta: editar, duplicar, eliminar.
  *
- * Existe para que pulsar un bloque no lleve derecho al formulario. Editar es
- * una de tres cosas que se le pueden hacer a una clase, y de las tres la que
- * menos se usa: lo normal es duplicarla al otro dia que se dicta, o quitarla.
- * Enseñar las tres y dejar elegir cuesta un click y evita abrir un formulario
- * entero para acabar borrando.
+ * Existe para que los tres puntos hagan algo distinto que el resto del
+ * bloque. Editar es una de tres cosas que se le pueden hacer a una clase, y
+ * de las tres la que menos se usa: lo normal es duplicarla al otro dia que se
+ * dicta, o quitarla. Enseñar las tres y dejar elegir cuesta un click y evita
+ * abrir un formulario entero para acabar borrando.
  *
  * Cada opcion se cierra sola al ejecutarse: un menu que sigue abierto despues
  * de pulsar obliga a un segundo gesto para nada.
@@ -26,19 +62,16 @@ function MenuClase({ ancla, opciones, alCerrar }) {
     return () => document.removeEventListener('keydown', tecla)
   }, [alCerrar])
 
-  /* Se mide despues de pintar: durante el render no hay alto que medir y el
-     panel daria un salto visible al recolocarse. */
+  /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
+     el render no hay alto que medir, y colocarlo luego daria un salto. */
   useLayoutEffect(() => {
-    const alto = refPanel.current?.offsetHeight ?? 0
-    setPos({
-      x: Math.max(MARGEN, Math.min(ancla.x - ANCHO / 2, window.innerWidth - ANCHO - MARGEN)),
-      y: Math.min(ancla.y + 6, window.innerHeight - alto - MARGEN),
-    })
-  }, [ancla.x, ancla.y])
+    setPos(colocar(ancla, refPanel.current?.offsetHeight ?? 0))
+  }, [ancla])
 
   return createPortal(
     <div className="fixed inset-0 z-50">
-      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer la semana */}
+      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer la semana, que
+          es justo lo que se esta mirando. */}
       <button
         type="button"
         aria-label="Cerrar"
@@ -51,9 +84,10 @@ function MenuClase({ ancla, opciones, alCerrar }) {
         style={{
           width: ANCHO,
           transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
+          transformOrigin: pos?.origen,
           visibility: pos ? 'visible' : 'hidden',
         }}
-        className="popover-clase absolute top-0 left-0 flex flex-col rounded-xl border border-panel-borde bg-panel p-1.5 shadow-2xl"
+        className="menu-clase absolute top-0 left-0 flex flex-col rounded-xl border border-panel-borde bg-panel p-1.5 shadow-2xl"
       >
         {opciones.map(({ id, etiqueta, icono: Icono, peligro, alPulsar }) => (
           <button
@@ -64,7 +98,7 @@ function MenuClase({ ancla, opciones, alCerrar }) {
               alPulsar()
               alCerrar()
             }}
-            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12px] font-semibold transition-colors hover:bg-panel-suave ${
+            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-semibold transition-colors hover:bg-panel-suave ${
               peligro ? 'text-[var(--estado-rojo)]' : 'text-tinta'
             }`}
           >

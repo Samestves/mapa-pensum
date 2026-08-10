@@ -6,33 +6,41 @@
 export const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 
-/* La UDO dicta de siete de la mañana a nueve de la noche. */
+/* La jornada que se dibuja: de siete de la mañana a seis de la tarde. Once
+   filas y doce etiquetas, la ultima de las cuales cierra la rejilla. No hay
+   una hora de mas por debajo: una etiqueta suelta bajo la ultima fila rompe
+   el ritmo de una en una y se lee como que el horario sigue, y no sigue. */
 export const ABRE = 7 * 60
-export const CIERRA = 21 * 60
+export const CIERRA = 18 * 60
+
+/* Hasta donde se ACEPTA una clase, que no es lo mismo que hasta donde se
+   dibuja por defecto. Alguien puede tener laboratorio a las siete y media de
+   la tarde, y bajar el cierre no puede significar que su clase deje de ser
+   valida y se pierda al leer el horario guardado. */
+export const LIMITE = 21 * 60
 
 /* Alto de una fila de hora. No es constante: se reparte la altura disponible
-   entre las catorce horas de la jornada, para que quepa en pantalla la mayor
-   parte del dia posible.
+   entre las horas de la jornada.
 
    Aqui hay un limite que conviene tener escrito, porque se intento al reves y
    no sale: celda cuadrada, ancho completo y jornada entera a la vista son
    tres cosas que no caben juntas. En un monitor de 1440 la columna mide 270
-   px; con la fila igual de alta, las catorce horas suman 3780 px de
+   px; con la fila igual de alta, la jornada se va a miles de pixeles de
    desplazamiento. Manda el ancho completo -la semana es lo que se viene a
-   mirar- y la fila se queda con el alto que le deje la pantalla.
+   mirar- y la fila se queda con todo el alto que le deje la pantalla.
 
-   El minimo esta puesto en 64 y no mas alto por una razon concreta: catorce
-   filas de 64 son 896 px, que es lo que deja libre una pantalla normal una
-   vez descontadas la barra de la aplicacion y la cabecera de dias. Con 72 la
-   jornada se pasaba por cien pixeles y habia que desplazarse para ver la
-   ultima hora de un dia que casi cabia. Por debajo de 64 la fila empieza a
-   no poder enseñar el nombre de una materia, y ahi si se desplaza.
-   El maximo evita que en un monitor muy alto una hora ocupe media pantalla.
+   No hay tope por arriba a proposito: la fila se queda con TODO lo que
+   sobre, que es lo mas alta -y por tanto lo mas cuadrada- que puede ser sin
+   obligar a desplazarse. Recortar once filas en vez de catorce sube el alto
+   util un veintisiete por ciento por el mismo motivo.
+
+   El minimo protege el caso contrario: en una ventana baja la fila no se
+   aplasta por debajo de donde deja de caber el nombre de una materia; ahi si
+   se desplaza.
 
    El numero de horas es fijo, asi que este alto solo cambia si cambia la
    ventana: agregar una clase no reescala nunca la rejilla. */
 export const ALTO_MIN = 64
-export const ALTO_MAX = 116
 
 /** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
 export const ANCHO_HORAS_PX = 88
@@ -70,9 +78,21 @@ export const enDoceHoras = (min) => {
 /** La hora en punto, para la columna de la izquierda */
 export const etiquetaHora = (min) => enDoceHoras(min)
 
-/** Las horas en punto dibujadas, de la apertura al cierre inclusive */
-export const horasEnPunto = () =>
-  Array.from({ length: (CIERRA - ABRE) / 60 + 1 }, (_, i) => ABRE + i * 60)
+/**
+ * Hasta que hora se dibuja.
+ *
+ * Las seis de la tarde salvo que alguien tenga algo mas tarde; entonces la
+ * rejilla crece hasta cubrirlo. Una clase guardada que no se ve seria peor
+ * que una fila de mas.
+ */
+export const finVisible = (sesiones) => {
+  const ultima = sesiones.reduce((max, s) => Math.max(max, s.fin), CIERRA)
+  return Math.min(LIMITE, Math.ceil(ultima / 60) * 60)
+}
+
+/** Las horas en punto dibujadas, de la apertura al final inclusive */
+export const horasEnPunto = (hasta = CIERRA) =>
+  Array.from({ length: (hasta - ABRE) / 60 + 1 }, (_, i) => ABRE + i * 60)
 
 export const acotar = (v, min, max) => Math.max(min, Math.min(max, v))
 
@@ -98,7 +118,7 @@ export const TOLERANCIA_IMAN = 9
  * las dos seguidas seria imposible, que es justo el gesto que se busca.
  */
 export function imantarInicio(minuto, duracion, sesionesDelDia) {
-  const bordes = [ABRE, CIERRA - duracion]
+  const bordes = [ABRE, LIMITE - duracion]
   for (const s of sesionesDelDia) {
     bordes.push(s.fin) // pegarse justo debajo
     bordes.push(s.inicio - duracion) // acabar justo donde empieza
@@ -126,7 +146,7 @@ export function posicionValida(sesionesDelDia, candidata) {
 
   const cabe = (inicio) =>
     inicio >= ABRE &&
-    inicio + duracion <= CIERRA &&
+    inicio + duracion <= LIMITE &&
     !otras.some((o) => inicio < o.fin && o.inicio < inicio + duracion)
 
   if (cabe(candidata.inicio)) return candidata
@@ -198,7 +218,7 @@ export function huecoEn(sesionesDelDia, minuto) {
       .reduce((max, s) => Math.max(max, s.fin), ABRE),
     hasta: sesionesDelDia
       .filter((s) => s.inicio >= minuto)
-      .reduce((min, s) => Math.min(min, s.inicio), CIERRA),
+      .reduce((min, s) => Math.min(min, s.inicio), LIMITE),
   }
 }
 

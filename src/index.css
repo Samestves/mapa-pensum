@@ -671,6 +671,23 @@ body {
   }
 }
 
+/* El menu crece desde la esquina pegada al boton que lo abrio. El origen lo
+   pone el componente, que es quien sabe hacia donde tuvo que voltearse. */
+.menu-clase {
+  animation: brotar-menu 130ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes brotar-menu {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 /* El popover crece un pelin desde su flecha, que es de donde sale */
 .popover-clase {
   animation: brotar-popover 150ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -787,6 +804,7 @@ body {
   .bloque-clase,
   .celda-fantasma,
   .popover-clase,
+  .menu-clase,
   .aviso-entrando {
     animation: none;
   }

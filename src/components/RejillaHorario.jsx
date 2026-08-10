@@ -2,14 +2,13 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import {
   ABRE,
-  enDoceHoras,
-  ALTO_MAX,
   ALTO_MIN,
   ANCHO_HORAS_PX,
-  CIERRA,
   DIAS,
   acotar,
+  enDoceHoras,
   etiquetaHora,
+  finVisible,
   franjaPropuesta,
   horasEnPunto,
 } from '../layout/horario'
@@ -17,34 +16,32 @@ import { useArrastreClase } from '../hooks/useArrastreClase'
 import BloqueClase from './BloqueClase'
 
 const LINEA = 'border-[var(--horario-linea)]'
-const HORAS_JORNADA = (CIERRA - ABRE) / 60
+/* Lo que mide la cabecera de dias, que hay que descontar del alto util */
+const ALTO_CABECERA = 54
 
 /**
  * Cuanto mide de alto una fila de hora.
  *
- * Se reparte la altura disponible entre las catorce horas de la jornada, para
- * que quepa en pantalla la mayor parte del dia posible. El ancho no entra en
- * la cuenta: las columnas se estiran a lo que haya, que es lo que se quiere.
+ * Reparte TODA la altura disponible entre las horas de la jornada: la fila
+ * queda tan alta -y por tanto tan cuadrada- como puede sin obligar a
+ * desplazarse. El ancho no entra en la cuenta; las columnas se estiran a lo
+ * que haya, que es lo que se quiere.
  *
- * Depende solo de la ventana, no del contenido: el numero de horas es fijo,
- * asi que agregar una clase no reescala nunca la rejilla bajo el cursor.
+ * Depende de la ventana y del numero de filas, no de las clases: mover o
+ * agregar una clase no reescala la rejilla bajo el cursor.
  */
-function useAltoHora(refVista) {
-  const [alto, setAlto] = useState(ALTO_MIN)
+function useAltoHora(refVista, filas) {
+  const [util, setUtil] = useState(0)
 
   useLayoutEffect(() => {
     const el = refVista.current
     if (!el) return
-    const ro = new ResizeObserver(([entrada]) => {
-      // Lo que queda tras la cabecera de dias, que mide poco mas de cincuenta
-      const util = entrada.contentRect.height - 54
-      setAlto(acotar(Math.floor(util / HORAS_JORNADA), ALTO_MIN, ALTO_MAX))
-    })
+    const ro = new ResizeObserver(([e]) => setUtil(e.contentRect.height - ALTO_CABECERA))
     ro.observe(el)
     return () => ro.disconnect()
   }, [refVista])
 
-  return alto
+  return Math.max(ALTO_MIN, Math.floor(util / filas) || ALTO_MIN)
 }
 
 /**
@@ -63,12 +60,16 @@ function useAltoHora(refVista) {
  * Las lineas de hora son un degradado repetido y no un div por hora: cinco
  * columnas por catorce horas serian setenta nodos que no aportan nada.
  */
-function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEditar }) {
+function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMoverClase, alAbrirMenu }) {
   const refVista = useRef(null)
   const refDias = useRef(null)
   const [fantasma, setFantasma] = useState(null)
 
-  const altoHora = useAltoHora(refVista)
+  /* La jornada llega a las seis salvo que alguien tenga algo mas tarde. Una
+     clase guardada que no se ve seria peor que una fila de mas. */
+  const hasta = finVisible(porDia.flat())
+  const filas = (hasta - ABRE) / 60
+  const altoHora = useAltoHora(refVista, filas)
   const pxPorMinuto = altoHora / 60
   const aY = (min) => (min - ABRE) * pxPorMinuto
 
@@ -93,18 +94,17 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEdit
     puntoADiaYMinuto,
     porDia,
     alMover: alMoverClase,
-    alPulsar: alEditar,
   })
 
   /* La franja que se propone bajo el puntero, ya recortada contra las clases
      vecinas. La regla vive en franjaPropuesta; aqui solo se le añade el dia. */
   const celdaDe = useCallback(
     (dia, minuto) => {
-      if (minuto < ABRE || minuto >= CIERRA) return null
+      if (minuto < ABRE || minuto >= hasta) return null
       const franja = franjaPropuesta(porDia[dia], minuto)
       return franja && { dia, ...franja }
     },
-    [porDia],
+    [porDia, hasta],
   )
 
   /** La caja en pantalla de una franja, para que la ficha cuelgue de ella */
@@ -160,11 +160,11 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEdit
         ))}
       </div>
 
-      <div className={`flex border-b ${LINEA}`} style={{ height: HORAS_JORNADA * altoHora }}>
+      <div className={`flex border-b ${LINEA}`} style={{ height: filas * altoHora }}>
         {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
             en ella: centrada, la primera quedaria partida por la cabecera. */}
         <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
-          {horasEnPunto().map((min, i, todas) => (
+          {horasEnPunto(hasta).map((min, i, todas) => (
             <span
               key={min}
               style={{ top: aY(min) }}
@@ -244,7 +244,9 @@ function RejillaHorario({ porDia, porCodigo, alPulsarHueco, alMoverClase, alEdit
                   asignatura={porCodigo.get(sesion.codigo)}
                   pxPorMinuto={pxPorMinuto}
                   arrastrando={arrastrando?.sesion.id === sesion.id}
+                  menuAbierto={idMenuAbierto === sesion.id}
                   alAgarrar={agarrar}
+                  alAbrirMenu={alAbrirMenu}
                 />
               ))}
             </div>

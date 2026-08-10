@@ -22,15 +22,14 @@ const CABE_PROFESOR = 136
  * formulario no deja guardar un solape, asi que en la practica siempre son
  * 0 y 1 y el bloque ocupa la columna entera.
  */
-function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }) {
+function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, menuAbierto, alAgarrar, alAbrirMenu }) {
   const color = colorClase(sesion, asignatura)
   const alto = (sesion.fin - sesion.inicio) * pxPorMinuto
   const nombre = asignatura?.nombre ?? sesion.codigo
   const pie = [sesion.aula, sesion.seccion && `Sec. ${sesion.seccion}`].filter(Boolean)
 
   return (
-    <button
-      type="button"
+    <div
       id={`clase-${sesion.id}`}
       onPointerDown={(e) => alAgarrar(sesion, e)}
       title={`${nombre} · ${enDoceHoras(sesion.inicio)} a ${enDoceHoras(sesion.fin)}`}
@@ -62,17 +61,27 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }
         {nombre}
       </span>
 
-      {/* Los tres puntos no son un boton aparte: pulsar el bloque en
-          cualquier sitio abre el mismo menu. Estan para que se vea que hay
-          algo que hacer con la clase, que es lo que un bloque mudo no dice.
-          Por eso no reciben puntero: se los queda el bloque, y asi el gesto
-          de arrastrar tampoco se corta al pasar por encima de ellos. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1.5 right-1.5 text-tinta-tenue opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+      {/* Los tres puntos SON el boton del menu, no un adorno. El cuerpo del
+          bloque queda entonces para una sola cosa -arrastrarlo- y no hay que
+          adivinar que hace un click segun donde caiga.
+          El pointerdown se para aqui para que pulsarlos no arranque un
+          arrastre: sin eso, el gesto empezaria y el click nunca llegaria.
+          Se quedan visibles mientras el menu esta abierto; si desaparecieran
+          al salir el raton del bloque, el menu quedaria colgando de nada. */}
+      <button
+        type="button"
+        aria-label={`Acciones de ${nombre}`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          alAbrirMenu(sesion, e.currentTarget)
+        }}
+        className={`absolute top-1 right-1 grid size-6 cursor-pointer place-items-center rounded-md text-tinta-tenue transition-[opacity,background-color] duration-150 hover:bg-tinta/[0.06] hover:text-tinta focus-visible:opacity-100 ${
+          menuAbierto ? 'bg-tinta/[0.06] text-tinta opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
       >
         <MoreHorizontal size={15} />
-      </span>
+      </button>
 
       {alto >= CABE_HORA && (
         <span className="mt-1 block truncate text-[11.5px] font-semibold tabular-nums text-tinta-suave">
@@ -91,7 +100,7 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, alAgarrar }
           {sesion.profesor}
         </span>
       )}
-    </button>
+    </div>
   )
 }
 
