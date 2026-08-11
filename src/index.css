@@ -48,10 +48,13 @@
 
   /* Linea de la rejilla del horario. No vale --panel-borde: ese esta pensado
      para el borde de una tarjeta suelta sobre el lienzo, y aqui la linea cae
-     sobre --panel-suave, que en oscuro esta casi al mismo nivel. Repetida
-     catorce veces por cinco columnas, esa diferencia de dos puntos hacia que
-     la cuadricula no se viera. */
-  --horario-linea: #26364e;
+     sobre --panel-suave, que en oscuro esta casi al mismo nivel.
+
+     En oscuro es blanco translucido y no un azul solido: el azul teñia la
+     rejilla entera y competia con el color de las clases, que es lo unico que
+     deberia llevar color ahi. El blanco al once por ciento se apoya en el
+     fondo que tenga debajo y se lee como una linea de lapiz. */
+  --horario-linea: rgba(255, 255, 255, 0.11);
 
   /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
      tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
@@ -506,6 +509,26 @@ body {
   animation: entrar-mapa 280ms ease-out;
 }
 
+/* Cambiar de vista -mapa, lista, horario- funde la que entra. Sin esto el
+   relevo era un corte seco: la vista nueva aparecia de golpe y, en el caso
+   del mapa, encima de un fotograma en el que todavia no se habia encajado.
+   Corta a proposito: pasar de una vista a otra tiene que sentirse inmediato,
+   no como una animacion que hay que esperar. */
+@keyframes entrar-panel {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entrada-panel {
+  animation: entrar-panel 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* ---- Aviso de instalar -------------------------------------------------
    Sube desde fuera de la pantalla en vez de aparecer: algo que se materializa
    encima del contenido sobresalta, algo que entra deslizandose se lee como
@@ -592,13 +615,21 @@ body {
   transform: translateY(-10px);
 }
 
-/* La pestaña para traerla de vuelta nunca se desmonta: se desliza desde
-   detras del borde. Montarla y desmontarla cortaba la transicion. */
 /* La pestaña se ancla al borde inferior de la barra con top-full, asi que
    sube y baja sola cuando la barra se pliega: no hace falta animarla ni
-   medir su alto. Aqui solo queda el color. */
+   medir su alto.
+
+   Las tres propiedades van juntas AQUI y no en utilidades de Tailwind. Esta
+   regla vive fuera de @layer, asi que gana a las utilidades y las reemplaza:
+   cuando solo declaraba color, se cargaba la transicion de opacidad y escala
+   del boton y este aparecia y desaparecia de golpe. Un solo sitio que declare
+   transition evita que vuelva a pasar. */
 .pestana-barra {
-  transition: color 200ms ease;
+  transition:
+    opacity 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    color 200ms ease,
+    background-color 200ms ease;
 }
 
 /* El panel de avance entra desde el borde en el que se apoya: desde abajo en
@@ -800,6 +831,7 @@ body {
   .entrada-vista,
   .salida-vista,
   .entrada-mapa,
+  .entrada-panel,
   .esqueleto-mapa,
   .bloque-clase,
   .celda-fantasma,

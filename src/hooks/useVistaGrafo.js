@@ -108,12 +108,18 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     })
   }, [medida, anchoContenido, altoContenido, aplicarVista])
 
-  // Encaje automatico la primera vez que se conoce el tamano del contenedor
+  /* Encaje automatico la primera vez que se conoce el tamaño del contenedor.
+     Hasta que ocurre, la vista vale {0, 0, escala 1}: el mapa entero dibujado
+     a tamaño natural desde la esquina. Eso es un fotograma valido que NO hay
+     que enseñar -es el tiron que se veia al volver del horario al mapa-, asi
+     que se avisa de cuando ya esta colocado y el grafo se revela ahi. */
+  const [encajado, setEncajado] = useState(false)
   const yaEncajado = useRef(false)
   useEffect(() => {
     if (yaEncajado.current || !medida.ancho) return
     yaEncajado.current = true
     encajar()
+    setEncajado(true)
   }, [medida, encajar])
 
   // Cuadro y red de la animacion de los botones
@@ -312,6 +318,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     contenedorRef,
     vista,
     medida,
+    encajado,
     arrastrando,
     enGesto,
     huboMovimiento,

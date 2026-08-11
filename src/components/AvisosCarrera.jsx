@@ -26,7 +26,7 @@ export function BotonAvisos({ cantidad, abierto, alPulsar }) {
       title={etiqueta}
       aria-label={etiqueta}
       aria-expanded={abierto}
-      className={`transicion-tema grid size-8 shrink-0 place-items-center rounded-lg border text-cursando sm:size-9 ${
+      className={`transicion-tema grid size-8 shrink-0 place-items-center rounded-lg border text-cursando transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97] sm:size-9 ${
         abierto ? 'border-transparent bg-panel-suave' : 'border-panel-borde hover:bg-panel-suave'
       }`}
     >

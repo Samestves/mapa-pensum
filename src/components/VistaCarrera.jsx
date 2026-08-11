@@ -192,13 +192,14 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       )}
 
-      {/* La key cambia una sola vez, cuando el mapa releva a la silueta: eso
-          rearranca la animacion y el mapa aparece fundiendose encima de ella
-          en vez de dando un salto. Es mas corta que la de la ruta porque va
-          anidada dentro de ella: dos opacidades que se multiplican. */}
+      {/* La key incluye la vista, no solo si el mapa ya monto: asi cambiar
+          entre mapa, lista y horario rearranca la animacion y la vista nueva
+          entra fundiendose en vez de aparecer de golpe. Antes la key solo
+          cambiaba una vez -cuando el mapa relevaba a la silueta- y los
+          cambios de vista posteriores eran un corte seco. */}
       <div
-        key={mapaMontado ? 'mapa' : 'esqueleto'}
-        className="entrada-mapa relative flex flex-1 overflow-hidden"
+        key={mapaMontado ? vista : 'esqueleto'}
+        className="entrada-panel relative flex flex-1 overflow-hidden"
       >
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />

@@ -2,6 +2,24 @@ import { ArrowLeft, CalendarRange, LayoutList, Map, Moon, Route, Sun } from 'luc
 import AnilloAvance from './AnilloAvance'
 import { BotonAvisos } from './AvisosCarrera'
 
+/* La forma comun de TODO lo que se pulsa en la cabecera. Vive en una
+   constante y no repetida en cada boton porque antes cada uno traia su
+   propia mezcla: el de volver se iluminaba de fondo al pasar por encima y
+   los demas solo cambiaban de tinta, y el anillo de avance ni siquiera media
+   lo mismo. Una barra donde cada boton responde distinto al mismo gesto se
+   lee como piezas pegadas, no como un mando. */
+/* Sin radio: lo pone cada uso. Dejarlo aqui hacia que el 'rounded-full' del
+   anillo compitiera con el 'rounded-lg' de la base a igual especificidad, y
+   ganaba el que Tailwind emitiese despues -salia cuadrado-. */
+const BASE =
+  'transicion-tema flex shrink-0 items-center justify-center gap-1.5 h-8 sm:h-9 ' +
+  'transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97]'
+
+/* Reposo, hover y activo. El activo se rellena y quita el borde: es un
+   estado, no un boton mas fuerte. */
+const REPOSO = 'border border-panel-borde text-tinta-suave hover:bg-panel-suave hover:text-tinta'
+const ACTIVO = 'border border-transparent bg-panel-suave text-tinta'
+
 /**
  * Boton de la cabecera. Todos miden y pesan igual; en movil bajan a 32px,
  * que sigue siendo objetivo tactil comodo.
@@ -11,12 +29,9 @@ import { BotonAvisos } from './AvisosCarrera'
  * no aparece nunca: una barra entera de iconos pelados no se entiende, y de
  * hecho no se entendio. Donde hay sitio, la palabra se ve.
  */
-function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar, variante = 'suelto' }) {
-  const segmento = variante === 'segmento'
-  const alto = segmento ? 'h-8' : 'h-8 sm:h-9'
-  const borde = segmento ? 'border-0' : 'border'
+function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar }) {
   // Con etiqueta deja de ser cuadrado y crece con el texto
-  const ancho = etiqueta ? 'px-2 sm:px-2.5' : segmento ? 'w-8' : 'w-8 sm:w-9'
+  const ancho = etiqueta ? 'px-2 sm:px-2.5' : 'w-8 sm:w-9'
   const visible =
     desde === 'xl' ? 'hidden xl:inline' : desde === 'lg' ? 'hidden lg:inline' : 'hidden sm:inline'
 
@@ -26,11 +41,8 @@ function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar, v
       onClick={alPulsar}
       title={titulo}
       aria-label={titulo}
-      className={`transicion-tema flex shrink-0 items-center justify-center gap-1.5 rounded-lg ${alto} ${ancho} ${borde} ${
-        activo
-          ? 'border-transparent bg-panel-suave text-tinta'
-          : 'border-panel-borde text-tinta-suave hover:text-tinta'
-      }`}
+      aria-pressed={activo === undefined ? undefined : activo}
+      className={`${BASE} rounded-lg ${ancho} ${activo ? ACTIVO : REPOSO}`}
     >
       <Ico size={16} className="shrink-0" />
       {etiqueta && <span className={`${visible} text-[12px] font-bold`}>{etiqueta}</span>}
@@ -83,7 +95,7 @@ function BarraSuperior({
         onClick={alVolver}
         title="Ver todas las carreras"
         aria-label="Ver todas las carreras"
-        className="transicion-tema group flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-panel-borde px-2 text-tinta-suave hover:bg-panel-suave hover:text-tinta sm:h-9 sm:px-2.5"
+        className={`${BASE} group rounded-lg px-2 sm:px-2.5 ${REPOSO}`}
       >
         <ArrowLeft
           size={16}
@@ -112,13 +124,16 @@ function BarraSuperior({
           Sin creditos oficiales no hay porcentaje de UC, pero si de materias:
           el anillo se llena igual y el detalle lo aclara al pasar por encima.
           Antes ahi habia un numero, una barra de ochenta pixeles y un
-          contador de UC, tres formas de decir lo mismo en fila. */}
+          contador de UC, tres formas de decir lo mismo en fila.
+          Redondo y sin borde a proposito: es un indicador que ademas se
+          pulsa, no una accion mas de la fila. Comparte alto y respuesta al
+          hover con los demas para que la fila no se descuadre. */}
       <button
         type="button"
         onClick={alAlternarAvance}
         title={detalleAvance}
         aria-label={detalleAvance}
-        className={`transicion-tema grid shrink-0 place-items-center rounded-full p-1 ${
+        className={`${BASE} w-9 rounded-full border-transparent p-0 ${
           avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
         }`}
       >

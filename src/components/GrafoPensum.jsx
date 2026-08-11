@@ -26,6 +26,7 @@ function GrafoPensum({
     contenedorRef,
     vista,
     medida,
+    encajado,
     arrastrando,
     enGesto,
     huboMovimiento,
@@ -97,7 +98,18 @@ function GrafoPensum({
           }}
         />
 
-        <g transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}>
+        {/* Oculto hasta que la vista se encaja. El primer fotograma tras
+            montar dibuja el mapa a tamaño natural desde la esquina, y
+            enseñarlo era el tiron que se veia al volver del horario. Se
+            revela con una transicion corta de opacidad, que el compositor
+            resuelve sin repintar los mil seiscientos elementos. */}
+        <g
+          transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}
+          style={{
+            opacity: encajado ? 1 : 0,
+            transition: 'opacity 200ms ease-out',
+          }}
+        >
           {/* Todo el contenido del mapa vive memoizado ahi dentro. Este <g>
               es lo unico que cambia al desplazar o acercar, y su unico hijo
               se salta el render entero comparando una prop. */}
