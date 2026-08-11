@@ -22,7 +22,18 @@ const CABE_PROFESOR = 136
  * formulario no deja guardar un solape, asi que en la practica siempre son
  * 0 y 1 y el bloque ocupa la columna entera.
  */
-function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, menuAbierto, alAgarrar, alAbrirMenu }) {
+function BloqueClase({
+  sesion,
+  asignatura,
+  pxPorMinuto,
+  arrastrando,
+  menuAbierto,
+  /* En el telefono no se arrastra: solo hay un dia a la vista, y ademas
+     touch-none impediria desplazar la jornada con el dedo. */
+  arrastrable = true,
+  alAgarrar,
+  alAbrirMenu,
+}) {
   const color = colorClase(sesion, asignatura)
   const alto = (sesion.fin - sesion.inicio) * pxPorMinuto
   const nombre = asignatura?.nombre ?? sesion.codigo
@@ -31,7 +42,7 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, menuAbierto
   return (
     <div
       id={`clase-${sesion.id}`}
-      onPointerDown={(e) => alAgarrar(sesion, e)}
+      onPointerDown={arrastrable ? (e) => alAgarrar(sesion, e) : undefined}
       title={`${nombre} · ${enDoceHoras(sesion.inicio)} a ${enDoceHoras(sesion.fin)}`}
       style={{
         top: (sesion.inicio - ABRE) * pxPorMinuto,
@@ -45,7 +56,7 @@ function BloqueClase({ sesion, asignatura, pxPorMinuto, arrastrando, menuAbierto
         // parece tener un agujero justo donde estaba la clase.
         opacity: arrastrando ? 0.3 : undefined,
       }}
-      className={`bloque-clase group absolute flex touch-none cursor-grab flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] active:cursor-grabbing ${
+      className={`bloque-clase group absolute flex flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] ${arrastrable ? 'touch-none cursor-grab active:cursor-grabbing' : ''} ${
         alto < CABE_HORA ? 'justify-center py-1' : 'py-2'
       }`}
     >

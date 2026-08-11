@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 import {
   ABRE,
   CIERRA,
@@ -37,18 +38,6 @@ const normalizar = (t) =>
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-
-/** True mientras la ventana sea de telefono. Se re-evalua al girar. */
-function useEsTelefono() {
-  const [es, setEs] = useState(() => window.matchMedia('(max-width: 639px)').matches)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
-    const alCambiar = (e) => setEs(e.matches)
-    mq.addEventListener('change', alCambiar)
-    return () => mq.removeEventListener('change', alCambiar)
-  }, [])
-  return es
-}
 
 /**
  * Alta y edicion de una clase, colgando del bloque que se pulso.

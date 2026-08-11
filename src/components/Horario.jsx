@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
 import { descargarHorario } from '../data/exportarHorario'
 import RejillaHorario from './RejillaHorario'
+import HorarioMovil from './HorarioMovil'
 import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 
@@ -25,6 +27,7 @@ const CLAVE_NOMBRE = 'mapa-pensum:nombre'
  */
 function Horario({ carrera, estados }) {
   const { porDia, sesiones, guardar, quitar, duplicar } = useHorario(carrera.slug)
+  const esTelefono = useEsTelefono()
 
   /* Que hay abierto. Un solo valor por cosa en vez de booleanos sueltos, para
      que no exista el estado imposible de tener el menu y la ficha a la vez. */
@@ -85,17 +88,32 @@ function Horario({ carrera, estados }) {
 
   return (
     <div className="transicion-tema relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
-      {/* La rejilla es su propio contenedor de desplazamiento: necesita medir
-          la altura que le queda para repartirla entre las horas, y esa altura
-          solo la conoce quien tiene el overflow. */}
-      <RejillaHorario
-        porDia={porDia}
-        porCodigo={porCodigo}
-        alPulsarHueco={abrirEnHueco}
-        idMenuAbierto={menu?.sesion.id}
-        alMoverClase={mover}
-        alAbrirMenu={abrirMenu}
-      />
+      {/* Dos formas del mismo horario. En el telefono la semana de cinco
+          columnas dejaria cada dia en unos sesenta pixeles, menos que el
+          nombre de cualquier materia, asi que se apila y se pasa de dia
+          deslizando. Los datos, el formulario y el menu son los mismos: lo
+          unico que cambia es cuantos dias se ven a la vez.
+          La rejilla de escritorio es su propio contenedor de desplazamiento
+          porque necesita medir la altura para repartirla entre las horas, y
+          esa altura solo la conoce quien tiene el overflow. */}
+      {esTelefono ? (
+        <HorarioMovil
+          porDia={porDia}
+          porCodigo={porCodigo}
+          idMenuAbierto={menu?.sesion.id}
+          alPulsarHueco={abrirEnHueco}
+          alAbrirMenu={abrirMenu}
+        />
+      ) : (
+        <RejillaHorario
+          porDia={porDia}
+          porCodigo={porCodigo}
+          alPulsarHueco={abrirEnHueco}
+          idMenuAbierto={menu?.sesion.id}
+          alMoverClase={mover}
+          alAbrirMenu={abrirMenu}
+        />
+      )}
 
       {/* Descargar vive dentro del horario y flotando sobre su esquina, no en
           la barra de la aplicacion: es una accion de esta vista y solo de
