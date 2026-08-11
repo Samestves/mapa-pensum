@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
@@ -29,6 +29,7 @@ function GrafoPensum({
     encajado,
     arrastrando,
     enGesto,
+    refEnGesto,
     huboMovimiento,
     encajar,
     acercar,
@@ -54,8 +55,31 @@ function GrafoPensum({
   // son las unicas props de los nodos que no son valores simples, y por eso
   // son las unicas que hay que fijar. Reciben el codigo en vez de venir ya
   // atadas a un nodo concreto: una funcion por mapa, no una por materia.
-  const senalar = useCallback((codigo) => alSenalar(codigo), [alSenalar])
+  /* Señalar se ignora mientras el mapa se mueve.
+     Al arrastrar, el puntero cruza decenas de tarjetas y cada una dispara su
+     hover: eso recalcula la cadena, cambia la identidad de `atenuado` y
+     obliga a rehacer los ciento treinta y un hijos memoizados, ademas de
+     relanzar la transicion de opacidad de setenta y cinco nodos. Medido: el
+     arrastre pasa de 6,9 a entre 9,7 y 15,9 ms por movimiento.
+     Ademas de caro, no es lo que se pide: quien arrastra el mapa lo esta
+     moviendo, no inspeccionando lo que le pasa por debajo.
+     Se consulta una ref y no el estado para no cambiar de identidad, que es
+     lo unico que mantiene vivo el memo. */
+  const senalar = useCallback(
+    (codigo) => {
+      if (refEnGesto.current) return
+      alSenalar(codigo)
+    },
+    [alSenalar, refEnGesto],
+  )
   const dejarDeSenalar = useCallback(() => alSenalar(null), [alSenalar])
+
+  /* Y al empezar a mover, lo que hubiera resaltado se apaga. Arrastrar el
+     mapa con media pantalla atenuada estorba para ver a donde se va, y de
+     paso deja el gesto con el arbol en su estado mas barato. */
+  useEffect(() => {
+    if (enGesto) alSenalar(null)
+  }, [enGesto, alSenalar])
   const verFicha = useCallback(
     (codigo) => {
       // Si el puntero se movio, fue un arrastre del lienzo, no un click

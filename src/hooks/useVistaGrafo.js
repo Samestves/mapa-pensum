@@ -37,11 +37,21 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
      ultimo evento. `arrastrando` no vale para esto: el pellizco lo pone en
      falso a proposito, para no enseñar el cursor de agarre con dos dedos. */
   const [enGesto, setEnGesto] = useState(false)
+  /* Lo mismo, en una ref. El estado sirve para repintar; la ref, para que
+     quien tenga que consultarlo dentro de un manejador no dependa de el.
+     Los nodos del mapa reciben sus funciones memoizadas, y una que dependiera
+     del estado cambiaria de identidad al empezar y al acabar cada gesto,
+     tirando abajo el memo de los ciento treinta y un hijos. */
+  const refEnGesto = useRef(false)
   const relojGesto = useRef(null)
   const marcarGesto = useCallback(() => {
+    refEnGesto.current = true
     setEnGesto(true)
     clearTimeout(relojGesto.current)
-    relojGesto.current = setTimeout(() => setEnGesto(false), 250)
+    relojGesto.current = setTimeout(() => {
+      refEnGesto.current = false
+      setEnGesto(false)
+    }, 250)
   }, [])
   useEffect(() => () => clearTimeout(relojGesto.current), [])
 
@@ -321,6 +331,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     encajado,
     arrastrando,
     enGesto,
+    refEnGesto,
     huboMovimiento,
     encajar,
     acercar: () => zoomAlCentro(ZOOM.paso),
