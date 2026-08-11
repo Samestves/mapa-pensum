@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import {
   ABRE,
@@ -6,7 +6,6 @@ import {
   DIAS,
   DIAS_CORTOS,
   FILAS,
-  ANCHO_HORAS_PX,
   etiquetaHora,
   franjaPropuesta,
   horasEnPunto,
@@ -21,6 +20,12 @@ const LINEA = 'border-[var(--horario-linea)]'
    gesto natural, y apretar doce filas en la altura de un movil dejaria
    bloques donde no cabe el nombre de la materia. */
 const ALTO_HORA = 76
+
+/* La columna de las horas es mas estrecha que en escritorio. Alli sobra
+   ancho; aqui los 88 px del escritorio se comian casi una cuarta parte de la
+   pantalla y dejaban las clases descentradas contra el borde derecho. Con 62
+   sigue cabiendo "11:00 AM" y el dia gana veintiseis pixeles. */
+const ANCHO_HORAS = 62
 
 /** Lunes a viernes; el fin de semana entra por el lunes */
 const diaDeHoy = () => {
@@ -65,6 +70,23 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
 
   const pxPorMinuto = ALTO_HORA / 60
   const aY = (min) => (min - ABRE) * pxPorMinuto
+
+  /**
+   * La primera hora libre del dia, para dejar ahi la pista de que se puede
+   * tocar.
+   *
+   * En un telefono no hay hover, asi que la señal que en escritorio aparece
+   * al pasar el raton no existe: sin nada, la rejilla es un dibujo y no se
+   * sabe que responde. En vez de un cartel al margen, la pista va donde de
+   * verdad hay que tocar y con la forma que tendra la clase. Se apaga sola en
+   * cuanto el dia se llena, porque entonces ya no hay nada que enseñar. */
+  const pista = useMemo(() => {
+    for (let hora = ABRE; hora < CIERRA; hora += 60) {
+      const franja = franjaPropuesta(porDia[dia], hora)
+      if (franja && franja.inicio === hora) return franja
+    }
+    return null
+  }, [porDia, dia])
 
   const tocarHueco = (e) => {
     // El click que sigue a un deslizamiento no es un toque en el hueco
@@ -149,12 +171,12 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
             avanza o se retrocede. */}
         <div key={dia} className={sentido > 0 ? 'entra-dia-derecha' : 'entra-dia-izquierda'}>
           <div className={`flex border-b ${LINEA}`} style={{ height: FILAS * ALTO_HORA }}>
-            <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
+            <div style={{ width: ANCHO_HORAS }} className="relative shrink-0">
               {horasEnPunto().map((min) => (
                 <span
                   key={min}
                   style={{ top: aY(min) }}
-                  className="absolute right-3 translate-y-1.5 text-[12px] font-semibold tabular-nums text-tinta-tenue"
+                  className="absolute right-2 translate-y-1.5 text-[11.5px] font-semibold tabular-nums text-tinta-tenue"
                 >
                   {etiquetaHora(min)}
                 </span>
@@ -180,14 +202,26 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
                 />
               ))}
 
-              {porDia[dia].length === 0 && (
-                <p className="absolute inset-x-6 top-24 text-center text-[13px] leading-relaxed font-medium text-tinta-tenue">
-                  <Plus size={16} className="mx-auto mb-2 opacity-60" />
-                  Toca cualquier hora para agregar una clase
-                  <span className="mt-1.5 block text-[11.5px] opacity-70">
-                    Desliza para ver otro día
+              {/* La pista ocupa el hueco que ocuparia la clase, con su misma
+                  forma. No recibe toques: el contenedor se los queda, asi que
+                  se puede tocar tanto encima de ella como en cualquier otra
+                  hora libre. */}
+              {pista && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    top: aY(pista.inicio),
+                    height: (pista.fin - pista.inicio) * pxPorMinuto - 5,
+                  }}
+                  className="pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
+                >
+                  <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
+                    <Plus size={13} strokeWidth={1.75} />
                   </span>
-                </p>
+                  <span className="text-[11px] font-semibold text-tinta-tenue">
+                    Toca para agregar
+                  </span>
+                </span>
               )}
             </div>
           </div>
