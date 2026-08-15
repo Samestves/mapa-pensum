@@ -19,15 +19,19 @@ const LINEA = 'border-[var(--horario-linea)]'
 /* En el telefono la fila no se ajusta a la pantalla: se fija comoda y el dia
    se desplaza. Solo hay una columna, asi que desplazarse hacia abajo es el
    gesto natural, y apretar doce filas en la altura de un movil dejaria
-   bloques donde no cabe el nombre de la materia. */
-const ALTO_HORA = 76
+   bloques donde no cabe el nombre de la materia.
 
-/* Lo que se aparta la clase para dejar leer la marca de la hora.
-   No es una columna: las lineas y el fondo pasan por debajo, y por eso las
-   dos cosas se leen como una sola rejilla. Con "12 PM" -la marca mas larga-
-   ocupando hasta los 46 px, 52 deja un respiro de seis antes de que empiece
-   la clase, que ademas trae sus propios cuatro de margen. */
-const SANGRIA_HORAS = 52
+   Cien y no los setenta y seis de antes, y el numero sale de los umbrales de
+   BloqueClase, no del gusto. Ahora la clase ocupa el ancho entero y por tanto
+   tapa la marca de su hora, asi que tiene que poder decirla ella: con 76, una
+   clase de media hora medía 34 px -por debajo de los 44 que hacen falta para
+   que quepa el horario- y se quedaba muda justo despues de haber tapado la
+   unica referencia que habia. Con 100 mide 46 y lo dice.
+
+   De paso cruza el otro umbral: una clase de una hora pasa de 72 a 96 px, y
+   los 92 son los que hacen falta para que quepan el aula y la seccion. Antes
+   ninguna clase de una hora las enseñaba en el telefono. */
+const ALTO_HORA = 100
 
 /** Lunes a viernes; el fin de semana entra por el lunes */
 const diaDeHoy = () => {
@@ -208,12 +212,19 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
               </span>
             ))}
 
-            {/* Las clases se apartan de la marca lo justo para no taparla, y
-                llegan hasta el borde opuesto. Van en su propia capa porque
-                BloqueClase se coloca en porcentajes de su contenedor: dandole
-                uno que ya empieza sangrado, la cuenta de carriles sigue
-                sirviendo igual en el telefono y en escritorio sin tocarla. */}
-            <div className="absolute inset-y-0 right-2" style={{ left: SANGRIA_HORAS }}>
+            {/* Las clases ocupan el ancho entero, no lo que sobra al lado de
+                la marca. En una pantalla de 375 px, apartarlas cincuenta les
+                quitaba un septimo del ancho para dejar sitio a un texto que
+                casi siempre son dos caracteres.
+                La marca no se pierde: va detras. Se pinta antes en el DOM y el
+                fondo de la clase es opaco, asi que donde hay clase manda la
+                clase -que ademas dice su horario exacto, mas preciso que la
+                marca- y donde no la hay, la marca esta. Sin filtrar nada ni
+                calcular solapes: es orden de pintado.
+                Van en su propia capa porque BloqueClase se coloca en
+                porcentajes de su contenedor; dandole uno ya sangrado, la
+                cuenta de carriles sirve igual aqui y en escritorio. */}
+            <div className="absolute inset-y-0 inset-x-2">
               {porDia[dia].map((sesion) => (
                 <BloqueClase
                   key={sesion.id}
@@ -237,7 +248,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
                     top: aY(pista.inicio),
                     height: (pista.fin - pista.inicio) * pxPorMinuto - 5,
                   }}
-                  className="pointer-events-none absolute inset-x-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
+                  className="hueco-propuesto pointer-events-none absolute inset-x-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)]"
                 >
                   <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
                     <Plus size={13} strokeWidth={1.75} />

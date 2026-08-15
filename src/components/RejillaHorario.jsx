@@ -230,7 +230,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
                     top: aY(fantasma.inicio),
                     height: (fantasma.fin - fantasma.inicio) * pxPorMinuto - 5,
                   }}
-                  className="celda-fantasma pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
+                  className="celda-fantasma hueco-propuesto pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)]"
                 >
                   {/* Neutro y de trazo fino, no un boton verde relleno. Esto
                       es una pista de que ahi se puede crear algo, no una

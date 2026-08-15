@@ -675,6 +675,21 @@ body {
     background-color 200ms ease;
 }
 
+/* El hueco que se propone -al pasar el raton en escritorio, al abrir el dia
+   en el telefono- va OPACO y no translucido, aunque el color sea el mismo.
+
+   Es la vista previa de una clase, asi que tiene que tapar lo que taparia la
+   clase. Translucido dejaba pasar la marca de la hora del telefono, y salia
+   un "9" suelto flotando dentro del recuadro de "Toca para agregar", justo al
+   lado de su texto. La mezcla reproduce exactamente el tono que daba la tinta
+   al 2,8% sobre esta superficie: se ve igual que antes, pero ocluye.
+
+   Un color-mix y no un color fijo porque la superficie cambia con el tema; el
+   tono se recalcula solo en claro y en oscuro. */
+.hueco-propuesto {
+  background-color: color-mix(in oklab, var(--tinta) 2.8%, var(--panel-suave));
+}
+
 /* El pulgar del selector de vista se DESLIZA de una posicion a otra. Es la
    diferencia entre un mando y tres luces: encender el destino y apagar el
    origen obliga a volver a buscar donde quedaste, mientras que algo que se
