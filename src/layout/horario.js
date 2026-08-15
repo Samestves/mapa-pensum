@@ -88,6 +88,24 @@ export const enDoceHoras = (min) => {
 /** La hora en punto, para la columna de la izquierda */
 export const etiquetaHora = (min) => enDoceHoras(min)
 
+/**
+ * La hora para la marca del telefono: el meridiano solo cuando cambia.
+ *
+ * "7:00 AM, 8:00 AM, 9:00 AM..." repite doce veces algo que en una jornada
+ * cambia una sola vez, y los ceros no dicen nada porque todas las marcas caen
+ * en punto por definicion. Ese ruido se paga en tamaño de letra: es lo que
+ * obligaba a reservarle a la hora un carril de sesenta y dos pixeles.
+ *
+ * Queda "7 AM", luego solo el numero, y el meridiano vuelve a salir cuando de
+ * verdad aporta: "12 PM". Doce marcas, dos con meridiano.
+ */
+export const etiquetaHoraMovil = (min, previa) => {
+  const h = Math.floor(min / 60)
+  const hora = ((h + 11) % 12) + 1
+  const cambiaElDia = previa == null || Math.floor(previa / 60) < 12 !== h < 12
+  return cambiaElDia ? `${hora} ${h < 12 ? 'AM' : 'PM'}` : `${hora}`
+}
+
 /* Cuantas filas tiene la rejilla */
 export const FILAS = (CIERRA - ABRE) / 60
 

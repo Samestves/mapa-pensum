@@ -6,7 +6,7 @@ import {
   DIAS,
   DIAS_CORTOS,
   FILAS,
-  etiquetaHora,
+  etiquetaHoraMovil,
   franjaPropuesta,
   horasEnPunto,
   lineasDeHora,
@@ -22,11 +22,12 @@ const LINEA = 'border-[var(--horario-linea)]'
    bloques donde no cabe el nombre de la materia. */
 const ALTO_HORA = 76
 
-/* La columna de las horas es mas estrecha que en escritorio. Alli sobra
-   ancho; aqui los 88 px del escritorio se comian casi una cuarta parte de la
-   pantalla y dejaban las clases descentradas contra el borde derecho. Con 62
-   sigue cabiendo "11:00 AM" y el dia gana veintiseis pixeles. */
-const ANCHO_HORAS = 62
+/* Lo que se aparta la clase para dejar leer la marca de la hora.
+   No es una columna: las lineas y el fondo pasan por debajo, y por eso las
+   dos cosas se leen como una sola rejilla. Con "12 PM" -la marca mas larga-
+   ocupando hasta los 46 px, 52 deja un respiro de seis antes de que empiece
+   la clase, que ademas trae sus propios cuatro de margen. */
+const SANGRIA_HORAS = 52
 
 /** Lunes a viernes; el fin de semana entra por el lunes */
 const diaDeHoy = () => {
@@ -185,24 +186,34 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
             decide por que lado entra: sin eso, pasar de dia no diria si se
             avanza o se retrocede. */}
         <div key={dia} className={sentido > 0 ? 'entra-dia-derecha' : 'entra-dia-izquierda'}>
-          <div className={`flex border-b ${LINEA}`} style={{ height: FILAS * ALTO_HORA }}>
-            <div style={{ width: ANCHO_HORAS }} className="relative shrink-0">
-              {horasEnPunto().map((min) => (
-                <span
-                  key={min}
-                  style={{ top: aY(min) }}
-                  className="absolute right-2 translate-y-1.5 text-[11.5px] font-semibold tabular-nums text-tinta-tenue"
-                >
-                  {etiquetaHora(min)}
-                </span>
-              ))}
-            </div>
+          {/* Una sola superficie, no un carril de horas mas una columna de
+              dia. Las lineas la cruzan ENTERA y de borde a borde de la
+              pantalla, y la hora va escrita encima de ellas: eso es lo que
+              hace que la marca se lea como parte de la rejilla y no como una
+              barra lateral pegada al canto. Antes las lineas empezaban donde
+              acababa el carril y un border-l separaba las dos zonas, que es
+              justo lo que las delataba como cosas distintas. */}
+          <div
+            ref={refDia}
+            style={{ height: FILAS * ALTO_HORA, ...lineasDeHora(ALTO_HORA) }}
+            className={`relative border-b ${LINEA}`}
+          >
+            {horasEnPunto().map((min, i, todas) => (
+              <span
+                key={min}
+                style={{ top: aY(min) }}
+                className="pointer-events-none absolute left-3 translate-y-1 text-[10.5px] font-semibold tracking-wide tabular-nums text-tinta-tenue"
+              >
+                {etiquetaHoraMovil(min, i > 0 ? todas[i - 1] : null)}
+              </span>
+            ))}
 
-            <div
-              ref={refDia}
-              style={lineasDeHora(ALTO_HORA)}
-              className={`relative flex-1 border-l ${LINEA}`}
-            >
+            {/* Las clases se apartan de la marca lo justo para no taparla, y
+                llegan hasta el borde opuesto. Van en su propia capa porque
+                BloqueClase se coloca en porcentajes de su contenedor: dandole
+                uno que ya empieza sangrado, la cuenta de carriles sigue
+                sirviendo igual en el telefono y en escritorio sin tocarla. */}
+            <div className="absolute inset-y-0 right-2" style={{ left: SANGRIA_HORAS }}>
               {porDia[dia].map((sesion) => (
                 <BloqueClase
                   key={sesion.id}
@@ -226,7 +237,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
                     top: aY(pista.inicio),
                     height: (pista.fin - pista.inicio) * pxPorMinuto - 5,
                   }}
-                  className="pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
+                  className="pointer-events-none absolute inset-x-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] bg-tinta/[0.028]"
                 >
                   <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
                     <Plus size={13} strokeWidth={1.75} />
