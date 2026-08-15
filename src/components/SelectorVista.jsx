@@ -1,34 +1,12 @@
-import { CalendarDays, List, Waypoints } from 'lucide-react'
+import { VISTAS, indiceDeVista } from '../data/vistas'
 
 /**
- * Las tres formas de mirar la misma carrera.
+ * Selector de vista de ESCRITORIO: un solo mando de tres posiciones.
  *
- * El orden no es alfabetico ni casual: es el de la profundidad con la que se
- * usan. El mapa es lo que abre por defecto y responde "que desbloquea que";
- * la lista es ese mismo pensum leido en fila, para marcar rapido; el horario
- * ya es armar algo con lo que sabes. De mirar a hacer, de izquierda a derecha.
- *
- * Los iconos dicen lo que la vista ES, no una metafora prestada:
- * - Waypoints son puntos unidos por lineas, que es literalmente el grafo de
- *   prelaciones. El icono de mapa doblado de antes prometia geografia.
- * - List, sin el bloque relleno de LayoutList: en un segmentado los tres
- *   iconos tienen que pesar lo mismo o el mas oscuro parece el activo.
- * - CalendarDays es una rejilla de dias, que es exactamente lo que se ve al
- *   entrar. CalendarRange dibujaba una barra de rango y sugeria fechas.
- */
-const VISTAS = [
-  { id: 'mapa', icono: Waypoints, etiqueta: 'Mapa', titulo: 'Ver el mapa de prelaciones' },
-  { id: 'lista', icono: List, etiqueta: 'Lista', titulo: 'Ver el pensum como lista' },
-  {
-    id: 'horario',
-    icono: CalendarDays,
-    etiqueta: 'Horario',
-    titulo: 'Ver mi horario de la semana',
-  },
-]
-
-/**
- * Selector de vista: un solo mando de tres posiciones.
+ * En el telefono no sale: alli las mismas tres vistas viven en la barra
+ * inferior, que es donde llega el pulgar. Se apaga con md:hidden y no con un
+ * hook de medida para que el corte lo resuelva CSS en el primer fotograma, y
+ * cae exactamente donde useEsTelefono pone el suyo.
  *
  * Antes esto eran dos botones sueltos con dos ideas opuestas dentro de la
  * misma barra: el de mapa/lista enseñaba a DONDE ibas -icono de lista cuando
@@ -50,10 +28,7 @@ const VISTAS = [
  * condicion para que la cuenta del pulgar sea cierta.
  */
 function SelectorVista({ vista, alCambiar }) {
-  const indice = Math.max(
-    0,
-    VISTAS.findIndex((v) => v.id === vista),
-  )
+  const indice = indiceDeVista(vista)
 
   return (
     <div
@@ -62,7 +37,7 @@ function SelectorVista({ vista, alCambiar }) {
       /* La pista va hundida y el pulgar sale a la altura de la barra: el
          contraste entre los dos es lo que hace que se lea como un mando
          fisico de tres posiciones y no como tres botones pintados. */
-      className="transicion-tema relative grid h-8 shrink-0 grid-cols-3 rounded-xl border border-panel-borde bg-panel-suave p-0.5 sm:h-9"
+      className="transicion-tema relative hidden h-8 shrink-0 grid-cols-3 rounded-xl border border-panel-borde bg-panel-suave p-0.5 sm:h-9 md:grid"
     >
       <span
         aria-hidden="true"

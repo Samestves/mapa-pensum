@@ -8,6 +8,7 @@ import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import PanelAvisos from './AvisosCarrera'
+import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
@@ -255,6 +256,10 @@ function VistaCarrera({ carrera, alVolver }) {
             cualquier cosa que asomara por debajo. */}
         <PanelAvisos avisos={carrera.avisos} abierto={abierto === 'avisos'} alCerrar={cerrar} />
 
+        {/* Dentro del mismo contenedor que la vista y no fuera: los paneles
+            que se apoyan en el borde de abajo -la ficha del horario en
+            telefono- tienen que apoyarse en el borde de la barra, no en el de
+            la ventana, o quedan por debajo de ella. */}
         <PanelProgreso
           progreso={progreso}
           avanceGrupos={avanceGrupos}
@@ -267,6 +272,12 @@ function VistaCarrera({ carrera, alVolver }) {
           alFiltrarArea={filtrarArea}
         />
       </div>
+
+      {/* La navegacion del telefono va al final del arbol y fuera del
+          contenedor de la vista: es hermana suya, no algo flotando encima.
+          Asi se lleva su alto del reparto en vez de taparle los ultimos
+          pixeles al mapa o a la ultima hora del horario. */}
+      <BarraInferior vista={vista} alCambiar={setVista} />
     </div>
   )
 }

@@ -136,12 +136,16 @@ function BarraSuperior({
         <span className="hidden text-[12px] font-bold lg:inline">Carreras</span>
       </button>
 
-      {/* En movil el titulo no cabe y truncado se ve peor que ausente. */}
-      {/* Nombre corto arriba y el completo debajo. El subtitulo estaba en
+      {/* El nombre de la carrera, que en el telefono no se enseñaba en
+          ninguna parte: se entraba a un mapa sin titulo y solo el color decia
+          de cual era. No cabia porque el mando de las tres vistas se llevaba
+          114 px de los 355 utiles; ahora ese mando esta abajo y el sitio es
+          suyo.
+          Nombre corto arriba y el completo debajo. El subtitulo estaba en
           leading-tight pegado al titulo y en un peso demasiado ligero: ahora
           tiene aire y va en tinta-suave, que da 9:1 de contraste en los dos
           temas. */}
-      <div className="hidden min-w-0 flex-1 pl-1 sm:block">
+      <div className="min-w-0 flex-1 pl-1">
         <h1 className="truncate text-[15px] leading-snug font-extrabold tracking-tight text-tinta lg:text-base">
           {carrera.nombreCorto}
         </h1>
@@ -149,7 +153,6 @@ function BarraSuperior({
           {carrera.nombre} · {carrera.nucleo}
         </p>
       </div>
-      <div className="min-w-0 flex-1 sm:hidden" />
 
       {/* El anillo abre el detalle del avance, y va donde siempre estuvo: al
           principio del bloque de la derecha, pegado al selector de vista.
