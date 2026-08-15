@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { guardar, leer } from '../data/almacen'
 
 const CLAVE = 'mapa-pensum:instalar-descartado'
 
@@ -7,13 +8,7 @@ const yaInstalada = () =>
 
 const esIOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent)
 
-function descartado() {
-  try {
-    return localStorage.getItem(CLAVE) === 'si'
-  } catch {
-    return false
-  }
-}
+const descartado = () => leer(CLAVE) === 'si'
 
 /**
  * Decide si ofrecer instalar la aplicacion, y como.
@@ -74,11 +69,8 @@ export function useInstalable(retraso = 2600) {
   }, [evento])
 
   const descartar = useCallback(() => {
-    try {
-      localStorage.setItem(CLAVE, 'si')
-    } catch {
-      // Modo privado: no se recordara, pero al menos se cierra ahora
-    }
+    // Si no se puede recordar, al menos se cierra ahora
+    guardar(CLAVE, 'si')
     setModo(null)
   }, [])
 

@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, RotateCcw, TriangleAlert } from 'lucide-react'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
 import { colorArea, etiquetaArea } from '../theme/areas'
@@ -38,18 +39,16 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
   const [confirmando, setConfirmando] = useState(false)
   const caja = useRef(null)
 
+  const cancelar = useCallback(() => setConfirmando(false), [])
+  useCerrarConEscape(cancelar, confirmando)
+
   useEffect(() => {
     if (!confirmando) return
     const fuera = (e) => {
       if (!caja.current?.contains(e.target)) setConfirmando(false)
     }
-    const tecla = (e) => e.key === 'Escape' && setConfirmando(false)
     document.addEventListener('pointerdown', fuera)
-    document.addEventListener('keydown', tecla)
-    return () => {
-      document.removeEventListener('pointerdown', fuera)
-      document.removeEventListener('keydown', tecla)
-    }
+    return () => document.removeEventListener('pointerdown', fuera)
   }, [confirmando])
 
   return (
@@ -232,11 +231,7 @@ function PanelProgreso({
   const [pos, setPos] = useState(null)
   const [ancho, setAncho] = useState(ANCHO)
 
-  useEffect(() => {
-    const tecla = (e) => e.key === 'Escape' && alCerrar()
-    document.addEventListener('keydown', tecla)
-    return () => document.removeEventListener('keydown', tecla)
-  }, [alCerrar])
+  useCerrarConEscape(alCerrar)
 
   /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
      el render no hay alto que medir, y colocarlo luego daria un salto. */

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { guardarJSON, leerJSON } from '../data/almacen'
 import { ABRE, CIERRA, DIAS, posicionValida, repartirEnCarriles } from '../layout/horario'
 
 const CLAVE = 'mapa-pensum:horario'
@@ -21,24 +22,20 @@ const valida = (s) =>
   s.fin > s.inicio
 
 function leer(slug) {
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveDe(slug)) ?? '[]')
-    if (!Array.isArray(guardado)) return []
-    return guardado.filter(valida).map((s) => ({
-      id: s.id ?? `${s.codigo}-${s.dia}-${s.inicio}`,
-      codigo: s.codigo,
-      dia: s.dia,
-      inicio: s.inicio,
-      fin: s.fin,
-      seccion: texto(s.seccion),
-      aula: texto(s.aula),
-      profesor: texto(s.profesor),
-      // null = toma el color del area, el mismo que la materia tiene en el mapa
-      color: Number.isInteger(s.color) ? s.color : null,
-    }))
-  } catch {
-    return []
-  }
+  const guardado = leerJSON(claveDe(slug), [])
+  if (!Array.isArray(guardado)) return []
+  return guardado.filter(valida).map((s) => ({
+    id: s.id ?? `${s.codigo}-${s.dia}-${s.inicio}`,
+    codigo: s.codigo,
+    dia: s.dia,
+    inicio: s.inicio,
+    fin: s.fin,
+    seccion: texto(s.seccion),
+    aula: texto(s.aula),
+    profesor: texto(s.profesor),
+    // null = toma el color del area, el mismo que la materia tiene en el mapa
+    color: Number.isInteger(s.color) ? s.color : null,
+  }))
 }
 
 /**
@@ -67,11 +64,8 @@ export function useHorario(slug) {
       montado.current = true
       return
     }
-    try {
-      localStorage.setItem(claveDe(slug), JSON.stringify(sesiones))
-    } catch {
-      // Modo privado o cuota llena: se sigue usando, solo que sin recordar
-    }
+    // Si no se puede escribir se sigue usando, solo que sin recordar
+    guardarJSON(claveDe(slug), sesiones)
   }, [slug, sesiones])
 
   /** Crea o reemplaza. El id decide cual de las dos cosas es. */

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
 import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
@@ -50,10 +51,10 @@ function VistaCarrera({ carrera, alVolver }) {
 
   // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
   const [vista, setVista] = useState(
-    () => localStorage.getItem(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
+    () => leer(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
   )
   useEffect(() => {
-    localStorage.setItem(CLAVE_VISTA, vista)
+    guardar(CLAVE_VISTA, vista)
   }, [vista])
 
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:

@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { colocarBajoAncla } from '../layout/popover'
 
 const ANCHO = 178
@@ -20,11 +21,7 @@ function MenuClase({ ancla, opciones, alCerrar }) {
   const refPanel = useRef(null)
   const [pos, setPos] = useState(null)
 
-  useEffect(() => {
-    const tecla = (e) => e.key === 'Escape' && alCerrar()
-    document.addEventListener('keydown', tecla)
-    return () => document.removeEventListener('keydown', tecla)
-  }, [alCerrar])
+  useCerrarConEscape(alCerrar)
 
   /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
      el render no hay alto que medir, y colocarlo luego daria un salto. */

@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import {
   ABRE,
@@ -65,11 +66,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
   const [color, setColor] = useState(inicial.color ?? null)
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => {
-    const tecla = (e) => e.key === 'Escape' && alCerrar()
-    document.addEventListener('keydown', tecla)
-    return () => document.removeEventListener('keydown', tecla)
-  }, [alCerrar])
+  useCerrarConEscape(alCerrar)
 
   /* Se coloca AL LADO del cuadrado, no debajo del punto que se pulso.
      Colgando del click, la ficha tapaba la propia franja sobre la que se

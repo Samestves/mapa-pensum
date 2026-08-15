@@ -3,6 +3,7 @@ import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../hooks/usePensum'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
+import { leer } from '../data/almacen'
 import { descargarHorario } from '../data/exportarHorario'
 import RejillaHorario from './RejillaHorario'
 import HorarioMovil from './HorarioMovil'
@@ -74,13 +75,8 @@ function Horario({ carrera, estados }) {
   const bajar = async () => {
     setBajando(true)
     try {
-      let nombre = ''
-      try {
-        nombre = localStorage.getItem(CLAVE_NOMBRE) ?? ''
-      } catch {
-        // Sin nombre guardado la imagen sale igual, solo que sin firmar
-      }
-      await descargarHorario({ carrera, sesiones, porCodigo, nombre })
+      // Sin nombre guardado la imagen sale igual, solo que sin firmar
+      await descargarHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
     } finally {
       setBajando(false)
     }

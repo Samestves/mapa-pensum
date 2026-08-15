@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { guardar, leer } from '../data/almacen'
 
 const CLAVE = 'mapa-pensum:tema'
 
 function temaInicial() {
-  const guardado = localStorage.getItem(CLAVE)
+  const guardado = leer(CLAVE)
   if (guardado === 'claro' || guardado === 'oscuro') return guardado
   // Si el sistema pide claro se respeta; si no, oscuro por defecto
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro'
@@ -14,7 +15,7 @@ export function useTema() {
 
   useEffect(() => {
     document.documentElement.dataset.tema = tema
-    localStorage.setItem(CLAVE, tema)
+    guardar(CLAVE, tema)
   }, [tema])
 
   const alternarTema = useCallback(

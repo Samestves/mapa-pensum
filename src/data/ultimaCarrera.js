@@ -1,3 +1,5 @@
+import { guardar, leer } from './almacen'
+
 const CLAVE = 'mapa-pensum:ultima-carrera'
 
 /**
@@ -7,17 +9,10 @@ const CLAVE = 'mapa-pensum:ultima-carrera'
  * buscadores.
  */
 export function recordarCarrera(slug) {
-  try {
-    localStorage.setItem(CLAVE, slug)
-  } catch {
-    // Modo privado: no pasa nada, solo no habra atajo la proxima vez
-  }
+  // Si el almacen no deja escribir no pasa nada: solo no habra atajo
+  guardar(CLAVE, slug)
 }
 
 export function ultimaCarrera() {
-  try {
-    return localStorage.getItem(CLAVE)
-  } catch {
-    return null
-  }
+  return leer(CLAVE)
 }

@@ -1,5 +1,4 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
 import {
   ABRE,
   CIERRA,
@@ -16,6 +15,7 @@ import {
 } from '../layout/horario'
 import { useArrastreClase } from '../hooks/useArrastreClase'
 import BloqueClase from './BloqueClase'
+import HuecoPropuesto from './HuecoPropuesto'
 
 const LINEA = 'border-[var(--horario-linea)]'
 
@@ -223,28 +223,15 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
                 </span>
               )}
 
+              {/* celda-fantasma solo aqui: es la animacion de aparecer al
+                  pasar el raton, y en el telefono la pista no aparece, esta. */}
               {fantasma?.dia === i && !arrastrando && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    top: aY(fantasma.inicio),
-                    height: (fantasma.fin - fantasma.inicio) * pxPorMinuto - 5,
-                  }}
-                  className="celda-fantasma hueco-propuesto pointer-events-none absolute inset-x-1.5 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)]"
-                >
-                  {/* Neutro y de trazo fino, no un boton verde relleno. Esto
-                      es una pista de que ahi se puede crear algo, no una
-                      accion consumada: si pesa mas que las clases que ya
-                      estan puestas, compite con lo unico que importa. El
-                      color sale de la tinta del tema, asi que sirve igual en
-                      claro y en oscuro sin definir nada aparte. */}
-                  <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
-                    <Plus size={13} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-[11px] font-semibold tracking-wide text-tinta-tenue">
-                    Agregar materia
-                  </span>
-                </span>
+                <HuecoPropuesto
+                  franja={fantasma}
+                  pxPorMinuto={pxPorMinuto}
+                  etiqueta="Agregar materia"
+                  clase="celda-fantasma"
+                />
               )}
 
               {porDia[i].map((sesion) => (

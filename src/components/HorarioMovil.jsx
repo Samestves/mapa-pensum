@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   ABRE,
   CIERRA,
@@ -13,6 +13,7 @@ import {
 } from '../layout/horario'
 import { useDeslizar } from '../hooks/useDeslizar'
 import BloqueClase from './BloqueClase'
+import HuecoPropuesto from './HuecoPropuesto'
 
 const LINEA = 'border-[var(--horario-linea)]'
 
@@ -237,26 +238,13 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
                 />
               ))}
 
-              {/* La pista ocupa el hueco que ocuparia la clase, con su misma
-                  forma. No recibe toques: el contenedor se los queda, asi que
-                  se puede tocar tanto encima de ella como en cualquier otra
-                  hora libre. */}
               {pista && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    top: aY(pista.inicio),
-                    height: (pista.fin - pista.inicio) * pxPorMinuto - 5,
-                  }}
-                  className="hueco-propuesto pointer-events-none absolute inset-x-1 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)]"
-                >
-                  <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
-                    <Plus size={13} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-[11px] font-semibold text-tinta-tenue">
-                    Toca para agregar
-                  </span>
-                </span>
+                <HuecoPropuesto
+                  franja={pista}
+                  pxPorMinuto={pxPorMinuto}
+                  etiqueta="Toca para agregar"
+                  sangria="inset-x-1"
+                />
               )}
             </div>
           </div>
