@@ -9,6 +9,7 @@ import {
   etiquetaHora,
   franjaPropuesta,
   horasEnPunto,
+  lineasDeHora,
 } from '../layout/horario'
 import { useDeslizar } from '../hooks/useDeslizar'
 import BloqueClase from './BloqueClase'
@@ -199,9 +200,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
 
             <div
               ref={refDia}
-              style={{
-                backgroundImage: `repeating-linear-gradient(to bottom, var(--horario-linea) 0 1px, transparent 1px ${ALTO_HORA}px)`,
-              }}
+              style={lineasDeHora(ALTO_HORA)}
               className={`relative flex-1 border-l ${LINEA}`}
             >
               {porDia[dia].map((sesion) => (

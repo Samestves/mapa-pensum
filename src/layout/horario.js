@@ -92,6 +92,44 @@ export const etiquetaHora = (min) => enDoceHoras(min)
 export const FILAS = (CIERRA - ABRE) / 60
 
 /**
+ * El fondo con las lineas de hora de una columna de dia.
+ *
+ * Una rejilla de doce filas tiene TRECE lineas, y cada una tiene que tener un
+ * solo dueño. Aqui se repartian mal: la cabecera de dias dibujaba su borde
+ * inferior y el degradado dibujaba ademas una linea en su pixel cero, o sea
+ * que la de las siete la pintaban los dos. Pegadas y del mismo color se
+ * sumaban en una linea de dos pixeles, y solo se notaba con el
+ * desplazamiento arriba del todo: en cuanto se bajaba un poco, la del
+ * degradado se metia debajo de la cabecera -que es opaca y va por encima- y
+ * la linea volvia a su grosor. De ahi que se viera mas oscura solo a veces.
+ *
+ * El reparto ahora no se solapa:
+ *   - la de las 7:00 es el borde inferior de la cabecera, que es el limite de
+ *     arriba de la rejilla;
+ *   - las once de dentro -8:00 a 6:00 PM- las pinta este degradado, con la
+ *     linea al FINAL de cada hora y no al principio;
+ *   - la de las 7:00 PM es el borde inferior de la rejilla, que cruza tambien
+ *     la columna de las horas y cierra la esquina.
+ *
+ * El area pintada se limita a once horas -no doce- justamente para que el
+ * degradado no llegue a dibujar la ultima: si llegara, volveria a chocar con
+ * ese borde de abajo y habriamos movido el problema en vez de resolverlo.
+ *
+ * Vive aqui y no en cada vista porque la rejilla de escritorio y la del
+ * telefono dibujan las mismas lineas con distinto alto de fila, y dos copias
+ * de esta cuenta es como una de las dos se queda con el error.
+ */
+export function lineasDeHora(altoHora) {
+  return {
+    backgroundImage:
+      `repeating-linear-gradient(to bottom, transparent 0 ${altoHora - 1}px, ` +
+      `var(--horario-linea) ${altoHora - 1}px ${altoHora}px)`,
+    backgroundSize: `100% ${(FILAS - 1) * altoHora}px`,
+    backgroundRepeat: 'no-repeat',
+  }
+}
+
+/**
  * La hora con la que EMPIEZA cada fila.
  *
  * Una etiqueta por fila y ninguna suelta: la linea del cierre no se rotula,

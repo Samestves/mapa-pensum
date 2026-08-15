@@ -12,6 +12,7 @@ import {
   etiquetaHora,
   franjaPropuesta,
   horasEnPunto,
+  lineasDeHora,
 } from '../layout/horario'
 import { useArrastreClase } from '../hooks/useArrastreClase'
 import BloqueClase from './BloqueClase'
@@ -201,9 +202,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
           {DIAS.map((dia, i) => (
             <div
               key={dia}
-              style={{
-                backgroundImage: `repeating-linear-gradient(to bottom, var(--horario-linea) 0 1px, transparent 1px ${altoHora}px)`,
-              }}
+              style={lineasDeHora(altoHora)}
               className={`relative flex-1 border-l ${LINEA}`}
             >
               {/* Donde caeria la clase que se esta arrastrando. Siempre es
