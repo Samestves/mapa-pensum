@@ -1,5 +1,6 @@
-import { ArrowLeft, CalendarRange, LayoutList, Map, Moon, Route, Sun } from 'lucide-react'
+import { ArrowLeft, GraduationCap, Moon, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
+import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
 
 /* La forma comun de TODO lo que se pulsa en la cabecera. Vive en una
@@ -24,16 +25,19 @@ const ACTIVO = 'border border-transparent bg-panel-suave text-tinta'
  * Boton de la cabecera. Todos miden y pesan igual; en movil bajan a 32px,
  * que sigue siendo objetivo tactil comodo.
  *
- * 'etiqueta' saca el texto a la vista a partir del ancho que se le diga. El
- * title solo aparece al dejar el raton quieto un segundo, y en un telefono
- * no aparece nunca: una barra entera de iconos pelados no se entiende, y de
- * hecho no se entendio. Donde hay sitio, la palabra se ve.
+ * La etiqueta sale a la vista a partir de lg y de ningun otro sitio. Antes
+ * cada boton elegia el suyo -uno en sm, otro en lg, otro en xl- y la barra
+ * tenia cuatro formas distintas segun el ancho, apareciendo palabras de una
+ * en una. Con un solo corte solo hay dos: compacta o con texto.
+ *
+ * 'claveIcono' es para los botones cuyo icono cambia con el estado. Al
+ * cambiar ese valor React remonta el icono y la animacion de giro vuelve a
+ * correr, que es lo que convierte el cambio de tema en un gesto y no en un
+ * salto de un glifo a otro.
  */
-function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar }) {
+function Icono({ icono: Ico, titulo, etiqueta, claveIcono, activo, alPulsar }) {
   // Con etiqueta deja de ser cuadrado y crece con el texto
-  const ancho = etiqueta ? 'px-2 sm:px-2.5' : 'w-8 sm:w-9'
-  const visible =
-    desde === 'xl' ? 'hidden xl:inline' : desde === 'lg' ? 'hidden lg:inline' : 'hidden sm:inline'
+  const ancho = etiqueta ? 'px-2 lg:px-2.5' : 'w-8 sm:w-9'
 
   return (
     <button
@@ -42,19 +46,44 @@ function Icono({ icono: Ico, titulo, etiqueta, desde = 'sm', activo, alPulsar })
       title={titulo}
       aria-label={titulo}
       aria-pressed={activo === undefined ? undefined : activo}
-      className={`${BASE} rounded-lg ${ancho} ${activo ? ACTIVO : REPOSO}`}
+      className={`${BASE} group rounded-lg ${ancho} ${activo ? ACTIVO : REPOSO}`}
     >
-      <Ico size={16} className="shrink-0" />
-      {etiqueta && <span className={`${visible} text-[12px] font-bold`}>{etiqueta}</span>}
+      {/* Todos los iconos de la barra suben un pixel al pasar por encima. Es
+          la misma respuesta para todos a proposito: lo que hace que una fila
+          de botones se lea como un mando es que contesten igual al mismo
+          gesto. Los dos que tienen algo propio que decir -la flecha de salir
+          y el sol que releva a la luna- añaden lo suyo encima. */}
+      <Ico
+        key={claveIcono}
+        size={16}
+        className={`shrink-0 transition-transform duration-200 group-hover:-translate-y-px ${
+          claveIcono === undefined ? '' : 'icono-relevo'
+        }`}
+      />
+      {etiqueta && <span className="hidden text-[12px] font-bold lg:inline">{etiqueta}</span>}
     </button>
   )
 }
 
 /** Separador fino: agrupa la barra en bloques en vez de una fila plana */
 function Division() {
-  return <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-panel-borde sm:block" />
+  return <span aria-hidden="true" className="h-5 w-px shrink-0 bg-panel-borde" />
 }
 
+/**
+ * La cabecera de una carrera.
+ *
+ * Se lee en dos mitades y esa division es lo unico que la hace entendible de
+ * un vistazo: a la IZQUIERDA, donde estas -de donde saliste, que carrera es y
+ * como vas-; a la DERECHA, lo que puedes hacer. Antes las dos cosas iban
+ * mezcladas en una fila de cuadrados iguales, con el anillo de avance
+ * flotando en mitad de la nada.
+ *
+ * Y a la derecha, otra vez en orden de mando: primero el selector de vista,
+ * que es lo que mas se toca; despues las acciones que abren algo encima
+ * -avisos y planificar-; y al final, detras de una linea, el tema, que se
+ * elige una vez en la vida. Lo que mas se usa nunca va en el extremo.
+ */
 function BarraSuperior({
   carrera,
   tema,
@@ -85,17 +114,20 @@ function BarraSuperior({
     : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`
 
   return (
-    <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-3 sm:px-5">
+    <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-2 sm:px-5">
       {/* Volver al selector. Antes esto era el logo, y nadie lo encontraba:
           un logo se lee como marca, no como boton. Una flecha con la palabra
           al lado no deja lugar a dudas. En movil queda solo la flecha, que
-          es el gesto de "atras" que todo el mundo reconoce. */}
+          es el gesto de "atras" que todo el mundo reconoce.
+          La flecha se adelanta medio pixel al pasar por encima: es la unica
+          pieza de la barra que te saca de aqui, y ese tiron hacia la
+          izquierda dice hacia donde vas antes de pulsarla. */}
       <button
         type="button"
         onClick={alVolver}
         title="Ver todas las carreras"
         aria-label="Ver todas las carreras"
-        className={`${BASE} group rounded-lg px-2 sm:px-2.5 ${REPOSO}`}
+        className={`${BASE} group rounded-lg px-2 lg:px-2.5 ${REPOSO}`}
       >
         <ArrowLeft
           size={16}
@@ -104,13 +136,35 @@ function BarraSuperior({
         <span className="hidden text-[12px] font-bold lg:inline">Carreras</span>
       </button>
 
+      {/* El anillo de avance vive con la identidad, no en la fila de acciones.
+          Es lo que te esta pasando a TI en esta carrera, igual que el nombre
+          dice cual es: juntos se leen de una vez -"Sistemas, 34%"- y dejan
+          toda la derecha para las cosas que se pulsan. Suelto en medio de los
+          botones parecia un control mas y no se sabia de que.
+          Redondo y sin borde a proposito: es un indicador que ademas se
+          pulsa. Cuadrado por fuera para que el circulo salga circulo: antes
+          media 36x32 en movil y el 'rounded-full' lo dejaba en una elipse,
+          con el dibujo de 34px asomando por arriba y por abajo. */}
+      <button
+        type="button"
+        onClick={alAlternarAvance}
+        title={detalleAvance}
+        aria-label={detalleAvance}
+        aria-pressed={avanceAbierto}
+        className={`${BASE} w-8 rounded-full border border-transparent p-0 sm:w-9 ${
+          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
+        }`}
+      >
+        <AnilloAvance valor={avance} tamano={30} activo={avanceAbierto} />
+      </button>
+
       {/* En movil el titulo no cabe y truncado se ve peor que ausente:
-          queda solo el logo, que ya identifica la app. */}
+          queda el anillo, que ya ancla el lado izquierdo. */}
       {/* Nombre corto arriba y el completo debajo. El subtitulo estaba en
           leading-tight pegado al titulo y en un peso demasiado ligero: ahora
           tiene aire y va en tinta-suave, que da 9:1 de contraste en los dos
           temas. */}
-      <div className="hidden min-w-0 flex-1 sm:block">
+      <div className="hidden min-w-0 flex-1 pl-1 sm:block">
         <h1 className="truncate text-[15px] leading-snug font-extrabold tracking-tight text-tinta lg:text-base">
           {carrera.nombreCorto}
         </h1>
@@ -120,44 +174,9 @@ function BarraSuperior({
       </div>
       <div className="min-w-0 flex-1 sm:hidden" />
 
-      {/* El anillo de avance es el acceso al detalle.
-          Sin creditos oficiales no hay porcentaje de UC, pero si de materias:
-          el anillo se llena igual y el detalle lo aclara al pasar por encima.
-          Antes ahi habia un numero, una barra de ochenta pixeles y un
-          contador de UC, tres formas de decir lo mismo en fila.
-          Redondo y sin borde a proposito: es un indicador que ademas se
-          pulsa, no una accion mas de la fila. Comparte alto y respuesta al
-          hover con los demas para que la fila no se descuadre. */}
-      <button
-        type="button"
-        onClick={alAlternarAvance}
-        title={detalleAvance}
-        aria-label={detalleAvance}
-        className={`${BASE} w-9 rounded-full border-transparent p-0 ${
-          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
-        }`}
-      >
-        <AnilloAvance valor={avance} activo={avanceAbierto} />
-      </button>
-
-      {/* Un solo boton que alterna, no un segmentado de dos.
-          La lista no sobra en escritorio aunque lo parezca: marcar una
-          materia son dos clicks en el mapa -abrir la ficha y pulsar- y uno
-          solo en la lista. Quien entra por primera vez tiene cuarenta
-          materias que marcar, y ahi la lista gana de calle. Ademas es HTML
-          de verdad, no un lienzo SVG, que es lo unico que puede recorrer un
-          lector de pantalla.
-          Lo que sobraba era el peso visual: competia con Planificar. Ahora
-          es un boton mas, y ensena a donde te lleva, no donde estas. */}
-      <Icono
-        icono={vista === 'mapa' ? LayoutList : Map}
-        titulo={vista === 'mapa' ? 'Ver como lista' : 'Ver el mapa'}
-        etiqueta={vista === 'mapa' ? 'Lista' : 'Mapa'}
-        desde="xl"
-        alPulsar={() => alCambiarVista(vista === 'mapa' ? 'lista' : 'mapa')}
-      />
-
-      <Division />
+      {/* Mapa, lista y horario son la misma carrera mirada de tres maneras,
+          asi que son un mando de tres posiciones y no tres botones. */}
+      <SelectorVista vista={vista} alCambiar={alCambiarVista} />
 
       {/* Solo aparece donde hay algo que advertir, o sea en las carreras cuya
           fuente tiene huecos o dudas. En las demas no ocupa sitio. */}
@@ -167,23 +186,14 @@ function BarraSuperior({
         alPulsar={alAlternarAvisos}
       />
 
-      {/* El horario es una vista mas, como el mapa y la lista: se marca
-          activa cuando la estas viendo y vuelve al mapa al pulsarla otra
-          vez. La etiqueta se ve desde sm y no desde lg: es la unica pieza
-          nueva de la barra y con solo el icono no se encontraba. */}
+      {/* El birrete y no la carretera de antes: lo que hace esto no es
+          dibujarte un camino, es decirte cuanto te falta para graduarte, y el
+          icono nombra la meta en vez del tramite. Ademas la carretera y el
+          mapa de prelaciones eran dos glifos de lineas y puntos juntos en la
+          misma barra queriendo decir cosas distintas.
+          Se levanta un pelo al pasar por encima, como el gorro que se lanza. */}
       <Icono
-        icono={CalendarRange}
-        titulo={vista === 'horario' ? 'Volver al mapa' : 'Ver mi horario de la semana'}
-        etiqueta="Mi Horario"
-        activo={vista === 'horario'}
-        alPulsar={() => alCambiarVista(vista === 'horario' ? 'mapa' : 'horario')}
-      />
-
-      {/* Con etiqueta a partir de lg: es una funcion completa -calcula tu
-          ruta hasta el grado y la exporta- y con solo el icono no la
-          encontraba nadie, ni quien propuso la idea. */}
-      <Icono
-        icono={Route}
+        icono={GraduationCap}
         titulo="Planificar mi ruta hasta el grado y exportarla"
         etiqueta="Planificar"
         alPulsar={alPlanificar}
@@ -191,14 +201,15 @@ function BarraSuperior({
 
       <Division />
 
-      {/* Sol y luna se entienden sin palabra en cualquier idioma */}
+      {/* Sol y luna se entienden sin palabra en cualquier idioma. El icono
+          entra girando: el tema tarda 200ms en cambiar en toda la app y sin
+          ese giro el boton se quedaba quieto mientras el resto se movia. */}
       <Icono
         icono={tema === 'oscuro' ? Sun : Moon}
+        claveIcono={tema}
         titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
         alPulsar={alternarTema}
       />
-
-
     </header>
   )
 }

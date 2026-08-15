@@ -675,6 +675,44 @@ body {
     background-color 200ms ease;
 }
 
+/* El pulgar del selector de vista se DESLIZA de una posicion a otra. Es la
+   diferencia entre un mando y tres luces: encender el destino y apagar el
+   origen obliga a volver a buscar donde quedaste, mientras que algo que se
+   mueve se sigue con la vista sin pensarlo.
+
+   Misma curva que la barra colapsable y las hojas -sale rapido y frena al
+   final, sin rebote-. Un rebote aqui haria que el unico control de la
+   cabecera se moviera con otra fisica que el resto de la app, y dos fisicas
+   en la misma pantalla se notan aunque no se sepa decir por que.
+
+   La transicion va aqui y no en una utilidad por lo mismo que en
+   .pestana-barra: esta regla vive fuera de @layer y gana, asi que declararla
+   en un solo sitio evita que una utilidad de Tailwind la reemplace a medias. */
+.pulgar-vista {
+  transition:
+    transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 200ms ease;
+}
+
+/* El icono que releva a otro entra girando desde donde salio el anterior.
+   Solo lo llevan los botones cuyo icono cambia con el estado -hoy el sol y la
+   luna-: el tema tarda 200ms en recorrer toda la app y sin esto el boton que
+   lo dispara era lo unico quieto en la pantalla. */
+@keyframes relevar-icono {
+  from {
+    opacity: 0;
+    transform: rotate(-75deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.icono-relevo {
+  animation: relevar-icono 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* El panel de avance entra desde el borde en el que se apoya: desde abajo en
    movil, desde la derecha en escritorio. Que entre desde su propio borde es
    lo que lo hace leerse como una hoja que se levanta y no como algo que
@@ -882,6 +920,7 @@ body {
   .celda-fantasma,
   .popover-clase,
   .menu-clase,
+  .icono-relevo,
   .aviso-entrando {
     animation: none;
   }
@@ -894,6 +933,7 @@ body {
   .barra-colapsable,
   .barra-contenido,
   .pestana-barra,
+  .pulgar-vista,
   .tarjeta-carrera,
   .tarjeta-carrera > * {
     transition: none;

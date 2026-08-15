@@ -26,11 +26,16 @@ export function BotonAvisos({ cantidad, abierto, alPulsar }) {
       title={etiqueta}
       aria-label={etiqueta}
       aria-expanded={abierto}
-      className={`transicion-tema grid size-8 shrink-0 place-items-center rounded-lg border text-cursando transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97] sm:size-9 ${
+      className={`transicion-tema group grid size-8 shrink-0 place-items-center rounded-lg border text-cursando transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97] sm:size-9 ${
         abierto ? 'border-transparent bg-panel-suave' : 'border-panel-borde hover:bg-panel-suave'
       }`}
     >
-      <TriangleAlert size={16} />
+      {/* Sube un pixel como el resto de la barra: es un boton mas de la fila
+          y responder distinto al mismo gesto lo desemparejaria del grupo. */}
+      <TriangleAlert
+        size={16}
+        className="transition-transform duration-200 group-hover:-translate-y-px"
+      />
     </button>
   )
 }
