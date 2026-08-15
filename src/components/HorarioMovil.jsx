@@ -72,18 +72,32 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
   const aY = (min) => (min - ABRE) * pxPorMinuto
 
   /**
-   * La primera hora libre del dia, para dejar ahi la pista de que se puede
+   * El primer hueco libre del dia, para dejar ahi la pista de que se puede
    * tocar.
    *
    * En un telefono no hay hover, asi que la señal que en escritorio aparece
    * al pasar el raton no existe: sin nada, la rejilla es un dibujo y no se
    * sabe que responde. En vez de un cartel al margen, la pista va donde de
    * verdad hay que tocar y con la forma que tendra la clase. Se apaga sola en
-   * cuanto el dia se llena, porque entonces ya no hay nada que enseñar. */
+   * cuanto el dia se llena.
+   *
+   * Los sitios donde puede empezar no son solo las horas en punto: tambien
+   * justo donde acaba cada clase. Buscando solo de hora en hora, un dia con
+   * una clase de 7:00 a 8:30 mandaba la pista a las 9:00 y se saltaba el
+   * hueco de las 8:30, que es precisamente el que el iman de escritorio
+   * ofrece primero. Ordenando los dos tipos de candidato y quedandose con el
+   * mas temprano que sea valido, la pista se encadena igual que alli. */
   const pista = useMemo(() => {
-    for (let hora = ABRE; hora < CIERRA; hora += 60) {
-      const franja = franjaPropuesta(porDia[dia], hora)
-      if (franja && franja.inicio === hora) return franja
+    const delDia = porDia[dia]
+    const candidatos = [
+      ...Array.from({ length: FILAS }, (_, i) => ABRE + i * 60),
+      ...delDia.map((s) => s.fin),
+    ].sort((a, b) => a - b)
+
+    for (const inicio of candidatos) {
+      if (inicio >= CIERRA) break
+      const franja = franjaPropuesta(delDia, inicio)
+      if (franja && franja.inicio === inicio) return franja
     }
     return null
   }, [porDia, dia])

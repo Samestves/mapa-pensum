@@ -529,6 +529,16 @@ body {
   animation: entrar-panel 220ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Donde no hay hover, los tres puntos de cada clase se quedan visibles. En un
+   telefono el estado "al pasar por encima" no existe nunca, asi que
+   esconderlos ahi no los hace discretos: los hace inalcanzables, y con ellos
+   editar, duplicar y eliminar. */
+@media (hover: none) {
+  .acciones-clase {
+    opacity: 1;
+  }
+}
+
 /* El dia entra por el lado del que viene. Sin eso, pasar de dia en el
    telefono seria un cambio de contenido sin direccion y no se sabria si se
    avanzo o se retrocedio. */

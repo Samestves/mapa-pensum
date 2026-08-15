@@ -87,7 +87,7 @@ function BloqueClase({
           e.stopPropagation()
           alAbrirMenu(sesion, e.currentTarget)
         }}
-        className={`absolute top-1 right-1 grid size-6 cursor-pointer place-items-center rounded-md text-tinta-tenue transition-[opacity,background-color] duration-150 hover:bg-tinta/[0.06] hover:text-tinta focus-visible:opacity-100 ${
+        className={`acciones-clase absolute top-1 right-1 grid size-6 cursor-pointer place-items-center rounded-md text-tinta-tenue transition-[opacity,background-color] duration-150 hover:bg-tinta/[0.06] hover:text-tinta focus-visible:opacity-100 ${
           menuAbierto ? 'bg-tinta/[0.06] text-tinta opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}
       >
