@@ -164,11 +164,25 @@ function VistaCarrera({ carrera, alVolver }) {
             centro de la pantalla competia con el mapa.
             Con la barra plegada tampoco se queda encendido: ahi la señal es
             acercar el raton al borde de arriba de la ventana. */}
-        {/* El envoltorio solo centra; la animacion va en el boton, para que
-            escalar no pelee con el translate que lo coloca sobre la linea.
+        {/* El envoltorio solo coloca; la animacion va en el boton, para que
+            escalar no pelee con el translate.
             pointer-events-none mientras esta oculto: si no, seria un blanco
-            de click invisible plantado encima del horario. */}
-        <div className="pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
+            de click invisible plantado encima del horario.
+
+            El desplazamiento vertical NO es el mismo en los dos estados, y
+            ahi estaba el fallo. Iba siempre centrado sobre el borde inferior
+            de la barra -medio boton arriba, medio abajo-, que es justo lo que
+            se quiere mientras hay una linea que montar. Pero plegada, esa
+            linea es el borde de arriba de la ventana: el boton quedaba de -14
+            a 14 y el contenedor, que recorta, empieza en 0. Medido: catorce
+            pixeles cortados, la mitad exacta. De ahi que saliera "a medias".
+            Plegada baja entero por debajo de la linea, que es el unico sitio
+            donde hay pantalla. */}
+        <div
+          className={`pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 transition-transform duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            barraOculta ? 'translate-y-1.5' : '-translate-y-1/2'
+          }`}
+        >
           <button
             type="button"
             onClick={() => {

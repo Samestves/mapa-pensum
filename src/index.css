@@ -675,6 +675,25 @@ body {
     background-color 200ms ease;
 }
 
+/* Donde no hay hover, la pestaña se queda puesta.
+   Aparecer al acercar el raton es la forma correcta en un escritorio: es un
+   control que se usa una vez cada mucho y encendido siempre competiria con el
+   mapa. Pero en un telefono ese "acercar el raton" no ocurre nunca. Medido en
+   un movil: opacidad 0 y pointer-events none, o sea que la funcion no existia
+   alli -no se podia plegar la barra, y si se hubiera podido, no habria manera
+   de traerla de vuelta-. Un modo inmersivo sin salida no es un modo, es una
+   trampa.
+   Es la misma regla que ya llevan los tres puntos de cada clase, y por la
+   misma razon: esconder algo tras un estado que el dispositivo no tiene no lo
+   hace discreto, lo hace inalcanzable. */
+@media (hover: none) {
+  .pestana-barra {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
 /* El hueco que se propone -al pasar el raton en escritorio, al abrir el dia
    en el telefono- va OPACO y no translucido, aunque el color sea el mismo.
 
