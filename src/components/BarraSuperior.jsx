@@ -136,30 +136,7 @@ function BarraSuperior({
         <span className="hidden text-[12px] font-bold lg:inline">Carreras</span>
       </button>
 
-      {/* El anillo de avance vive con la identidad, no en la fila de acciones.
-          Es lo que te esta pasando a TI en esta carrera, igual que el nombre
-          dice cual es: juntos se leen de una vez -"Sistemas, 34%"- y dejan
-          toda la derecha para las cosas que se pulsan. Suelto en medio de los
-          botones parecia un control mas y no se sabia de que.
-          Redondo y sin borde a proposito: es un indicador que ademas se
-          pulsa. Cuadrado por fuera para que el circulo salga circulo: antes
-          media 36x32 en movil y el 'rounded-full' lo dejaba en una elipse,
-          con el dibujo de 34px asomando por arriba y por abajo. */}
-      <button
-        type="button"
-        onClick={alAlternarAvance}
-        title={detalleAvance}
-        aria-label={detalleAvance}
-        aria-pressed={avanceAbierto}
-        className={`${BASE} w-8 rounded-full border border-transparent p-0 sm:w-9 ${
-          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
-        }`}
-      >
-        <AnilloAvance valor={avance} tamano={30} activo={avanceAbierto} />
-      </button>
-
-      {/* En movil el titulo no cabe y truncado se ve peor que ausente:
-          queda el anillo, que ya ancla el lado izquierdo. */}
+      {/* En movil el titulo no cabe y truncado se ve peor que ausente. */}
       {/* Nombre corto arriba y el completo debajo. El subtitulo estaba en
           leading-tight pegado al titulo y en un peso demasiado ligero: ahora
           tiene aire y va en tinta-suave, que da 9:1 de contraste en los dos
@@ -173,6 +150,30 @@ function BarraSuperior({
         </p>
       </div>
       <div className="min-w-0 flex-1 sm:hidden" />
+
+      {/* El anillo abre el detalle del avance, y va donde siempre estuvo: al
+          principio del bloque de la derecha, pegado al selector de vista.
+          Estuvo un tiempo a la izquierda con el nombre de la carrera, porque
+          describe la carrera igual que el nombre y juntos se leen de una vez
+          -"Sistemas, 34%"-. La razon era buena y aun asi pierde: la gente ya
+          sabe donde esta este boton, y romper esa memoria cuesta mas de lo
+          que da tenerlo mejor agrupado.
+          Redondo y sin borde a proposito: es un indicador que ademas se
+          pulsa. Cuadrado por fuera para que el circulo salga circulo: antes
+          media 36x32 en movil y el 'rounded-full' lo dejaba en una elipse,
+          con el dibujo de 34px asomando por arriba y por abajo. */}
+      <button
+        type="button"
+        onClick={(e) => alAlternarAvance(e.currentTarget)}
+        title={detalleAvance}
+        aria-label={detalleAvance}
+        aria-expanded={avanceAbierto}
+        className={`${BASE} w-8 rounded-full border border-transparent p-0 sm:w-9 ${
+          avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
+        }`}
+      >
+        <AnilloAvance valor={avance} tamano={30} activo={avanceAbierto} />
+      </button>
 
       {/* Mapa, lista y horario son la misma carrera mirada de tres maneras,
           asi que son un mando de tres posiciones y no tres botones. */}

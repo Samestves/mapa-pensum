@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import { colorArea, colorNodo, etiquetaArea } from '../theme/areas'
+import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
+import { colorArea, etiquetaArea } from '../theme/areas'
+
+const ANCHO = 304
 
 /** Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado. */
 function CuotaGrupo({ avance }) {
@@ -82,9 +86,9 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
           type="button"
           onClick={() => setConfirmando(true)}
           disabled={!hayMarcas}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-panel-borde px-3 py-2 text-[11px] font-semibold text-tinta-suave hover:text-tinta disabled:cursor-not-allowed disabled:opacity-35"
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 text-[11px] font-semibold text-tinta-tenue transition-colors hover:text-tinta disabled:cursor-not-allowed disabled:opacity-35"
         >
-          <RotateCcw size={14} />
+          <RotateCcw size={13} />
           Reiniciar mi avance
         </button>
       )}
@@ -93,14 +97,13 @@ function BotonReinicio({ reiniciar, hayMarcas }) {
 }
 
 /**
- * Barra de composicion de la carrera.
+ * Como esta repartida la carrera.
  *
- * Antes era una barra de un solo color que solo decia el porcentaje, o sea
- * lo mismo que el numero de al lado. Esta reparte los cuatro estados en sus
- * colores, asi que de un vistazo se ve la forma de la carrera: cuanto llevas
- * hecho, cuanto tienes en marcha, cuanto se te ha abierto y cuanto sigue
- * cerrado. Es la misma tinta que usa el mapa, asi que no hay que aprender
- * una leyenda nueva.
+ * Es lo unico que de verdad hace falta ver aqui, y por eso es lo unico que se
+ * queda en primer plano. Reparte los cuatro estados en sus colores, asi que
+ * de un vistazo se ve la forma de la carrera: cuanto llevas hecho, cuanto
+ * tienes en marcha, cuanto se te ha abierto y cuanto sigue cerrado. Es la
+ * misma tinta que usa el mapa, asi que no hay leyenda nueva que aprender.
  */
 function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total }) {
   if (!total) return null
@@ -109,7 +112,7 @@ function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total 
     { clave: 'aprobadas', n: aprobadas, color: 'var(--estado-aprobada)', texto: 'aprobadas' },
     { clave: 'cursando', n: cursando, color: 'var(--estado-cursando)', texto: 'cursando' },
     { clave: 'disponibles', n: disponibles, color: 'var(--tinta-suave)', texto: 'puedes inscribir' },
-    { clave: 'bloqueadas', n: bloqueadas, color: 'var(--panel-borde)', texto: 'aun bloqueadas' },
+    { clave: 'bloqueadas', n: bloqueadas, color: 'var(--panel-borde)', texto: 'aún bloqueadas' },
   ].filter((t) => t.n > 0)
 
   return (
@@ -126,10 +129,7 @@ function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total 
       <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1">
         {tramos.map((t) => (
           <li key={t.clave} className="flex items-center gap-1.5 text-[11px] text-tinta-suave">
-            <span
-              className="size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: t.color }}
-            />
+            <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
             <span className="font-mono font-bold text-tinta">{t.n}</span>
             <span className="min-w-0 truncate">{t.texto}</span>
           </li>
@@ -140,64 +140,19 @@ function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total 
 }
 
 /**
- * Lo que puedes inscribir ahora mismo.
- *
- * Es la razon de abrir este panel. Antes aqui solo habia un numero suelto
- * -"Disponibles: 11"- que no se puede usar para nada: lo que el estudiante
- * quiere saber es CUALES son esas once, y eso obligaba a ir a buscarlas al
- * mapa una por una.
- */
-function ParaInscribir({ materias }) {
-  if (!materias.length) return null
-
-  return (
-    <div>
-      <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-        Puedes inscribir ahora ({materias.length})
-      </h3>
-      <ul className="mt-1.5 flex flex-col gap-1">
-        {materias.map((a) => (
-          <li
-            key={a.codigo}
-            className="flex items-center gap-2 rounded-lg border border-panel-borde px-2.5 py-1.5"
-          >
-            <span
-              className="size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: colorNodo(a) }}
-            />
-            <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-tinta">
-              {a.nombre}
-            </span>
-            <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
-              {a.semestre ? `S${a.semestre}` : ''} · {a.uc} UC
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-/**
  * Filtro por area. Vivia en la leyenda flotante del mapa, que se quito por
- * estorbar: era un panel permanente sobre el lienzo y solo aparecia en
- * Sistemas, la unica carrera con las areas clasificadas.
- *
- * El filtro si era una funcion de verdad -el unico sitio desde donde se podia
- * aislar un area-, asi que se muda aqui en vez de perderse. Y encaja: el
- * desglose por area ya se calculaba en usePensum y no se pintaba en ningun
- * sitio, o sea que era dato muerto.
+ * estorbar. El filtro si era una funcion de verdad -el unico sitio desde
+ * donde se puede aislar un area-, asi que se conserva; pero es una
+ * herramienta del mapa y no una medida de avance, y por eso va plegado.
  */
 function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
   if (!areas.length) return null
 
   return (
-    <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+    <div>
       <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">Áreas</h3>
-      <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
-        Toca una para aislarla en el mapa.
-      </p>
-      <div className="flex flex-col gap-1">
+      <p className="mt-0.5 mb-1.5 text-[10px] text-tinta-tenue">Toca una para aislarla en el mapa.</p>
+      <div className="flex flex-col gap-0.5">
         {areas.map((a) => {
           const activa = areaFiltrada === a.area
           const apagada = areaFiltrada && !activa
@@ -208,7 +163,7 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
               onClick={() => alFiltrarArea(activa ? null : a.area)}
               title={`Aislar ${etiquetaArea(a.area)}`}
               aria-pressed={activa}
-              className={`flex items-center gap-2 rounded px-1 py-1 text-left transition-opacity ${
+              className={`flex items-center gap-2 rounded px-1 py-0.5 text-left transition-opacity ${
                 apagada ? 'opacity-40 hover:opacity-75' : ''
               }`}
             >
@@ -235,10 +190,26 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
 }
 
 /**
- * Popover de detalle del avance, anclado al chip de progreso de la cabecera.
- * Solo trae lo que NO esta ya a la vista en otro sitio: el desglose en
- * numeros, las cuotas de electivas y el reinicio. El porcentaje vive en el
- * chip. El filtro por area vive aqui desde que se quito la leyenda flotante.
+ * El avance de la carrera, colgado del anillo que lo abre.
+ *
+ * Antes era un cajon: pegado al borde derecho a lo alto en escritorio y una
+ * hoja desde abajo en el telefono. Dos formas distintas del mismo contenido,
+ * y las dos mucho mas grandes de lo que tenian que decir. Un cajon de pared a
+ * pared promete el peso de una seccion entera de la aplicacion; esto es una
+ * consulta de dos segundos: como voy.
+ *
+ * Ahora es una nubecita anclada al anillo, la misma pieza que ya usa el menu
+ * de una clase en el horario -misma colocacion, mismo origen de animacion-, y
+ * la misma en el telefono que en el escritorio. Colgar de lo que lo abrio dice
+ * de donde salio y a que pertenece; una hoja que sube desde abajo no lo dice.
+ *
+ * Y adelgaza. Lo que se queda a la vista es el porcentaje, los creditos y como
+ * esta repartida la carrera, que es lo que se viene a mirar. La lista de "lo
+ * que puedes inscribir ahora" se va entera: eran hasta once filas ocupando el
+ * mejor sitio para repetir lo que el mapa ya pinta en verde y lo que
+ * Planificar calcula entero: cuantas son sigue estando, en la leyenda. Las
+ * electivas y las areas quedan plegadas, que es donde estaban, porque ninguna
+ * de las dos es la pregunta que trae a nadie aqui.
  */
 function PanelProgreso({
   progreso,
@@ -246,64 +217,81 @@ function PanelProgreso({
   reiniciar,
   hayMarcas,
   abierto,
+  ancla,
   alCerrar,
   areaFiltrada,
   alFiltrarArea,
 }) {
-  const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } =
-    progreso
+  const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } = progreso
   // Sin creditos oficiales no hay porcentaje: se muestran materias y UC sueltas
   const hayPorcentaje = progreso.porcentaje != null
   const porcentaje = useNumeroAnimado(progreso.porcentaje ?? 0)
   const grupos = Object.values(avanceGrupos)
 
-  if (!abierto) return null
+  const refPanel = useRef(null)
+  const [pos, setPos] = useState(null)
+  const [ancho, setAncho] = useState(ANCHO)
 
-  return (
-    <>
-      {/* El velo solo oscurece en movil, donde la hoja tapa el mapa. En
-          escritorio el panel va al lado y el mapa se sigue viendo y usando:
-          atenuarlo ahi seria fingir que hay un modal donde no lo hay. */}
+  useEffect(() => {
+    const tecla = (e) => e.key === 'Escape' && alCerrar()
+    document.addEventListener('keydown', tecla)
+    return () => document.removeEventListener('keydown', tecla)
+  }, [alCerrar])
+
+  /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
+     el render no hay alto que medir, y colocarlo luego daria un salto. */
+  useLayoutEffect(() => {
+    if (!abierto || !ancla) return
+    const cabe = anchoQueCabe(ANCHO)
+    setAncho(cabe)
+    setPos(colocarBajoAncla(ancla, cabe, refPanel.current?.offsetHeight ?? 0))
+  }, [abierto, ancla])
+
+  if (!abierto || !ancla) return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-50">
+      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer el mapa, que
+          es justo lo que se esta mirando. El cajon traia un velo negro en
+          movil porque tapaba media pantalla; una nubecita no tapa nada. */}
       <button
         type="button"
         aria-label="Cerrar"
         onClick={alCerrar}
-        className="fixed inset-0 z-30 cursor-default bg-black/40 backdrop-blur-[2px] md:bg-transparent md:backdrop-blur-none"
+        className="absolute inset-0 cursor-default"
       />
 
-      {/* Antes era un globo flotando arriba a la derecha. En movil ocupaba
-          casi toda la pantalla flotando en el aire, sin quedar anclado a
-          ningun borde, y eso es lo que se siente raro: un panel de ese
-          tamaño tiene que apoyarse en algo.
-          Ahora se apoya. En movil sube desde abajo, que es de donde se
-          esperan las hojas y donde llega el pulgar; en escritorio se pega al
-          borde derecho a lo alto, como un cajon. Mismo contenido, dos formas
-          que si tienen sitio propio. */}
-      <div className="hoja-avance transicion-tema absolute inset-x-0 bottom-0 z-40 flex max-h-[85%] flex-col gap-4 overflow-y-auto rounded-t-2xl border border-b-0 border-panel-borde bg-panel/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-xl md:inset-x-auto md:top-0 md:right-0 md:bottom-0 md:max-h-none md:w-[20rem] md:rounded-t-none md:rounded-l-2xl md:border-b md:border-r-0 md:p-5">
-        {/* Asa: en movil dice "esto se arrastra o se cierra tocando fuera" */}
-        <span
-          aria-hidden="true"
-          className="mx-auto -mt-1 mb-1 h-1 w-10 shrink-0 rounded-full bg-panel-borde md:hidden"
-        />
-        {/* El panel no decia en ningun sitio que era. Ahora se presenta. */}
-        <header className="flex items-start justify-between gap-3">
+      <div
+        ref={refPanel}
+        role="dialog"
+        aria-label="Tu avance"
+        style={{
+          width: ancho,
+          transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
+          transformOrigin: pos?.origen,
+          visibility: pos ? 'visible' : 'hidden',
+        }}
+        className="menu-clase transicion-tema absolute top-0 left-0 flex max-h-[min(78vh,34rem)] flex-col gap-3.5 overflow-y-auto rounded-2xl border border-panel-borde bg-panel p-4 shadow-2xl"
+      >
+        {/* El porcentaje grande y los creditos debajo. Entero, no un decimal:
+            "0.0%" se lee como un error de calculo, y nadie planifica su
+            carrera por decimas. */}
+        <header className="flex items-baseline justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[13px] leading-tight font-extrabold text-tinta">Tu avance</h2>
-            <p className="mt-0.5 text-[11px] text-tinta-suave">
+            <h2 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+              Tu avance
+            </h2>
+            <p className="mt-1 truncate text-[11px] text-tinta-suave">
               {hayPorcentaje
                 ? `${ucAprobadas + ucElectivas} de ${ucTitulo} UC del título`
                 : `${ucAprobadas} UC de ${progreso.ucTotales} en obligatorias`}
             </p>
           </div>
-          {/* Entero, no un decimal. "0.0%" se lee como un error de calculo, y
-              nadie planifica su carrera por decimas. */}
           <div className="shrink-0 text-right">
             <span className="font-mono text-3xl leading-none font-extrabold text-aprobada">
               {hayPorcentaje ? `${Math.round(porcentaje)}%` : aprobadas}
             </span>
-            {!hayPorcentaje && (
-              <span className="font-mono text-sm text-tinta-tenue">/{total}</span>
-            )}
+            {!hayPorcentaje && <span className="font-mono text-sm text-tinta-tenue">/{total}</span>}
           </div>
         </header>
 
@@ -315,16 +303,9 @@ function PanelProgreso({
           total={total}
         />
 
-        {/* Lo unico accionable del panel va antes que cualquier resumen: es
-            lo que se viene a mirar. */}
-        <ParaInscribir materias={progreso.paraInscribir} />
-
-        {/* Electivas y areas bajan a un desplegable cerrado. Son utiles pero
-            no son lo que se busca al abrir el avance, y ocupando el sitio
-            bueno tapaban lo que si. */}
         {(grupos.length > 0 || progreso.porArea.length > 0) && (
-          <details className="group/mas">
-            <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg border border-panel-borde px-3 py-2 text-[11px] font-bold text-tinta-suave hover:text-tinta">
+          <details className="group/mas border-t border-panel-borde pt-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] font-bold text-tinta-suave hover:text-tinta">
               Electivas y áreas
               <ChevronDown
                 size={14}
@@ -332,9 +313,9 @@ function PanelProgreso({
               />
             </summary>
 
-            <div className="mt-2 flex flex-col gap-3">
+            <div className="mt-3 flex flex-col gap-3">
               {grupos.length > 0 && (
-                <div className="transicion-tema rounded-lg border border-panel-borde p-3">
+                <div>
                   <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
                     Electivas
                   </h3>
@@ -360,11 +341,12 @@ function PanelProgreso({
           </details>
         )}
 
-        <div className="mt-auto border-t border-panel-borde pt-3">
+        <div className="border-t border-panel-borde pt-2.5">
           <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
         </div>
       </div>
-    </>
+    </div>,
+    document.body,
   )
 }
 

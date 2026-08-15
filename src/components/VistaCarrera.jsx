@@ -59,6 +59,11 @@ function VistaCarrera({ carrera, alVolver }) {
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
   // un solo valor en vez de un booleano por panel, y no hay que apagar nada.
   const { abierto, alternar, cerrar } = usePaneles()
+  /* De que boton cuelga el avance. Se guarda su caja al abrirlo y no una ref
+     al elemento: el popover solo necesita saber donde estaba en ese momento,
+     y una caja es un valor muerto que no puede quedarse apuntando a un nodo
+     que ya no existe. */
+  const [anclaAvance, setAnclaAvance] = useState(null)
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
   /* Si el raton esta sobre la cabecera. La zona sensible es la cabecera y
@@ -140,7 +145,10 @@ function VistaCarrera({ carrera, alVolver }) {
             vista={vista}
             alCambiarVista={setVista}
             avanceAbierto={abierto === 'avance'}
-            alAlternarAvance={() => alternar('avance')}
+            alAlternarAvance={(boton) => {
+              setAnclaAvance(boton.getBoundingClientRect())
+              alternar('avance')
+            }}
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
@@ -238,6 +246,7 @@ function VistaCarrera({ carrera, alVolver }) {
           reiniciar={reiniciar}
           hayMarcas={hayMarcas}
           abierto={abierto === 'avance'}
+          ancla={anclaAvance}
           alCerrar={cerrar}
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
