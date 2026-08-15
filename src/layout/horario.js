@@ -21,28 +21,36 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 19 * 60
 
-/* Alto de una fila de hora. No es constante: se reparte la altura disponible
-   entre las horas de la jornada.
+/* Alto de una fila de hora en escritorio, por tramo de ancho.
 
-   Aqui hay un limite que conviene tener escrito, porque se intento al reves y
-   no sale: celda cuadrada, ancho completo y jornada entera a la vista son
-   tres cosas que no caben juntas. En un monitor de 1440 la columna mide 270
-   px; con la fila igual de alta, la jornada se va a miles de pixeles de
-   desplazamiento. Manda el ancho completo -la semana es lo que se viene a
-   mirar- y la fila se queda con todo el alto que le deje la pantalla.
+   Antes esto no era una medida sino un reparto: se cogia el alto de la
+   ventana y se dividia entre las doce horas para que la jornada entera
+   cupiese sin desplazarse. Cabia, si, pero a costa de todo lo demas. En una
+   ventana normal salian filas de 66 px contra columnas de 180: rectangulos
+   aplastados donde una clase de una hora no tiene sitio ni para su nombre y
+   su horario. Y encima el reparto dejaba un hueco muerto abajo, porque
+   floor(alto/12) tira hasta once pixeles que ya no los recuperaba nadie.
 
-   No hay tope por arriba a proposito: la fila se queda con TODO lo que
-   sobre, que es lo mas alta -y por tanto lo mas cuadrada- que puede ser sin
-   obligar a desplazarse. Recortar once filas en vez de catorce sube el alto
-   util un veintisiete por ciento por el mismo motivo.
+   La regla se invierte: la fila mide lo que tiene que medir para respirar y
+   si la jornada no cabe, se desplaza. Meter doce horas en una pantalla no es
+   un requisito de nadie; verlas bien, si.
 
-   El minimo protege el caso contrario: en una ventana baja la fila no se
-   aplasta por debajo de donde deja de caber el nombre de una materia; ahi si
-   se desplaza.
+   Los cortes son los de Tailwind -md, lg, xl- para que la rejilla cambie de
+   escala en los mismos anchos que el resto de la app. Por debajo de md no
+   hay tramo porque ahi no llega esta vista: manda HorarioMovil, que tiene su
+   propio alto.
 
-   El numero de horas es fijo, asi que este alto solo cambia si cambia la
-   ventana: agregar una clase no reescala nunca la rejilla. */
-export const ALTO_MIN = 64
+   Es una tabla y no tres constantes sueltas para que anadir un tramo sea
+   anadir una linea, y para que la funcion de abajo pueda probarse sola. */
+export const ALTO_HORA_ESCRITORIO = [
+  { desde: 1280, alto: 144 }, // xl
+  { desde: 1024, alto: 124 }, // lg
+  { desde: 0, alto: 100 }, // md
+]
+
+/** El alto de fila que toca a un ancho de rejilla. Funcion pura. */
+export const altoHoraPara = (ancho) =>
+  ALTO_HORA_ESCRITORIO.find((tramo) => ancho >= tramo.desde).alto
 
 /** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
 export const ANCHO_HORAS_PX = 88

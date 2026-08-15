@@ -2,12 +2,12 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import {
   ABRE,
-  ALTO_MIN,
   CIERRA,
   FILAS,
   ANCHO_HORAS_PX,
   DIAS,
   acotar,
+  altoHoraPara,
   enDoceHoras,
   etiquetaHora,
   franjaPropuesta,
@@ -17,32 +17,39 @@ import { useArrastreClase } from '../hooks/useArrastreClase'
 import BloqueClase from './BloqueClase'
 
 const LINEA = 'border-[var(--horario-linea)]'
-/* Lo que mide la cabecera de dias, que hay que descontar del alto util */
-const ALTO_CABECERA = 54
 
 /**
  * Cuanto mide de alto una fila de hora.
  *
- * Reparte TODA la altura disponible entre las horas de la jornada: la fila
- * queda tan alta -y por tanto tan cuadrada- como puede sin obligar a
- * desplazarse. El ancho no entra en la cuenta; las columnas se estiran a lo
- * que haya, que es lo que se quiere.
+ * Depende del ANCHO, no del alto. Antes era al reves: se repartia la altura
+ * de la ventana entre las doce horas para que la jornada cupiera entera, y
+ * eso hacia dos danos a la vez. Las filas salian de 66 px contra columnas de
+ * 180 -rectangulos aplastados donde una clase de una hora no tiene sitio ni
+ * para su nombre y su horario-, y el floor de la division dejaba hasta once
+ * pixeles muertos al final, que es el hueco raro que se veia bajo la ultima
+ * hora. Los dos problemas eran la misma cuenta.
  *
- * Depende de la ventana y del numero de filas, no de las clases: mover o
- * agregar una clase no reescala la rejilla bajo el cursor.
+ * Ahora la fila mide lo que necesita para respirar y la jornada se desplaza
+ * si no cabe. La tabla de tramos vive en layout/horario, que es donde estan
+ * las medidas; aqui solo se observa el ancho.
+ *
+ * Se mide el elemento y no la ventana porque lo que le toca a la rejilla no
+ * es la pantalla: es lo que le dejan la barra lateral y los margenes. Y
+ * cuando el ancho cambia sin cruzar un tramo, altoHoraPara devuelve el mismo
+ * numero y React no vuelve a pintar.
  */
 function useAltoHora(refVista) {
-  const [util, setUtil] = useState(0)
+  const [alto, setAlto] = useState(() => altoHoraPara(window.innerWidth))
 
   useLayoutEffect(() => {
     const el = refVista.current
     if (!el) return
-    const ro = new ResizeObserver(([e]) => setUtil(e.contentRect.height - ALTO_CABECERA))
+    const ro = new ResizeObserver(([e]) => setAlto(altoHoraPara(e.contentRect.width)))
     ro.observe(el)
     return () => ro.disconnect()
   }, [refVista])
 
-  return Math.max(ALTO_MIN, Math.floor(util / FILAS) || ALTO_MIN)
+  return alto
 }
 
 /**
@@ -139,9 +146,11 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
   }
 
   return (
-    /* Sin scrollbar-gutter: la rejilla se dimensiona para caber en alto, asi
-       que reservar sitio para una barra que no aparece era dejar una franja
-       muerta a la derecha, justo donde deberia acabar el viernes. */
+    /* La jornada es mas alta que la ventana a proposito, asi que aqui SIEMPRE
+       hay desplazamiento vertical. Eso es justo lo que hace innecesario
+       reservar sitio para la barra: no aparece y desaparece segun el
+       contenido, esta puesta desde el primer momento y no hay salto que
+       amortiguar. La cabecera de dias se queda pegada arriba mientras se baja. */
     <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
           las clases pasen por debajo sin transparentarse. */}
