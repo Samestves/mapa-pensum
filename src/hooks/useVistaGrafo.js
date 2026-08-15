@@ -7,6 +7,50 @@ const DURACION_ZOOM = 220
 
 const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
 
+/* Cuanto se deja pasar del borde del contenido. Un poco de aire evita que
+   llegar al final se sienta como chocar contra una pared. */
+const MARGEN_PAN = 96
+
+/**
+ * Deja la vista dentro de los limites: el mapa no se puede perder.
+ *
+ * Sin esto se podia arrastrar indefinidamente en cualquier direccion y
+ * acabar mirando una cuadricula vacia, sin nada en pantalla que dijera hacia
+ * donde estaba el mapa ni cuanto habia que volver. El unico camino de vuelta
+ * era el boton de encajar, y hay que saber que existe.
+ *
+ * No es una cuestion de rendimiento, aunque lo parezca: el contenido es un
+ * <g> con un transform, siempre los mismos elementos, y el navegador descarta
+ * lo que cae fuera del viewport. Medido, desplazarse a cincuenta mil pixeles
+ * sale MAS barato que tener el mapa a la vista -21 ms contra 35 por sesenta
+ * desplazamientos- porque no hay nada que rasterizar. Esto se arregla porque
+ * se puede uno perder, no porque cueste.
+ *
+ * El rango se calcula igual que el de una barra de desplazamiento: el borde
+ * de arriba del contenido no puede bajar mas de un margen por debajo del
+ * borde de la ventana, y el de abajo no puede subir mas de un margen por
+ * encima del suyo.
+ *
+ * Cuando el contenido es MAS PEQUEÑO que la ventana -mapa alejado- esos dos
+ * limites se cruzan, y ahi el intervalo se lee al reves: en vez de dejar
+ * recorrer el contenido, acota por donde puede moverse dentro de la ventana.
+ * Por eso se ordenan en vez de asumir cual es cual; asumirlo daba un rango
+ * vacio y clavaba el mapa en un punto.
+ */
+export function acotarVista(v, medida, anchoContenido, altoContenido) {
+  if (!medida.ancho || !medida.alto) return v
+
+  const rango = (ventana, contenido) => {
+    const tope = MARGEN_PAN
+    const suelo = ventana - contenido - MARGEN_PAN
+    return suelo <= tope ? [suelo, tope] : [tope, suelo]
+  }
+
+  const [minX, maxX] = rango(medida.ancho, anchoContenido * v.escala)
+  const [minY, maxY] = rango(medida.alto, altoContenido * v.escala)
+  return { ...v, x: acotar(v.x, minX, maxX), y: acotar(v.y, minY, maxY) }
+}
+
 /**
  * Pan y zoom del grafo. La vista es {x, y, escala} y se aplica como un
  * transform sobre un <g>, no tocando el viewBox: asi el fondo se queda
@@ -23,11 +67,20 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
      calcular el destino dentro del updater, y un updater tiene que ser puro.
      Todo pasa por aplicarVista, asi que las dos nunca se separan. */
   const vistaRef = useRef(vista)
-  const aplicarVista = useCallback((siguiente) => {
-    vistaRef.current = siguiente
-    setVista(siguiente)
-  }, [])
   const [medida, setMedida] = useState({ ancho: 0, alto: 0 })
+
+  /* Todo pasa por aqui -arrastre, rueda, pellizco, botones y encaje-, asi que
+     acotar en este punto y en ninguno mas basta para que no exista ninguna
+     forma de dejar el mapa fuera de la pantalla. Ponerlo en cada gesto seria
+     cuatro sitios donde acordarse. */
+  const aplicarVista = useCallback(
+    (siguiente) => {
+      const acotada = acotarVista(siguiente, medida, anchoContenido, altoContenido)
+      vistaRef.current = acotada
+      setVista(acotada)
+    },
+    [medida, anchoContenido, altoContenido],
+  )
   const [arrastrando, setArrastrando] = useState(false)
 
   /* Cierto mientras se mueve el mapa: arrastre, pellizco o rueda. Sirve para
