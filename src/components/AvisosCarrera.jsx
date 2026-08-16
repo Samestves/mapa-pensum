@@ -26,8 +26,10 @@ export function BotonAvisos({ cantidad, abierto, alPulsar }) {
       title={etiqueta}
       aria-label={etiqueta}
       aria-expanded={abierto}
-      className={`transicion-tema group grid size-8 shrink-0 place-items-center rounded-lg border text-cursando transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97] sm:size-9 ${
-        abierto ? 'border-transparent bg-panel-suave' : 'border-panel-borde hover:bg-panel-suave'
+      /* Sin borde, como el resto de la barra: el color ambar ya lo distingue
+         de sobra y no hacia falta ademas encerrarlo en una caja. */
+      className={`transicion-tema group grid size-9 shrink-0 place-items-center rounded-lg text-cursando transition-[background-color,color,transform] duration-150 active:scale-[0.92] ${
+        abierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
       }`}
     >
       {/* Sube un pixel como el resto de la barra: es un boton mas de la fila

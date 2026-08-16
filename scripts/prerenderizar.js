@@ -149,17 +149,17 @@ function paginaDe(carrera) {
        al titulo. Sin ella el nombre de la carrera se pintaba 37 px a la
        izquierda de donde la aplicacion lo iba a dejar, y ese desplazamiento
        lateral es exactamente el parpadeo que se venia a quitar. */
-    `<span class="flex h-8 shrink-0 items-center justify-center rounded-lg border ` +
-    `border-panel-borde px-2 text-tinta-suave sm:h-9 lg:px-2.5">` +
+    `<span class="flex h-9 shrink-0 items-center justify-center rounded-lg px-2 ` +
+    `text-tinta-suave">` +
     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
     `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
     `<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>` +
     `</span>` +
     `<div class="min-w-0 flex-1 pl-1">` +
-    `<h1 class="truncate text-[15px] leading-snug font-extrabold tracking-tight ` +
-    `text-tinta lg:text-base">${escapar(carrera.nombreCorto ?? carrera.nombre)}</h1>` +
-    `<p class="hidden truncate text-[11px] leading-snug font-medium text-tinta-suave ` +
-    `lg:block">${escapar(carrera.nombre)} · ${escapar(carrera.nucleo)}</p>` +
+    `<h1 class="truncate text-base leading-tight font-extrabold tracking-tight ` +
+    `text-tinta">${escapar(carrera.nombreCorto ?? carrera.nombre)}</h1>` +
+    `<p class="mt-0.5 truncate text-[11px] leading-tight font-medium text-tinta-tenue">` +
+    `${escapar(carrera.nombre)}</p>` +
     `</div>` +
     `</div>`
 

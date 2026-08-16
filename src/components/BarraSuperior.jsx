@@ -13,13 +13,21 @@ import { BotonAvisos } from './AvisosCarrera'
    anillo compitiera con el 'rounded-lg' de la base a igual especificidad, y
    ganaba el que Tailwind emitiese despues -salia cuadrado-. */
 const BASE =
-  'transicion-tema flex shrink-0 items-center justify-center gap-1.5 h-8 sm:h-9 ' +
-  'transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97]'
+  'transicion-tema flex shrink-0 items-center justify-center gap-1.5 h-9 ' +
+  'transition-[background-color,color,transform] duration-150 active:scale-[0.92]'
 
-/* Reposo, hover y activo. El activo se rellena y quita el borde: es un
-   estado, no un boton mas fuerte. */
-const REPOSO = 'border border-panel-borde text-tinta-suave hover:bg-panel-suave hover:text-tinta'
-const ACTIVO = 'border border-transparent bg-panel-suave text-tinta'
+/* Reposo y activo, SIN borde, y ese es el cambio que mas se nota.
+   Cada control iba metido en su propia cajita de un pixel, y eso -tres
+   rectangulos con borde y un circulo suelto entre ellos, ademas de tamaños
+   distintos- es lenguaje de formulario, no de producto. En una barra, el
+   chrome tiene que desaparecer para que mande el contenido: aqui el
+   contenido es el nombre de la carrera.
+   Lo que queda como señal de que se puede pulsar es el relleno al pasar por
+   encima en escritorio, y el hundido al tocar en el telefono, que es donde
+   no hay hover. Un icono suelto en una barra se entiende pulsable sin que
+   haya que dibujarle el contorno. */
+const REPOSO = 'text-tinta-suave hover:bg-panel-suave hover:text-tinta'
+const ACTIVO = 'bg-panel-suave text-tinta'
 
 /**
  * Boton de la cabecera. Todos miden y pesan igual; en movil bajan a 32px,
@@ -37,7 +45,7 @@ const ACTIVO = 'border border-transparent bg-panel-suave text-tinta'
  */
 function Icono({ icono: Ico, titulo, etiqueta, claveIcono, activo, alPulsar }) {
   // Con etiqueta deja de ser cuadrado y crece con el texto
-  const ancho = etiqueta ? 'px-2 lg:px-2.5' : 'w-8 sm:w-9'
+  const ancho = etiqueta ? 'px-2.5' : 'w-9'
 
   return (
     <button
@@ -127,7 +135,7 @@ function BarraSuperior({
         onClick={alVolver}
         title="Ver todas las carreras"
         aria-label="Ver todas las carreras"
-        className={`${BASE} group rounded-lg px-2 lg:px-2.5 ${REPOSO}`}
+        className={`${BASE} group rounded-lg px-2 ${REPOSO}`}
       >
         <ArrowLeft
           size={16}
@@ -145,12 +153,19 @@ function BarraSuperior({
           leading-tight pegado al titulo y en un peso demasiado ligero: ahora
           tiene aire y va en tinta-suave, que da 9:1 de contraste en los dos
           temas. */}
+      {/* El nombre completo baja tambien al telefono. Antes solo se veia en
+          pantallas grandes: en un movil quedaba un "Sistemas" suelto y mucho
+          aire, que es parte de lo que hacia que la barra se viera a medio
+          hacer. Al quitarle el borde a los botones sobro sitio, y dos lineas
+          de texto llenan la barra mejor que tres cajitas.
+          El nucleo solo desde lg: en 375 px no cabe y truncado no aporta. */}
       <div className="min-w-0 flex-1 pl-1">
-        <h1 className="truncate text-[15px] leading-snug font-extrabold tracking-tight text-tinta lg:text-base">
+        <h1 className="truncate text-base leading-tight font-extrabold tracking-tight text-tinta">
           {carrera.nombreCorto}
         </h1>
-        <p className="hidden truncate text-[11px] leading-snug font-medium text-tinta-suave lg:block">
-          {carrera.nombre} · {carrera.nucleo}
+        <p className="mt-0.5 truncate text-[11px] leading-tight font-medium text-tinta-tenue">
+          {carrera.nombre}
+          <span className="hidden lg:inline"> · {carrera.nucleo}</span>
         </p>
       </div>
 
@@ -171,7 +186,7 @@ function BarraSuperior({
         title={detalleAvance}
         aria-label={detalleAvance}
         aria-expanded={avanceAbierto}
-        className={`${BASE} w-8 rounded-full border border-transparent p-0 sm:w-9 ${
+        className={`${BASE} w-9 rounded-full p-0 ${
           avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
         }`}
       >
