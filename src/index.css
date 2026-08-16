@@ -34,6 +34,28 @@
   --estado-cursando: #ffb454;
   --estado-rojo: #ff6b7d;
 
+  /* Los colores que una clase del horario puede tomar. Son los ocho de area
+     reordenados: ya estan ajustados para los dos temas, asi que el horario no
+     inventa una paleta que no se parezca al resto de la aplicacion. */
+  --clase-1: #46c8f5;
+  --clase-2: #2fe8c6;
+  --clase-3: #6094ff;
+  --clase-4: #b781ff;
+  --clase-5: #ff6f9f;
+  --clase-6: #ffa94d;
+  --clase-7: #ffd93d;
+  --clase-8: #9aa8bd;
+
+  /* Linea de la rejilla del horario. No vale --panel-borde: ese esta pensado
+     para el borde de una tarjeta suelta sobre el lienzo, y aqui la linea cae
+     sobre --panel-suave, que en oscuro esta casi al mismo nivel.
+
+     En oscuro es blanco translucido y no un azul solido: el azul teñia la
+     rejilla entera y competia con el color de las clases, que es lo unico que
+     deberia llevar color ahi. El blanco al once por ciento se apoya en el
+     fondo que tenga debajo y se lee como una linea de lapiz. */
+  --horario-linea: rgba(255, 255, 255, 0.11);
+
   /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
      tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
      blanco sobre lienzo claro seria invisible. */
@@ -71,6 +93,17 @@
   --estado-aprobada: #0a9781;
   --estado-cursando: #c8650d;
   --estado-rojo: #d92d45;
+
+  --clase-1: #0b7aa8;
+  --clase-2: #0a9781;
+  --clase-3: #2751cc;
+  --clase-4: #7434cb;
+  --clase-5: #c92f65;
+  --clase-6: #c8650d;
+  --clase-7: #9c7700;
+  --clase-8: #56677e;
+
+  --horario-linea: #cfd9e6;
 
   --nucleo: #ffffff;
   --nucleo-fuerza: 14%;
@@ -476,6 +509,69 @@ body {
   animation: entrar-mapa 280ms ease-out;
 }
 
+/* Cambiar de vista -mapa, lista, horario- funde la que entra. Sin esto el
+   relevo era un corte seco: la vista nueva aparecia de golpe y, en el caso
+   del mapa, encima de un fotograma en el que todavia no se habia encajado.
+   Corta a proposito: pasar de una vista a otra tiene que sentirse inmediato,
+   no como una animacion que hay que esperar. */
+@keyframes entrar-panel {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entrada-panel {
+  animation: entrar-panel 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Donde no hay hover, los tres puntos de cada clase se quedan visibles. En un
+   telefono el estado "al pasar por encima" no existe nunca, asi que
+   esconderlos ahi no los hace discretos: los hace inalcanzables, y con ellos
+   editar, duplicar y eliminar. */
+@media (hover: none) {
+  .acciones-clase {
+    opacity: 1;
+  }
+}
+
+/* El dia entra por el lado del que viene. Sin eso, pasar de dia en el
+   telefono seria un cambio de contenido sin direccion y no se sabria si se
+   avanzo o se retrocedio. */
+@keyframes entrar-dia-derecha {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes entrar-dia-izquierda {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entra-dia-derecha {
+  animation: entrar-dia-derecha 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.entra-dia-izquierda {
+  animation: entrar-dia-izquierda 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* ---- Aviso de instalar -------------------------------------------------
    Sube desde fuera de la pantalla en vez de aparecer: algo que se materializa
    encima del contenido sobresalta, algo que entra deslizandose se lee como
@@ -562,13 +658,93 @@ body {
   transform: translateY(-10px);
 }
 
-/* La pestaña para traerla de vuelta nunca se desmonta: se desliza desde
-   detras del borde. Montarla y desmontarla cortaba la transicion. */
 /* La pestaña se ancla al borde inferior de la barra con top-full, asi que
    sube y baja sola cuando la barra se pliega: no hace falta animarla ni
-   medir su alto. Aqui solo queda el color. */
+   medir su alto.
+
+   Las tres propiedades van juntas AQUI y no en utilidades de Tailwind. Esta
+   regla vive fuera de @layer, asi que gana a las utilidades y las reemplaza:
+   cuando solo declaraba color, se cargaba la transicion de opacidad y escala
+   del boton y este aparecia y desaparecia de golpe. Un solo sitio que declare
+   transition evita que vuelva a pasar. */
 .pestana-barra {
-  transition: color 200ms ease;
+  transition:
+    opacity 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+/* Donde no hay hover, la pestaña se queda puesta.
+   Aparecer al acercar el raton es la forma correcta en un escritorio: es un
+   control que se usa una vez cada mucho y encendido siempre competiria con el
+   mapa. Pero en un telefono ese "acercar el raton" no ocurre nunca. Medido en
+   un movil: opacidad 0 y pointer-events none, o sea que la funcion no existia
+   alli -no se podia plegar la barra, y si se hubiera podido, no habria manera
+   de traerla de vuelta-. Un modo inmersivo sin salida no es un modo, es una
+   trampa.
+   Es la misma regla que ya llevan los tres puntos de cada clase, y por la
+   misma razon: esconder algo tras un estado que el dispositivo no tiene no lo
+   hace discreto, lo hace inalcanzable. */
+@media (hover: none) {
+  .pestana-barra {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+/* El hueco que se propone -al pasar el raton en escritorio, al abrir el dia
+   en el telefono- va OPACO y no translucido, aunque el color sea el mismo.
+
+   Es la vista previa de una clase, asi que tiene que tapar lo que taparia la
+   clase. Translucido dejaba pasar la marca de la hora del telefono, y salia
+   un "9" suelto flotando dentro del recuadro de "Toca para agregar", justo al
+   lado de su texto. La mezcla reproduce exactamente el tono que daba la tinta
+   al 2,8% sobre esta superficie: se ve igual que antes, pero ocluye.
+
+   Un color-mix y no un color fijo porque la superficie cambia con el tema; el
+   tono se recalcula solo en claro y en oscuro. */
+.hueco-propuesto {
+  background-color: color-mix(in oklab, var(--tinta) 2.8%, var(--panel-suave));
+}
+
+/* El pulgar del selector de vista se DESLIZA de una posicion a otra. Es la
+   diferencia entre un mando y tres luces: encender el destino y apagar el
+   origen obliga a volver a buscar donde quedaste, mientras que algo que se
+   mueve se sigue con la vista sin pensarlo.
+
+   Misma curva que la barra colapsable y las hojas -sale rapido y frena al
+   final, sin rebote-. Un rebote aqui haria que el unico control de la
+   cabecera se moviera con otra fisica que el resto de la app, y dos fisicas
+   en la misma pantalla se notan aunque no se sepa decir por que.
+
+   La transicion va aqui y no en una utilidad por lo mismo que en
+   .pestana-barra: esta regla vive fuera de @layer y gana, asi que declararla
+   en un solo sitio evita que una utilidad de Tailwind la reemplace a medias. */
+.pulgar-vista {
+  transition:
+    transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 200ms ease;
+}
+
+/* El icono que releva a otro entra girando desde donde salio el anterior.
+   Solo lo llevan los botones cuyo icono cambia con el estado -hoy el sol y la
+   luna-: el tema tarda 200ms en recorrer toda la app y sin esto el boton que
+   lo dispara era lo unico quieto en la pantalla. */
+@keyframes relevar-icono {
+  from {
+    opacity: 0;
+    transform: rotate(-75deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.icono-relevo {
+  animation: relevar-icono 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* El panel de avance entra desde el borde en el que se apoya: desde abajo en
@@ -604,6 +780,73 @@ body {
 @media (min-width: 48rem) {
   .hoja-avance {
     animation: entrar-cajon 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+/* ---- Horario -----------------------------------------------------------
+   El bloque entra creciendo desde el 96%: al confirmar una clase el ojo la
+   sigue hasta su sitio en vez de tener que buscarla. */
+@keyframes asentar-bloque {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bloque-clase {
+  animation: asentar-bloque 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La celda que se previsualiza se funde en vez de aparecer de golpe: es una
+   pista, no una alarma, y a la velocidad que se recorre la semana con el
+   raton un parpadeo duro en cada cuadro seria ruido. */
+.celda-fantasma {
+  animation: aparecer-fantasma 130ms ease-out;
+}
+
+@keyframes aparecer-fantasma {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* El menu crece desde la esquina pegada al boton que lo abrio. El origen lo
+   pone el componente, que es quien sabe hacia donde tuvo que voltearse. */
+.menu-clase {
+  animation: brotar-menu 130ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes brotar-menu {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* El popover crece un pelin desde su flecha, que es de donde sale */
+.popover-clase {
+  animation: brotar-popover 150ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes brotar-popover {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
   }
 }
 
@@ -703,7 +946,15 @@ body {
   .entrada-vista,
   .salida-vista,
   .entrada-mapa,
+  .entrada-panel,
+  .entra-dia-derecha,
+  .entra-dia-izquierda,
   .esqueleto-mapa,
+  .bloque-clase,
+  .celda-fantasma,
+  .popover-clase,
+  .menu-clase,
+  .icono-relevo,
   .aviso-entrando {
     animation: none;
   }
@@ -716,6 +967,7 @@ body {
   .barra-colapsable,
   .barra-contenido,
   .pestana-barra,
+  .pulgar-vista,
   .tarjeta-carrera,
   .tarjeta-carrera > * {
     transition: none;

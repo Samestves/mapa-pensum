@@ -174,31 +174,56 @@ function ContenidoGrafo({
             strokeWidth="1"
             strokeDasharray="2 8"
           />
+          {/* Titulo y cuota son UN solo texto con dos tramos, no dos textos
+              colocados cada uno por su cuenta.
+
+              La cuota salia antes a 300 px del margen izquierdo, un numero
+              que valia mientras el titulo fuese corto: "ELECTIVAS TECNICAS"
+              acaba en 248 y cabia, pero "ELECTIVAS SOCIOHUMANISTICAS" acaba
+              en 358 y se le montaba encima diez pixeles. Cualquier otro
+              numero fijo solo mueve el titulo a partir del cual vuelve a
+              romperse.
+
+              Con dos tspan y un dx, el segundo tramo arranca donde acaba el
+              primero: lo coloca el propio SVG y la separacion es la misma
+              diga lo que diga el titulo, sin medir texto ni llevar refs.
+
+              Anclarla al extremo derecho tambien evitaba el choque, pero era
+              peor: a la escala en que el mapa entra entero, once pixeles y
+              medio se dibujan a poco mas de cuatro y no se leen, asi que la
+              cuota solo se lee acercandose -y acercandose, el otro extremo de
+              la franja cae a tres mil pixeles del titulo-. Se leeria "elige
+              15 UC de 25 opciones" sin ver de que grupo. Juntas o no sirve.
+
+              El halo va en el padre y lo heredan los dos: ambos se leen sobre
+              la cuadricula del fondo y sobre la linea de puntos. */}
           <text
             x={MARGEN.left}
             y={grupo.yTitulo + 34}
-            fontSize="15"
-            fill="var(--tinta)"
             stroke="var(--halo-titulo)"
             strokeWidth="4"
             paintOrder="stroke"
             strokeLinejoin="round"
-            className="font-extrabold tracking-[0.2em]"
           >
-            {grupo.titulo}
-          </text>
-          {/* La cuota sale del pensum, no del componente. Donde no la
-              hay se dice cuantas opciones existen y nada mas. */}
-          <text
-            x={MARGEN.left + 300}
-            y={grupo.yTitulo + 34}
-            fontSize="11"
-            fill="var(--tinta-suave)"
-            className="font-mono font-semibold"
-          >
-            {grupo.cuota != null
-              ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`
-              : `${grupo.cantidad} opciones`}
+            <tspan
+              fontSize="15"
+              fill="var(--tinta)"
+              className="font-extrabold tracking-[0.16em]"
+            >
+              {grupo.titulo}
+            </tspan>
+            {/* La cuota sale del pensum, no del componente. Donde no la hay
+                se dice cuantas opciones existen y nada mas. */}
+            <tspan
+              dx="18"
+              fontSize="11.5"
+              fill="var(--tinta-suave)"
+              className="font-mono font-semibold tabular-nums"
+            >
+              {grupo.cuota != null
+                ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`
+                : `${grupo.cantidad} opciones`}
+            </tspan>
           </text>
         </g>
       ))}

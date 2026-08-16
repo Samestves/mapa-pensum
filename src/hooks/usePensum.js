@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { guardarJSON, leerJSON } from '../data/almacen'
 
 export const ESTADO = {
   APROBADA: 'aprobada',
@@ -39,19 +40,15 @@ function depurar(datos, codigosValidos) {
  * arranca en limpio en vez de reventar.
  */
 function leerGuardadas(slug, codigosValidos) {
-  try {
-    const propia = localStorage.getItem(claveDe(slug))
-    if (propia) return depurar(JSON.parse(propia), codigosValidos)
+  const propia = leerJSON(claveDe(slug), null)
+  if (propia) return depurar(propia, codigosValidos)
 
-    // Migracion de la clave vieja, solo para la carrera que existia entonces
-    if (slug === SLUG_HEREDADO) {
-      const vieja = localStorage.getItem(CLAVE_HEREDADA)
-      if (vieja) return depurar(JSON.parse(vieja), codigosValidos)
-    }
-    return {}
-  } catch {
-    return {}
+  // Migracion de la clave vieja, solo para la carrera que existia entonces
+  if (slug === SLUG_HEREDADO) {
+    const vieja = leerJSON(CLAVE_HEREDADA, null)
+    if (vieja) return depurar(vieja, codigosValidos)
   }
+  return {}
 }
 
 /**
@@ -99,11 +96,8 @@ export function usePensum(carrera) {
   const contador = useRef(0)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(claveDe(slug), JSON.stringify(marcas))
-    } catch {
-      // Modo privado o cuota llena: la app sigue funcionando sin persistir
-    }
+    // Si no se puede escribir, la app sigue funcionando sin persistir
+    guardarJSON(claveDe(slug), marcas)
   }, [slug, marcas])
 
   // La animacion dura menos de un segundo; despues se limpia el DOM

@@ -7,8 +7,18 @@ import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
 
 /**
- * Portada y selector. Es la primera impresion del proyecto, asi que las nueve
- * carreras se ven a la vez sin scroll en escritorio.
+ * Portada y selector. Es la primera impresion del proyecto y su trabajo es
+ * dejar comparar las nueve carreras de un vistazo.
+ *
+ * Decia que se veian las nueve sin desplazarse en escritorio, y no era
+ * verdad: medido a 1440x900, la novena acababa 196 px por debajo del pliegue.
+ * Las tarjetas adelgazaron 42 px cada una quitando aire sobrante -no
+ * contenido- y ahora hacen falta 970 px de alto en vez de 1096, con lo que en
+ * una pantalla de 1080 entran las nueve. En un portatil de 900 se sale la
+ * ultima fila, y ahi se queda: cerrar esos setenta pixeles obligaria a
+ * encoger la silueta, que es lo unico que distingue una carrera de otra de un
+ * vistazo, y entonces la pagina cumpliria la promesa habiendo perdido la
+ * razon por la que importaba.
  *
  * La carrera vista por ultima vez se marca con "Continuar" en vez de saltar
  * directo a ella: redirigir automaticamente dejaria el selector inalcanzable

@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
+import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import PanelAvisos from './AvisosCarrera'
+import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
 import PanelProgreso from './PanelProgreso'
+import Horario from './Horario'
 import PlanRuta from './PlanRuta'
 import VistaLista from './VistaLista'
 
@@ -48,17 +52,33 @@ function VistaCarrera({ carrera, alVolver }) {
 
   // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
   const [vista, setVista] = useState(
-    () => localStorage.getItem(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
+    () => leer(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
   )
   useEffect(() => {
-    localStorage.setItem(CLAVE_VISTA, vista)
+    guardar(CLAVE_VISTA, vista)
   }, [vista])
 
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
   // un solo valor en vez de un booleano por panel, y no hay que apagar nada.
   const { abierto, alternar, cerrar } = usePaneles()
+  /* De que boton cuelga el avance. Se guarda su caja al abrirlo y no una ref
+     al elemento: el popover solo necesita saber donde estaba en ese momento,
+     y una caja es un valor muerto que no puede quedarse apuntando a un nodo
+     que ya no existe. */
+  const [anclaAvance, setAnclaAvance] = useState(null)
   // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
   const [barraOculta, setBarraOculta] = useState(false)
+  /* Si el raton esta sobre la cabecera. La zona sensible es la cabecera y
+     nada mas: una franja invisible extra por debajo haria aparecer el
+     circulo antes, pero a cambio robaria los clicks de esa franja al
+     horario, y el control no puede estorbar a lo que hay debajo. */
+  const [cercaCabecera, setCercaCabecera] = useState(false)
+  /* Con la barra plegada no queda cabecera sobre la que hacer hover, asi que
+     ahi la señal es la cercania al borde de arriba de la ventana. Antes el
+     circulo se quedaba encendido permanentemente en ese caso -era el unico
+     camino de vuelta- y estorbaba justo encima del horario. */
+  const cercaDelBorde = useCercaDelBorde(barraOculta)
+  const visiblePestana = barraOculta ? cercaDelBorde : cercaCabecera
   const [planAbierto, setPlanAbierto] = useState(false)
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -110,7 +130,11 @@ function VistaCarrera({ carrera, alVolver }) {
       {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
           ancla a su borde inferior con top-full, asi que al plegarse la barra
           sube pegada a ella sin animar nada aparte. */}
-      <div className="relative z-40 shrink-0">
+      <div
+        className="relative z-40 shrink-0"
+        onPointerEnter={() => setCercaCabecera(true)}
+        onPointerLeave={() => setCercaCabecera(false)}
+      >
         {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
             1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
         <div className="barra-colapsable" data-oculta={barraOculta}>
@@ -123,32 +147,62 @@ function VistaCarrera({ carrera, alVolver }) {
             vista={vista}
             alCambiarVista={setVista}
             avanceAbierto={abierto === 'avance'}
-            alAlternarAvance={() => alternar('avance')}
+            alAlternarAvance={(boton) => {
+              setAnclaAvance(boton.getBoundingClientRect())
+              alternar('avance')
+            }}
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
-              alVolver={alVolver}
-            />
+            alVolver={alVolver}
+          />
           </div>
         </div>
 
-        {/* Una sola pestaña que alterna, siempre centrada y siempre en el
-            mismo punto. Antes ocultar estaba arriba a la derecha y mostrar
-            reaparecia en el centro: el mismo gesto vivia en dos sitios y
-            habia que buscarlo la segunda vez. */}
-        <button
-          type="button"
-          onClick={() => {
-            setBarraOculta((v) => !v)
-            cerrar()
-          }}
-          title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-          aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-          aria-expanded={!barraOculta}
-          className="pestana-barra absolute top-full left-1/2 z-50 -translate-x-1/2 rounded-b-lg border border-t-0 border-panel-borde bg-panel/90 px-6 py-1 text-tinta-tenue backdrop-blur hover:text-tinta"
+        {/* Un circulo montado justo encima de la linea que separa la barra
+            del contenido, no una pestaña colgando de ella. Va invisible y
+            aparece al acercar el raton a la cabecera: es un control que se
+            usa una vez cada mucho, y teniendolo siempre encendido en el
+            centro de la pantalla competia con el mapa.
+            Con la barra plegada tampoco se queda encendido: ahi la señal es
+            acercar el raton al borde de arriba de la ventana. */}
+        {/* El envoltorio solo coloca; la animacion va en el boton, para que
+            escalar no pelee con el translate.
+            pointer-events-none mientras esta oculto: si no, seria un blanco
+            de click invisible plantado encima del horario.
+
+            El desplazamiento vertical NO es el mismo en los dos estados, y
+            ahi estaba el fallo. Iba siempre centrado sobre el borde inferior
+            de la barra -medio boton arriba, medio abajo-, que es justo lo que
+            se quiere mientras hay una linea que montar. Pero plegada, esa
+            linea es el borde de arriba de la ventana: el boton quedaba de -14
+            a 14 y el contenedor, que recorta, empieza en 0. Medido: catorce
+            pixeles cortados, la mitad exacta. De ahi que saliera "a medias".
+            Plegada baja entero por debajo de la linea, que es el unico sitio
+            donde hay pantalla. */}
+        <div
+          className={`pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 transition-transform duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            barraOculta ? 'translate-y-1.5' : '-translate-y-1/2'
+          }`}
         >
-          {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              setBarraOculta((v) => !v)
+              cerrar()
+            }}
+            title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+            aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
+            aria-expanded={!barraOculta}
+            className={`pestana-barra grid size-7 place-items-center rounded-full border border-panel-borde bg-panel text-tinta-tenue shadow-sm transition-[opacity,transform] duration-200 ease-out hover:text-tinta focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 ${
+              visiblePestana
+                ? 'pointer-events-auto scale-100 opacity-100'
+                : 'pointer-events-none scale-75 opacity-0'
+            }`}
+          >
+            {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+          </button>
+        </div>
       </div>
 
       {planAbierto && (
@@ -162,16 +216,19 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       )}
 
-      {/* La key cambia una sola vez, cuando el mapa releva a la silueta: eso
-          rearranca la animacion y el mapa aparece fundiendose encima de ella
-          en vez de dando un salto. Es mas corta que la de la ruta porque va
-          anidada dentro de ella: dos opacidades que se multiplican. */}
+      {/* La key incluye la vista, no solo si el mapa ya monto: asi cambiar
+          entre mapa, lista y horario rearranca la animacion y la vista nueva
+          entra fundiendose en vez de aparecer de golpe. Antes la key solo
+          cambiaba una vez -cuando el mapa relevaba a la silueta- y los
+          cambios de vista posteriores eran un corte seco. */}
       <div
-        key={mapaMontado ? 'mapa' : 'esqueleto'}
-        className="entrada-mapa relative flex flex-1 overflow-hidden"
+        key={mapaMontado ? vista : 'esqueleto'}
+        className="entrada-panel relative flex flex-1 overflow-hidden"
       >
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />
+        ) : vista === 'horario' ? (
+          <Horario carrera={carrera} estados={estados} />
         ) : vista === 'mapa' ? (
           <GrafoPensum
             layout={layout}
@@ -199,17 +256,28 @@ function VistaCarrera({ carrera, alVolver }) {
             cualquier cosa que asomara por debajo. */}
         <PanelAvisos avisos={carrera.avisos} abierto={abierto === 'avisos'} alCerrar={cerrar} />
 
+        {/* Dentro del mismo contenedor que la vista y no fuera: los paneles
+            que se apoyan en el borde de abajo -la ficha del horario en
+            telefono- tienen que apoyarse en el borde de la barra, no en el de
+            la ventana, o quedan por debajo de ella. */}
         <PanelProgreso
           progreso={progreso}
           avanceGrupos={avanceGrupos}
           reiniciar={reiniciar}
           hayMarcas={hayMarcas}
           abierto={abierto === 'avance'}
+          ancla={anclaAvance}
           alCerrar={cerrar}
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
         />
       </div>
+
+      {/* La navegacion del telefono va al final del arbol y fuera del
+          contenedor de la vista: es hermana suya, no algo flotando encima.
+          Asi se lleva su alto del reparto en vez de taparle los ultimos
+          pixeles al mapa o a la ultima hora del horario. */}
+      <BarraInferior vista={vista} alCambiar={setVista} />
     </div>
   )
 }

@@ -9,6 +9,8 @@ import {
   HORAS_POR_UC,
 } from '../layout/planificador'
 import { pesoDesbloqueo } from '../layout/relaciones'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { guardar, leer } from '../data/almacen'
 import { descargarMarkdown, MES } from '../data/exportarPlan'
 import HojaPlan from './HojaPlan'
 
@@ -65,26 +67,20 @@ function Boton({ icono: Ico, texto, principal, alPulsar }) {
  */
 function PlanRuta({ carrera, marcas, estados, progreso, relaciones, alCerrar }) {
   const { asignaturas, grupos } = carrera
-  const [nombre, setNombre] = useState(() => localStorage.getItem(CLAVE_NOMBRE) ?? '')
-  const [ucPorSemestre, setUc] = useState(
-    () => Number(localStorage.getItem(CLAVE_UC)) || 16,
-  )
-  const [horas, setHoras] = useState(() => horasDe(Number(localStorage.getItem(CLAVE_UC)) || 16))
+  const [nombre, setNombre] = useState(() => leer(CLAVE_NOMBRE, ''))
+  const [ucPorSemestre, setUc] = useState(() => Number(leer(CLAVE_UC)) || 16)
+  const [horas, setHoras] = useState(() => horasDe(Number(leer(CLAVE_UC)) || 16))
   // En movil los ajustes arrancan plegados para que la hoja tenga sitio
   const [ajustes, setAjustes] = useState(() => window.innerWidth >= 768)
 
   useEffect(() => {
-    localStorage.setItem(CLAVE_NOMBRE, nombre)
+    guardar(CLAVE_NOMBRE, nombre)
   }, [nombre])
   useEffect(() => {
-    localStorage.setItem(CLAVE_UC, String(ucPorSemestre))
+    guardar(CLAVE_UC, String(ucPorSemestre))
   }, [ucPorSemestre])
 
-  useEffect(() => {
-    const tecla = (e) => e.key === 'Escape' && alCerrar()
-    document.addEventListener('keydown', tecla)
-    return () => document.removeEventListener('keydown', tecla)
-  }, [alCerrar])
+  useCerrarConEscape(alCerrar)
 
   // Los dos mandos son el mismo dato visto de dos formas, asi que se
   // sincronizan en ambos sentidos. Antes mover las UC dejaba las horas

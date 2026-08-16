@@ -111,10 +111,22 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
               oscuro-, pero a ese cuerpo y en peso normal el trazo es tan fino
               que igual no se leia. La cifra sube a tinta plena y la palabra
               se queda de etiqueta: se lee el dato antes que el texto. */}
+          {/* Las dos cifras que DISTINGUEN a una carrera de otra.
+              Aqui salia el numero de semestres y no decia nada: las nueve
+              carreras tienen diez, asi que el dato era identico en las nueve
+              tarjetas y no ayudaba a elegir ninguna. Y encima estaba dibujado
+              -la silueta lleva un punto por semestre, o sea diez columnas-,
+              con lo que se repetia a si mismo dos veces.
+              En su sitio van las electivas, que si cambian mucho -de 16 en
+              Recursos Humanos a 49 en Agronomica- y ya venian en el indice
+              sin que nadie las enseñara.
+              "Obligatorias" y no "materias" porque ahora hay dos numeros al
+              lado: con "materias" no se sabria si las electivas estan dentro
+              de esa cuenta o aparte. Estan aparte. */}
           <div className="mt-2 flex items-center gap-2.5">
-            <Cifra valor={carrera.asignaturas} etiqueta="materias" />
+            <Cifra valor={carrera.asignaturas} etiqueta="obligatorias" />
             <span aria-hidden="true" className="h-3 w-px shrink-0 bg-panel-borde" />
-            <Cifra valor={carrera.semestres} etiqueta="semestres" />
+            <Cifra valor={carrera.electivas} etiqueta="electivas" />
           </div>
         </div>
         {/* La insignia va aqui arriba y no encima del titulo porque ahi
@@ -148,7 +160,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
           una carrera de otra de un vistazo, asi que se lleva el sitio bueno y
           crece con la pantalla en vez de quedarse en su franja fija. */}
       <div
-        className="relative mt-6 h-20 xl:mt-8 xl:h-28"
+        className="relative mt-4 h-20 xl:mt-5 xl:h-24"
         style={{ transform: giro ? 'translateZ(28px)' : undefined }}
       >
         <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />
@@ -157,7 +169,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       {/* El nombre completo cierra la tarjeta detras de una regla fina. Antes
           iba suelto a tres pixeles de la miniatura y parecia un sobrante; con
           la regla se lee como pie, que es lo que es. */}
-      <p className="relative mt-6 truncate border-t border-panel-borde pt-3.5 text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-8 xl:text-xs">
+      <p className="relative mt-4 truncate border-t border-panel-borde pt-3 text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-5 xl:text-xs">
         {carrera.nombre}
       </p>
     </button>
