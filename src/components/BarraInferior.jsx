@@ -46,9 +46,9 @@ function BarraInferior({ vista, alCambiar }) {
       <span
         aria-hidden="true"
         style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista pointer-events-none absolute top-1.5 left-0 flex h-8 w-1/3 justify-center"
+        className="pulgar-vista pointer-events-none absolute top-2 left-0 flex h-9 w-1/3 justify-center"
       >
-        <span className="transicion-tema h-full w-16 rounded-full bg-panel-suave" />
+        <span className="pastilla-vista transicion-tema h-full w-[4.5rem] rounded-full" />
       </span>
 
       {VISTAS.map(({ id, icono: Ico, etiqueta, titulo }) => {
@@ -61,14 +61,31 @@ function BarraInferior({ vista, alCambiar }) {
             title={titulo}
             aria-label={titulo}
             aria-pressed={activo}
-            className={`relative flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors duration-200 ${
-              activo ? 'text-tinta' : 'text-tinta-tenue'
-            }`}
+            className="relative flex flex-col items-center gap-1 pt-2 pb-2.5"
           >
-            <span className="grid h-8 place-items-center">
-              <Ico size={19} strokeWidth={activo ? 2.2 : 1.9} />
+            {/* El acuse de recibo al toque va en el icono y no en la pestaña
+                entera: encoger un bloque de 125 px de ancho se lee como que
+                se hunde la barra, encoger el icono se lee como pulsar algo.
+                Y va aqui dentro y no en el boton para no pelearse con el
+                translate de la pastilla, que es su hermana absoluta. */}
+            <span
+              className={`grid h-9 place-items-center transition-transform duration-150 active:scale-90 ${
+                activo ? 'text-tinta' : 'text-tinta-tenue'
+              }`}
+            >
+              {/* El trazo cambia de verdad -2,4 contra 1,7- y no por decimas.
+                  Antes iba 2,2 contra 1,9: una diferencia que existe en el
+                  codigo y no en la pantalla. */}
+              <Ico size={21} strokeWidth={activo ? 2.4 : 1.7} />
             </span>
-            <span className="text-[10.5px] leading-none font-bold tracking-[0.02em]">
+            {/* La etiqueta activa sube de peso ademas de tinta. Solo con el
+                color, sobre una pastilla que apenas se ve, la pestaña activa
+                se distinguia por un gris contra otro gris. */}
+            <span
+              className={`text-[10.5px] leading-none tracking-[0.02em] transition-colors duration-200 ${
+                activo ? 'font-extrabold text-tinta' : 'font-semibold text-tinta-tenue'
+              }`}
+            >
               {etiqueta}
             </span>
           </button>
