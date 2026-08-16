@@ -139,12 +139,37 @@ function paginaDe(carrera) {
     )
     .join('')
 
+  /* Misma idea que en la portada: lo que se pinta va donde la aplicacion lo
+     va a poner. Aqui es la barra de arriba, con el nombre de la carrera a la
+     izquierda, de modo que al montar el mapa nada se mueve de sitio. */
+  const barra =
+    `<div class="flex items-center gap-1 border-b border-panel-borde bg-panel ` +
+    `px-2.5 py-2.5 sm:gap-2 sm:px-5">` +
+    /* La flecha de volver va tambien, y no por adorno: ocupa 34 px y empuja
+       al titulo. Sin ella el nombre de la carrera se pintaba 37 px a la
+       izquierda de donde la aplicacion lo iba a dejar, y ese desplazamiento
+       lateral es exactamente el parpadeo que se venia a quitar. */
+    `<span class="flex h-8 shrink-0 items-center justify-center rounded-lg border ` +
+    `border-panel-borde px-2 text-tinta-suave sm:h-9 lg:px-2.5">` +
+    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
+    `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
+    `<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>` +
+    `</span>` +
+    `<div class="min-w-0 flex-1 pl-1">` +
+    `<h1 class="truncate text-[15px] leading-snug font-extrabold tracking-tight ` +
+    `text-tinta lg:text-base">${escapar(carrera.nombreCorto ?? carrera.nombre)}</h1>` +
+    `<p class="hidden truncate text-[11px] leading-snug font-medium text-tinta-suave ` +
+    `lg:block">${escapar(carrera.nombre)} · ${escapar(carrera.nucleo)}</p>` +
+    `</div>` +
+    `</div>`
+
   const contenido =
     `<main id="contenido-seo">` +
-    `<h1>Pensum de ${escapar(carrera.nombre)}</h1>` +
+    barra +
+    `<div class="seo-solo-lectura">` +
+    `<h2>Pensum de ${escapar(carrera.nombre)}</h2>` +
     `<p>${escapar(carrera.nucleo)} · ${carrera.asignaturas.length} materias · ` +
     `${carrera.semestres.length} semestres</p>` +
-    `<div class="seo-solo-lectura">` +
     secciones +
     grupos +
     `<p>Fuente: pensum publicado por la DACE del Núcleo de Monagas. ` +
@@ -221,10 +246,46 @@ function paginaInicio(indice) {
     })),
   }
 
+  /* El primer fotograma es la CABECERA REAL de la portada, en su sitio, no
+     un rotulo centrado en mitad de la pantalla.
+
+     Esa es toda la diferencia entre que se lea como "la web esta cargando" o
+     como un destello. Un titulo en el centro que un instante despues salta a
+     la esquina superior izquierda es un cambio de sitio, y el ojo lo ve como
+     un parpadeo aunque dure una decima. Escrito donde React lo va a poner, lo
+     que ocurre despues es que las tarjetas RELLENAN lo que faltaba: nada se
+     mueve de donde estaba.
+
+     Si, esto duplica el marcado de la cabecera. Es una duplicacion pequeña y
+     consciente -un logotipo, un titulo y una linea, que no cambian nunca- y
+     se paga a cambio de que la entrada no de un salto. Si algun dia la
+     cabecera cambia, lo peor que pasa es que durante una decima de segundo
+     se vea la anterior. */
+  const cabecera =
+    `<div class="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 ` +
+    `xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">` +
+    `<header class="flex items-start gap-3">` +
+    `<span class="grid size-10 shrink-0 place-items-center rounded-xl xl:size-12" ` +
+    `style="background-color:color-mix(in oklab, var(--estado-aprobada) 16%, transparent);` +
+    `color:var(--estado-aprobada)">` +
+    `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
+    `stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">` +
+    `<path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/>` +
+    `<path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/>` +
+    `<circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>` +
+    `</span>` +
+    `<div>` +
+    `<h1 class="text-xl leading-tight font-extrabold tracking-tight text-tinta ` +
+    `sm:text-2xl xl:text-3xl">Mapa de Pensum</h1>` +
+    `<p class="mt-0.5 text-[12px] leading-snug font-medium text-tinta-suave xl:text-sm">` +
+    `Universidad de Oriente · Núcleo de Monagas</p>` +
+    `</div>` +
+    `</header>` +
+    `</div>`
+
   const contenido =
     `<main id="contenido-seo">` +
-    `<h1>Mapa de Pensum</h1>` +
-    `<p>Universidad de Oriente · Núcleo de Monagas</p>` +
+    cabecera +
     `<div class="seo-solo-lectura">` +
     `<p>Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes ` +
     `inscribir ahora y cuánto te falta.</p>` +

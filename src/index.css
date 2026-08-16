@@ -190,14 +190,8 @@ body {
    cuando hay app, este nodo ya no existe.
    ------------------------------------------------------------------ */
 #contenido-seo {
-  display: flex;
   height: 100dvh;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 2rem;
-  text-align: center;
+  overflow: hidden;
   /* Sin animacion de entrada, y es deliberado. Se probo a fundirlo, pero
      entrar desde opacidad 0 es justo lo que NO puede hacer este elemento:
      un navegador no cuenta como "contentful" lo que todavia es invisible, y
@@ -207,19 +201,13 @@ body {
      aplicacion al montar, con .entrada-vista. */
 }
 
-#contenido-seo h1 {
+/* El marcado que se prerenderiza trae las mismas clases de utilidad que usa
+   la aplicacion, asi que se coloca solo. Aqui solo hay que neutralizar los
+   margenes que el navegador le pone por defecto a un h1 y a un p, que en la
+   aplicacion los quita Tailwind y en este nodo no llega a hacerlo. */
+#contenido-seo h1,
+#contenido-seo p {
   margin: 0;
-  font-size: clamp(1.5rem, 6vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tinta);
-}
-
-#contenido-seo > p {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--tinta-suave);
 }
 
 /* Presente para quien lee, invisible para quien mira. Es la misma tecnica
