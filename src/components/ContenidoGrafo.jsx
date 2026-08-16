@@ -119,6 +119,14 @@ function ContenidoGrafo({
             retardo={(i % 7) * 0.55}
             velocidad={3.8 + (i % 5) * 0.35}
             viva={estados[arista.origen] === ESTADO.APROBADA}
+            /* Lleva corriente el cable que va de algo aprobado a algo que
+               eso acaba de abrir. Es lo que el efecto siempre quiso decir, y
+               de paso es lo unico que no crece sin freno segun avanza la
+               carrera: la frontera de lo inscribible siempre es pequeña. */
+            desbloqueando={
+              estados[arista.origen] === ESTADO.APROBADA &&
+              estados[arista.destino] === ESTADO.DISPONIBLE
+            }
             resaltada={cadena != null && cadena.has(arista.origen) && cadena.has(arista.destino)}
             atenuada={atenuado(arista.origen) || atenuado(arista.destino)}
             descargando={descarga?.codigo === arista.origen}

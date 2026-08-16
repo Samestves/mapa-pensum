@@ -59,6 +59,7 @@ function Arista({
   area,
   codigoOrigen,
   viva,
+  desbloqueando,
   resaltada,
   atenuada,
   descargando,
@@ -80,6 +81,22 @@ function Arista({
   const opacidad = OPACIDAD[estado]
   const perla = PERLA[estado]
   const encendida = (viva || resaltada) && !atenuada
+
+  /* Que un cable se VEA satisfecho y que lleve corriente CORRIENDO por dentro
+     son dos cosas distintas, y hasta ahora eran la misma.
+     Todo cable cuyo origen esta aprobado se dibuja encendido -mas grueso, mas
+     opaco, con su halo-, y eso esta bien: dice "este requisito ya lo tienes".
+     Pero animarlos todos era animar tambien los que van a materias que ya
+     aprobaste, o sea corriente viajando hacia algo terminado. Ademas de no
+     significar nada, escalaba al reves: cuanto mas avanzabas, mas cables
+     animados. Medido en Sistemas: 10 con diez materias aprobadas, 30 con
+     veinticinco, 63 con el pensum casi entero. El estudiante que mas usa la
+     aplicacion era el que peor la tenia.
+     La estela se queda solo donde la corriente significa algo: de lo que ya
+     aprobaste hacia lo que eso te acaba de abrir. Con la misma medida, 5, 13
+     y 20: deja de crecer, porque la frontera de lo inscribible siempre es
+     pequeña. */
+  const conCorriente = (desbloqueando || resaltada) && !atenuada
   const grosor = resaltada ? 2.4 : viva ? 2 : 1.4
 
   // Cuanto se nota la estela segun el estado del cable
@@ -94,9 +111,12 @@ function Arista({
 
   return (
     // color fija currentColor para que .filamento pueda mezclarlo con el nucleo.
-    // data-encendida la usa el CSS para dejar corriendo en tactil solo los
-    // cables que llevan corriente de verdad; los apagados no se animan.
-    <g color={color} data-encendida={encendida || undefined}>
+    // data-corriente la usa el CSS para dejar animados en tactil solo los
+    // cables por los que la corriente significa algo. Es un atributo aparte de
+    // data-encendida a proposito: encendida decide como se VE el cable -halo,
+    // grosor, opacidad-, y eso no debe cambiar porque su destino ya este
+    // aprobado. Fundirlos en uno apagaria el brillo de medio mapa.
+    <g color={color} data-encendida={encendida || undefined} data-corriente={conCorriente || undefined}>
       <path
         {...comun}
         stroke={color}

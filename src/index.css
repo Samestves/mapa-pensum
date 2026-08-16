@@ -322,13 +322,17 @@ body {
     display: none;
   }
 
-  /* 3. Y solo se anima el cable que lleva corriente. Un cable apagado con
-        una luz corriendo por dentro nunca significo nada -era decoracion en
-        los ciento y pico cables a la vez-; que la estela salga solo de lo
-        que ya aprobaste es ademas lo que el efecto queria decir. Se quita
-        con display y no con animation:none, que dejaria el guion parado a
-        mitad del cable como una mancha. */
-  g:not([data-encendida]) > .cometa {
+  /* 3. Y solo se anima el cable por el que la corriente significa algo: el
+        que va de una materia aprobada a una que eso acaba de abrir.
+        Antes bastaba con que el origen estuviera aprobado, y eso incluia los
+        cables que llegan a materias TAMBIEN aprobadas: corriente viajando
+        hacia algo terminado. No decia nada y ademas escalaba al reves, con
+        mas animaciones cuanto mas avanzada la carrera. Medido en Sistemas,
+        63 cables animados con el pensum casi entero contra 20 asi.
+        El cable sigue viendose encendido: lo que se apaga es la estela, no
+        el brillo. Se quita con display y no con animation:none, que dejaria
+        el guion parado a mitad del cable como una mancha. */
+  g:not([data-corriente]) > .cometa {
     display: none;
   }
 }
