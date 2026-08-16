@@ -144,10 +144,12 @@ function paginaDe(carrera) {
     `<h1>Pensum de ${escapar(carrera.nombre)}</h1>` +
     `<p>${escapar(carrera.nucleo)} · ${carrera.asignaturas.length} materias · ` +
     `${carrera.semestres.length} semestres</p>` +
+    `<div class="seo-solo-lectura">` +
     secciones +
     grupos +
     `<p>Fuente: pensum publicado por la DACE del Núcleo de Monagas. ` +
     `Confirma siempre con control de estudios.</p>` +
+    `</div>` +
     `</main>`
 
   /* Una pagina de carrera SABE que va a necesitar el chunk de la vista, asi
@@ -223,11 +225,13 @@ function paginaInicio(indice) {
     `<main id="contenido-seo">` +
     `<h1>Mapa de Pensum</h1>` +
     `<p>Universidad de Oriente · Núcleo de Monagas</p>` +
+    `<div class="seo-solo-lectura">` +
     `<p>Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes ` +
     `inscribir ahora y cuánto te falta.</p>` +
     `<ul>${items}</ul>` +
     `<p>Datos tomados de los pensums publicados por la DACE del Núcleo de ` +
     `Monagas. Confirma siempre con control de estudios.</p>` +
+    `</div>` +
     `</main>`
 
   return plantilla.replace(

@@ -167,6 +167,72 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ------------------------------------------------------------------
+   El PRIMER FOTOGRAMA: lo que se ve antes de que React monte.
+
+   Las paginas llegan con su contenido escrito en el HTML para que se pinte
+   sin esperar a los 216 KB de JavaScript, y eso rebajo el primer pintado de
+   780 ms a 64. Pero ese contenido no tenia una sola regla de estilo, asi que
+   durante esa decima de segundo el navegador lo dibujaba como HTML crudo:
+   un h1 enorme, una lista con viñetas y nueve parrafos de texto corrido
+   sobre el fondo del tema. Es lo que se veia como un destello de letras
+   sueltas antes de que apareciera la aplicacion.
+
+   La solucion no es esconderlo -eso devolveria la pantalla en blanco y con
+   ella los 780 ms-, sino que lo que se pinta merezca verse. Se queda a la
+   vista solo la portada: el titulo y una linea debajo, centrados. Lo demas
+   -el indice de carreras, los semestres, la nota de la fuente- pasa a ser
+   solo legible: sigue en el documento para los buscadores y para quien use
+   lector de pantalla, pero no se dibuja.
+
+   Todo esto vive y muere en esa decima de segundo. React vacia #contenido-seo
+   al montar, asi que ninguna de estas reglas puede afectar a la aplicacion:
+   cuando hay app, este nodo ya no existe.
+   ------------------------------------------------------------------ */
+#contenido-seo {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 2rem;
+  text-align: center;
+  /* Sin animacion de entrada, y es deliberado. Se probo a fundirlo, pero
+     entrar desde opacidad 0 es justo lo que NO puede hacer este elemento:
+     un navegador no cuenta como "contentful" lo que todavia es invisible, y
+     este nodo existe precisamente para disparar ese primer pintado cuanto
+     antes. Habria sido pagar la metrica que se venia a ganar por un fundido
+     que dura menos que un parpadeo. La transicion suave ya la pone la
+     aplicacion al montar, con .entrada-vista. */
+}
+
+#contenido-seo h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+}
+
+#contenido-seo > p {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+
+/* Presente para quien lee, invisible para quien mira. Es la misma tecnica
+   que ya usa la frase de orientacion del selector, y por la misma razon. */
+.seo-solo-lectura {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Se marca lo que si tiene sentido copiar */
 .seleccionable {
   user-select: text;
