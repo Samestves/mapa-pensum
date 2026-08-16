@@ -1,5 +1,5 @@
 import { Check, CircleDot, Info, Lock, RotateCcw, X } from 'lucide-react'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
 import { codigoVisible } from '../data/codigoVisible'

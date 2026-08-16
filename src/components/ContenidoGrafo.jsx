@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'

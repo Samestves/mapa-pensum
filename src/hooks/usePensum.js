@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { guardarJSON, leerJSON } from '../data/almacen'
-
-export const ESTADO = {
-  APROBADA: 'aprobada',
-  CURSANDO: 'cursando',
-  DISPONIBLE: 'disponible',
-  BLOQUEADA: 'bloqueada',
-}
+import { ESTADO } from '../data/estados'
 
 const CLAVE_BASE = 'mapa-pensum:marcas'
 // Antes de las multiples carreras habia una sola clave sin sufijo. Los

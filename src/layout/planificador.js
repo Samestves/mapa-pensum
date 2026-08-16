@@ -1,4 +1,9 @@
-import { ESTADO } from '../hooks/usePensum'
+/* Con extension, a diferencia del resto del proyecto, y a proposito. Los
+   imports sin extension los resuelve Vite, no el estandar; este modulo es
+   logica pura y se prueba con el runner de Node, que si exige la extension
+   porque es lo que dice la especificacion de ESM. Vite la acepta igual, asi
+   que poniendola funciona en los dos sitios. */
+import { ESTADO } from '../data/estados.js'
 
 // Estimacion para traducir horas de estudio a carga academica. Una UC de la
 // UDO ronda una hora de clase semanal, y la regla de oro es dedicarle unas

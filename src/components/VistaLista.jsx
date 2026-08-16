@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronDown, CircleDot, Lock } from 'lucide-react'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { COLOR_ESTADO } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'

@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'

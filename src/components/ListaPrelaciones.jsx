@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { ETIQUETA_ESTADO } from '../theme/estados'
 

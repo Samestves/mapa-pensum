@@ -178,8 +178,18 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
               size={13}
               className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-tinta-tenue"
             />
+            {/* El foco automatico solo en escritorio. Alli es un acierto: la
+                ficha abre y ya se puede escribir sin tocar nada mas.
+                En un telefono ese mismo foco levanta el teclado, y el teclado
+                se come la mitad de abajo de la pantalla justo encima de la
+                hoja que acaba de subir. Lo que tapa no es un adorno: son las
+                materias ya desbloqueadas, que es como se elige casi siempre.
+                Se acaba escribiendo el nombre de una materia que estaba a un
+                toque de distancia, o cerrando el teclado a mano para poder
+                verla. El teclado tiene que salir cuando alguien decide
+                escribir, no antes. */}
             <input
-              autoFocus
+              autoFocus={!esTelefono}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar materia…"

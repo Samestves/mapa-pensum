@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
 import { leer } from '../data/almacen'

@@ -1,5 +1,5 @@
 import { Check, CircleDot, Lock } from 'lucide-react'
-import { ESTADO } from '../hooks/usePensum'
+import { ESTADO } from '../data/estados'
 
 /**
  * Color representativo de cada estado, como variable CSS.
