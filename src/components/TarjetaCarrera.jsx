@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { precargarCarrera } from '../data/carreras'
+import { precargarVista } from './vistaDiferida'
 import MiniMapa from './MiniMapa'
 
 // Grados de inclinacion en el borde de la tarjeta. Mas que esto se lee como
@@ -55,8 +56,16 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
   const color =
     (tema === 'oscuro' ? carrera.color?.oscuro : carrera.color?.claro) ?? 'var(--tinta-suave)'
 
-  const seguirPuntero = (e) => {
+  /* Se calientan las dos cosas a la vez: los datos del pensum y el codigo que
+     los dibuja, que desde que la vista se baja aparte tambien hay que ir a
+     buscarlo. Precargar solo una de las dos cambiaria una espera por otra. */
+  const precargar = () => {
     precargarCarrera(carrera.slug)
+    precargarVista()
+  }
+
+  const seguirPuntero = (e) => {
+    precargar()
     // Solo raton: el dedo no tiene hover y el giro quedaria pegado
     if (e.pointerType !== 'mouse' || !caja.current) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -69,7 +78,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
 
   const entrar = () => {
     // Por si se llego aqui sin pasar el puntero: teclado, o un toque limpio
-    precargarCarrera(carrera.slug)
+    precargar()
     alElegir(carrera.slug)
   }
 
@@ -78,8 +87,8 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       ref={caja}
       type="button"
       onPointerMove={seguirPuntero}
-      onPointerDown={() => precargarCarrera(carrera.slug)}
-      onFocus={() => precargarCarrera(carrera.slug)}
+      onPointerDown={precargar}
+      onFocus={precargar}
       onPointerLeave={() => setGiro(null)}
       onClick={entrar}
       className="tarjeta-carrera group transicion-tema relative block w-full rounded-2xl border border-panel-borde bg-panel p-5 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none xl:p-6"

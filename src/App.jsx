@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
 import { ponerMeta } from './data/seo'
@@ -6,7 +6,8 @@ import { useRuta } from './hooks/useRuta'
 import EsqueletoMapa from './components/EsqueletoMapa'
 import LimiteDeError from './components/LimiteDeError'
 import SelectorCarrera from './components/SelectorCarrera'
-import VistaCarrera from './components/VistaCarrera'
+
+import { VistaCarreraDiferida } from './components/vistaDiferida'
 
 /**
  * Raiz: decide entre el selector y el mapa de una carrera.
@@ -91,9 +92,22 @@ function App() {
       <EsqueletoMapa slug={slug} conNombre />
     </div>
   ) : (
-    // key por slug: cambiar de carrera remonta la vista en vez de arrastrar
-    // el zoom y la seleccion de la anterior
-    <VistaCarrera key={slug} carrera={lista} alVolver={() => navegar('')} />
+    /* El fallback de Suspense es EXACTAMENTE el mismo que el de esperar los
+       datos, y eso no es pereza: al estudiante le da igual si lo que falta
+       por llegar es el pensum o el codigo que lo dibuja. Dos pantallas de
+       espera distintas para la misma espera solo se notarian como un
+       parpadeo entre una y otra. */
+    <Suspense
+      fallback={
+        <div className="grid h-full place-items-center">
+          <EsqueletoMapa slug={slug} conNombre />
+        </div>
+      }
+    >
+      {/* key por slug: cambiar de carrera remonta la vista en vez de
+          arrastrar el zoom y la seleccion de la anterior */}
+      <VistaCarreraDiferida key={slug} carrera={lista} alVolver={() => navegar('')} />
+    </Suspense>
   )
 
   // Las dos fases del cambio de ruta cuelgan de aqui y no de cada vista, que
