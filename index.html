@@ -39,6 +39,50 @@
     <!-- El color de fondo se fija antes de pintar para que no haya un
          fogonazo blanco al cargar en tema oscuro -->
     <meta name="theme-color" content="#05080e" />
+
+    <!--
+      El tema se decide AQUI, antes de que se pinte el primer pixel, y esta
+      es la unica razon por la que este script existe suelto en el HTML.
+
+      La paleta por defecto del CSS es la oscura: el tema claro entra cuando
+      <html> lleva data-tema="claro", y eso lo ponia un efecto de React. O
+      sea que hasta que el JavaScript no arrancaba, la pagina se pintaba
+      NEGRA aunque el usuario tuviera el tema claro elegido, y al montar la
+      aplicacion daba el salto a blanco. Ese era el destello de entrada.
+
+      Tiene que ir inline y sin type="module": un modulo se aplaza hasta
+      despues de analizar el documento, que es justo lo que hay que evitar.
+      Un script clasico dentro del head corre al leerlo y bloquea el pintado
+      esos microsegundos, que es exactamente lo que se quiere.
+
+      Repite la regla que aplica useTema -lo guardado manda, y si no hay
+      nada, lo que pida el sistema-. Es la unica duplicacion del proyecto que
+      no se puede evitar importando: importar significaria aplazar, y aplazar
+      es el fallo. Si la regla cambia, hay que cambiarla en los dos sitios.
+
+      El try es obligatorio y ya sabemos por que: con los datos de sitio
+      bloqueados, leer localStorage lanza. Sin el, este script reventaria
+      antes de que existiera la aplicacion y no habria ni limite de error que
+      lo recogiera.
+    -->
+    <script>
+      ;(function () {
+        var tema
+        try {
+          tema = localStorage.getItem('mapa-pensum:tema')
+        } catch (e) {
+          /* Sin almacen se decide por lo que pida el sistema */
+        }
+        if (tema !== 'claro' && tema !== 'oscuro') {
+          tema = matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro'
+        }
+        document.documentElement.dataset.tema = tema
+        /* Que la barra del navegador acompañe: con el color fijo en oscuro,
+           en un telefono en tema claro quedaba una franja negra arriba. */
+        var meta = document.querySelector('meta[name="theme-color"]')
+        if (meta) meta.setAttribute('content', tema === 'claro' ? '#eef1f7' : '#05080e')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
