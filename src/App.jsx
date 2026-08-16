@@ -4,6 +4,7 @@ import { recordarCarrera } from './data/ultimaCarrera'
 import { ponerMeta } from './data/seo'
 import { useRuta } from './hooks/useRuta'
 import EsqueletoMapa from './components/EsqueletoMapa'
+import LimiteDeError from './components/LimiteDeError'
 import SelectorCarrera from './components/SelectorCarrera'
 import VistaCarrera from './components/VistaCarrera'
 
@@ -110,7 +111,19 @@ function App() {
       key={`${ruta}:${fase}`}
       className={`h-full ${saliendo ? 'salida-vista' : 'entrada-vista'}`}
     >
-      {contenido}
+      {/* La key es la ruta y no algo fijo: un limite que ya atrapo se queda
+          enseñando el fallo para siempre, asi que cambiar de carrera tiene
+          que montar uno nuevo. Con esto, volver al selector -que es lo que
+          hace el boton- limpia el estado sin que el limite sepa de rutas.
+          Va aqui dentro y no envolviendo al div para no romper la animacion
+          de entrada y salida, que depende de esa otra key. */}
+      <LimiteDeError
+        key={ruta}
+        alReintentar={() => navegar('')}
+        etiquetaReintento="Volver a las carreras"
+      >
+        {contenido}
+      </LimiteDeError>
     </div>
   )
 }

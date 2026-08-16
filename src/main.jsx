@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import './index.css'
 import App from './App.jsx'
+import LimiteDeError from './components/LimiteDeError'
 
 /* El service worker guarda la app para que abra sin conexion. Solo en
    produccion: en desarrollo se quedaria con una copia del servidor de Vite y
@@ -19,7 +20,16 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    {/* Dos limites y no uno, porque no protegen lo mismo.
+        El de dentro de App envuelve a la vista y puede ofrecer volver al
+        selector, que es una recuperacion de verdad: se sigue usando la app.
+        Este de fuera solo entra cuando lo que revienta es App -el enrutado,
+        el estado de la ruta-, y entonces no hay a donde navegar porque
+        navegar es justo lo roto. Ahi lo unico honesto que se puede ofrecer
+        es recargar. */}
+    <LimiteDeError alReintentar={() => window.location.reload()} etiquetaReintento="Recargar">
+      <App />
+    </LimiteDeError>
     {/* Contador de visitas de Vercel. En local no envia nada: el script real
         solo se carga en el despliegue. Hay que activar Web Analytics en el
         panel del proyecto para que empiecen a aparecer los datos. */}
