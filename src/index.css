@@ -694,27 +694,6 @@ body {
   }
 }
 
-/* La pastilla de la pestaña activa en la barra del telefono.
-   Iba en --panel-suave, que es el gris hundido de la app, y sobre el blanco
-   de --panel resulta que no se ve: medido, 1,07 de contraste, donde 1,00 es
-   el mismo color exacto. La pastilla estaba ahi y no comunicaba nada; todo
-   el trabajo de decir cual es la vista activa lo hacia el color del texto.
-
-   Se resuelve en VALOR y no en tono. Meter aqui el verde de la marca habria
-   dado contraste de sobra, pero en esta aplicacion el verde significa
-   "aprobada" y el resto de la interfaz -el selector de escritorio, los
-   botones de la cabecera- marca lo activo en neutro. Un solo sitio hablando
-   otro idioma se nota.
-
-   Mezclar con la tinta en vez de fijar un gris es lo que hace que funcione
-   en los dos temas sin escribirlo dos veces: en claro la tinta es oscura y
-   la pastilla sale mas gris que el panel; en oscuro la tinta es clara y sale
-   mas clara. La misma regla, resultado opuesto, que es justo lo que se
-   quiere. */
-.pastilla-vista {
-  background-color: color-mix(in oklab, var(--tinta) 10%, var(--panel));
-}
-
 /* El hueco que se propone -al pasar el raton en escritorio, al abrir el dia
    en el telefono- va OPACO y no translucido, aunque el color sea el mismo.
 

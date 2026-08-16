@@ -38,17 +38,28 @@ function BarraInferior({ vista, alCambiar }) {
       aria-label="Vistas de la carrera"
       className="transicion-tema relative z-30 grid shrink-0 grid-cols-3 border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      {/* La pastilla se DESLIZA de una pestaña a otra, igual que el pulgar del
-          mando de escritorio y con la misma curva: es la misma idea contada
-          en el mismo idioma. El envoltorio ocupa un tercio y la pastilla va
-          centrada dentro, asi que el desplazamiento sigue siendo un tercio
-          exacto y no hay que medir nada. */}
+      {/* La linea de arriba de la barra se ENCIENDE bajo la pestaña activa, y
+          se desliza de una a otra con la curva de la casa.
+
+          Antes habia una pastilla gris detras del icono, y estaba mal elegida
+          por dos motivos. Uno de significado: una pastilla rellena es el
+          lenguaje de un boton con el raton encima, no el de una pestaña
+          seleccionada; se leia como si el dedo se hubiera quedado ahi. Y otro
+          de identidad: era gris, y esta barra era la unica superficie grande
+          de la aplicacion sin una gota del color de marca -el mismo verde del
+          logotipo y del anillo de avance-, lo que la dejaba con aire de
+          plantilla.
+
+          La linea no compite con nada. Vive en el borde que la barra ya
+          tenia, asi que no añade un objeto a la pantalla: solo lo colorea en
+          el tramo que toca. Es lo que hace que se lea como "estas aqui" en
+          vez de como un boton pulsado. */}
       <span
         aria-hidden="true"
         style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista pointer-events-none absolute top-2 left-0 flex h-9 w-1/3 justify-center"
+        className="pulgar-vista pointer-events-none absolute -top-px left-0 flex w-1/3 justify-center"
       >
-        <span className="pastilla-vista transicion-tema h-full w-[4.5rem] rounded-full" />
+        <span className="h-[2.5px] w-9 rounded-full bg-aprobada" />
       </span>
 
       {VISTAS.map(({ id, icono: Ico, etiqueta, titulo }) => {
@@ -61,28 +72,27 @@ function BarraInferior({ vista, alCambiar }) {
             title={titulo}
             aria-label={titulo}
             aria-pressed={activo}
-            className="relative flex flex-col items-center gap-1 pt-2 pb-2.5"
+            className="relative flex flex-col items-center gap-1.5 pt-3 pb-2.5"
           >
             {/* El acuse de recibo al toque va en el icono y no en la pestaña
                 entera: encoger un bloque de 125 px de ancho se lee como que
-                se hunde la barra, encoger el icono se lee como pulsar algo.
-                Y va aqui dentro y no en el boton para no pelearse con el
-                translate de la pastilla, que es su hermana absoluta. */}
+                se hunde la barra, encoger el icono se lee como pulsar algo. */}
             <span
-              className={`grid h-9 place-items-center transition-transform duration-150 active:scale-90 ${
-                activo ? 'text-tinta' : 'text-tinta-tenue'
+              className={`grid h-6 place-items-center transition-[color,transform] duration-200 active:scale-90 ${
+                activo ? 'text-aprobada' : 'text-tinta-tenue'
               }`}
             >
-              {/* El trazo cambia de verdad -2,4 contra 1,7- y no por decimas.
-                  Antes iba 2,2 contra 1,9: una diferencia que existe en el
-                  codigo y no en la pantalla. */}
-              <Ico size={21} strokeWidth={activo ? 2.4 : 1.7} />
+              {/* El trazo cambia de verdad -2,3 contra 1,7- y no por decimas.
+                  Hubo una version con 2,2 contra 1,9: una diferencia que
+                  existia en el codigo y no en la pantalla. */}
+              <Ico size={21} strokeWidth={activo ? 2.3 : 1.7} />
             </span>
-            {/* La etiqueta activa sube de peso ademas de tinta. Solo con el
-                color, sobre una pastilla que apenas se ve, la pestaña activa
-                se distinguia por un gris contra otro gris. */}
+            {/* La etiqueta activa sube a tinta plena y a peso fuerte, pero NO
+                se tiñe: con el icono y la linea ya en color, pintarla tambien
+                dejaba tres cosas gritando lo mismo. Queda el color para
+                señalar y el texto para leerse. */}
             <span
-              className={`text-[10.5px] leading-none tracking-[0.02em] transition-colors duration-200 ${
+              className={`text-[10.5px] leading-none tracking-[0.01em] transition-colors duration-200 ${
                 activo ? 'font-extrabold text-tinta' : 'font-semibold text-tinta-tenue'
               }`}
             >
