@@ -264,21 +264,24 @@ function paginaInicio(indice) {
   const cabecera =
     `<div class="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 ` +
     `xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">` +
-    `<header class="flex items-start gap-3">` +
-    `<span class="grid size-10 shrink-0 place-items-center rounded-xl xl:size-12" ` +
+    `<header class="flex items-center gap-3">` +
+    `<span class="grid size-11 shrink-0 place-items-center rounded-2xl xl:size-12" ` +
     `style="background-color:color-mix(in oklab, var(--estado-aprobada) 16%, transparent);` +
     `color:var(--estado-aprobada)">` +
-    `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
+    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
     `stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">` +
     `<path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/>` +
     `<path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/>` +
     `<circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>` +
     `</span>` +
-    `<div>` +
-    `<h1 class="text-xl leading-tight font-extrabold tracking-tight text-tinta ` +
+    `<div class="min-w-0">` +
+    `<h1 class="truncate text-[22px] leading-none font-extrabold tracking-tight text-tinta ` +
     `sm:text-2xl xl:text-3xl">Mapa de Pensum</h1>` +
-    `<p class="mt-0.5 text-[12px] leading-snug font-medium text-tinta-suave xl:text-sm">` +
-    `Universidad de Oriente · Núcleo de Monagas</p>` +
+    `<p class="mt-1 truncate text-[11.5px] leading-none font-medium text-tinta-tenue ` +
+    `xl:mt-1.5 xl:text-[13px]">` +
+    `<span class="sm:hidden">UDO</span>` +
+    `<span class="hidden sm:inline">Universidad de Oriente</span>` +
+    ` · Núcleo de Monagas</p>` +
     `</div>` +
     `</header>` +
     `</div>`

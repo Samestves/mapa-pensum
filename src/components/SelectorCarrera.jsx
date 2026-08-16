@@ -40,35 +40,50 @@ function SelectorCarrera({ alElegir }) {
           con tres a 1600 saldrian de 520 px y la silueta, que nunca llena a
           lo ancho, quedaria nadando en hueco. */}
       <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
-        <header className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            {/* La marca crece y se redondea mas. Un cuadrado de esquinas
+                suaves a 11 px de radio se lee como icono de aplicacion, que
+                es lo que es; con el radio anterior parecia un boton mas. */}
             <span
-              className="grid size-10 shrink-0 place-items-center rounded-xl xl:size-12"
+              className="grid size-11 shrink-0 place-items-center rounded-2xl xl:size-12"
               style={{
                 backgroundColor: 'color-mix(in oklab, var(--estado-aprobada) 16%, transparent)',
                 color: 'var(--estado-aprobada)',
               }}
             >
-              <Waypoints size={21} strokeWidth={2.4} />
+              <Waypoints size={22} strokeWidth={2.4} />
             </span>
-            <div>
-              <h1 className="text-xl leading-tight font-extrabold tracking-tight text-tinta sm:text-2xl xl:text-3xl">
+            <div className="min-w-0">
+              <h1 className="truncate text-[22px] leading-none font-extrabold tracking-tight text-tinta sm:text-2xl xl:text-3xl">
                 Mapa de Pensum
               </h1>
-              <p className="mt-0.5 text-[12px] leading-snug font-medium text-tinta-suave xl:text-sm">
-                Universidad de Oriente · Núcleo de Monagas
+              {/* En el telefono la universidad va abreviada, y no es una
+                  rebaja: "Universidad de Oriente · Núcleo de Monagas" son
+                  cuarenta y un caracteres que a 375 px partian en dos lineas
+                  -"...Núcleo de" arriba y "Monagas" solo abajo-, y una
+                  segunda linea con una palabra suelta es justo lo que hacia
+                  que la cabecera se viera a medio terminar. UDO es ademas
+                  como la llama todo el mundo en Monagas, asi que no se pierde
+                  nada; el nombre entero vuelve en cuanto hay ancho. */}
+              <p className="mt-1 truncate text-[11.5px] leading-none font-medium text-tinta-tenue xl:mt-1.5 xl:text-[13px]">
+                <span className="sm:hidden">UDO</span>
+                <span className="hidden sm:inline">Universidad de Oriente</span>
+                {' · Núcleo de Monagas'}
               </p>
             </div>
           </div>
 
+          {/* Sin borde, como toda la barra de una carrera desde el rework:
+              el chrome se retira y lo que manda es la marca. */}
           <button
             type="button"
             onClick={alternarTema}
             title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
             aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            className="transicion-tema grid size-9 shrink-0 place-items-center rounded-lg border border-panel-borde text-tinta-suave hover:text-tinta"
+            className="transicion-tema grid size-10 shrink-0 place-items-center rounded-xl text-tinta-suave transition-[background-color,color,transform] duration-150 hover:bg-panel hover:text-tinta active:scale-[0.92]"
           >
-            {tema === 'oscuro' ? <Sun size={16} /> : <Moon size={16} />}
+            {tema === 'oscuro' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
         </header>
 
