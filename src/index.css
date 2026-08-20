@@ -61,9 +61,6 @@
      blanco sobre lienzo claro seria invisible. */
   --nucleo: #ffffff;
   --nucleo-fuerza: 72%;
-
-  /* Halo de los titulos de semestre: sobre fondo oscuro es luz blanca */
-  --halo-titulo: rgba(190, 225, 255, 0.3);
 }
 
 [data-tema='claro'] {
@@ -107,9 +104,6 @@
 
   --nucleo: #ffffff;
   --nucleo-fuerza: 14%;
-
-  /* En tema claro el halo va al reves: separa el texto negro del lienzo */
-  --halo-titulo: rgba(255, 255, 255, 0.9);
 }
 
 /* @theme inline hace que las utilidades emitan var(--x) en vez del valor

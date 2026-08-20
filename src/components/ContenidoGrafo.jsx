@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import NodoAsignatura from './NodoAsignatura'
@@ -48,61 +48,134 @@ function ContenidoGrafo({
   alVerFicha,
   alMarcar,
 }) {
+  /* Lo que la cabecera dice de cada semestre, ya con lo que el estudiante ha
+     hecho y elegido. Se calcula una vez para las diez columnas en vez de
+     recorrer los nodos dentro de cada una.
+
+     Las UC suman las electivas que hayas COLOCADO. La cabecera cuenta la
+     casilla como una materia del semestre -y esta bien, porque vas a cursar
+     algo ahi-, asi que sus creditos tienen que entrar en cuanto se sepan
+     cuales son. Vacia aporta cero, que es lo honesto: todavia no lo has
+     decidido, y el mapa no se lo inventa. */
+  const porColumna = useMemo(() => {
+    const mapa = new Map()
+    for (const nodo of nodos) {
+      if (!mapa.has(nodo.semestre)) mapa.set(nodo.semestre, { uc: 0, hechas: 0, total: 0 })
+      const fila = mapa.get(nodo.semestre)
+      fila.total += 1
+
+      const materia = nodo.esHueco ? enCasilla(nodo.codigo) : nodo
+      if (!materia) continue
+      fila.uc += materia.uc ?? 0
+      if (estados[materia.codigo] === ESTADO.APROBADA) fila.hechas += 1
+    }
+    return mapa
+  }, [nodos, estados, enCasilla])
+
   return (
     <>
-      {/* Encabezado de cada semestre: numero grande, conteo y una regla
-          fina. Sin franja de fondo: ensuciaba mas de lo que ordenaba. */}
-      {columnas.map((columna) => (
-        <g key={columna.semestre}>
-          {/* El numero se pinta dos veces: primero un trazo ancho y
-              translucido que hace de halo, y encima el relleno nitido.
-              paintOrder lo manda detras. Nada de filtros SVG. */}
-          <text
-            x={columna.x}
-            y={MARGEN.top + 30}
-            fontSize="38"
-            fill="var(--tinta)"
-            stroke="var(--halo-titulo)"
-            strokeWidth="7"
-            paintOrder="stroke"
-            strokeLinejoin="round"
-            className="font-mono font-extrabold"
-          >
-            {String(columna.semestre).padStart(2, '0')}
-          </text>
-          <text
-            x={columna.x + 54}
-            y={MARGEN.top + 17}
-            fontSize="12"
-            fill="var(--tinta)"
-            stroke="var(--halo-titulo)"
-            strokeWidth="4"
-            paintOrder="stroke"
-            strokeLinejoin="round"
-            className="font-extrabold tracking-[0.2em]"
-          >
-            SEMESTRE
-          </text>
-          <text
-            x={columna.x + 54}
-            y={MARGEN.top + 31}
-            fontSize="11"
-            fill="var(--tinta-suave)"
-            className="font-mono font-semibold"
-          >
-            {columna.cantidad} materias · {columna.uc} UC
-          </text>
-          <line
-            x1={columna.x}
-            y1={MARGEN.top + 42}
-            x2={columna.x + NODO.ancho}
-            y2={MARGEN.top + 42}
-            stroke="var(--tinta-tenue)"
-            strokeOpacity="0.35"
-            strokeWidth="1"
-          />
-        </g>
-      ))}
+      {/* Cabecera de cada semestre.
+          Cuatro cosas, ordenadas por lo que cada una vale:
+
+            01                   el numero, lo unico que se lee de lejos
+            SEMESTRE             la etiqueta, identica en las diez columnas
+            6 materias · 17 UC   el dato
+            ────────────         una regla que ademas dice cuanto llevas
+
+          Estaba plano: los tres textos iban en tinta plena y extrabold, o sea
+          los tres con el mismo peso, y encima con un contorno de 7 px que los
+          emborronaba. El contorno estaba para separarlos de la rejilla del
+          fondo y no hacia falta: medido en tema claro, la tinta tiene 14,08
+          de contraste contra la linea de rejilla y el minimo para texto
+          grande es 3. Un halo sobre 14 a 1 no separa nada.
+
+          El numero cambia de tipografia. Iba en JetBrains Mono, que es una
+          fuente para LEER CODIGO -cero punteado, terminales marcadas, formas
+          pensadas para distinguir un 0 de una O en una linea diminuta-, y
+          como numero de display eso se lee tecnico y no rotundo. Manrope a
+          peso 800 da cifras cerradas y geometricas. Estaba en mono por la
+          alineacion de las diez columnas, y resulta que no hacia falta:
+          medido, Manrope trae cifras tabulares, asi que "01" y "10" ocupan
+          exactamente lo mismo. Se gana la letra sin perder la rejilla y sin
+          descargar una tercera fuente. */}
+      {columnas.map((columna) => {
+        const vivo = porColumna.get(columna.semestre) ?? { uc: 0, hechas: 0, total: 0 }
+        const avance = vivo.total ? vivo.hechas / vivo.total : 0
+        return (
+          <g key={columna.semestre}>
+            {/* De una pieza y de un solo color. Se probo a apagar el cero de
+                relleno para destacar el digito que cuenta y era peor: dos
+                tonos dentro de un mismo numero se leen como dos cosas, y
+                "01" es una cosa. Un numero no se subraya por dentro. */}
+            <text
+              x={columna.x}
+              y={MARGEN.top + 31}
+              fontSize="46"
+              fill="var(--tinta)"
+              className="font-extrabold tracking-[-0.05em]"
+            >
+              {String(columna.semestre).padStart(2, '0')}
+            </text>
+
+            {/* El numero manda sobre la unidad: se lee el 6 y el 17, no
+                "materias" y "UC", que son siempre las mismas dos palabras. */}
+            <text
+              x={columna.x + 66}
+              y={MARGEN.top + 18}
+              fontSize="11"
+              fill="var(--tinta-tenue)"
+              className="font-mono font-semibold"
+            >
+              <tspan fill="var(--tinta-suave)">{columna.cantidad}</tspan> materias
+              <tspan dx="4">·</tspan>
+              <tspan dx="4" fill="var(--tinta-suave)">
+                {vivo.uc}
+              </tspan>{' '}
+              UC
+            </text>
+
+            <text
+              x={columna.x + 66}
+              y={MARGEN.top + 31}
+              fontSize="8.5"
+              fill="var(--tinta-tenue)"
+              className="font-semibold tracking-[0.24em]"
+            >
+              SEMESTRE
+            </text>
+
+            {/* La regla hace dos trabajos y por eso no ensucia.
+                Ya estaba ahi separando la cabecera de las tarjetas; ahora
+                ademas se llena con lo que llevas aprobado de ese semestre.
+                Un indicador de avance que no ocupa ni un pixel de mas es la
+                unica clase de indicador que cabe en un mapa con diez columnas:
+                cualquier barra añadida encima habria que restarsela al sitio
+                de las materias. */}
+            <line
+              x1={columna.x}
+              y1={MARGEN.top + 42}
+              x2={columna.x + NODO.ancho}
+              y2={MARGEN.top + 42}
+              stroke="var(--tinta-tenue)"
+              strokeOpacity="0.28"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            {avance > 0 && (
+              <line
+                x1={columna.x}
+                y1={MARGEN.top + 42}
+                x2={columna.x + NODO.ancho * avance}
+                y2={MARGEN.top + 42}
+                stroke="var(--estado-aprobada)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                style={{ transition: 'stroke-width 200ms ease' }}
+              />
+            )}
+          </g>
+        )
+      })}
 
       {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza
           que ninguno pasa por encima de un nodo. */}
@@ -228,16 +301,13 @@ function ContenidoGrafo({
               la franja cae a tres mil pixeles del titulo-. Se leeria "elige
               15 UC de 25 opciones" sin ver de que grupo. Juntas o no sirve.
 
-              El halo va en el padre y lo heredan los dos: ambos se leen sobre
-              la cuadricula del fondo y sobre la linea de puntos. */}
-          <text
-            x={MARGEN.left}
-            y={grupo.yTitulo + 34}
-            stroke="var(--halo-titulo)"
-            strokeWidth="4"
-            paintOrder="stroke"
-            strokeLinejoin="round"
-          >
+              Aqui tambien se fue el halo, por lo mismo que en la cabecera de
+              semestre: la tinta tiene catorce veces el contraste que hace
+              falta contra la rejilla, asi que un contorno de 4 px no separaba
+              nada y solo engordaba los bordes. Quitarlo en un sitio de dos
+              habria dejado el mapa con dos criterios distintos para el mismo
+              problema. */}
+          <text x={MARGEN.left} y={grupo.yTitulo + 34}>
             <tspan
               fontSize="15"
               fill="var(--tinta)"
