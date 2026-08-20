@@ -79,56 +79,66 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir }) 
         rx={NODO.radio}
         fill="none"
         stroke={colorBorde}
-        strokeOpacity={vacia ? 0.5 : bloqueada ? 0.4 : 1}
+        strokeOpacity={vacia ? 0.42 : bloqueada ? 0.4 : 1}
         strokeWidth={seleccionado ? 2.6 : vacia ? 1.5 : bloqueada ? 1.25 : 1.8}
-        strokeDasharray={vacia ? '5 4' : undefined}
+        /* Guiones mas largos y con la punta redonda: a 6-5 el trazo se lee
+           como una linea intencionada y no como un borde roto, que es lo que
+           parecia a 5-4 con punta cuadrada. */
+        strokeDasharray={vacia ? '6 5' : undefined}
+        strokeLinecap={vacia ? 'round' : undefined}
         style={{ transition: 'stroke 300ms ease, stroke-width 160ms ease' }}
       />
 
       {vacia ? (
         <>
-          {/* El mas, dentro de un circulo, centrado. Es el gesto universal de
-              "aqui se agrega algo" y se reconoce sin leer, que es lo que hace
-              falta a la escala en la que se ve el mapa entero. */}
-          <circle
-            className="mas-casilla"
-            cx={NODO.ancho / 2}
-            cy={38}
-            r={13}
+          {/* El mas, dentro de un cuadrado redondeado y centrado.
+              Cuadrado y no circulo porque es lo que significa "agregar" en
+              cualquier interfaz moderna -el boton de nueva pestaña, de nuevo
+              archivo, de nuevo bloque-, mientras que un circulo con un mas
+              se lee mas como un boton flotante de accion principal, que esto
+              no es: es un sitio del mapa, no un boton de la barra.
+
+              Va a 30 px porque tiene que seguir leyendose cuando el mapa se
+              aleja: a la escala en la que cabe una carrera entera esto se
+              dibuja a unos diez pixeles, que es el minimo en el que un mas
+              sigue siendo un mas y no un punto. */}
+          <rect
+            className="marco-mas"
+            x={NODO.ancho / 2 - 15}
+            y={21}
+            width={30}
+            height={30}
+            rx={9}
             fill={acento}
-            fillOpacity={0.1}
+            fillOpacity={0.08}
             stroke={acento}
-            strokeOpacity={0.35}
+            strokeOpacity={0.3}
             strokeWidth={1.25}
           />
           <Plus
-            x={NODO.ancho / 2 - 7}
-            y={31}
-            width={14}
-            height={14}
+            x={NODO.ancho / 2 - 8}
+            y={28}
+            width={16}
+            height={16}
             color="var(--tinta-suave)"
-            strokeWidth={2.4}
+            strokeWidth={2.2}
             aria-hidden="true"
           />
+
+          {/* Y debajo, lo unico que hay que saber: QUE va aqui.
+              Antes decia ademas "elige una", y sobraba: el borde discontinuo
+              ya dice que esta vacio y el mas ya dice que se agrega algo.
+              Tres elementos diciendo lo mismo dejan la tarjeta cargada sin
+              añadir un dato. */}
           <text
             x={NODO.ancho / 2}
-            y={68}
+            y={71}
             textAnchor="middle"
             fontSize={TEXTO.nombre}
             fill="var(--tinta-suave)"
             className="font-semibold"
           >
             {nombre}
-          </text>
-          <text
-            x={NODO.ancho / 2}
-            y={83}
-            textAnchor="middle"
-            fontSize={TEXTO.meta}
-            fill="var(--tinta-tenue)"
-            className="font-mono"
-          >
-            elige una
           </text>
         </>
       ) : (

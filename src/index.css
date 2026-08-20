@@ -1041,3 +1041,34 @@ body {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------
+   La casilla de electiva vacia, al pasar el raton.
+
+   Todo el realce se hace aqui y no en React a proposito. Señalar una casilla
+   no cambia ningun dato -sigue vacia, sigue siendo del mismo grupo-, asi que
+   no tiene por que costar un render: es puro aspecto, y el navegador lo
+   resuelve sin volver a pasar por el arbol de componentes. Es el mismo
+   criterio con el que se atenua el mapa al señalar una materia.
+   ------------------------------------------------------------------ */
+.grupo-casilla .marco-mas {
+  transition:
+    fill-opacity 180ms ease,
+    stroke-opacity 180ms ease;
+}
+
+.grupo-casilla:hover .marco-mas {
+  fill-opacity: 0.16;
+  stroke-opacity: 0.65;
+}
+
+/* Y el borde discontinuo se cierra un poco: los guiones siguen ahi -la
+   casilla sigue vacia- pero se ven mas firmes, que es lo que dice "esto
+   responde" sin cambiar lo que la casilla significa. */
+.grupo-casilla rect[stroke-dasharray] {
+  transition: stroke-opacity 180ms ease;
+}
+
+.grupo-casilla:hover rect[stroke-dasharray] {
+  stroke-opacity: 0.8;
+}

@@ -90,7 +90,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
             type="button"
             onClick={alCerrar}
             aria-label="Cerrar"
-            className="grid size-7 shrink-0 place-items-center rounded-lg text-tinta-suave transition-colors hover:bg-panel-suave hover:text-tinta"
+            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg text-tinta-suave transition-colors hover:bg-panel-suave hover:text-tinta"
           >
             <X size={15} />
           </button>
@@ -127,7 +127,14 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
                 <button
                   type="button"
                   onClick={() => alColocar(casilla.codigo, aqui ? null : o.codigo)}
-                  className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-panel-suave"
+                  /* cursor-pointer explicito, y no sobra: Tailwind v4 le pone
+                     cursor:default a todos los <button> en su preflight, asi
+                     que una fila que claramente se pulsa se quedaba con la
+                     flecha de siempre. La mano es la unica señal de que esto
+                     es una lista para elegir y no una lista para leer.
+                     focus-visible para quien llegue con el teclado: sin el, la
+                     fila enfocada no se distingue de las demas. */
+                  className="flex w-full cursor-pointer items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-panel-suave focus-visible:bg-panel-suave focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--estado-aprobada)]"
                 >
                   <span
                     className="h-8 w-1 shrink-0 rounded-full"
@@ -183,7 +190,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
             <button
               type="button"
               onClick={() => alColocar(casilla.codigo, null)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-panel-borde py-2.5 text-[12px] font-semibold text-tinta-suave transition-colors hover:border-[var(--estado-rojo)] hover:text-[var(--estado-rojo)]"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-panel-borde py-2.5 text-[12px] font-semibold text-tinta-suave transition-colors hover:border-[var(--estado-rojo)] hover:text-[var(--estado-rojo)]"
             >
               <Trash2 size={14} />
               Vaciar la casilla
