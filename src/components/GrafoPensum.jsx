@@ -9,6 +9,7 @@ import ControlesZoom from './ControlesZoom'
 
 function GrafoPensum({
   layout,
+  porCodigo,
   estados,
   descarga,
   toque,
@@ -22,8 +23,7 @@ function GrafoPensum({
   alAbrirCasilla,
   casillaDe,
 }) {
-  const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, porCodigo, ancho, alto } =
-    layout
+  const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, ancho, alto } = layout
 
   const {
     contenedorRef,

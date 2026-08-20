@@ -67,6 +67,25 @@ function VistaCarrera({ carrera, alVolver }) {
   )
   const abrirCasilla = useCallback((codigo) => setCasillaAbierta(codigo), [])
 
+  /* Una electiva colocada hereda las coordenadas de su casilla.
+     El layout es geometria pura y se calcula una vez, asi que no sabe -ni
+     debe saber- que has puesto tu en cada casilla: las electivas del catalogo
+     salen de ahi sin x ni y. Pero la ficha flotante se coloca al lado de la
+     materia usando justo esas coordenadas, asi que al abrir una electiva le
+     salian NaN y acababa situada en cualquier parte.
+     Se resuelve aqui, que es el unico sitio donde se saben las dos cosas: el
+     dibujo del mapa y lo que el estudiante eligio. */
+  const porCodigo = useMemo(() => {
+    if (!Object.keys(elegidas).length) return layout.porCodigo
+    const mapa = new Map(layout.porCodigo)
+    for (const [casilla, codigo] of Object.entries(elegidas)) {
+      const hueco = layout.porCodigo.get(casilla)
+      const electiva = layout.porCodigo.get(codigo)
+      if (hueco && electiva) mapa.set(codigo, { ...electiva, x: hueco.x, y: hueco.y })
+    }
+    return mapa
+  }, [layout, elegidas])
+
   const { tema, alternarTema } = useTema()
 
   // Rampa de tonos de la carrera, publicada como --tono-N para que cada nodo
@@ -276,6 +295,7 @@ function VistaCarrera({ carrera, alVolver }) {
         ) : vista === 'mapa' ? (
           <GrafoPensum
             layout={layout}
+            porCodigo={porCodigo}
             estados={estados}
             descarga={descarga}
             toque={toque}

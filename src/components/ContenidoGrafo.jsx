@@ -148,8 +148,22 @@ function ContenidoGrafo({
             nodo={nodo}
             electiva={enCasilla(nodo.codigo)}
             estado={estados[enCasilla(nodo.codigo)?.codigo]}
-            atenuado={atenuado(nodo.codigo)}
-            seleccionado={seleccionado === nodo.codigo}
+            /* El foco y la seleccion preguntan por la ELECTIVA cuando la hay,
+               y solo por la casilla cuando esta vacia.
+
+               Aqui habia un fallo que apagaba el mapa entero. Una casilla
+               llena dibuja una materia, pero lo hacia bajo el codigo de la
+               casilla -casilla-humanistica-1-, mientras que la cadena de
+               prelaciones se calcula con el codigo real de la materia
+               -0113053-. Al pulsarla, la cadena no contenia NI UN nodo de los
+               que estan dibujados, asi que los cuarenta y nueve nodos y las
+               ocho casillas se iban a opacidad 0,14 a la vez. Medido: 49/49 y
+               8/8 atenuados.
+
+               Una materia tiene un codigo. Que ademas ocupe una casilla es
+               donde esta, no quien es. */
+            atenuado={atenuado(enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
+            seleccionado={seleccionado === (enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
             alAbrir={alAbrirCasilla}
             alVerFicha={alVerFicha}
           />
