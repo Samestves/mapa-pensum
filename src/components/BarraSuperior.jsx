@@ -211,12 +211,20 @@ function BarraSuperior({
           mapa de prelaciones eran dos glifos de lineas y puntos juntos en la
           misma barra queriendo decir cosas distintas.
           Se levanta un pelo al pasar por encima, como el gorro que se lanza. */}
-      <Icono
-        icono={GraduationCap}
-        titulo="Planificar mi ruta hasta el grado y exportarla"
-        etiqueta="Planificar"
-        alPulsar={alPlanificar}
-      />
+      {/* En el telefono este boton se va abajo, con las tres vistas.
+          Arriba se quedaba solo y descolgado, y ademas en la peor esquina del
+          aparato: sujetandolo con una mano el pulgar llega comodo al tercio
+          de abajo y hay que recolocar el agarre para tocar el borde superior.
+          Bajarlo deja la cabecera del telefono con una sola cosa -el anillo
+          de avance- y junta en un sitio todo lo que se toca. */}
+      <span className="hidden md:contents">
+        <Icono
+          icono={GraduationCap}
+          titulo="Planificar mi ruta hasta el grado y exportarla"
+          etiqueta="Planificar"
+          alPulsar={alPlanificar}
+        />
+      </span>
 
       <Division />
 

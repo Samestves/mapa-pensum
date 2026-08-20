@@ -344,7 +344,11 @@ function VistaCarrera({ carrera, alVolver }) {
           contenedor de la vista: es hermana suya, no algo flotando encima.
           Asi se lleva su alto del reparto en vez de taparle los ultimos
           pixeles al mapa o a la ultima hora del horario. */}
-      <BarraInferior vista={vista} alCambiar={setVista} />
+      <BarraInferior
+            vista={vista}
+            alCambiar={setVista}
+            alPlanificar={() => setPlanAbierto(true)}
+          />
     </div>
   )
 }

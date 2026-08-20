@@ -1,3 +1,4 @@
+import { GraduationCap } from 'lucide-react'
 import { VISTAS, indiceDeVista } from '../data/vistas'
 
 /**
@@ -23,7 +24,7 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * ancho-, no el icono. Da unos 125x56 px por destino, muy por encima de los
  * 44 que se consideran el minimo comodo.
  */
-function BarraInferior({ vista, alCambiar }) {
+function BarraInferior({ vista, alCambiar, alPlanificar }) {
   const indice = indiceDeVista(vista)
 
   return (
@@ -36,7 +37,7 @@ function BarraInferior({ vista, alCambiar }) {
        indicador de inicio. */
     <nav
       aria-label="Vistas de la carrera"
-      className="transicion-tema relative z-30 grid shrink-0 grid-cols-3 border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="transicion-tema relative z-30 grid shrink-0 grid-cols-4 border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {/* La linea de arriba de la barra se ENCIENDE bajo la pestaña activa, y
           se desliza de una a otra con la curva de la casa.
@@ -57,7 +58,7 @@ function BarraInferior({ vista, alCambiar }) {
       <span
         aria-hidden="true"
         style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista pointer-events-none absolute -top-px left-0 flex w-1/3 justify-center"
+        className="pulgar-vista pointer-events-none absolute -top-px left-0 flex w-1/4 justify-center"
       >
         <span className="h-[2.5px] w-9 rounded-full bg-aprobada" />
       </span>
@@ -101,6 +102,35 @@ function BarraInferior({ vista, alCambiar }) {
           </button>
         )
       })}
+
+      {/* Planificar cierra la fila, y es de otra clase que las tres de al
+          lado: aquellas son SITIOS -cambian lo que llena la pantalla- y esta
+          es una ACCION, que abre un panel encima y se cierra dejandote donde
+          estabas.
+
+          Por eso la linea de arriba nunca llega hasta aqui. Esa linea dice
+          "estas aqui", y de una accion no se puede estar: mientras el panel
+          esta abierto sigues en el mapa, en la lista o en el horario, y la
+          linea se queda marcando cual. Deslizarla hasta este cuarto sitio
+          habria dicho que las tres vistas se apagaron, que no es lo que pasa.
+
+          Lo que si comparte es todo lo demas -mismo alto, misma area de
+          toque, mismo tamaño de icono y de etiqueta-, porque el pulgar no
+          tiene por que aprender dos gestos distintos en la misma barra. */}
+      <button
+        type="button"
+        onClick={alPlanificar}
+        title="Planificar mi ruta hasta el grado y exportarla"
+        aria-label="Planificar mi ruta hasta el grado y exportarla"
+        className="relative flex flex-col items-center gap-1.5 pt-3 pb-2.5"
+      >
+        <span className="grid h-6 place-items-center text-tinta-tenue transition-transform duration-200 active:scale-90">
+          <GraduationCap size={21} strokeWidth={1.7} />
+        </span>
+        <span className="text-[10.5px] leading-none font-semibold tracking-[0.01em] text-tinta-tenue">
+          Planificar
+        </span>
+      </button>
     </nav>
   )
 }
