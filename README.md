@@ -56,16 +56,6 @@ Solo Sistemas tiene los créditos del título confirmados. Ver [Honestidad con l
 
 <div align="center">
 
-### El mapa
-
-<img src="docs/capturas/mapa.gif" width="720" alt="Señalar una materia ilumina su cadena de prelaciones; al pulsarla se abre su ficha y se marca como aprobada o cursando">
-
-**Señala una materia y se ilumina toda su cadena**: lo que necesita y lo que habilita.
-Púlsala y se abre su ficha, con sus prelaciones y el estado en el que va.
-Al marcarla como aprobada, la corriente recorre los cables y enciende lo que acabas de desbloquear.
-
-<br>
-
 ### Las nueve carreras
 
 <img src="docs/capturas/selector.gif" width="720" alt="Selector con las nueve carreras del Núcleo de Monagas, cada una con su color y la silueta de su pensum">
@@ -73,6 +63,16 @@ Al marcarla como aprobada, la corriente recorre los cables y enciende lo que aca
 **Cada carrera con su color y la silueta de su pensum.**
 Los puntos no son decoración: son sus materias, una por una, agrupadas por semestre.
 De un vistazo se ve cuál es más larga, cuál carga más al principio y cuál se abre al final.
+
+<br>
+
+### El mapa
+
+<img src="docs/capturas/mapa.gif" width="720" alt="Señalar una materia ilumina su cadena de prelaciones; al pulsarla se abre su ficha y se marca como aprobada o cursando">
+
+**Señala una materia y se ilumina toda su cadena**: lo que necesita y lo que habilita.
+Púlsala y se abre su ficha, con sus prelaciones y el estado en el que va.
+Al marcarla como aprobada, la corriente recorre los cables y enciende lo que acabas de desbloquear.
 
 </div>
 
