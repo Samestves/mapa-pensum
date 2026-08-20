@@ -1,4 +1,4 @@
-import { Check, CircleDot, Info, Lock, RotateCcw, X } from 'lucide-react'
+import { Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
@@ -38,6 +38,8 @@ function DetalleAsignatura({
   posicion,
   medida,
   alMarcar,
+  enCasilla,
+  alCambiarElectiva,
   alCerrar,
 }) {
   const margen = 12
@@ -120,6 +122,22 @@ function DetalleAsignatura({
           alPulsar={() => alMarcar(nodo.codigo, null)}
         />
       </div>
+
+      {/* Solo si esta materia ocupa una casilla del pensum. Cambiarla se
+          ofrece AQUI y no pulsando la casilla del mapa, que es lo que hacia
+          antes: una vez elegida ahi hay una materia, y pulsar una materia
+          tiene que llevar a su ficha. Cambiarla es una accion sobre ella, y
+          las acciones sobre una materia viven en su ficha. */}
+      {enCasilla && (
+        <button
+          type="button"
+          onClick={() => alCambiarElectiva(enCasilla)}
+          className="mx-3.5 mb-3 flex items-center justify-center gap-2 rounded-lg border border-panel-borde py-2 text-[11px] font-bold text-tinta-suave transition-colors hover:border-[var(--acento)] hover:text-tinta"
+        >
+          <Repeat2 size={13} />
+          Cambiar esta electiva
+        </button>
+      )}
 
       {estado === ESTADO.BLOQUEADA && (
         <p className="mx-3.5 mb-3 flex items-start gap-1.5 rounded-lg bg-panel-suave px-2.5 py-2 text-[11px] leading-snug text-tinta-suave">

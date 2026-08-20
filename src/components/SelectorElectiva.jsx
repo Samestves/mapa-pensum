@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Lock, Search, Trash2, X } from 'lucide-react'
+import { Check, Info, Lock, Search, Trash2, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
@@ -35,6 +35,14 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
   const [busqueda, setBusqueda] = useState('')
 
   const puesta = Object.entries(casillaDe).find(([, c]) => c === casilla.codigo)?.[0] ?? null
+
+  /* UC ya colocadas de este grupo, esten en la casilla que esten. Se suman
+     sobre las opciones del grupo y no sobre todas las casillas porque lo que
+     se cuenta es la cuota de ESTE grupo. */
+  const ucColocadas = useMemo(
+    () => opciones.reduce((s, o) => s + (casillaDe[o.codigo] ? (o.uc ?? 0) : 0), 0),
+    [opciones, casillaDe],
+  )
 
   const filtradas = useMemo(() => {
     const q = sinTildes(busqueda.trim())
@@ -80,17 +88,48 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
             <h3 className="text-[17px] leading-tight font-extrabold tracking-[-0.02em] text-tinta">
               {casilla.nombre}
             </h3>
-            <p className="mt-1 text-[11px] text-tinta-suave">
-              {grupo?.cuota != null
-                ? `El pensum pide ${grupo.cuota} UC de este grupo en total`
-                : `${opciones.length} opciones`}
-            </p>
+            {/* Lo que se enseña es el avance en UC, no "2 de 3 casillas", y
+                esa diferencia es la clave de todo este panel.
+
+                La cuota del pensum esta en UNIDADES DE CREDITO, no en numero
+                de materias. Las humanisticas piden 6 UC y las hay de 2 y de
+                3: con tres de 2 cumples, pero con dos de 3 tambien, y en ese
+                caso te sobra una casilla para siempre. Contar casillas le
+                diria a esa persona que le falta una materia cuando ya
+                termino.
+
+                Asi que las casillas son la ruta que sugiere la UDO, y la
+                cuota en UC es la verdad. */}
+            {grupo?.cuota != null ? (
+              <div className="mt-1.5">
+                <p className="text-[11px] text-tinta-suave">
+                  Llevas{' '}
+                  <strong className="font-bold text-tinta">{ucColocadas}</strong> de{' '}
+                  {grupo.cuota} UC de este grupo
+                  {ucColocadas >= grupo.cuota && ' · cuota cubierta'}
+                </p>
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-panel-suave">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-300"
+                    style={{
+                      width: `${Math.min(100, (ucColocadas / grupo.cuota) * 100)}%`,
+                      backgroundColor:
+                        ucColocadas >= grupo.cuota
+                          ? 'var(--estado-aprobada)'
+                          : 'var(--tinta-suave)',
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="mt-1 text-[11px] text-tinta-suave">{opciones.length} opciones</p>
+            )}
           </div>
           <button
             type="button"
             onClick={alCerrar}
             aria-label="Cerrar"
-            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg text-tinta-suave transition-colors hover:bg-panel-suave hover:text-tinta"
+            className="grid size-7 shrink-0 place-items-center rounded-lg text-tinta-suave transition-colors hover:bg-panel-suave hover:text-tinta"
           >
             <X size={15} />
           </button>
@@ -114,6 +153,21 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
           </div>
         )}
 
+        {/* El semestre de la casilla es la ruta que sugiere la universidad,
+            no un registro de cuando la cursaste. Hay que decirlo, porque la
+            casilla lleva el numero de semestre escrito y sin esta linea
+            alguien que curso una tecnica en el segundo semestre pensaria que
+            el mapa le esta diciendo que lo hizo mal, o buscaria una forma de
+            moverla que no existe ni hace falta. */}
+        <p className="flex items-start gap-2 border-b border-panel-borde bg-panel-suave px-5 py-2.5 text-[10px] leading-snug text-tinta-tenue">
+          <Info size={12} className="mt-px shrink-0" />
+          <span>
+            El semestre es la ruta que sugiere la UDO. Si la cursaste en otro,
+            ponla igual: lo que cuenta para el título son las UC, no en qué
+            semestre la viste.
+          </span>
+        </p>
+
         <ul className="min-h-0 flex-1 divide-y divide-panel-borde overflow-y-auto overscroll-contain">
           {filtradas.map((o) => {
             const estado = estados[o.codigo]
@@ -134,7 +188,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
                      es una lista para elegir y no una lista para leer.
                      focus-visible para quien llegue con el teclado: sin el, la
                      fila enfocada no se distingue de las demas. */
-                  className="flex w-full cursor-pointer items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-panel-suave focus-visible:bg-panel-suave focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--estado-aprobada)]"
+                  className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-panel-suave focus-visible:bg-panel-suave focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--estado-aprobada)]"
                 >
                   <span
                     className="h-8 w-1 shrink-0 rounded-full"
@@ -190,7 +244,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
             <button
               type="button"
               onClick={() => alColocar(casilla.codigo, null)}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-panel-borde py-2.5 text-[12px] font-semibold text-tinta-suave transition-colors hover:border-[var(--estado-rojo)] hover:text-[var(--estado-rojo)]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-panel-borde py-2.5 text-[12px] font-semibold text-tinta-suave transition-colors hover:border-[var(--estado-rojo)] hover:text-[var(--estado-rojo)]"
             >
               <Trash2 size={14} />
               Vaciar la casilla

@@ -29,7 +29,7 @@ import { codigoVisible } from '../data/codigoVisible'
  * obligatorias, asi que dibujarla distinta la dejaria en un limbo visual que
  * no corresponde a nada real.
  */
-function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir }) {
+function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, alVerFicha }) {
   const { x, y, nombre } = nodo
   const vacia = electiva == null
 
@@ -46,7 +46,14 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir }) 
   return (
     <g
       transform={`translate(${x}, ${y})`}
-      onClick={() => alAbrir(nodo.codigo)}
+      /* Vacia lleva a elegir; llena lleva a la ficha de esa materia.
+         Que una casilla llena volviera a abrir la lista era un fallo de
+         concepto: una vez elegida, ahi hay una MATERIA, y lo que se espera al
+         pulsar una materia en este mapa es su ficha, con sus prelaciones y
+         los botones de aprobada y cursando. Cambiar la eleccion pasa a ser
+         una accion dentro de esa ficha, que es donde se busca cuando ya
+         estas mirando la materia que quieres cambiar. */
+      onClick={() => (electiva ? alVerFicha(electiva.codigo) : alAbrir(nodo.codigo))}
       className="grupo-casilla cursor-pointer"
       opacity={atenuado ? 0.14 : 1}
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}

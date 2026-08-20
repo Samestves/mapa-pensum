@@ -151,6 +151,7 @@ function ContenidoGrafo({
             atenuado={atenuado(nodo.codigo)}
             seleccionado={seleccionado === nodo.codigo}
             alAbrir={alAbrirCasilla}
+            alVerFicha={alVerFicha}
           />
         ))}
 

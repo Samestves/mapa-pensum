@@ -287,6 +287,7 @@ function VistaCarrera({ carrera, alVolver }) {
             alMarcar={marcar}
             enCasilla={enCasilla}
             alAbrirCasilla={abrirCasilla}
+            casillaDe={casillaDe}
           />
         ) : (
           <VistaLista

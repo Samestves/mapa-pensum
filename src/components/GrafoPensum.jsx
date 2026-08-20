@@ -20,6 +20,7 @@ function GrafoPensum({
   alMarcar,
   enCasilla,
   alAbrirCasilla,
+  casillaDe,
 }) {
   const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, porCodigo, ancho, alto } =
     layout
@@ -172,6 +173,8 @@ function GrafoPensum({
           posicion={detalle.posicion}
           medida={medida}
           alMarcar={alMarcar}
+          enCasilla={casillaDe?.[seleccionado]}
+          alCambiarElectiva={alAbrirCasilla}
           alCerrar={() => alSeleccionar(null)}
         />
       )}
