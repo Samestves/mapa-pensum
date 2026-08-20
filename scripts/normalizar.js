@@ -220,6 +220,45 @@ function normalizar(crudo, overlayTodo) {
     cuota: ov.cuotas?.[g.clave] ?? null,
   }))
 
+  /* Las casillas de electiva: donde el pensum oficial reserva sitio.
+     El crudo de la DACE trae la LISTA de electivas, pero no dice en que
+     semestre va cada una; eso solo esta en el diagrama de ruta optima que
+     publica la universidad, asi que viene del overlay.
+     Se generan aqui y no en desdeCrudo porque necesitan los grupos ya
+     armados: una casilla sin grupo al que apuntar no sirve de nada. */
+  /* El titulo del grupo va en plural -"Electivas Tecnicas"- y una casilla es
+     UNA, asi que se singulariza quitando la s final de cada palabra. Es un
+     apaño estrecho y no una regla de gramatica, pero cubre exactamente los
+     dos titulos que existen en los nueve pensums, y ponerlo a mano en el
+     overlay seria repetir en cada carrera algo que ya dice el grupo. */
+  const enSingular = (titulo) => titulo.replace(/(\S)s\b/g, '$1')
+
+  const casillas = (ov.rutaElectivas?.casillas ?? []).map((c, i) => ({
+    codigo: `casilla-${c.grupo}-${i + 1}`,
+    nombre: enSingular(grupos.find((g) => g.clave === c.grupo)?.titulo ?? 'Electivas'),
+    semestre: c.semestre,
+    uc: null,
+    esHueco: true,
+    grupo: c.grupo,
+    prerrequisitos: [],
+  }))
+
+  /* Y los huecos que SI vienen del crudo -hoy solo Ambiental- se atan a su
+     grupo por el nombre, que es lo unico que los identifica. Sin esta linea
+     serian dos mecanismos para la misma idea: unos huecos donde se puede
+     elegir y otros donde no, sin motivo visible para quien mira el mapa. */
+  const clavesDeGrupo = new Set(grupos.map((g) => g.clave))
+  for (const a of base.asignaturas) {
+    if (!a.esHueco || a.grupo) continue
+    // claveGrupo ya sabe leer "Electiva Tecnica" -> tecnica; es la misma
+    // deduccion que se le aplica al titulo del grupo, asi que las dos puntas
+    // se nombran igual por construccion en vez de por coincidencia.
+    const clave = claveGrupo(a.nombre)
+    if (clavesDeGrupo.has(clave)) a.grupo = clave
+  }
+
+  if (casillas.length) base.asignaturas.push(...casillas)
+
   // Antes de derivar nada: si la fuente repitio codigos hay que separarlos, o
   // los mapas por codigo de aqui en adelante perderian materias por el camino.
   const todas = [...base.asignaturas, ...grupos.flatMap((g) => g.asignaturas)]
@@ -283,6 +322,13 @@ function normalizar(crudo, overlayTodo) {
     semestres,
     asignaturas: base.asignaturas,
     grupos,
+    /* Que las casillas sean TODA la exigencia de electivas de la carrera.
+       Con esto el mapa las enseña donde el pensum dice que van y deja de
+       listar las opciones abajo; sin esto, las casillas que haya son solo
+       informativas y la lista de abajo se queda. Es una afirmacion sobre el
+       plan de estudios -la ruta que publica la UDO-, no una preferencia de
+       dibujo, y por eso viaja con los datos y no con el componente. */
+    ...(ov.rutaElectivas?.completa ? { electivasEnCasillas: true } : {}),
   }
 }
 

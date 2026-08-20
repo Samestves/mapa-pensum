@@ -16,23 +16,81 @@
     "Animal, 142 Agronomica, 172 Contaduria, 194 Ambiental, 222 Sistemas,",
     "250 Administracion, 330 Recursos Humanos."
   ],
-
   "ingenieria-de-sistemas": {
     "nombreCorto": "Sistemas",
-    "color": { "oscuro": "#6094ff", "claro": "#2751cc" },
+    "color": {
+      "oscuro": "#6094ff",
+      "claro": "#2751cc"
+    },
     "creditos": {
       "titulo": 153,
       "obligatorias": 132,
       "fuente": "INTRADACE, verificado contra el pensum oficial CU-021/2013"
     },
-    "cuotas": { "tecnica": 15, "humanistica": 6 }
+    "cuotas": {
+      "tecnica": 15,
+      "humanistica": 6
+    },
+    "rutaElectivas": {
+      "comment": [
+        "La ruta optima que publica la UDO en el diagrama oficial del pensum: las",
+        "electivas no van todas al final, sino en casillas reservadas dentro de",
+        "semestres concretos. El scrape de la DACE no trae esta colocacion -solo",
+        "la lista de opciones-, asi que vive aqui.",
+        "",
+        "Las cuentas cuadran con las cuotas de arriba, que es la comprobacion de",
+        "que la lectura del diagrama es correcta: 3 casillas humanisticas x 2 UC",
+        "= 6, y 5 tecnicas x 3 UC = 15.",
+        "",
+        "completa: true significa que estas casillas son TODA la exigencia de",
+        "electivas de la carrera. Con eso el mapa deja de listarlas abajo y las",
+        "enseña donde el pensum dice que van. Sin esta bandera, las casillas -si",
+        "las hay- son solo informativas y la lista de abajo se queda."
+      ],
+      "completa": true,
+      "casillas": [
+        {
+          "semestre": 2,
+          "grupo": "humanistica"
+        },
+        {
+          "semestre": 3,
+          "grupo": "humanistica"
+        },
+        {
+          "semestre": 4,
+          "grupo": "humanistica"
+        },
+        {
+          "semestre": 7,
+          "grupo": "tecnica"
+        },
+        {
+          "semestre": 8,
+          "grupo": "tecnica"
+        },
+        {
+          "semestre": 9,
+          "grupo": "tecnica"
+        },
+        {
+          "semestre": 9,
+          "grupo": "tecnica"
+        },
+        {
+          "semestre": 9,
+          "grupo": "tecnica"
+        }
+      ]
+    }
   },
-
   "ingenieria-agronomica": {
     "nombreCorto": "Agronómica",
-    "color": { "oscuro": "#3fcb74", "claro": "#1b7a44" }
+    "color": {
+      "oscuro": "#3fcb74",
+      "claro": "#1b7a44"
+    }
   },
-
   "ingenieria-ambiental": {
     "nombreCorto": "Ambiental",
     "comment_color": [
@@ -41,44 +99,59 @@
       "a 52 grados del verde de Agronomica, que era el riesgo real de confusion.",
       "Ademas agua y aire es de lo que va la carrera."
     ],
-    "color": { "oscuro": "#34c6ea", "claro": "#0b7391" },
+    "color": {
+      "oscuro": "#34c6ea",
+      "claro": "#0b7391"
+    },
     "avisos": [
       "Este pensum no viene del sitio de la DACE como los demas, sino de un documento oficial escaneado (DR / Abril 2023) suministrado por un usuario. No se ha podido contrastar contra una fuente en linea.",
       "El reparto de las 22 electivas entre Tecnicas y Sociohumanisticas se infirio del contenido de cada materia, porque el encabezado de esa seccion en la imagen era ambiguo. Confirmar con control de estudios antes de planificar en base a esa division.",
       "Las cinco casillas de electiva dentro de los semestres 5, 7, 8 y 9 se dibujan como huecos a rellenar. No cuentan para el avance: la materia que elijas se marca en su grupo de electivas."
     ]
   },
-
   "ingenieria-en-produccion-animal": {
     "nombreCorto": "Producción Animal",
-    "color": { "oscuro": "#a9c23f", "claro": "#5f7a16" },
+    "color": {
+      "oscuro": "#a9c23f",
+      "claro": "#5f7a16"
+    },
     "avisos": [
       "La DACE publica este pensum bajo la URL PensumIngAmbiental.php, que por su nombre corresponderia a Ingenieria Ambiental. El contenido es inequivocamente Produccion Animal. Confirmar con control de estudios."
     ]
   },
-
   "ingenieria-de-petroleo": {
     "nombreCorto": "Petróleo",
-    "color": { "oscuro": "#e8a33d", "claro": "#9a6410" }
+    "color": {
+      "oscuro": "#e8a33d",
+      "claro": "#9a6410"
+    }
   },
-
   "licenciatura-en-tecnologia-de-los-alimentos": {
     "nombreCorto": "Tecnología de Alimentos",
-    "color": { "oscuro": "#ff7a6b", "claro": "#c03a2b" }
+    "color": {
+      "oscuro": "#ff7a6b",
+      "claro": "#c03a2b"
+    }
   },
-
   "licenciatura-en-contaduria-publica": {
     "nombreCorto": "Contaduría",
-    "color": { "oscuro": "#2fd3c0", "claro": "#0a8577" }
+    "color": {
+      "oscuro": "#2fd3c0",
+      "claro": "#0a8577"
+    }
   },
-
   "licenciatura-en-administracion": {
     "nombreCorto": "Administración",
-    "color": { "oscuro": "#8a7cf0", "claro": "#4b3bc4" }
+    "color": {
+      "oscuro": "#8a7cf0",
+      "claro": "#4b3bc4"
+    }
   },
-
   "gerencia-de-recursos-humanos": {
     "nombreCorto": "Recursos Humanos",
-    "color": { "oscuro": "#f072b0", "claro": "#b32c74" }
+    "color": {
+      "oscuro": "#f072b0",
+      "claro": "#b32c74"
+    }
   }
 }

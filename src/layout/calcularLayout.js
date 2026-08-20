@@ -108,7 +108,7 @@ function colocarGrupos(grupos, xColumnas, yInicio) {
   return { nodos, zonas, alto: y - yInicio }
 }
 
-export function calcularLayout(asignaturas, grupos = []) {
+export function calcularLayout(asignaturas, grupos = [], electivasEnCasillas = false) {
   const semestres = [...new Set(asignaturas.map((a) => a.semestre))].sort((a, b) => a - b)
 
   const nodos = []
@@ -151,19 +151,45 @@ export function calcularLayout(asignaturas, grupos = []) {
   const finSemestres =
     MARGEN.top + ALTO_ENCABEZADO + filasN * NODO.alto + (filasN - 1) * ESPACIADO.fila
 
-  const zona = colocarGrupos(
-    grupos,
-    columnas.map((c) => c.x),
-    finSemestres + ELECTIVAS.corredor,
-  )
+  /* Cuando el pensum reserva casilla a cada electiva dentro de los semestres,
+     la zona de abajo sobra: seria enseñar dos veces lo mismo, una en su sitio
+     y otra en una lista. En Sistemas eso son 39 tarjetas y dos cabeceras que
+     dejan de dibujarse.
 
-  const todos = [...nodos, ...zona.nodos]
+     Pero las electivas siguen existiendo como catalogo -hay que poder
+     elegirlas, y una vez puestas se dibujan a tamaño de tarjeta normal-, asi
+     que se les parte el nombre igual. Con la medida grande, no con la
+     compacta de la zona: van a ocupar una tarjeta entera. */
+  const zona = electivasEnCasillas
+    ? { nodos: [], zonas: [], alto: 0 }
+    : colocarGrupos(
+        grupos,
+        columnas.map((c) => c.x),
+        finSemestres + ELECTIVAS.corredor,
+      )
+
+  const catalogo = electivasEnCasillas
+    ? grupos.flatMap((g) =>
+        g.asignaturas.map((a) => ({
+          ...a,
+          grupo: g.clave,
+          lineasNombre: partirEnLineas(a.nombre, ANCHO_TEXTO, TEXTO.nombre, TEXTO.maxLineas),
+        })),
+      )
+    : []
+
+  /* El catalogo entra en `todos` aunque no se dibuje. porCodigo es de donde
+     sale la materia al pulsar una casilla y al abrir su ficha, y relaciones
+     necesita las electivas para que señalar una ilumine lo que pide. */
+  const todos = [...nodos, ...zona.nodos, ...catalogo]
 
   return {
     nodos,
     columnas,
     electivas: zona.nodos,
     gruposElectivas: zona.zonas,
+    // Las electivas elegibles, con el nombre ya partido para la casilla
+    catalogo,
     finSemestres,
     // Las electivas son un mapa aparte: cero cables entre las dos zonas.
     // Un cable que baje desde la malla se leeria como "esta electiva es

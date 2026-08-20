@@ -40,6 +40,8 @@ function ContenidoGrafo({
   seleccionado,
   cadena,
   atenuado,
+  enCasilla,
+  alAbrirCasilla,
   ancho,
   alSenalar,
   alDejarDeSenalar,
@@ -141,7 +143,15 @@ function ContenidoGrafo({
       {nodos
         .filter((nodo) => nodo.esHueco)
         .map((nodo) => (
-          <NodoHueco key={nodo.codigo} nodo={nodo} atenuado={atenuado(nodo.codigo)} />
+          <NodoHueco
+            key={nodo.codigo}
+            nodo={nodo}
+            electiva={enCasilla(nodo.codigo)}
+            estado={estados[enCasilla(nodo.codigo)?.codigo]}
+            atenuado={atenuado(nodo.codigo)}
+            seleccionado={seleccionado === nodo.codigo}
+            alAbrir={alAbrirCasilla}
+          />
         ))}
 
       {nodos

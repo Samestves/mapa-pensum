@@ -4,6 +4,7 @@ import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
 import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
+import { useCasillas } from '../hooks/useCasillas'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
@@ -15,6 +16,7 @@ import GrafoPensum from './GrafoPensum'
 import PanelProgreso from './PanelProgreso'
 import Horario from './Horario'
 import PlanRuta from './PlanRuta'
+import SelectorElectiva from './SelectorElectiva'
 import VistaLista from './VistaLista'
 
 const CLAVE_VISTA = 'mapa-pensum:vista'
@@ -31,7 +33,10 @@ function VistaCarrera({ carrera, alVolver }) {
   const { asignaturas, grupos } = carrera
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
-  const layout = useMemo(() => calcularLayout(asignaturas, grupos), [asignaturas, grupos])
+  const layout = useMemo(
+    () => calcularLayout(asignaturas, grupos, carrera.electivasEnCasillas),
+    [asignaturas, grupos, carrera.electivasEnCasillas],
+  )
 
   const {
     marcas,
@@ -44,6 +49,24 @@ function VistaCarrera({ carrera, alVolver }) {
     reiniciar,
     hayMarcas,
   } = usePensum(carrera)
+  /* Que electiva has puesto en cada casilla del pensum. Es una decision de
+     planificacion, no de avance: aprobarla la sigue llevando usePensum. */
+  const { elegidas, casillaDe, colocar } = useCasillas(carrera)
+  const [casillaAbierta, setCasillaAbierta] = useState(null)
+
+  /* La materia que hay en una casilla, o null si sigue vacia. Va con
+     useCallback porque baja hasta el contenido memoizado del mapa: si
+     cambiara de identidad en cada render, mover el mapa volveria a dibujar
+     los ciento y pico hijos. */
+  const enCasilla = useCallback(
+    (codigoCasilla) => {
+      const codigo = elegidas[codigoCasilla]
+      return codigo ? (layout.porCodigo.get(codigo) ?? null) : null
+    },
+    [elegidas, layout],
+  )
+  const abrirCasilla = useCallback((codigo) => setCasillaAbierta(codigo), [])
+
   const { tema, alternarTema } = useTema()
 
   // Rampa de tonos de la carrera, publicada como --tono-N para que cada nodo
@@ -216,6 +239,27 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       )}
 
+      {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa porque
+          el mapa es un SVG: un modal ahi dentro heredaria su transform de
+          pan y zoom y saldria movido y a escala. */}
+      {casillaAbierta && (
+        <SelectorElectiva
+          casilla={layout.porCodigo.get(casillaAbierta)}
+          grupo={grupos.find((g) => g.clave === layout.porCodigo.get(casillaAbierta)?.grupo)}
+          opciones={
+            grupos.find((g) => g.clave === layout.porCodigo.get(casillaAbierta)?.grupo)
+              ?.asignaturas ?? []
+          }
+          estados={estados}
+          casillaDe={casillaDe}
+          alColocar={(casilla, codigo) => {
+            colocar(casilla, codigo)
+            setCasillaAbierta(null)
+          }}
+          alCerrar={() => setCasillaAbierta(null)}
+        />
+      )}
+
       {/* La key incluye la vista, no solo si el mapa ya monto: asi cambiar
           entre mapa, lista y horario rearranca la animacion y la vista nueva
           entra fundiendose en vez de aparecer de golpe. Antes la key solo
@@ -241,6 +285,8 @@ function VistaCarrera({ carrera, alVolver }) {
             alSenalar={setSenalado}
             alSeleccionar={alternarSeleccion}
             alMarcar={marcar}
+            enCasilla={enCasilla}
+            alAbrirCasilla={abrirCasilla}
           />
         ) : (
           <VistaLista
