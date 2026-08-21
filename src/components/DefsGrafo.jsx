@@ -1,5 +1,9 @@
 /**
- * Definiciones reutilizables del SVG: rejilla de fondo y filtros de glow.
+ * Definiciones reutilizables del SVG: los filtros de glow.
+ *
+ * La rejilla del fondo vivia aqui como <pattern> y se mudo al fondo CSS del
+ * contenedor, para poder meter la viñeta por encima de ella. Ver
+ * .lienzo-profundo en index.css.
  *
  * Los filtros solo se aplican a lo que esta encendido (aristas vivas, cadena
  * resaltada, nodos aprobados). Ponerlos en los 49 nodos a la vez cuesta caro
@@ -8,10 +12,6 @@
 function DefsGrafo() {
   return (
     <defs>
-      <pattern id="rejilla" width="34" height="34" patternUnits="userSpaceOnUse">
-        <path d="M34 0H0V34" fill="none" stroke="var(--rejilla)" strokeWidth="1" />
-      </pattern>
-
       {/* El glow toma el color de lo que ilumina: se difumina el propio trazo
           y se vuelve a pintar el original encima, nitido. */}
       <filter id="glow-suave" x="-60%" y="-60%" width="220%" height="220%">

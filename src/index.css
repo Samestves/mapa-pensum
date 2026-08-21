@@ -10,6 +10,15 @@
 
   --lienzo: #05080e;
   --rejilla: #101a28;
+  /* Profundidad del lienzo del mapa, ver .lienzo-profundo.
+     El azul esta desaturado a proposito y NO es ninguno de los colores de
+     area ni de estado. La primera version uso el verde de la marca para las
+     manchas y salio mal por dos motivos: se veia -una mancha de fondo que se
+     ve deja de ser fondo- y sobre todo mentia, porque en este mapa el verde
+     significa "aprobada" y habia lienzo verde donde no habia aprobado nada. */
+  --lienzo-alza: rgba(58, 96, 145, 0.1);
+  --lienzo-mancha: rgba(58, 96, 145, 0.06);
+  --lienzo-vineta: rgba(0, 0, 0, 0.62);
   --panel: #0a1018;
   --panel-borde: #1b2637;
   --panel-suave: #111b28;
@@ -67,6 +76,12 @@
 
   --lienzo: #eef1f7;
   --rejilla: #dde4ee;
+  /* En claro la profundidad se hace al reves: el centro se ACLARA hacia el
+     blanco y las esquinas caen a un gris azulado. Bajar el centro sobre un
+     fondo ya claro lo ensuciaria en vez de darle aire. */
+  --lienzo-alza: rgba(255, 255, 255, 0.85);
+  --lienzo-mancha: rgba(255, 255, 255, 0.55);
+  --lienzo-vineta: rgba(88, 108, 138, 0.16);
   --panel: #ffffff;
   --panel-borde: #d7dfea;
   --panel-suave: #f4f7fb;
@@ -983,6 +998,48 @@ body {
    ------------------------------------------------------------------ */
 .solo-impresion {
   display: none;
+}
+
+/* ------------------------------------------------------------------
+   El lienzo del mapa: profundidad, no color plano.
+   ------------------------------------------------------------------
+   El mapa se abria sobre un color liso con una rejilla encima, y eso hace
+   que 130 tarjetas floten sobre nada. La profundidad se arma con cuatro
+   capas de fondo, de arriba abajo:
+
+     1. la viñeta, que oscurece las esquinas y empuja la mirada al centro
+     2. la rejilla
+     3. dos manchas de luz difusas, abajo a la izquierda y arriba a la
+        derecha, que rompen la simetria: centradas se leen como un foco
+     4. una elevacion central amplia, que es la que da el aire
+
+   La rejilla se muda aqui desde el <pattern> del SVG, y no es por gusto.
+   Tenia que quedar POR DEBAJO de la viñeta -si no, al oscurecerse las
+   esquinas las lineas se quedaban a su brillo original y se veian MAS ahi
+   que en el centro, justo al reves de lo que hace una viñeta-. Dentro del
+   SVG no habia forma de meter una capa entre la rejilla y los nodos.
+   De paso el SVG pinta un rectangulo menos: aqui esto es un fondo que el
+   navegador rasteriza una vez, y alli era relleno con patron dentro de la
+   capa que se repinta al mover el mapa.
+
+   Todo es fondo del contenedor: no añade un solo elemento al arbol, no
+   recibe eventos y no participa del pan ni del zoom. */
+.lienzo-profundo {
+  background-color: var(--lienzo);
+  background-image:
+    radial-gradient(130% 110% at 50% 50%, transparent 32%, var(--lienzo-vineta) 100%),
+    linear-gradient(var(--rejilla) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rejilla) 1px, transparent 1px),
+    radial-gradient(55% 45% at 14% 86%, var(--lienzo-mancha), transparent 68%),
+    radial-gradient(50% 42% at 86% 16%, var(--lienzo-mancha), transparent 68%),
+    radial-gradient(110% 85% at 50% 36%, var(--lienzo-alza), transparent 62%);
+  background-size:
+    100% 100%,
+    34px 34px,
+    34px 34px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
 }
 
 @media print {

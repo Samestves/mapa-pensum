@@ -93,7 +93,7 @@ function GrafoPensum({
   )
 
   return (
-    <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
+    <div ref={contenedorRef} className="lienzo-profundo relative min-w-0 flex-1 overflow-hidden">
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
@@ -115,11 +115,16 @@ function GrafoPensum({
       >
         <DefsGrafo />
 
-        {/* Click en el vacio: cierra la seleccion */}
+        {/* Click en el vacio: cierra la seleccion.
+            Este rectangulo ya no dibuja la rejilla -eso lo hace el fondo del
+            contenedor, ver .lienzo-profundo- y se queda solo como blanco de
+            pulsacion. Va con fill transparent y no con fill none: none no
+            recibe eventos, asi que pulsar fuera de una tarjeta habria dejado
+            de cerrar la ficha. */}
         <rect
           width="100%"
           height="100%"
-          fill="url(#rejilla)"
+          fill="transparent"
           onClick={() => {
             if (!huboMovimiento.current) alSeleccionar(null)
           }}
