@@ -80,8 +80,16 @@ function hslAHex(h, s, l) {
  * Devuelve `niveles` colores repartidos en arco alrededor de `hexBase`.
  * El indice 0 corresponde a profundidad 1.
  */
+/* Suelo de saturacion. Las areas de Sistemas se subieron a croma alto para
+   que el mapa deje de verse lavado, y estas ocho carreras heredan la
+   saturacion del color de SU carrera, que en varios casos es bastante suave:
+   sin este suelo, Sistemas quedaria vivo y las otras ocho apagadas, o sea la
+   misma aplicacion con dos calidades distintas segun a que carrera entres. */
+const SATURACION_MINIMA = 74
+
 function tonosDeCarrera(hexBase, niveles) {
-  const [h, s, l] = hexAHsl(hexBase)
+  const [h, sBase, l] = hexAHsl(hexBase)
+  const s = Math.max(sBase, SATURACION_MINIMA)
   if (niveles <= 1) return [hexBase]
 
   return Array.from({ length: niveles }, (_, i) => {

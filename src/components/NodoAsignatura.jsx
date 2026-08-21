@@ -36,10 +36,19 @@ import { codigoVisible } from '../data/codigoVisible'
 const ICONO_AREA = 17
 
 const ESTILO = {
-  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.04, acento: 0.34, apagado: 0.68 },
-  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.12, acento: 1, apagado: 1 },
-  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.24, acento: 1, apagado: 1 },
-  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.36, acento: 1, apagado: 1 },
+  /* El techo del tinte no es estetico, es de contraste, y esta medido. Con el
+     color del area al 42% una tarjeta aprobada de Trabajo de Grado -que es
+     amarillo, el area mas clara de las ocho- dejaba su codigo y sus UC en 1,77
+     de contraste: ilegibles. A 26% quedan en 4,69, por encima del 4,5 que pide
+     la norma, y el nombre en 7,3.
+     Se probo tambien igualar la claridad de las ocho areas para poder subir el
+     tinte, y salio peor: con la claridad pareja el unico dato que separa dos
+     areas es el matiz, y la pareja mas parecida caia de 26,7 a 12. Antes que un
+     tinte mas fuerte esta poder distinguir de que area es cada materia. */
+  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.05, acento: 0.34, apagado: 0.68 },
+  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.14, acento: 1, apagado: 1 },
+  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
+  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.26, acento: 1, apagado: 1 },
 }
 
 function NodoAsignatura({
@@ -138,7 +147,7 @@ function NodoAsignatura({
         rx={NODO.radio + 3}
         fill="none"
         stroke={colorBorde}
-        strokeOpacity={aprobada ? 0.26 : 0}
+        strokeOpacity={aprobada ? 0.45 : 0}
         strokeWidth="5"
         style={{ transition: 'stroke-opacity 300ms ease' }}
       />
@@ -179,7 +188,7 @@ function NodoAsignatura({
         x={NODO.padIzq}
         y={26}
         fontSize={TEXTO.codigo}
-        fill="var(--tinta-tenue)"
+        fill="var(--tinta-suave)"
         className="tabular-nums tracking-wider"
       >
         {codigoVisible(nodo)}
@@ -202,7 +211,7 @@ function NodoAsignatura({
         x={NODO.padIzq}
         y={86}
         fontSize={TEXTO.meta}
-        fill="var(--tinta-tenue)"
+        fill="var(--tinta-suave)"
         className="tabular-nums"
       >
         {uc} UC

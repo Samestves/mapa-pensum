@@ -8,61 +8,82 @@
 :root {
   color-scheme: dark;
 
-  --lienzo: #05080e;
-  --rejilla: #101a28;
-  /* Profundidad del lienzo del mapa, ver .lienzo-profundo.
-     El azul esta desaturado a proposito y NO es ninguno de los colores de
-     area ni de estado. La primera version uso el verde de la marca para las
-     manchas y salio mal por dos motivos: se veia -una mancha de fondo que se
-     ve deja de ser fondo- y sobre todo mentia, porque en este mapa el verde
-     significa "aprobada" y habia lienzo verde donde no habia aprobado nada. */
-  --lienzo-alza: rgba(58, 96, 145, 0.1);
-  --lienzo-mancha: rgba(58, 96, 145, 0.06);
-  --lienzo-vineta: rgba(0, 0, 0, 0.62);
-  --panel: #0a1018;
-  --panel-borde: #1b2637;
-  --panel-suave: #111b28;
-  --nodo: #121d2c;
+  /* Las superficies son casi neutras -croma 0,006 a 0,012- y ahi hay una
+     razon, no un gusto. La tarjeta era azul marino de verdad: croma 0,033 en
+     tono 256. Y como el color del area se pinta ENCIMA como un tinte, un 17%
+     de naranja sobre azul marino se sigue leyendo azul; el mapa entero salia
+     azulito y daba igual de que area fuera cada materia. Sobre una base
+     neutra manda el tinte, que es justo lo que hace ARC: fondo casi sin color
+     y encima colores puros.
+     Casi neutras y no grises muertos: queda un rastro de frio -el tono 262-
+     que se nota al lado del blanco y evita el gris de plantilla. */
+  --lienzo: oklch(0.135 0.006 262);
+  --rejilla: oklch(0.185 0.007 262);
+  /* Profundidad del lienzo, ver .lienzo-profundo. Esta elevacion era un
+     rgb(58, 96, 145) al 10% extendido sobre el mapa entero, o sea un velo
+     azul encima de TODO, y era la otra mitad de por que las tarjetas se veian
+     azulitas. Ahora apenas tiene color. */
+  --lienzo-alza: oklch(0.62 0.018 262 / 0.11);
+  --lienzo-mancha: oklch(0.62 0.018 262 / 0.06);
+  --lienzo-vineta: oklch(0 0 0 / 0.62);
+  --panel: oklch(0.178 0.008 262);
+  --panel-borde: oklch(0.305 0.011 262);
+  --panel-suave: oklch(0.205 0.008 262);
+  --nodo: oklch(0.24 0.009 262);
   /* La tarjeta bloqueada: a medio camino entre el lienzo y una tarjeta
      normal. Sigue leyendose como objeto, pero se hunde hacia el fondo. */
-  --nodo-hundido: #0b131e;
-  --nodo-borde: #2a3a52;
+  --nodo-hundido: oklch(0.19 0.007 262);
+  --nodo-borde: oklch(0.375 0.012 262);
   --tinta: #eaf1fa;
   --tinta-suave: #b3c4da;
   /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
   --tinta-tenue: #8497b1;
 
-  /* Azul, no gris. Un gris entre siete colores no se lee como "esta es su
-     area": se lee como "esta materia no tiene area", que es justo lo que le
-     pasa a las otras ocho carreras. El tono esta elegido midiendo: de todos
-     los azules probados es el que menos se acerca a los vecinos -27,6 de
-     distancia perceptual contra Ciencias basicas, donde el gris daba 29,6-.
-     Los azules mas vivos bajaban a 17 y hasta a 11, y a esa distancia dos
-     areas que ademas se tocan en el semestre 1 dejan de distinguirse. */
-  --area-generales: #6f93c9;
-  --area-ciencias-basicas: #46c8f5;
-  --area-estadistica: #b781ff;
-  --area-computacion: #2fe8c6;
-  --area-electronica: #ffa94d;
-  --area-sistemas: #6094ff;
-  --area-gestion: #ff6f9f;
-  --area-tesis: #ffd93d;
+  /* ---- Paleta ------------------------------------------------------
+     Escrita en oklch y no en hexadecimal a proposito: aqui lo que importa no
+     es "que numero es este color" sino sus tres magnitudes -claridad, croma y
+     tono-, y en oklch se leen directamente. Todas las areas comparten croma
+     alto y solo cambian de tono, que es lo que hace que la familia se vea
+     hecha a la vez en vez de reunida.
 
-  --estado-aprobada: #2fe8c6;
-  --estado-cursando: #ffb454;
-  --estado-rojo: #ff6b7d;
+     El croma subio de 0,09-0,18 a 0,15-0,20. La referencia es el arbol de
+     ARC Raiders, cuyos tres colores estan en 0,177, 0,219 y 0,245: estabamos
+     a dos tercios de eso y por eso todo se veia lavado.
+
+     Los tonos de la banda azul estaban amontonados -Ciencias basicas 225,
+     Generales 258 y Sistemas 263, tres colores en 38 grados- y ahora van a
+     222, 248 y 272. La pareja mas parecida de las ocho queda a 26,7 de
+     distancia perceptual, que es el peor caso de toda la paleta. */
+  --area-generales: oklch(0.72 0.192 248);
+  --area-ciencias-basicas: oklch(0.79 0.148 222);
+  --area-estadistica: oklch(0.72 0.2 305);
+  --area-computacion: oklch(0.85 0.16 176);
+  --area-electronica: oklch(0.8 0.2 62);
+  --area-sistemas: oklch(0.68 0.2 272);
+  --area-gestion: oklch(0.72 0.2 5);
+  --area-tesis: oklch(0.88 0.184 95);
+
+  /* Aprobada se mueve al verde de verdad -tono 150- y no se queda en el
+     turquesa. Era EXACTAMENTE el mismo color que el area de Computacion, cero
+     de distancia: una materia de Computacion disponible se veia aprobada.
+     Ahora hay 37,3 entre las dos.
+     Cursando baja a coral por el mismo motivo con Electronica: en 72 estaban a
+     8,3 y en 38 quedan a 34,8. */
+  --estado-aprobada: oklch(0.84 0.2 150);
+  --estado-cursando: oklch(0.8 0.19 38);
+  --estado-rojo: oklch(0.68 0.2 22);
 
   /* Los colores que una clase del horario puede tomar. Son los ocho de area
      reordenados: ya estan ajustados para los dos temas, asi que el horario no
      inventa una paleta que no se parezca al resto de la aplicacion. */
-  --clase-1: #46c8f5;
-  --clase-2: #2fe8c6;
-  --clase-3: #6094ff;
-  --clase-4: #b781ff;
-  --clase-5: #ff6f9f;
-  --clase-6: #ffa94d;
-  --clase-7: #ffd93d;
-  --clase-8: #9aa8bd;
+  --clase-1: oklch(0.79 0.148 222);
+  --clase-2: oklch(0.85 0.16 176);
+  --clase-3: oklch(0.68 0.2 272);
+  --clase-4: oklch(0.72 0.2 305);
+  --clase-5: oklch(0.72 0.2 5);
+  --clase-6: oklch(0.8 0.2 62);
+  --clase-7: oklch(0.88 0.184 95);
+  --clase-8: oklch(0.72 0.192 248);
 
   /* Linea de la rejilla del horario. No vale --panel-borde: ese esta pensado
      para el borde de una tarjeta suelta sobre el lienzo, y aqui la linea cae
@@ -84,56 +105,58 @@
 [data-tema='claro'] {
   color-scheme: light;
 
-  --lienzo: #eef1f7;
-  --rejilla: #dde4ee;
+  --lienzo: oklch(0.955 0.005 262);
+  --rejilla: oklch(0.905 0.006 262);
   /* En claro la profundidad se hace al reves: el centro se ACLARA hacia el
      blanco y las esquinas caen a un gris azulado. Bajar el centro sobre un
      fondo ya claro lo ensuciaria en vez de darle aire. */
-  --lienzo-alza: rgba(255, 255, 255, 0.85);
-  --lienzo-mancha: rgba(255, 255, 255, 0.55);
-  --lienzo-vineta: rgba(88, 108, 138, 0.16);
+  --lienzo-alza: oklch(1 0 0 / 0.85);
+  --lienzo-mancha: oklch(1 0 0 / 0.55);
+  --lienzo-vineta: oklch(0.55 0.02 262 / 0.16);
   --panel: #ffffff;
-  --panel-borde: #d7dfea;
-  --panel-suave: #f4f7fb;
+  --panel-borde: oklch(0.885 0.008 262);
+  --panel-suave: oklch(0.975 0.004 262);
   --nodo: #ffffff;
   /* En claro hundirse es GRISEARSE, no oscurecerse, y hay que pasarse de
      frenada respecto al oscuro. Sobre un lienzo casi blanco una tarjeta
      disponible es blanca: entre ella y el lienzo hay 1,09 de contraste, o sea
      nada, y el borde era lo unico que la dibujaba. Sin borde, si la bloqueada
      tambien se queda a un pelo del blanco no hay forma de distinguirlas.
-     Medido: con #e6ebf3 quedaban a 1,17 -indistinguibles-, con esto quedan a
-     1,36, y el nombre encima sigue en 4,93 de contraste, por encima del 4,5
+     Medido: con el gris de antes quedaban a 1,17 -indistinguibles- y con este
+     quedan a 1,46, y el nombre encima sigue por encima del 4,5 de contraste
      que pide la norma. */
-  --nodo-hundido: #cbd5e3;
-  --nodo-borde: #c6d1e0;
+  --nodo-hundido: oklch(0.875 0.008 262);
+  --nodo-borde: oklch(0.835 0.01 262);
   --tinta: #0c1725;
   --tinta-suave: #3a4a61;
   /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
   --tinta-tenue: #5b6b82;
 
-  /* Mismo cambio en claro, y aqui hasta sale mejor: 21,0 de distancia a
-     Ciencias basicas donde el gris daba 20,9. */
-  --area-generales: #3d5f9e;
-  --area-ciencias-basicas: #0b7aa8;
-  --area-estadistica: #7434cb;
-  --area-computacion: #0a9781;
-  --area-electronica: #c8650d;
-  --area-sistemas: #2751cc;
-  --area-gestion: #c92f65;
-  --area-tesis: #9c7700;
+  /* Mismos tonos que en oscuro, bajados de claridad para que se lean sobre
+     blanco. Todos pasan el 3:1 que pide la norma para un grafico; tesis fue
+     el unico que hubo que bajar aparte, porque el amarillo sobre blanco es el
+     caso mas dificil: a 0,68 daba 2,86 y a 0,64 da 3,33. */
+  --area-generales: oklch(0.55 0.19 248);
+  --area-ciencias-basicas: oklch(0.6 0.19 222);
+  --area-estadistica: oklch(0.55 0.19 305);
+  --area-computacion: oklch(0.62 0.19 176);
+  --area-electronica: oklch(0.63 0.19 62);
+  --area-sistemas: oklch(0.52 0.19 272);
+  --area-gestion: oklch(0.56 0.19 5);
+  --area-tesis: oklch(0.64 0.19 95);
 
-  --estado-aprobada: #0a9781;
-  --estado-cursando: #c8650d;
-  --estado-rojo: #d92d45;
+  --estado-aprobada: oklch(0.6 0.19 150);
+  --estado-cursando: oklch(0.63 0.19 38);
+  --estado-rojo: oklch(0.55 0.2 22);
 
-  --clase-1: #0b7aa8;
-  --clase-2: #0a9781;
-  --clase-3: #2751cc;
-  --clase-4: #7434cb;
-  --clase-5: #c92f65;
-  --clase-6: #c8650d;
-  --clase-7: #9c7700;
-  --clase-8: #56677e;
+  --clase-1: oklch(0.6 0.19 222);
+  --clase-2: oklch(0.62 0.19 176);
+  --clase-3: oklch(0.52 0.19 272);
+  --clase-4: oklch(0.55 0.19 305);
+  --clase-5: oklch(0.56 0.19 5);
+  --clase-6: oklch(0.63 0.19 62);
+  --clase-7: oklch(0.64 0.19 95);
+  --clase-8: oklch(0.55 0.19 248);
 
   --horario-linea: #cfd9e6;
 
