@@ -33,13 +33,13 @@ import { codigoVisible } from '../data/codigoVisible'
  * inaccesible: es una materia que vas a cursar, solo que todavia no.
  */
 // Lado del icono de area, en unidades del mapa
-const ICONO_AREA = 12
+const ICONO_AREA = 17
 
 const ESTILO = {
-  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0, acento: 0.3, apagado: 0.68 },
-  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.09, acento: 1, apagado: 1 },
-  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
-  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.3, acento: 1, apagado: 1 },
+  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.04, acento: 0.34, apagado: 0.68 },
+  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.12, acento: 1, apagado: 1 },
+  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.24, acento: 1, apagado: 1 },
+  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.36, acento: 1, apagado: 1 },
 }
 
 function NodoAsignatura({
@@ -61,8 +61,6 @@ function NodoAsignatura({
   const estilo = ESTILO[estado]
 
   const colorBorde = colorBordeEstado(estado, acento)
-  const colorTinte =
-    estado === ESTADO.CURSANDO ? 'var(--estado-cursando)' : 'var(--estado-aprobada)'
 
   const aprobada = estado === ESTADO.APROBADA
   const Icono = ICONO_ESTADO[estado]
@@ -105,7 +103,7 @@ function NodoAsignatura({
         width={NODO.ancho}
         height={NODO.alto}
         rx={NODO.radio}
-        fill={estado === ESTADO.DISPONIBLE ? acento : colorTinte}
+        fill={acento}
         fillOpacity={estilo.tinte}
         className={estado === ESTADO.CURSANDO ? 'respirando' : undefined}
         style={{ transition: 'fill-opacity 300ms ease' }}
@@ -177,18 +175,6 @@ function NodoAsignatura({
         />
       )}
 
-      {/* Barra de acento del area */}
-      <rect
-        x={NODO.barra.x}
-        y={NODO.barra.y}
-        width={NODO.barra.ancho}
-        height={NODO.barra.alto}
-        rx={NODO.barra.ancho / 2}
-        fill={acento}
-        fillOpacity={estilo.acento}
-        style={{ transition: 'fill-opacity 300ms ease' }}
-      />
-
       <text
         x={NODO.padIzq}
         y={26}
@@ -241,25 +227,14 @@ function NodoAsignatura({
       {IconoArea && (
         <IconoArea
           x={NODO.ancho - NODO.padDer - ICONO_AREA}
-          y={86 - ICONO_AREA + 2.5}
+          y={88 - ICONO_AREA}
           width={ICONO_AREA}
           height={ICONO_AREA}
           color={acento}
           opacity={estilo.acento}
-          strokeWidth={2.6}
+          strokeWidth={2.4}
         />
       )}
-      <text
-        x={NODO.ancho - NODO.padDer - (IconoArea ? ICONO_AREA + 5 : 0)}
-        y={86}
-        textAnchor="end"
-        fontSize={TEXTO.meta}
-        fill={acento}
-        fillOpacity={estilo.acento}
-        className="font-medium"
-      >
-        {nodo.area ? etiquetaArea(nodo.area) : ''}
-      </text>
 
       {Icono && (
         <Icono

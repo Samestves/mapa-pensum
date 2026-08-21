@@ -150,16 +150,6 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
         </>
       ) : (
         <>
-          <rect
-            x={NODO.barra.x}
-            y={NODO.barra.y}
-            width={NODO.barra.ancho}
-            height={NODO.barra.alto}
-            rx={NODO.barra.ancho / 2}
-            fill={acento}
-            fillOpacity={bloqueada ? 0.4 : 1}
-          />
-
           <text
             x={NODO.padIzq}
             y={26}

@@ -7,8 +7,6 @@ export const NODO = {
   radio: 12,
   padIzq: 20, // deja sitio a la barra de acento del area
   padDer: 16,
-  // Barra vertical de color que identifica el area
-  barra: { x: 8, ancho: 3, y: 14, alto: 68 },
 }
 
 // Ancho util para el texto dentro del nodo
