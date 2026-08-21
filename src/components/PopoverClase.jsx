@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import PicoPopover from './PicoPopover'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import {
   ABRE,
@@ -54,6 +55,9 @@ const normalizar = (t) =>
 function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones, alGuardar, alQuitar, alCerrar }) {
   const esTelefono = useEsTelefono()
   const refPanel = useRef(null)
+  const refHoja = useRef(null)
+  const refBusqueda = useRef(null)
+  const yaEnfocado = useRef(false)
   const [pos, setPos] = useState(null)
 
   const [codigo, setCodigo] = useState(inicial.codigo ?? '')
@@ -67,6 +71,35 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
   const [busqueda, setBusqueda] = useState('')
 
   useCerrarConEscape(alCerrar)
+
+  /* El foco se encierra SOLO en telefono. Ahi esto es una hoja con velo
+     negro: detras no se puede usar nada, y dejar que Tab se escape a una
+     semana tapada no lleva a ningun sitio. En escritorio es lo contrario a
+     proposito -no oscurece la semana porque es lo que se esta mirando para
+     decidir la hora-, asi que encerrar el foco seria mentir sobre lo que
+     tapa. Alli ya salta solo al buscador y lo demas sigue accesible. */
+  useFocoAtrapado(refHoja, esTelefono, false)
+
+  /* El foco al buscador se pone aqui y no con autoFocus en el input, y no es
+     un cambio de gusto: autoFocus NO funcionaba.
+
+     El panel nace con visibility:hidden y no se enseña hasta que se ha
+     medido y se sabe donde cabe. Un elemento invisible no puede recibir el
+     foco, y autoFocus se ejecuta al montar, o sea justo mientras todavia lo
+     es: la llamada se perdia sin error ninguno. Comprobado en el navegador
+     con una pulsacion de raton de verdad -abriendo la ficha, el foco se
+     quedaba en <body>-, asi que llevaba desde el principio sin hacer nada y
+     el comentario de aqui abajo describia algo que no pasaba.
+
+     Espera a que haya posicion, que es exactamente cuando el panel se vuelve
+     visible. Y una sola vez: la posicion se recalcula al elegir materia, y
+     volver a llamar a focus() ahi le quitaria el foco a lo que estuviera
+     usando el estudiante. */
+  useEffect(() => {
+    if (esTelefono || !pos || yaEnfocado.current) return
+    yaEnfocado.current = true
+    refBusqueda.current?.focus()
+  }, [esTelefono, pos])
 
   /* Se coloca AL LADO del cuadrado, no debajo del punto que se pulso.
      Colgando del click, la ficha tapaba la propia franja sobre la que se
@@ -178,8 +211,9 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
               size={13}
               className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-tinta-tenue"
             />
-            {/* El foco automatico solo en escritorio. Alli es un acierto: la
-                ficha abre y ya se puede escribir sin tocar nada mas.
+            {/* El foco automatico solo en escritorio -lo pone el efecto de
+                arriba-. Alli es un acierto: la ficha abre y ya se puede
+                escribir sin tocar nada mas.
                 En un telefono ese mismo foco levanta el teclado, y el teclado
                 se come la mitad de abajo de la pantalla justo encima de la
                 hoja que acaba de subir. Lo que tapa no es un adorno: son las
@@ -189,7 +223,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
                 verla. El teclado tiene que salir cuando alguien decide
                 escribir, no antes. */}
             <input
-              autoFocus={!esTelefono}
+              ref={refBusqueda}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar materia…"
@@ -384,7 +418,9 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
         className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
       />
       <div
+        ref={refHoja}
         role="dialog"
+        aria-modal="true"
         aria-label="Clase"
         className="popover-clase relative max-h-[88vh] w-full overflow-y-auto rounded-t-2xl border border-b-0 border-panel-borde bg-panel pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl"
       >

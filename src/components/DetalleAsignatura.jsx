@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
@@ -108,6 +109,12 @@ function DetalleAsignatura({
 }) {
   const esTelefono = useEsTelefono()
   const refFicha = useRef(null)
+
+  /* Escape la cierra, como a todo lo demas que se abre encima. Era la unica
+     capa que no lo hacia: se salia de ella pulsando el mapa, que con el
+     teclado no es ninguna salida. */
+  useCerrarConEscape(alCerrar)
+
   const [alto, setAlto] = useState(0)
 
   /* El alto se mide cuando cambia el CONTENIDO, no cuando cambia el sitio.

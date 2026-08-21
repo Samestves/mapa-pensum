@@ -87,7 +87,13 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
     : (progreso.aprobadas / Math.max(1, progreso.total)) * 100
 
   return (
-    <div className="hoja bg-panel px-9 py-8 text-tinta" style={{ width: ANCHO_HOJA }} lang="es">
+    /* <article> y no un <div>: la hoja lleva su propio <header> y su propio
+       <footer>, y sueltos en la pagina esos dos cuentan como la cabecera y el
+       pie DEL SITIO. Con el modal abierto habia tres cabeceras anunciadas y
+       dos pies. Dentro de un article quedan donde tienen que estar, que es
+       encabezando y cerrando la hoja. Y es lo que la hoja es: algo completo
+       que se entiende sacado de aqui, que para eso se imprime. */
+    <article className="hoja bg-panel px-9 py-8 text-tinta" style={{ width: ANCHO_HOJA }} lang="es">
       <header className="flex items-center justify-between gap-4 border-b border-tinta pb-2.5">
         <span className="flex items-center gap-1.5 text-[9.5px] font-extrabold tracking-[0.18em] text-tinta uppercase">
           <Waypoints size={13} strokeWidth={2.6} className="text-aprobada" />
@@ -232,7 +238,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
           <span className={ROTULO}>Arma la tuya gratis</span>
         </p>
       </footer>
-    </div>
+    </article>
   )
 }
 

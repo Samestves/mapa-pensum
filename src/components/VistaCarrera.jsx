@@ -285,7 +285,10 @@ function VistaCarrera({ carrera, alVolver }) {
           entra fundiendose en vez de aparecer de golpe. Antes la key solo
           cambiaba una vez -cuando el mapa relevaba a la silueta- y los
           cambios de vista posteriores eran un corte seco. */}
-      <div
+      {/* <main> y no un <div>: es el contenido de la pagina, y ponerle el
+          nombre que le corresponde es lo que deja saltar hasta aqui de un
+          golpe con un lector de pantalla en vez de recorrer la cabecera. */}
+      <main
         key={mapaMontado ? vista : 'esqueleto'}
         className="entrada-panel relative flex flex-1 overflow-hidden"
       >
@@ -339,7 +342,7 @@ function VistaCarrera({ carrera, alVolver }) {
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
         />
-      </div>
+      </main>
 
       {/* La navegacion del telefono va al final del arbol y fuera del
           contenedor de la vista: es hermana suya, no algo flotando encima.

@@ -11,9 +11,10 @@ import { useEffect } from 'react'
  * nota nadie hasta que lo prueba con el teclado. Que sea una linea en el
  * componente hace que olvidarla se vea.
  *
- * Escucha en document y no en el panel: quien acaba de abrir algo casi nunca
- * tiene el foco dentro, asi que un manejador colgado del panel solo
- * responderia despues de tabular hasta el.
+ * Escucha en document y no en el panel. En los modales el foco SI entra
+ * dentro -lo mete [[useFocoAtrapado]]- pero en las nubecitas ancladas no: el
+ * foco se queda en el boton que las abrio, que es lo correcto para ellas, y
+ * un manejador colgado del panel no se enteraria nunca.
  *
  * `activo` existe para los que solo escuchan mientras estan en un estado
  * concreto -la confirmacion de borrar, por ejemplo-. Apagado no engancha

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Info, Lock, Search, Trash2, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 
 const sinTildes = (t) =>
   t
@@ -31,7 +32,10 @@ const sinTildes = (t) =>
  * dejaria a alguien buscando una materia que sabe que existe.
  */
 function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColocar, alCerrar }) {
+  const refModal = useRef(null)
+
   useCerrarConEscape(alCerrar)
+  useFocoAtrapado(refModal)
   const [busqueda, setBusqueda] = useState('')
 
   const puesta = Object.entries(casillaDe).find(([, c]) => c === casilla.codigo)?.[0] ?? null
@@ -75,6 +79,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
       />
 
       <div
+        ref={refModal}
         role="dialog"
         aria-modal="true"
         aria-label={`Elegir ${casilla.nombre}`}

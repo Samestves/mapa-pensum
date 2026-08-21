@@ -4,6 +4,7 @@ import { ChevronDown, Download, Printer, Route, TriangleAlert, X } from 'lucide-
 import { planificar, horasDe, mesEstimadoGrado } from '../layout/planificador'
 import { pesoDesbloqueo } from '../layout/relaciones'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 import { guardar, leer } from '../data/almacen'
 import { descargarMarkdown, MES } from '../data/exportarPlan'
 import HojaPlan, { ANCHO_HOJA } from './HojaPlan'
@@ -97,6 +98,7 @@ function Resumen({ semestres, grado, materias }) {
  */
 function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, alCerrar }) {
   const { asignaturas, grupos } = carrera
+  const refModal = useRef(null)
   const [nombre, setNombre] = useState(() => leer(CLAVE_NOMBRE, ''))
   const [ucPorSemestre, setUc] = useState(() => Number(leer(CLAVE_UC)) || 16)
   // En movil los ajustes arrancan plegados para que la hoja tenga sitio
@@ -110,6 +112,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
   }, [ucPorSemestre])
 
   useCerrarConEscape(alCerrar)
+  useFocoAtrapado(refModal)
 
   const pesos = useMemo(() => pesoDesbloqueo(relaciones), [relaciones])
 
@@ -179,7 +182,13 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
         {/* A pantalla completa en movil y como tarjeta a partir de md: en un
             telefono un modal centrado con margenes desperdicia el poco alto
             que hay y deja la hoja en una ranura. */}
-        <div className="surgir relative flex h-full w-full flex-col overflow-hidden bg-panel md:h-auto md:max-h-full md:max-w-5xl md:flex-row md:rounded-2xl md:border md:border-panel-borde md:shadow-2xl">
+        <div
+          ref={refModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Planificar mi ruta"
+          className="surgir relative flex h-full w-full flex-col overflow-hidden bg-panel md:h-auto md:max-h-full md:max-w-5xl md:flex-row md:rounded-2xl md:border md:border-panel-borde md:shadow-2xl"
+        >
           <div className="no-imprimir flex shrink-0 flex-col border-panel-borde md:min-h-0 md:w-[19rem] md:border-r">
             <div className="flex items-start justify-between gap-2 border-b border-panel-borde px-4 py-3 md:px-5 md:py-4">
               <div className="min-w-0">
