@@ -234,7 +234,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
                 className="transicion-tema flex items-center justify-between rounded-lg border border-panel-borde px-3 py-2.5 text-[11.5px] font-bold text-tinta-suave md:hidden"
               >
                 <span>Ajustar mi carga</span>
-                <span className="flex items-center gap-1.5 font-mono text-tinta">
+                <span className="flex items-center gap-1.5 tabular-nums text-tinta">
                   {ucPorSemestre} UC
                   <ChevronDown
                     size={14}
@@ -249,7 +249,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
                     <span className="text-[11.5px] font-bold text-tinta-suave">
                       Carga por semestre
                     </span>
-                    <span className="font-mono text-sm font-bold text-tinta">
+                    <span className="tabular-nums text-sm font-bold text-tinta">
                       {ucPorSemestre}
                       <span className="text-[10px] text-tinta-tenue"> UC</span>
                     </span>

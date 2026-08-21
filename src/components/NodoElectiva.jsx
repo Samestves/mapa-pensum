@@ -110,7 +110,7 @@ function NodoElectiva({
         y={ELECTIVAS.alto - 10}
         fontSize={8.5}
         fill={colorPie}
-        className="font-mono"
+        className="tabular-nums"
       >
         {pie}
       </text>

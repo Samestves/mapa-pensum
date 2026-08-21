@@ -152,7 +152,7 @@ function DetalleAsignatura({
             style={{ backgroundColor: colorNodo(nodo) }}
           />
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-[10px] tracking-wider text-tinta-suave">
+            <p className="tabular-nums text-[10px] tracking-wider text-tinta-suave">
               {codigoVisible(nodo)}
               {nodo.semestre ? ` · Semestre ${nodo.semestre}` : ' · Electiva'}
             </p>

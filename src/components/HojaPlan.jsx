@@ -38,7 +38,7 @@ function Fila({ asignatura }) {
         aria-hidden="true"
         className="mt-[3px] size-[11px] shrink-0 self-start rounded-[3px] border border-tinta-tenue"
       />
-      <span className="w-[62px] shrink-0 font-mono text-[9px] tracking-tight text-tinta-tenue">
+      <span className="w-[62px] shrink-0 text-[9px] tracking-wider text-tinta-tenue tabular-nums">
         {esHueco ? '' : codigoVisible(asignatura)}
       </span>
       {/* Sin recortar. Una hoja impresa no tiene donde enseñar lo que corta:
@@ -50,7 +50,7 @@ function Fila({ asignatura }) {
       >
         {asignatura.nombre}
       </span>
-      <span className="w-[52px] shrink-0 text-right font-mono text-[9.5px] text-tinta-tenue">
+      <span className="w-[52px] shrink-0 text-right tabular-nums text-[9.5px] text-tinta-tenue">
         {asignatura.uc != null ? `${asignatura.uc} UC` : 'a elegir'}
       </span>
     </li>
@@ -99,7 +99,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
           <Waypoints size={13} strokeWidth={2.6} className="text-aprobada" />
           Mapa de Pensum
         </span>
-        <span className="font-mono text-[9.5px] text-tinta-tenue">{HOY()}</span>
+        <span className="tabular-nums text-[9.5px] text-tinta-tenue">{HOY()}</span>
       </header>
 
       <div className="mt-5 flex items-end justify-between gap-6">
@@ -149,7 +149,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
           <section className="mt-5">
             <div className="flex items-baseline justify-between gap-3">
               <span className={ROTULO}>Tu avance</span>
-              <span className="font-mono text-[10px] text-tinta-suave">
+              <span className="tabular-nums text-[10px] text-tinta-suave">
                 {hayPorcentaje
                   ? `${ucLogradas} de ${progreso.ucTitulo} UC · ${Math.round(progreso.porcentaje)} %`
                   : `${progreso.aprobadas} de ${progreso.total} materias`}
@@ -187,7 +187,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, ucPorSemestre, grado }) {
                   <h2 className="text-[11px] font-extrabold tracking-[0.12em] text-tinta uppercase">
                     {etiquetaSemestre(s.numero)}
                   </h2>
-                  <span className="shrink-0 font-mono text-[9.5px] text-tinta-tenue">
+                  <span className="shrink-0 tabular-nums text-[9.5px] text-tinta-tenue">
                     {s.materias.length} materias · {s.uc} UC
                   </span>
                 </div>

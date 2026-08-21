@@ -11,7 +11,7 @@ const GIRO = 7
 /**
  * Una cifra del encabezado de la tarjeta.
  *
- * El numero va en JetBrains Mono y la palabra en versalita apretada. No es un
+ * El numero va en cifras tabulares y la palabra en versalita apretada. No es un
  * capricho: la versalita de 10px en negrita es exactamente el estilo de
  * etiqueta que ya usan el panel de avance y la leyenda, asi que la tarjeta
  * habla el mismo idioma que el resto de la app sin traer una tercera fuente.
@@ -24,7 +24,7 @@ const GIRO = 7
 function Cifra({ valor, etiqueta }) {
   return (
     <span className="flex items-baseline gap-1.5">
-      <span className="font-mono text-[13px] leading-none font-bold text-tinta tabular-nums xl:text-[15px]">
+      <span className="text-[13px] leading-none font-bold text-tinta tabular-nums xl:text-[15px]">
         {valor}
       </span>
       <span className="text-[10px] leading-none font-bold tracking-[0.09em] text-tinta-tenue uppercase">

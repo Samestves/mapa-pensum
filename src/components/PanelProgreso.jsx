@@ -20,7 +20,7 @@ function CuotaGrupo({ avance }) {
         <span className="min-w-0 truncate text-[11px] font-semibold text-tinta">
           {avance.titulo}
         </span>
-        <span className="shrink-0 font-mono text-[10px] font-bold" style={{ color }}>
+        <span className="shrink-0 tabular-nums text-[10px] font-bold" style={{ color }}>
           {avance.meta != null ? `${avance.uc}/${avance.meta} UC` : `${avance.uc} UC`}
         </span>
       </div>
@@ -130,7 +130,7 @@ function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total 
         {tramos.map((t) => (
           <li key={t.clave} className="flex items-center gap-1.5 text-[11px] text-tinta-suave">
             <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-            <span className="font-mono font-bold text-tinta">{t.n}</span>
+            <span className="tabular-nums font-bold text-tinta">{t.n}</span>
             <span className="min-w-0 truncate">{t.texto}</span>
           </li>
         ))}
@@ -178,7 +178,7 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
               >
                 {etiquetaArea(a.area)}
               </span>
-              <span className="shrink-0 font-mono text-[10px] text-tinta-tenue">
+              <span className="shrink-0 tabular-nums text-[10px] text-tinta-tenue">
                 {a.aprobadas}/{a.total}
               </span>
             </button>
@@ -294,10 +294,10 @@ function PanelProgreso({
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <span className="font-mono text-3xl leading-none font-extrabold text-aprobada">
+              <span className="tabular-nums text-3xl leading-none font-extrabold text-aprobada">
                 {hayPorcentaje ? `${Math.round(porcentaje)}%` : aprobadas}
               </span>
-              {!hayPorcentaje && <span className="font-mono text-sm text-tinta-tenue">/{total}</span>}
+              {!hayPorcentaje && <span className="tabular-nums text-sm text-tinta-tenue">/{total}</span>}
             </div>
           </header>
 

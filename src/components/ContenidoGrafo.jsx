@@ -124,7 +124,7 @@ function ContenidoGrafo({
               y={MARGEN.top + 18}
               fontSize="11"
               fill="var(--tinta-tenue)"
-              className="font-mono font-semibold"
+              className="tabular-nums font-semibold"
             >
               <tspan fill="var(--tinta-suave)">{columna.cantidad}</tspan> materias
               <tspan dx="4">·</tspan>
@@ -321,7 +321,7 @@ function ContenidoGrafo({
               dx="18"
               fontSize="11.5"
               fill="var(--tinta-suave)"
-              className="font-mono font-semibold tabular-nums"
+              className="font-semibold tabular-nums"
             >
               {grupo.cuota != null
                 ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`

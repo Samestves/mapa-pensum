@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/manrope';
-@import '@fontsource-variable/jetbrains-mono';
 
 /* ------------------------------------------------------------------
    Tema oscuro (por defecto). Todo el color vive en estas variables:
@@ -123,7 +122,19 @@
   --color-cursando: var(--estado-cursando);
 
   --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  /* No hay segunda fuente. Los codigos, los creditos y las horas iban en
+     JetBrains Mono, y era media descarga de la aplicacion -39,5 kB
+     comprimidos, mas que Manrope entera- para dibujar cuarenta caracteres
+     distintos: se midio recorriendo el arbol de todas las vistas y lo unico
+     que aparecia era "0123456789CEGSTUabcdegijlmnoprstu %/·áíó". La fuente
+     trae ademas las ligaduras de programacion -=>, !=- que aqui no se pintan
+     nunca.
+     Lo que hacia falta de ella no era la forma de las letras: era que las
+     cifras midieran todas lo mismo para que las columnas no bailen. Eso
+     Manrope lo sabe hacer, pero no de serie: por defecto "1111" mide 62 px
+     donde "0000" mide 98. Se pide con font-variant-numeric: tabular-nums
+     -la utilidad tabular-nums-, y entonces las tres miden 99,2 y ademas
+     igual en cualquier peso. Medido en el navegador antes de quitarla. */
 }
 
 html,

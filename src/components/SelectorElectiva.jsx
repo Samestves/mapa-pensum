@@ -87,7 +87,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
       >
         <header className="flex items-start gap-3 border-b border-panel-borde px-5 py-4">
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-[10px] tracking-[0.11em] text-tinta-suave">
+            <p className="tabular-nums text-[10px] tracking-[0.11em] text-tinta-suave">
               SEMESTRE {casilla.semestre}
             </p>
             <h3 className="text-[17px] leading-tight font-extrabold tracking-[-0.02em] text-tinta">
@@ -207,8 +207,8 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
                       {o.nombre}
                     </span>
                     <span className="mt-0.5 flex items-center gap-2 text-[10px] text-tinta-tenue">
-                      <span className="font-mono">{codigoVisible(o)}</span>
-                      <span className="font-mono font-semibold text-tinta-suave">
+                      <span className="tabular-nums">{codigoVisible(o)}</span>
+                      <span className="tabular-nums font-semibold text-tinta-suave">
                         {o.uc} UC
                       </span>
                       {aprobada && (

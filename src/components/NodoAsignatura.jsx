@@ -154,7 +154,7 @@ function NodoAsignatura({
         y={26}
         fontSize={TEXTO.codigo}
         fill="var(--tinta-tenue)"
-        className="font-mono tracking-wider"
+        className="tabular-nums tracking-wider"
       >
         {codigoVisible(nodo)}
       </text>
@@ -177,7 +177,7 @@ function NodoAsignatura({
         y={86}
         fontSize={TEXTO.meta}
         fill="var(--tinta-tenue)"
-        className="font-mono"
+        className="tabular-nums"
       >
         {uc} UC
       </text>

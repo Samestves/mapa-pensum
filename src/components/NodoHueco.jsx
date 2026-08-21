@@ -165,7 +165,7 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
             y={26}
             fontSize={TEXTO.codigo}
             fill="var(--tinta-tenue)"
-            className="font-mono tracking-wider"
+            className="tabular-nums tracking-wider"
           >
             {codigoVisible(electiva)}
           </text>
@@ -188,7 +188,7 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
             y={86}
             fontSize={TEXTO.meta}
             fill="var(--tinta-tenue)"
-            className="font-mono"
+            className="tabular-nums"
           >
             {electiva.uc} UC
           </text>

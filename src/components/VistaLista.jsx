@@ -77,7 +77,7 @@ function FilaMateria({ nodo, estado, relaciones, porCodigo, estados, alMarcar })
             </span>
             {/* El area solo existe donde esta clasificada a mano. Sin ella
                 no se pinta el separador, o quedaria un "· undefined". */}
-            <span className="block font-mono text-[10px] text-tinta-tenue">
+            <span className="block tabular-nums text-[10px] text-tinta-tenue">
               {codigoVisible(nodo)}
               {nodo.uc != null && ` · ${nodo.uc} UC`}
               {nodo.area && ` · ${etiquetaArea(nodo.area)}`}
@@ -168,14 +168,14 @@ function VistaLista({ layout, estados, avanceGrupos, alMarcar }) {
             <section key={columna.semestre}>
               <header className="transicion-tema sticky top-0 z-10 -mx-1 mb-2 flex items-baseline justify-between bg-lienzo px-1 py-2">
                 <h2 className="flex items-baseline gap-2">
-                  <span className="font-mono text-2xl font-extrabold text-tinta">
+                  <span className="tabular-nums text-2xl font-extrabold text-tinta">
                     {String(columna.semestre).padStart(2, '0')}
                   </span>
                   <span className="text-[10px] font-bold tracking-[0.2em] text-tinta-suave">
                     SEMESTRE
                   </span>
                 </h2>
-                <span className="font-mono text-[10px] text-tinta-tenue">
+                <span className="tabular-nums text-[10px] text-tinta-tenue">
                   {aprobadas}/{materias.length} · {columna.uc} UC
                 </span>
               </header>
@@ -218,7 +218,7 @@ function VistaLista({ layout, estados, avanceGrupos, alMarcar }) {
                 {/* Sin cuota oficial se dice lo que llevas y ya: un
                     denominador inventado seria peor que no poner ninguno. */}
                 <span
-                  className="shrink-0 font-mono text-[10px] font-bold"
+                  className="shrink-0 tabular-nums text-[10px] font-bold"
                   style={{
                     color: grupo.avance?.completa
                       ? 'var(--estado-aprobada)'
