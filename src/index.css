@@ -23,6 +23,9 @@
   --panel-borde: #1b2637;
   --panel-suave: #111b28;
   --nodo: #121d2c;
+  /* La tarjeta bloqueada: a medio camino entre el lienzo y una tarjeta
+     normal. Sigue leyendose como objeto, pero se hunde hacia el fondo. */
+  --nodo-hundido: #0b131e;
   --nodo-borde: #2a3a52;
   --tinta: #eaf1fa;
   --tinta-suave: #b3c4da;
@@ -86,6 +89,8 @@
   --panel-borde: #d7dfea;
   --panel-suave: #f4f7fb;
   --nodo: #ffffff;
+  /* En claro hundirse es acercarse al lienzo, o sea GRISEARSE, no oscurecerse */
+  --nodo-hundido: #e6ebf3;
   --nodo-borde: #c6d1e0;
   --tinta: #0c1725;
   --tinta-suave: #3a4a61;
@@ -499,14 +504,16 @@ body {
   animation: anillo 620ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
-/* Latido lento del borde de una asignatura en curso */
+/* Latido lento de una asignatura en curso. Vivia en el borde -stroke-opacity-
+   y las tarjetas ya no tienen borde, asi que ahora late el relleno del tinte,
+   que es donde vive el color del estado. */
 @keyframes respirar {
   0%,
   100% {
-    stroke-opacity: 0.55;
+    fill-opacity: 0.14;
   }
   50% {
-    stroke-opacity: 1;
+    fill-opacity: 0.26;
   }
 }
 

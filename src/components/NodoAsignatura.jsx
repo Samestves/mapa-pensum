@@ -6,16 +6,37 @@ import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
 
 /**
- * Los cuatro estados se distinguen por relleno, borde y trazo de la propia
- * tarjeta, no por un control aparte: la marca se hace desde la ficha y aqui
- * solo se refleja. El tinte de aprobada es deliberadamente fuerte para que
- * el mapa se pueda leer de un vistazo desde lejos.
+ * Los cuatro estados se distinguen por el RELLENO de la tarjeta y por nada
+ * mas. No hay borde.
+ *
+ * Antes lo decian cinco cosas a la vez -borde de color, grosor de borde,
+ * guiones, tinte y barra de area- y cinco señales para un solo dato no es
+ * enfasis, es ruido: ninguna llegaba a leerse de lejos y el ojo tenia que
+ * comparar tarjeta con tarjeta para saber cual podia inscribir.
+ *
+ * La idea es del arbol de habilidades de ARC Raiders, y lo que hace bien no
+ * es no tener borde: es que ALLI EL COLOR SIGNIFICA POSESION. Lo que ya
+ * tienes viene relleno; lo que no, oscuro. Una sola escala, se lee a un metro
+ * de la pantalla. Aqui esa escala tiene cuatro peldaños y sube en el mismo
+ * sentido: cuanto mas avanzada esta la materia, mas encendida esta la
+ * tarjeta.
+ *
+ * `base` es lo que hunde a la bloqueada: no se apaga con un borde mas tenue,
+ * se acerca al color del lienzo hasta quedarse casi dentro de el. Y `apagado`
+ * baja la tarjeta entera.
+ *
+ * El 0,68 no es a ojo. Hundir y seguir siendo legible tiran en sentidos
+ * opuestos, asi que se midio el contraste del nombre sobre su propia tarjeta
+ * a varios valores: a 0,6 daba 4,40 en tema claro, por debajo del 4,5 que
+ * pide la norma para texto normal, o sea que hundirla la habria dejado a
+ * medio leer. A 0,68 da 5,69 en claro y 7,84 en oscuro. Bloqueada no es
+ * inaccesible: es una materia que vas a cursar, solo que todavia no.
  */
 const ESTILO = {
-  [ESTADO.BLOQUEADA]: { opacidadBorde: 0.4, grosor: 1.25, guiones: '5 4', tinte: 0, acento: 0.4 },
-  [ESTADO.DISPONIBLE]: { opacidadBorde: 0.85, grosor: 1.5, guiones: null, tinte: 0.05, acento: 1 },
-  [ESTADO.CURSANDO]: { opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.14, acento: 1 },
-  [ESTADO.APROBADA]: { opacidadBorde: 1, grosor: 2, guiones: null, tinte: 0.22, acento: 1 },
+  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0, acento: 0.3, apagado: 0.68 },
+  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.09, acento: 1, apagado: 1 },
+  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
+  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.3, acento: 1, apagado: 1 },
 }
 
 function NodoAsignatura({
@@ -50,7 +71,11 @@ function NodoAsignatura({
   return (
     <g
       transform={`translate(${x}, ${y})`}
-      opacity={atenuado ? 0.14 : 1}
+      /* La bloqueada baja ENTERA -texto, candado y barra-, no solo su fondo.
+         Bajar solo el fondo dejaba el nombre a tinta plena flotando sobre una
+         tarjeta apagada, y el nombre es lo que mas pesa de lejos: la tarjeta
+         seguia pidiendo la misma atencion que una que si puedes inscribir. */
+      opacity={atenuado ? 0.14 : estilo.apagado}
       onClick={() => alVerFicha(nodo.codigo)}
       onPointerEnter={() => alSenalar(nodo.codigo)}
       onPointerLeave={alDejarDeSenalar}
@@ -64,7 +89,13 @@ function NodoAsignatura({
           .join(' ')}
       </title>
 
-      <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />
+      <rect
+        width={NODO.ancho}
+        height={NODO.alto}
+        rx={NODO.radio}
+        fill={estilo.base}
+        style={{ transition: 'fill 300ms ease' }}
+      />
 
       <rect
         width={NODO.ancho}
@@ -72,6 +103,7 @@ function NodoAsignatura({
         rx={NODO.radio}
         fill={estado === ESTADO.DISPONIBLE ? acento : colorTinte}
         fillOpacity={estilo.tinte}
+        className={estado === ESTADO.CURSANDO ? 'respirando' : undefined}
         style={{ transition: 'fill-opacity 300ms ease' }}
       />
 
@@ -104,22 +136,26 @@ function NodoAsignatura({
         rx={NODO.radio + 3}
         fill="none"
         stroke={colorBorde}
-        strokeOpacity={aprobada ? 0.18 : 0}
+        strokeOpacity={aprobada ? 0.26 : 0}
         strokeWidth="5"
         style={{ transition: 'stroke-opacity 300ms ease' }}
       />
 
+      {/* El unico trazo que queda, y solo en la tarjeta abierta. No es
+          decoracion: es "esta es la que estas mirando", y sin el la ficha
+          flotante apuntaria con su piquito a una tarjeta igual que las demas.
+          Va en pixeles de pantalla, como los cables, para que siga marcando
+          algo con la vista alejada. */}
       <rect
         width={NODO.ancho}
         height={NODO.alto}
         rx={NODO.radio}
         fill="none"
         stroke={colorBorde}
-        strokeOpacity={estilo.opacidadBorde}
-        strokeWidth={seleccionado ? estilo.grosor + 1.4 : estilo.grosor}
-        strokeDasharray={estilo.guiones ?? undefined}
-        className={estado === ESTADO.CURSANDO ? 'respirando' : undefined}
-        style={{ transition: 'stroke 300ms ease, stroke-width 160ms ease' }}
+        strokeOpacity={seleccionado ? 0.95 : 0}
+        strokeWidth="2.5"
+        vectorEffect="non-scaling-stroke"
+        style={{ transition: 'stroke-opacity 200ms ease' }}
       />
 
       {/* Anillo de confirmacion. Solo en la tarjeta que el usuario acaba de
