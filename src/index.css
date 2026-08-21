@@ -76,14 +76,22 @@
   /* Una materia aprobada no se tiñe: se RELLENA. Es lo que hace ARC con lo
      que ya tienes, y es lo que convierte el mapa en un recorrido que se ve de
      lejos en vez de en un tablero de tarjetas parecidas.
-     En oscuro el relleno es blanco. No es un color mas de la paleta a
-     proposito: sobre un lienzo casi negro nada contrasta mas -17,35 contra
-     1,54 del mismo relleno en tema claro-, y ademas deja el verde libre para
-     lo que de verdad lo necesita, que es el anillo de avance.
+
+     El relleno es verde en los DOS temas, solo cambia de claridad. Se probo
+     blanco en oscuro -contrastaba mas que nada, 17,35 contra el lienzo- y en
+     pantalla no encajaba: una tarjeta blanca no pertenece a una paleta de
+     ocho colores, se lee como un hueco.
+
+     El tono 150 no es cualquier verde. Es el hueco mas grande que queda libre
+     en la rueda -entre Trabajo de Grado en 95 y Computacion en 176- y es
+     exactamente donde esta el verde de ARC. Ponerlo en turquesa, que es lo
+     primero que se penso, lo habria dejado encima de Computacion: una materia
+     de Computacion CURSANDO se habria parecido a una aprobada. Asi quedan a
+     83,7 de distancia en oscuro y 52,1 en claro.
      La tinta se invierte porque la tarjeta ya no es oscura. */
-  --aprobada-superficie: oklch(0.95 0.018 200);
-  --aprobada-tinta: oklch(0.22 0.014 40);
-  --aprobada-tinta-suave: oklch(0.42 0.014 40);
+  --aprobada-superficie: oklch(0.84 0.2 150);
+  --aprobada-tinta: oklch(0.22 0.05 150);
+  --aprobada-tinta-suave: oklch(0.4 0.06 150);
 
   --estado-aprobada: oklch(0.84 0.2 150);
   --estado-cursando: oklch(0.8 0.19 38);
@@ -161,11 +169,11 @@
   --area-gestion: oklch(0.56 0.19 5);
   --area-tesis: oklch(0.64 0.19 95);
 
-  /* En claro el blanco no sirve: seria la tarjeta disponible. Aqui el relleno
-     es el turquesa, que sobre papel se lee como "hecho" sin gritar. */
-  --aprobada-superficie: oklch(0.8 0.14 178);
-  --aprobada-tinta: oklch(0.26 0.05 178);
-  --aprobada-tinta-suave: oklch(0.42 0.06 178);
+  /* Mismo verde, mas oscuro: aqui la tarjeta se apoya en papel blanco y no en
+     un lienzo negro, asi que hay menos sitio hacia arriba. */
+  --aprobada-superficie: oklch(0.78 0.16 150);
+  --aprobada-tinta: oklch(0.24 0.06 150);
+  --aprobada-tinta-suave: oklch(0.4 0.07 150);
 
   --estado-aprobada: oklch(0.6 0.19 150);
   --estado-cursando: oklch(0.63 0.19 38);
