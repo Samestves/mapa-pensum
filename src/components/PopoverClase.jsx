@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
+import PicoPopover from './PicoPopover'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import {
@@ -17,7 +18,6 @@ import {
 } from '../layout/horario'
 
 const MARGEN = 10
-const FLECHA = 7
 const HUECO = 12
 const ANCHO = 312
 
@@ -92,7 +92,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
       Math.min(centro - alto / 2, window.innerHeight - alto - MARGEN),
     )
 
-    setPos({ x, y, aLaIzquierda: !cabeDerecha, flechaY: Math.max(16, Math.min(centro - y, alto - 16)) })
+    setPos({ x, y, aLaIzquierda: !cabeDerecha, flechaY: Math.max(20, Math.min(centro - y, alto - 20)) })
   }, [ancla.izquierda, ancla.derecha, ancla.arriba, ancla.abajo, esTelefono, codigo])
 
   const elegida = codigo ? porCodigo.get(codigo) : null
@@ -413,16 +413,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
         className="popover-clase absolute top-0 left-0 rounded-xl border border-panel-borde bg-panel shadow-2xl"
       >
         {pos && (
-          <span
-            aria-hidden="true"
-            style={{
-              top: pos.flechaY,
-              [pos.aLaIzquierda ? 'right' : 'left']: -FLECHA + 1,
-            }}
-            className={`absolute size-3 -translate-y-1/2 rotate-45 border-panel-borde bg-panel ${
-              pos.aLaIzquierda ? 'border-t border-r' : 'border-b border-l'
-            }`}
-          />
+          <PicoPopover lado={pos.aLaIzquierda ? 'derecha' : 'izquierda'} posicion={pos.flechaY} />
         )}
         <div className="relative">{formulario}</div>
       </div>

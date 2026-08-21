@@ -40,7 +40,24 @@ export function colocarBajoAncla(ancla, ancho, alto) {
   const centro = (ancla.left + ancla.right) / 2
   const origenX = Math.min(Math.max(centro - x, 0), ancho)
 
-  return { x, y, origen: `${Math.round(origenX)}px ${cabeAbajo ? 'top' : 'bottom'}` }
+  /* El piquito apunta al centro del ancla, con el mismo calculo que el origen
+     de la animacion: las dos preguntas son "¿donde cae el boton respecto a
+     este panel?" y responderlas dos veces seria arriesgarse a que digan
+     cosas distintas.
+     Se aparta de las esquinas RADIO px, que no es un numero redondo elegido a
+     ojo: el panel curva 16 px y el piquito, girado, asoma 8,5 a cada lado de
+     su centro. Con menos de esos 24,5 una de sus puntas cae dentro de la
+     curva y se dibuja mordida, que parece un error de pintado y no una
+     flecha. */
+  const RADIO = 25
+  const flechaX = Math.min(Math.max(origenX, RADIO), ancho - RADIO)
+
+  return {
+    x,
+    y,
+    origen: `${Math.round(origenX)}px ${cabeAbajo ? 'top' : 'bottom'}`,
+    flecha: { x: Math.round(flechaX), lado: cabeAbajo ? 'arriba' : 'abajo' },
+  }
 }
 
 /** El ancho que de verdad le cabe a un popover en esta ventana */

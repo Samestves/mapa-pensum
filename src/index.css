@@ -854,7 +854,8 @@ body {
   }
 }
 
-.hoja-avance {
+.hoja-avance,
+.hoja-ficha {
   animation: subir-hoja 320ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -1060,7 +1061,8 @@ body {
     opacity: 1;
   }
 
-  .hoja-avance {
+  .hoja-avance,
+  .hoja-ficha {
     animation: none;
   }
 }

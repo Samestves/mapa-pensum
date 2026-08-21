@@ -1,11 +1,66 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
 import { codigoVisible } from '../data/codigoVisible'
 import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
+import PicoPopover from './PicoPopover'
 
 const ANCHO = 300
+const MARGEN = 12
+const HUECO = 14
+/* El piquito asoma 8,5 px a cada lado de su centro y la ficha curva 12: por
+   debajo de esto una de sus puntas cae dentro de la curva. */
+const RADIO = 21
+
+const acotar = (v, min, max) => Math.max(min, Math.min(v, max))
+
+/**
+ * Donde se pone la ficha respecto al nodo que se pulso, y por donde le sale
+ * el piquito.
+ *
+ * Se coloca AL LADO y centrada en el nodo, no colgando de el con un desfase
+ * fijo. El desfase fijo -"noventa pixeles mas arriba"- venia de una epoca en
+ * la que la ficha media siempre lo mismo; hoy crece con las prelaciones que
+ * tenga la materia, y una de nueve requisitos se salia por abajo mientras que
+ * una suelta quedaba flotando alta y descolgada. Centrandola en el nodo la
+ * ficha crece hacia los dos lados por igual y el piquito apunta siempre a la
+ * mitad del nodo.
+ *
+ * Es geometria pura y por eso esta fuera del componente: se lee sola y se
+ * puede seguir con un lapiz sin montar React.
+ */
+function colocarJuntoAlNodo(posicion, medida, alto) {
+  const ancho = Math.min(ANCHO, medida.ancho - MARGEN * 2)
+  const centroY = posicion.y + posicion.alto / 2
+
+  // A la derecha del nodo, y a la izquierda solo si ahi no cabe
+  const derecha = posicion.x + HUECO
+  const cabeDerecha = derecha + ancho <= medida.ancho - MARGEN
+  const x = cabeDerecha
+    ? derecha
+    : Math.max(MARGEN, posicion.x - posicion.ancho - HUECO - ancho)
+
+  /* Sujeta dentro del contenedor por arriba y por abajo. El maximo se calcula
+     con el alto MEDIDO, no con un numero a ojo: con 360 escrito a mano una
+     ficha mas alta que eso se salia igual, y en una ventana apaisada baja
+     -un telefono girado entra por aqui, no por la hoja- se salian casi todas. */
+  const y = acotar(centroY - alto / 2, MARGEN, Math.max(MARGEN, medida.alto - alto - MARGEN))
+
+  return {
+    x,
+    y,
+    ancho,
+    // El piquito mira hacia el nodo: si la ficha esta a su derecha, sale por
+    // el costado izquierdo de la ficha.
+    flecha: {
+      lado: cabeDerecha ? 'izquierda' : 'derecha',
+      posicion: acotar(centroY - y, RADIO, Math.max(RADIO, alto - RADIO)),
+    },
+  }
+}
 
 function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
@@ -26,9 +81,18 @@ function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
 }
 
 /**
- * Tarjeta flotante del nodo seleccionado. Se ancla al lado del nodo en
- * coordenadas de pantalla, calculadas a partir de la vista (pan + zoom).
- * Si no cabe a la derecha se pasa a la izquierda sola.
+ * La ficha de la materia que se pulso en el mapa.
+ *
+ * Tiene dos formas, y no son la misma caja mas estrecha. En escritorio es una
+ * nubecita anclada al nodo, con un piquito que sale hacia el: al lado del
+ * nodo se puede seguir viendo la cadena que se acaba de encender, que es la
+ * respuesta a la pregunta que se hizo al pulsar. En telefono se convierte en
+ * hoja inferior, por el mismo motivo que la ficha del horario: trescientos
+ * pixeles dentro de una pantalla de trescientos setenta y cinco ya son un
+ * modal, solo que peor colocado y mas lejos del pulgar.
+ *
+ * Ninguna de las dos oscurece el mapa. Un velo apagaria justo lo que la ficha
+ * esta explicando.
  */
 function DetalleAsignatura({
   nodo,
@@ -42,29 +106,34 @@ function DetalleAsignatura({
   alCambiarElectiva,
   alCerrar,
 }) {
-  const margen = 12
-  const cabeDerecha = posicion.x + 16 + ANCHO + margen <= medida.ancho
-  const izquierda = cabeDerecha
-    ? posicion.x + 16
-    : Math.max(margen, posicion.x - posicion.ancho - ANCHO - 16)
+  const esTelefono = useEsTelefono()
+  const refFicha = useRef(null)
+  const [alto, setAlto] = useState(0)
 
-  // Se sujeta dentro del contenedor para que nunca se salga por abajo
-  const arriba = Math.min(
-    Math.max(margen, posicion.y - 90),
-    Math.max(margen, medida.alto - 360),
-  )
+  /* El alto se mide cuando cambia el CONTENIDO, no cuando cambia el sitio.
+     La ficha sigue al nodo mientras se arrastra el mapa, asi que un efecto
+     que dependiera de la posicion correria en cada fotograma del gesto, y
+     leer offsetHeight obliga al navegador a recalcular el diseño entero
+     antes de contestar. Sesenta veces por segundo, para contestar siempre lo
+     mismo: lo que hace alta a una ficha es cuantas prelaciones tiene la
+     materia, y eso no cambia porque el mapa se mueva.
+
+     El alto del contenedor si entra, y no por simetria: es el tope de la
+     ficha, asi que al estrechar la ventana la ficha encoge de verdad y sin
+     volver a medirla se colocaria con el alto de antes. */
+  useLayoutEffect(() => {
+    if (esTelefono) return
+    setAlto(refFicha.current?.offsetHeight ?? 0)
+  }, [esTelefono, nodo.codigo, estado, enCasilla, medida.alto])
 
   const marca =
     estado === ESTADO.APROBADA || estado === ESTADO.CURSANDO ? estado : null
 
-  return (
-    <div
-      className="surgir transicion-tema absolute z-20 flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
-      style={{ left: izquierda, top: arriba, width: ANCHO }}
-    >
+  const contenido = (
+    <>
       {/* Cabecera con fondo generado y desenfocado: el color viene del area
           y la forma del codigo, asi cada materia tiene el suyo. */}
-      <div className="relative overflow-hidden border-b border-panel-borde">
+      <div className="relative shrink-0 overflow-hidden border-b border-panel-borde">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -inset-8"
@@ -99,7 +168,7 @@ function DetalleAsignatura({
         </div>
       </div>
 
-      <div className="flex gap-2 px-3.5 py-3">
+      <div className="flex shrink-0 gap-2 px-3.5 py-3">
         <Accion
           icono={Check}
           texto="Aprobada"
@@ -132,7 +201,7 @@ function DetalleAsignatura({
         <button
           type="button"
           onClick={() => alCambiarElectiva(enCasilla)}
-          className="mx-3.5 mb-3 flex items-center justify-center gap-2 rounded-lg border border-panel-borde py-2 text-[11px] font-bold text-tinta-suave transition-colors hover:border-[var(--acento)] hover:text-tinta"
+          className="mx-3.5 mb-3 flex shrink-0 items-center justify-center gap-2 rounded-lg border border-panel-borde py-2 text-[11px] font-bold text-tinta-suave transition-colors hover:border-[var(--acento)] hover:text-tinta"
         >
           <Repeat2 size={13} />
           Cambiar esta electiva
@@ -140,13 +209,13 @@ function DetalleAsignatura({
       )}
 
       {estado === ESTADO.BLOQUEADA && (
-        <p className="mx-3.5 mb-3 flex items-start gap-1.5 rounded-lg bg-panel-suave px-2.5 py-2 text-[11px] leading-snug text-tinta-suave">
+        <p className="mx-3.5 mb-3 flex shrink-0 items-start gap-1.5 rounded-lg bg-panel-suave px-2.5 py-2 text-[11px] leading-snug text-tinta-suave">
           <Lock size={12} className="mt-0.5 shrink-0" />
           Te falta aprobar sus prerrequisitos. Puedes marcarla igual si ya la viste.
         </p>
       )}
 
-      <div className="max-h-52 overflow-y-auto border-t border-panel-borde px-3.5 py-3">
+      <div className="max-h-52 min-h-0 flex-1 overflow-y-auto border-t border-panel-borde px-3.5 py-3">
         <ListaPrelaciones
           titulo="Requiere"
           materias={prerrequisitos}
@@ -174,6 +243,62 @@ function DetalleAsignatura({
             vacio="Nada: es final de rama."
           />
         </div>
+      </div>
+    </>
+  )
+
+  /* Telefono: hoja pegada al borde de abajo, donde llega el pulgar sin
+     recolocar el agarre. No lleva piquito porque no lo necesita: ocupa el
+     ancho entero, no sale de ningun sitio en concreto. Y no tapa el mapa
+     entero, solo su tercio de abajo, asi que la cadena encendida se sigue
+     viendo por encima. */
+  if (esTelefono) {
+    return (
+      <div
+        role="dialog"
+        aria-label={nodo.nombre}
+        className="hoja-ficha transicion-tema absolute inset-x-0 bottom-0 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-panel-borde bg-panel shadow-2xl"
+      >
+        {/* El asidero no arrastra nada: dice "esto es una hoja" con la unica
+            señal que ya conoce cualquiera que use un telefono. */}
+        <span
+          aria-hidden="true"
+          className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-panel-borde"
+        />
+        {contenido}
+      </div>
+    )
+  }
+
+  const pos = colocarJuntoAlNodo(posicion, medida, alto)
+
+  return (
+    /* Se mueve con transform y no con left/top. La ficha se recoloca en cada
+       fotograma mientras se arrastra el mapa, y left/top pasan por el diseño
+       de la pagina; transform lo resuelve el compositor sin tocarlo.
+
+       El envoltorio lleva el sitio y la ficha lleva el recorte: el piquito
+       asoma por fuera, y la ficha recorta lo que se sale para redondearse las
+       esquinas. Dentro de ella el piquito habria desaparecido por ese mismo
+       recorte. */
+    <div
+      className="popover-clase absolute top-0 left-0 z-30"
+      style={{
+        width: pos.ancho,
+        transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+        // Crece desde el piquito, que es por donde sale
+        transformOrigin: `${pos.flecha.lado === 'izquierda' ? 0 : '100%'} ${pos.flecha.posicion}px`,
+      }}
+    >
+      <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />
+      <div
+        ref={refFicha}
+        role="dialog"
+        aria-label={nodo.nombre}
+        style={{ maxHeight: Math.max(200, medida.alto - MARGEN * 2) }}
+        className="transicion-tema relative flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
+      >
+        {contenido}
       </div>
     </div>
   )

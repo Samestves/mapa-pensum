@@ -5,6 +5,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
 import { colorArea, etiquetaArea } from '../theme/areas'
+import PicoPopover from './PicoPopover'
 
 const ANCHO = 304
 
@@ -256,88 +257,99 @@ function PanelProgreso({
         className="absolute inset-0 cursor-default"
       />
 
+      {/* El pico va FUERA del panel y dentro de este envoltorio. El panel
+          lleva overflow-y-auto porque su contenido puede no caber, y un
+          elemento colocado por fuera de una caja que recorta se recorta con
+          ella: el pico habria desaparecido. Aqui los dos comparten la misma
+          traslacion y el mismo origen de animacion, asi que entran juntos. */}
       <div
-        ref={refPanel}
-        role="dialog"
-        aria-label="Tu avance"
+        className="menu-clase absolute top-0 left-0"
         style={{
           width: ancho,
           transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
           transformOrigin: pos?.origen,
           visibility: pos ? 'visible' : 'hidden',
         }}
-        className="menu-clase transicion-tema absolute top-0 left-0 flex max-h-[min(78vh,34rem)] flex-col gap-3.5 overflow-y-auto rounded-2xl border border-panel-borde bg-panel p-4 shadow-2xl"
       >
-        {/* El porcentaje grande y los creditos debajo. Entero, no un decimal:
-            "0.0%" se lee como un error de calculo, y nadie planifica su
-            carrera por decimas. */}
-        <header className="flex items-baseline justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-              Tu avance
-            </h2>
-            <p className="mt-1 truncate text-[11px] text-tinta-suave">
-              {hayPorcentaje
-                ? `${ucAprobadas + ucElectivas} de ${ucTitulo} UC del título`
-                : `${ucAprobadas} UC de ${progreso.ucTotales} en obligatorias`}
-            </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span className="font-mono text-3xl leading-none font-extrabold text-aprobada">
-              {hayPorcentaje ? `${Math.round(porcentaje)}%` : aprobadas}
-            </span>
-            {!hayPorcentaje && <span className="font-mono text-sm text-tinta-tenue">/{total}</span>}
-          </div>
-        </header>
+        {pos && <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.x} />}
 
-        <BarraComposicion
-          aprobadas={aprobadas}
-          cursando={cursando}
-          disponibles={disponibles}
-          bloqueadas={progreso.bloqueadas}
-          total={total}
-        />
-
-        {(grupos.length > 0 || progreso.porArea.length > 0) && (
-          <details className="group/mas border-t border-panel-borde pt-3">
-            <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] font-bold text-tinta-suave hover:text-tinta">
-              Electivas y áreas
-              <ChevronDown
-                size={14}
-                className="transition-transform duration-300 group-open/mas:rotate-180"
-              />
-            </summary>
-
-            <div className="mt-3 flex flex-col gap-3">
-              {grupos.length > 0 && (
-                <div>
-                  <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
-                    Electivas
-                  </h3>
-                  {/* Solo informa. Se marcan donde estan dibujadas: en la zona
-                      de electivas del mapa o al final de la lista. */}
-                  <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
-                    Elígelas en el mapa o al final de la lista.
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {grupos.map((g) => (
-                      <CuotaGrupo key={g.clave} avance={g} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <FiltroAreas
-                areas={progreso.porArea}
-                areaFiltrada={areaFiltrada}
-                alFiltrarArea={alFiltrarArea}
-              />
+        <div
+          ref={refPanel}
+          role="dialog"
+          aria-label="Tu avance"
+          className="transicion-tema relative flex max-h-[min(78vh,34rem)] w-full flex-col gap-3.5 overflow-y-auto rounded-2xl border border-panel-borde bg-panel p-4 shadow-2xl"
+        >
+          {/* El porcentaje grande y los creditos debajo. Entero, no un decimal:
+              "0.0%" se lee como un error de calculo, y nadie planifica su
+              carrera por decimas. */}
+          <header className="flex items-baseline justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+                Tu avance
+              </h2>
+              <p className="mt-1 truncate text-[11px] text-tinta-suave">
+                {hayPorcentaje
+                  ? `${ucAprobadas + ucElectivas} de ${ucTitulo} UC del título`
+                  : `${ucAprobadas} UC de ${progreso.ucTotales} en obligatorias`}
+              </p>
             </div>
-          </details>
-        )}
+            <div className="shrink-0 text-right">
+              <span className="font-mono text-3xl leading-none font-extrabold text-aprobada">
+                {hayPorcentaje ? `${Math.round(porcentaje)}%` : aprobadas}
+              </span>
+              {!hayPorcentaje && <span className="font-mono text-sm text-tinta-tenue">/{total}</span>}
+            </div>
+          </header>
 
-        <div className="border-t border-panel-borde pt-2.5">
-          <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
+          <BarraComposicion
+            aprobadas={aprobadas}
+            cursando={cursando}
+            disponibles={disponibles}
+            bloqueadas={progreso.bloqueadas}
+            total={total}
+          />
+
+          {(grupos.length > 0 || progreso.porArea.length > 0) && (
+            <details className="group/mas border-t border-panel-borde pt-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] font-bold text-tinta-suave hover:text-tinta">
+                Electivas y áreas
+                <ChevronDown
+                  size={14}
+                  className="transition-transform duration-300 group-open/mas:rotate-180"
+                />
+              </summary>
+
+              <div className="mt-3 flex flex-col gap-3">
+                {grupos.length > 0 && (
+                  <div>
+                    <h3 className="text-[10px] font-bold tracking-wide text-tinta-tenue uppercase">
+                      Electivas
+                    </h3>
+                    {/* Solo informa. Se marcan donde estan dibujadas: en la zona
+                        de electivas del mapa o al final de la lista. */}
+                    <p className="mt-0.5 mb-2 text-[10px] text-tinta-tenue">
+                      Elígelas en el mapa o al final de la lista.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {grupos.map((g) => (
+                        <CuotaGrupo key={g.clave} avance={g} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <FiltroAreas
+                  areas={progreso.porArea}
+                  areaFiltrada={areaFiltrada}
+                  alFiltrarArea={alFiltrarArea}
+                />
+              </div>
+            </details>
+          )}
+
+          <div className="border-t border-panel-borde pt-2.5">
+            <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
+          </div>
         </div>
       </div>
     </div>,

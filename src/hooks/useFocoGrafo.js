@@ -55,10 +55,15 @@ export function useFocoGrafo({
     return {
       prerrequisitos: relacionadas(relaciones.atras.get(seleccionado) ?? []),
       desbloquea: relacionadas(relaciones.adelante.get(seleccionado) ?? []),
+      /* El rectangulo del nodo en pixeles de pantalla: x es su borde
+         DERECHO, y el de arriba. Va tambien el alto porque la ficha se
+         centra en el nodo y le saca un piquito hacia su mitad, y sin el
+         alto la mitad habria que adivinarla. */
       posicion: {
         x: vista.x + (nodoSeleccionado.x + NODO.ancho) * vista.escala,
         y: vista.y + nodoSeleccionado.y * vista.escala,
         ancho: NODO.ancho * vista.escala,
+        alto: NODO.alto * vista.escala,
       },
     }
   }, [nodoSeleccionado, seleccionado, relaciones, porCodigo, estados, vista])
