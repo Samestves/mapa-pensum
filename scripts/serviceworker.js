@@ -43,18 +43,64 @@ function aUrl(ruta) {
   return '/' + rel
 }
 
-// El sitemap y el robots son para los buscadores, no para quien usa la app
-const FUERA = new Set(['/sitemap.xml', '/robots.txt'])
+/* Cosas que existen para OTROS, no para quien abre la aplicacion.
+   El sitemap y el robots los leen los buscadores. Y og.png es la miniatura
+   que sale al compartir el enlace por WhatsApp o Twitter: la piden sus
+   servidores desde la URL absoluta, nunca el navegador de quien usa la app,
+   porque no se dibuja en ninguna pantalla -solo vive en una etiqueta meta-.
+   Precachearla eran 59 kB por usuario para una imagen que no va a ver. */
+const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png'])
+
+/**
+ * De las fuentes solo se precachea el subconjunto que esta aplicacion usa.
+ *
+ * Las dos fuentes vienen partidas en subconjuntos -latin, latin-ext,
+ * cirilico, griego y vietnamita- y cada @font-face declara con unicode-range
+ * que caracteres cubre. El navegador solo pide el subconjunto cuando la
+ * pagina usa una letra de ese rango, asi que en una aplicacion en español
+ * NUNCA descarga los otros: comprobado en el navegador, de los diez archivos
+ * solo pide los dos latinos.
+ *
+ * El service worker no es tan listo: precachea la lista que se le da, y se
+ * estaba llevando los diez. Eso son 172 kB de fuentes en vez de 64, y los
+ * 108 de mas son alfabetos que no se van a dibujar. En un telefono con datos
+ * caros es descarga pagada por nada.
+ *
+ * Y no solo sobran los otros alfabetos: tampoco hace falta latin-ext, que
+ * cubre la Europa del este. Comprobado sobre los nueve pensums enteros: cero
+ * caracteres fuera del subconjunto latin en las 481 materias.
+ *
+ * Se quedan en el build a proposito, y por eso esto es un filtro de precache
+ * y no un cambio en el CSS. El @font-face de cada subconjunto declara con
+ * unicode-range que caracteres cubre, asi que si algun dia aparece un
+ * caracter raro -alguien escribiendo su nombre en el planificador, una
+ * materia nueva- el navegador pedira ese archivo y funcionara igual. Lo que
+ * se quita es traerselos por adelantado por si acaso.
+ *
+ * De 172 kB de fuentes a 64. En un telefono con datos caros, 108 kB de
+ * alfabetos que no se van a dibujar es descarga pagada por nada.
+ */
+const SUBCONJUNTO_QUE_USAMOS = /-latin-wght-/
 
 const recursos = todos
   .map(aUrl)
   .filter((u) => !FUERA.has(u))
+  .filter((u) => !u.endsWith('.woff2') || SUBCONJUNTO_QUE_USAMOS.test(u))
   .sort()
 
-// La version sale del contenido: si no cambia nada, el service worker es el
-// mismo y el navegador no reinstala la cache.
+/* La version sale del contenido: si no cambia nada, el service worker es el
+   mismo y el navegador no reinstala la cache.
+
+   La LISTA entra en la huella, y no es un detalle. El nombre de la cache se
+   arma con esta version, y el activate solo borra las caches que no se
+   llaman asi. Con la huella hecha solo de los archivos, cambiar QUE se
+   precachea -sin tocar ningun archivo- dejaba la version igual: el navegador
+   instalaba el service worker nuevo, abria la cache vieja porque se llama
+   igual, y se quedaba con las entradas que ya no queriamos ahi. La lista
+   cambio pero la cache no se entero. */
 const huella = createHash('sha256')
 for (const ruta of todos.sort()) huella.update(readFileSync(ruta))
+huella.update(recursos.join('\n'))
 const VERSION = huella.digest('hex').slice(0, 12)
 
 const sw = `/* Generado por scripts/serviceworker.js. No editar a mano. */
