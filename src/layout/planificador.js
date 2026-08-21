@@ -11,9 +11,6 @@ import { ESTADO } from '../data/estados.js'
 // sugerir un tope, no para decidir por el estudiante.
 export const HORAS_POR_UC = 3
 
-export const ucSugeridas = (horasSemana) =>
-  Math.max(4, Math.min(30, Math.round(horasSemana / HORAS_POR_UC)))
-
 export const horasDe = (uc) => uc * HORAS_POR_UC
 
 /**
@@ -52,7 +49,17 @@ export function mesEstimadoGrado(semestres, desde = new Date()) {
  *
  * Es una funcion pura: mismas marcas y mismo tope, mismo plan.
  */
-export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, grupos = []) {
+export function planificar(
+  asignaturas,
+  marcas,
+  estados,
+  pesos,
+  ucPorSemestre,
+  grupos = [],
+  elegidas = {},
+) {
+  // Las que el estudiante ya coloco en una casilla del mapa
+  const escogidas = new Set(Object.values(elegidas))
   const electivas = grupos.flatMap((g) =>
     g.asignaturas.map((a) => ({ ...a, grupo: g.clave, esElectiva: true })),
   )
@@ -77,12 +84,16 @@ export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, g
       .reduce((s, e) => s + (e.uc ?? 0), 0)
     let falta = Math.max(0, g.cuota - yaCubierto)
 
-    // Las mas baratas y sin prerrequisitos primero: cubren la cuota
-    // estorbando lo menos posible.
+    /* Las que ya eligio en el mapa van primero, y eso manda sobre todo lo
+       demas: si puso "Simulacion de Sistemas" en una casilla, su plan tiene
+       que decir esa y no la que a nosotros nos parezca mas comoda. Despues,
+       las mas baratas y sin prerrequisitos: cubren la cuota estorbando lo
+       menos posible. */
     const candidatas = g.asignaturas
       .filter((e) => !aprobadas.has(e.codigo))
       .sort(
         (a, b) =>
+          (escogidas.has(b.codigo) ? 1 : 0) - (escogidas.has(a.codigo) ? 1 : 0) ||
           (a.prerrequisitos?.length ?? 0) - (b.prerrequisitos?.length ?? 0) ||
           (b.uc ?? 0) - (a.uc ?? 0),
       )
@@ -94,8 +105,20 @@ export function planificar(asignaturas, marcas, estados, pesos, ucPorSemestre, g
     }
   }
 
+  /* Una casilla de electiva es un hueco del diagrama, no algo que se pueda
+     inscribir. Donde SI sabemos la cuota del grupo, ahi arriba ya se eligieron
+     materias concretas para cubrirla, y dejar ademas la casilla contaria dos
+     veces lo mismo: el plan de Sistemas salia con ocho "Electiva
+     Sociohumanistica" sin UC encima de las siete electivas de verdad, y la
+     hoja anunciaba 64 materias pendientes donde hay 56.
+
+     Donde no sabemos la cuota no se sugirio nada, y entonces la casilla es lo
+     unico que avisa de que ahi falta algo. Esa se queda. */
+  const conCuota = new Set(grupos.filter((g) => g.cuota != null).map((g) => g.clave))
+  const casillaYaCubierta = (a) => a.esHueco && conCuota.has(a.grupo)
+
   const pendientes = [
-    ...asignaturas.filter((a) => !aprobadas.has(a.codigo)),
+    ...asignaturas.filter((a) => !casillaYaCubierta(a) && !aprobadas.has(a.codigo)),
     ...sugeridas,
   ]
 

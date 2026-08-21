@@ -976,7 +976,7 @@ body {
 
 @media print {
   @page {
-    margin: 14mm;
+    margin: 12mm;
   }
 
   html,
@@ -999,14 +999,23 @@ body {
     display: none !important;
   }
 
-  /* En pantalla estrecha la hoja se compacta, pero en papel siempre hay
-     ancho de sobra: se recupera la maqueta completa. */
-  .cifras-hoja {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  /* La hoja mide siempre lo mismo -680 px, ver HojaPlan- y aqui solo se
+     centra en el papel, que segun sea A4 o carta le deja mas o menos sitio.
+     Antes esta seccion deshacia a mano cada compactacion de movil, o sea que
+     la maqueta de papel vivia en dos archivos y habia que acordarse de
+     tocar los dos. */
+  .hoja {
+    margin: 0 auto;
   }
 
-  .solo-ancho {
-    display: inline !important;
+  /* El acento, la barra de avance y los puntos de la linea de tiempo son
+     fondos, y el navegador los descarta al imprimir salvo que se le diga que
+     forman parte del contenido. Sin esto la hoja sale en blanco y negro y se
+     pierde justo lo que la hace bonita. */
+  .hoja,
+  .hoja * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   /* Que un semestre no se parta a la mitad entre dos hojas */

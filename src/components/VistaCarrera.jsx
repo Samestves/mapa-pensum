@@ -254,6 +254,7 @@ function VistaCarrera({ carrera, alVolver }) {
           estados={estados}
           progreso={progreso}
           relaciones={layout.relaciones}
+          elegidas={elegidas}
           alCerrar={() => setPlanAbierto(false)}
         />
       )}

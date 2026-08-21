@@ -7,7 +7,6 @@ import {
   horasDe,
   mesEstimadoGrado,
   planificar,
-  ucSugeridas,
 } from './planificador.js'
 
 /* El planificador es la funcion mas facil de romper en silencio del proyecto:
@@ -25,19 +24,14 @@ const materia = (codigo, semestre, uc, prerrequisitos = []) => ({
 })
 
 /** Un plan sin nada aprobado y sin pesos, para no repetirlo en cada prueba */
-const planDe = (asignaturas, { marcas = {}, estados = {}, pesos = new Map(), tope = 12, grupos = [] } = {}) =>
-  planificar(asignaturas, marcas, estados, pesos, tope, grupos)
+const planDe = (
+  asignaturas,
+  { marcas = {}, estados = {}, pesos = new Map(), tope = 12, grupos = [], elegidas = {} } = {},
+) => planificar(asignaturas, marcas, estados, pesos, tope, grupos, elegidas)
 
 describe('traduccion entre horas y creditos', () => {
-  test('las horas se convierten a UC y de vuelta', () => {
+  test('las UC se traducen a horas de dedicacion', () => {
     assert.equal(horasDe(10), 10 * HORAS_POR_UC)
-    assert.equal(ucSugeridas(HORAS_POR_UC * 15), 15)
-  })
-
-  test('la sugerencia se queda dentro de limites razonables', () => {
-    // Ni un plan de una materia ni uno de cuarenta: los extremos se acotan
-    assert.equal(ucSugeridas(0), 4)
-    assert.equal(ucSugeridas(100000), 30)
   })
 })
 
@@ -199,5 +193,56 @@ describe('el plan siempre cierra', () => {
     assert.equal(plan.ucRestantes, 9)
     const colocadas = plan.semestres.flatMap((s) => s.materias).length
     assert.equal(colocadas + plan.sinUbicar.length, plan.materiasRestantes)
+  })
+})
+
+describe('casillas de electiva', () => {
+  const casilla = (codigo, grupo) => ({
+    codigo,
+    nombre: 'Electiva',
+    uc: null,
+    esHueco: true,
+    grupo,
+    prerrequisitos: [],
+  })
+  const grupo = (clave, cuota, asignaturas) => ({ clave, cuota, asignaturas })
+
+  test('con cuota conocida la casilla no se suma a la electiva que la cubre', () => {
+    /* El plan elige materias CONCRETAS para cubrir la cuota. Si ademas
+       dejara la casilla, la misma obligacion saldria dos veces en la hoja:
+       una con nombre y otra como hueco sin UC. */
+    const plan = planDe([materia('MAT', 1, 4), casilla('casilla-t-1', 'tec')], {
+      grupos: [grupo('tec', 3, [materia('ELE', null, 3)])],
+    })
+    const codigos = plan.semestres.flatMap((s) => s.materias.map((m) => m.codigo))
+
+    assert.deepEqual(codigos.sort(), ['ELE', 'MAT'])
+    assert.equal(plan.materiasRestantes, 2)
+  })
+
+  test('sin cuota conocida la casilla se queda: es el unico aviso que hay', () => {
+    // Ambiental tiene cinco casillas y ninguna cuota oficial. Quitarlas
+    // dejaria un plan que no menciona sus electivas en ninguna parte.
+    const plan = planDe([materia('MAT', 1, 4), casilla('casilla-x-1', 'sin')], {
+      grupos: [grupo('sin', null, [materia('ELE', null, 3)])],
+    })
+    const codigos = plan.semestres.flatMap((s) => s.materias.map((m) => m.codigo))
+
+    assert.deepEqual(codigos.sort(), ['MAT', 'casilla-x-1'])
+  })
+
+  test('la electiva que el estudiante coloco gana a la que elegiriamos sola', () => {
+    /* Sin eleccion se prefiere la mas barata y sin prerrequisitos. Con
+       eleccion manda la suya, aunque sea la cara: el plan es de quien lo
+       imprime. */
+    const plan = planDe([casilla('casilla-t-1', 'tec')], {
+      grupos: [grupo('tec', 3, [materia('BARATA', null, 3), materia('SUYA', null, 3)])],
+      elegidas: { 'casilla-t-1': 'SUYA' },
+    })
+
+    assert.deepEqual(
+      plan.semestres.flatMap((s) => s.materias.map((m) => m.codigo)),
+      ['SUYA'],
+    )
   })
 })
