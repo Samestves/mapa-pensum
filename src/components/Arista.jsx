@@ -97,12 +97,42 @@ function Arista({
      y 20: deja de crecer, porque la frontera de lo inscribible siempre es
      pequeña. */
   const conCorriente = (desbloqueando || resaltada) && !atenuada
-  const grosor = resaltada ? 2.4 : viva ? 2 : 1.4
+
+  /* El grosor va en PIXELES DE PANTALLA, no en unidades del mapa. Lo hace
+     vector-effect en `comun`, y es el cambio que decide si este cable dice
+     algo o no.
+
+     Con el grosor en unidades del mapa, todo esto se encogia con el zoom.
+     Medido con la vista encajada, que es como se abre el mapa: escala 0,243,
+     asi que un cable encendido de 2 unidades salia a 0,49 px y uno normal de
+     1,4 a 0,34. Los dos por debajo del pixel, y el navegador los suavizaba
+     hasta el mismo gris. O sea que toda esta jerarquia -mas grueso, mas
+     opaco, con halo- existia en el codigo y no en la pantalla, y encima
+     desaparecia justo en la vista general, que es donde uno mira el mapa
+     entero para entender por donde va.
+
+     Ahora un cable encendido mide 3,2 px se mire desde donde se mire, y uno
+     apagado 1,5: mas del doble, y eso si se ve de lejos.
+
+     El precio esta en el otro extremo y empieza antes de lo que parece: hacia
+     escala 1,3 la tarjeta ya ocupa 290 px y el cable, que se quedo en 3,2, se
+     lee como un hilo. Se acepta a proposito. Ahi se esta leyendo una materia
+     concreta, no siguiendo un recorrido, y el recorrido se sigue en la vista
+     general, que es la que se abre por defecto y la que estaba rota. Los
+     grosores estan subidos un pelin justo por esto: buscan el punto donde la
+     vista general no se emborrona y de cerca el cable todavia tiene cuerpo. */
+  const grosor = resaltada ? 3.8 : viva ? 3.2 : atenuada ? 1.3 : 1.5
 
   // Cuanto se nota la estela segun el estado del cable
   const fuerzaEstela = atenuada ? 0.06 : viva ? 1 : resaltada ? 0.7 : 0.42
 
-  const comun = { d, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
+  const comun = {
+    d,
+    fill: 'none',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    vectorEffect: 'non-scaling-stroke',
+  }
   const suave = { transition: 'stroke-opacity 240ms ease, stroke-width 240ms ease' }
   const suavePerla = { transition: 'opacity 240ms ease, r 240ms ease' }
 
@@ -121,14 +151,14 @@ function Arista({
         {...comun}
         stroke={color}
         strokeOpacity={encendida ? 0.12 : 0}
-        strokeWidth={grosor + 12}
+        strokeWidth={grosor + 9}
         style={suave}
       />
       <path
         {...comun}
         stroke={color}
         strokeOpacity={encendida ? 0.2 : 0}
-        strokeWidth={grosor + 6}
+        strokeWidth={grosor + 4}
         style={suave}
       />
 
