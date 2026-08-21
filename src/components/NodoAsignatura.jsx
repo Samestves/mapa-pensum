@@ -45,7 +45,7 @@ const ESTILO = {
      tinte, y salio peor: con la claridad pareja el unico dato que separa dos
      areas es el matiz, y la pareja mas parecida caia de 26,7 a 12. Antes que un
      tinte mas fuerte esta poder distinguir de que area es cada materia. */
-  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.05, acento: 0.34, apagado: 0.68 },
+  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.09, acento: 0.34, apagado: 0.68 },
   [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.14, acento: 1, apagado: 1 },
   [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
   [ESTADO.APROBADA]: { base: 'var(--aprobada-superficie)', tinte: 0, acento: 1, apagado: 1 },

@@ -8,32 +8,36 @@
 :root {
   color-scheme: dark;
 
-  /* Las superficies son casi neutras -croma 0,006 a 0,012- y ahi hay una
-     razon, no un gusto. La tarjeta era azul marino de verdad: croma 0,033 en
-     tono 256. Y como el color del area se pinta ENCIMA como un tinte, un 17%
-     de naranja sobre azul marino se sigue leyendo azul; el mapa entero salia
-     azulito y daba igual de que area fuera cada materia. Sobre una base
-     neutra manda el tinte, que es justo lo que hace ARC: fondo casi sin color
-     y encima colores puros.
-     Casi neutras y no grises muertos: queda un rastro de frio -el tono 262-
-     que se nota al lado del blanco y evita el gris de plantilla. */
-  --lienzo: oklch(0.135 0.006 262);
-  --rejilla: oklch(0.185 0.007 262);
-  /* Profundidad del lienzo, ver .lienzo-profundo. Esta elevacion era un
-     rgb(58, 96, 145) al 10% extendido sobre el mapa entero, o sea un velo
-     azul encima de TODO, y era la otra mitad de por que las tarjetas se veian
-     azulitas. Ahora apenas tiene color. */
-  --lienzo-alza: oklch(0.62 0.018 262 / 0.11);
-  --lienzo-mancha: oklch(0.62 0.018 262 / 0.06);
+  /* Las superficies son casi neutras y en tono CALIDO, y las dos cosas
+     importan.
+
+     Casi neutras porque el color del area se pinta encima como un tinte: sobre
+     una base con color propio el tinte no manda y todas las tarjetas acaban
+     pareciendose entre si.
+
+     Y calidas porque estaban en el tono 262, que es la banda azul donde ya
+     viven dos de las ocho areas -Generales en 248 y Sistemas en 272-. Aunque
+     el croma sea minimo, una superficie del mismo tono que un area deja de
+     leerse como fondo: cada tarjeta sin marcar se leia como "una tarjeta
+     azul" en vez de como una tarjeta neutra teñida de lo suyo. En calido eso
+     no puede pasar, porque ninguna area vive ahi, y ademas es lo que hace el
+     fondo de ARC: un casi-negro tirando a marron.
+     Un neutro calido tambien hace resaltar mas los colores frios, que son
+     cinco de nuestras ocho areas. */
+  --lienzo: oklch(0.135 0.005 40);
+  --rejilla: oklch(0.185 0.006 40);
+  /* Profundidad del lienzo, ver .lienzo-profundo */
+  --lienzo-alza: oklch(0.62 0.015 40 / 0.11);
+  --lienzo-mancha: oklch(0.62 0.015 40 / 0.06);
   --lienzo-vineta: oklch(0 0 0 / 0.62);
-  --panel: oklch(0.178 0.008 262);
-  --panel-borde: oklch(0.305 0.011 262);
-  --panel-suave: oklch(0.205 0.008 262);
-  --nodo: oklch(0.24 0.009 262);
+  --panel: oklch(0.178 0.007 40);
+  --panel-borde: oklch(0.305 0.009 40);
+  --panel-suave: oklch(0.205 0.007 40);
+  --nodo: oklch(0.24 0.007 40);
   /* La tarjeta bloqueada: a medio camino entre el lienzo y una tarjeta
      normal. Sigue leyendose como objeto, pero se hunde hacia el fondo. */
-  --nodo-hundido: oklch(0.19 0.007 262);
-  --nodo-borde: oklch(0.375 0.012 262);
+  --nodo-hundido: oklch(0.19 0.006 40);
+  --nodo-borde: oklch(0.375 0.01 40);
   --tinta: #eaf1fa;
   --tinta-suave: #b3c4da;
   /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
@@ -78,8 +82,8 @@
      lo que de verdad lo necesita, que es el anillo de avance.
      La tinta se invierte porque la tarjeta ya no es oscura. */
   --aprobada-superficie: oklch(0.95 0.018 200);
-  --aprobada-tinta: oklch(0.22 0.02 262);
-  --aprobada-tinta-suave: oklch(0.42 0.02 262);
+  --aprobada-tinta: oklch(0.22 0.014 40);
+  --aprobada-tinta-suave: oklch(0.42 0.014 40);
 
   --estado-aprobada: oklch(0.84 0.2 150);
   --estado-cursando: oklch(0.8 0.19 38);
@@ -117,17 +121,17 @@
 [data-tema='claro'] {
   color-scheme: light;
 
-  --lienzo: oklch(0.955 0.005 262);
-  --rejilla: oklch(0.905 0.006 262);
+  --lienzo: oklch(0.955 0.004 40);
+  --rejilla: oklch(0.905 0.005 40);
   /* En claro la profundidad se hace al reves: el centro se ACLARA hacia el
      blanco y las esquinas caen a un gris azulado. Bajar el centro sobre un
      fondo ya claro lo ensuciaria en vez de darle aire. */
   --lienzo-alza: oklch(1 0 0 / 0.85);
   --lienzo-mancha: oklch(1 0 0 / 0.55);
-  --lienzo-vineta: oklch(0.55 0.02 262 / 0.16);
+  --lienzo-vineta: oklch(0.55 0.015 40 / 0.16);
   --panel: #ffffff;
-  --panel-borde: oklch(0.885 0.008 262);
-  --panel-suave: oklch(0.975 0.004 262);
+  --panel-borde: oklch(0.885 0.006 40);
+  --panel-suave: oklch(0.975 0.003 40);
   --nodo: #ffffff;
   /* En claro hundirse es GRISEARSE, no oscurecerse, y hay que pasarse de
      frenada respecto al oscuro. Sobre un lienzo casi blanco una tarjeta
@@ -137,8 +141,8 @@
      Medido: con el gris de antes quedaban a 1,17 -indistinguibles- y con este
      quedan a 1,46, y el nombre encima sigue por encima del 4,5 de contraste
      que pide la norma. */
-  --nodo-hundido: oklch(0.875 0.008 262);
-  --nodo-borde: oklch(0.835 0.01 262);
+  --nodo-hundido: oklch(0.875 0.006 40);
+  --nodo-borde: oklch(0.835 0.008 40);
   --tinta: #0c1725;
   --tinta-suave: #3a4a61;
   /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
@@ -1093,33 +1097,28 @@ body {
   background-image:
     radial-gradient(130% 110% at 50% 50%, transparent 32%, var(--lienzo-vineta) 100%),
     linear-gradient(var(--rejilla) 1px, transparent 1px),
-    linear-gradient(90deg, var(--rejilla) 1px, transparent 1px);
+    linear-gradient(90deg, var(--rejilla) 1px, transparent 1px),
+    radial-gradient(55% 45% at 14% 86%, var(--lienzo-mancha), transparent 68%),
+    radial-gradient(50% 42% at 86% 16%, var(--lienzo-mancha), transparent 68%),
+    radial-gradient(110% 85% at 50% 36%, var(--lienzo-alza), transparent 62%);
   background-size:
     100% 100%,
     34px 34px,
-    34px 34px;
+    34px 34px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
 }
 
-/* El halo va aparte de la viñeta porque los dos pertenecen a sitios
-   distintos, y meterlos juntos era el error.
+/* La luz vuelve a estar clavada a la ventana, y no fue por no intentarlo.
+   Se probo a que siguiera al grafo -mismo transform que el <g>, para que al
+   alejarse encogiera con el mapa- y sobre el papel tenia sentido. En pantalla
+   no: al acercarse, las manchas se agrandan con el mapa y acaban justo detras
+   de las tarjetas, asi que en vez de dar profundidad al fondo dejaban una
+   neblina encima de las materias. Un fondo tiene que quedarse en el fondo, y
+   para eso tiene que ser mas grande que lo que hay delante, no del mismo
+   tamaño. Quieta cumple su unico trabajo: dar aire a la ventana. */
 
-   La viñeta enmarca LA VENTANA: oscurece las esquinas de la pantalla y por eso
-   se queda quieta. El halo pertenece AL MAPA, y estaba tambien clavado a la
-   ventana: al alejarse, el grafo encogia hacia una zona y la luz se quedaba
-   donde estaba, iluminando lienzo vacio mientras el mapa se iba a otro lado.
-
-   Ahora es un elemento del tamaño del contenido que recibe la misma
-   transformacion que el <g> del SVG, asi que va pegado al grafo a cualquier
-   zoom. Y la sigue por transform, no recolocando el degradado: el degradado se
-   rastriza una vez y moverlo es trabajo de compositor, mientras que animar la
-   posicion de un fondo obliga a repintar la ventana entera en cada fotograma
-   del arrastre. */
-.halo-mapa {
-  background-image:
-    radial-gradient(48% 60% at 12% 78%, var(--lienzo-mancha), transparent 70%),
-    radial-gradient(44% 55% at 88% 22%, var(--lienzo-mancha), transparent 70%),
-    radial-gradient(72% 120% at 50% 45%, var(--lienzo-alza), transparent 68%);
-}
 
 @media print {
   @page {
