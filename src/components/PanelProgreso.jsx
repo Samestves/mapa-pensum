@@ -4,7 +4,7 @@ import { ChevronDown, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
-import { colorArea, etiquetaArea } from '../theme/areas'
+import { colorArea, etiquetaArea, iconoArea } from '../theme/areas'
 import PicoPopover from './PicoPopover'
 
 const ANCHO = 304
@@ -145,6 +145,17 @@ function BarraComposicion({ aprobadas, cursando, disponibles, bloqueadas, total 
  * donde se puede aislar un area-, asi que se conserva; pero es una
  * herramienta del mapa y no una medida de avance, y por eso va plegado.
  */
+/** El icono del area, o el punto de color donde no hay area clasificada */
+function IconoDeArea({ area }) {
+  const Icono = iconoArea(area)
+  if (!Icono) {
+    return (
+      <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: colorArea(area) }} />
+    )
+  }
+  return <Icono size={13} className="shrink-0" style={{ color: colorArea(area) }} />
+}
+
 function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
   if (!areas.length) return null
 
@@ -167,10 +178,12 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
                 apagada ? 'opacity-40 hover:opacity-75' : ''
               }`}
             >
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: colorArea(a.area) }}
-              />
+              {/* El punto de color se cambia por el icono del area. Esta
+                  lista es la unica de la aplicacion que las enseña todas
+                  juntas, asi que es donde de verdad se aprende cual es cual;
+                  un punto de color no enseñaba nada que el propio color de la
+                  fila no dijera ya. */}
+              <IconoDeArea area={a.area} />
               <span
                 className={`min-w-0 flex-1 truncate text-[11px] ${
                   activa ? 'font-bold text-tinta' : 'text-tinta-suave'

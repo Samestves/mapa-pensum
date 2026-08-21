@@ -3,7 +3,7 @@ import { Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-reac
 import { ESTADO } from '../data/estados'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
-import { colorNodo, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea, iconoArea } from '../theme/areas'
 import { fondoMateria } from '../theme/fondos'
 import { codigoVisible } from '../data/codigoVisible'
 import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
@@ -133,6 +133,8 @@ function DetalleAsignatura({
     setAlto(refFicha.current?.offsetHeight ?? 0)
   }, [esTelefono, nodo.codigo, estado, enCasilla, medida.alto])
 
+  const IconoArea = iconoArea(nodo.area)
+
   const marca =
     estado === ESTADO.APROBADA || estado === ESTADO.CURSANDO ? estado : null
 
@@ -159,7 +161,13 @@ function DetalleAsignatura({
             <h3 className="text-[15px] leading-tight font-extrabold text-tinta">
               {nodo.nombre}
             </h3>
-            <p className="mt-0.5 text-[11px] font-semibold text-tinta-suave">
+            {/* El icono del area repetido aqui es lo que lo hace aprendible:
+                en el mapa es una forma sin nombre, y esta es la unica
+                pantalla donde sale junto a la palabra que significa. */}
+            <p className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-tinta-suave">
+              {IconoArea && (
+                <IconoArea size={12} className="shrink-0" style={{ color: colorNodo(nodo) }} />
+              )}
               {nodo.area && `${etiquetaArea(nodo.area)} · `}
               {nodo.uc} UC
             </p>

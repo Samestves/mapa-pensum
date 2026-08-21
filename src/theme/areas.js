@@ -1,20 +1,47 @@
+import {
+  Atom,
+  Braces,
+  BriefcaseBusiness,
+  ChartColumn,
+  CircuitBoard,
+  Languages,
+  ScrollText,
+  Workflow,
+} from 'lucide-react'
 import { TONOS } from './paleta'
 
-// Etiquetas y color de acento por area. El color apunta a la variable CSS,
-// asi que cambia solo al alternar tema claro/oscuro.
+/* Etiqueta, color e icono de cada area. El color apunta a la variable CSS,
+   asi que cambia solo al alternar tema claro/oscuro.
+
+   El icono existe porque el nombre del area se escribe a 8 px en la esquina
+   de la tarjeta, y a 8 px una palabra no es una palabra: es una mancha gris.
+   Con la vista encajada -que es como se abre el mapa- "Ciencias basicas" y
+   "Computacion" son el mismo borron. Una forma si sobrevive a ese tamaño.
+
+   Se eligieron por lo que hay DENTRO de cada area en este pensum, no por la
+   palabra: generales es sobre todo idiomas y expresion, de ahi Languages, y
+   no un birrete, que ademas ya significa "planificar" en la barra. */
 const AREAS = {
-  generales: { etiqueta: 'Generales', color: 'var(--area-generales)' },
-  'ciencias-basicas': { etiqueta: 'Ciencias básicas', color: 'var(--area-ciencias-basicas)' },
-  estadistica: { etiqueta: 'Estadística', color: 'var(--area-estadistica)' },
-  computacion: { etiqueta: 'Computación', color: 'var(--area-computacion)' },
-  electronica: { etiqueta: 'Electrónica', color: 'var(--area-electronica)' },
-  sistemas: { etiqueta: 'Sistemas', color: 'var(--area-sistemas)' },
-  gestion: { etiqueta: 'Gestión', color: 'var(--area-gestion)' },
-  tesis: { etiqueta: 'Trabajo de grado', color: 'var(--area-tesis)' },
+  generales: { etiqueta: 'Generales', color: 'var(--area-generales)', icono: Languages },
+  'ciencias-basicas': {
+    etiqueta: 'Ciencias básicas',
+    color: 'var(--area-ciencias-basicas)',
+    icono: Atom,
+  },
+  estadistica: { etiqueta: 'Estadística', color: 'var(--area-estadistica)', icono: ChartColumn },
+  computacion: { etiqueta: 'Computación', color: 'var(--area-computacion)', icono: Braces },
+  electronica: { etiqueta: 'Electrónica', color: 'var(--area-electronica)', icono: CircuitBoard },
+  sistemas: { etiqueta: 'Sistemas', color: 'var(--area-sistemas)', icono: Workflow },
+  gestion: { etiqueta: 'Gestión', color: 'var(--area-gestion)', icono: BriefcaseBusiness },
+  tesis: { etiqueta: 'Trabajo de grado', color: 'var(--area-tesis)', icono: ScrollText },
 }
 
 export const colorArea = (area) => AREAS[area]?.color ?? 'var(--tinta-tenue)'
 export const etiquetaArea = (area) => AREAS[area]?.etiqueta ?? area
+
+/* null donde no hay area clasificada, que hoy es en ocho de las nueve
+   carreras: ahi el nodo no dibuja icono y no pasa nada. */
+export const iconoArea = (area) => AREAS[area]?.icono ?? null
 
 /**
  * Reparte un codigo entre los TONOS disponibles. Parece azar, pero es un

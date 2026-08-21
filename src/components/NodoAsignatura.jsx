@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
-import { colorNodo, etiquetaArea } from '../theme/areas'
+import { colorNodo, etiquetaArea, iconoArea } from '../theme/areas'
 import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
 
@@ -32,6 +32,9 @@ import { codigoVisible } from '../data/codigoVisible'
  * medio leer. A 0,68 da 5,69 en claro y 7,84 en oscuro. Bloqueada no es
  * inaccesible: es una materia que vas a cursar, solo que todavia no.
  */
+// Lado del icono de area, en unidades del mapa
+const ICONO_AREA = 12
+
 const ESTILO = {
   [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0, acento: 0.3, apagado: 0.68 },
   [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.09, acento: 1, apagado: 1 },
@@ -63,6 +66,7 @@ function NodoAsignatura({
 
   const aprobada = estado === ESTADO.APROBADA
   const Icono = ICONO_ESTADO[estado]
+  const IconoArea = iconoArea(nodo.area)
 
   // El bloque de nombre se centra: 1, 2 o 3 lineas quedan siempre equilibradas
   const primeraLinea =
@@ -217,8 +221,36 @@ function NodoAsignatura({
       >
         {uc} UC
       </text>
+      {/* El area, con su icono a la derecha del nombre.
+          Los dos van en posiciones FIJAS y el texto crece hacia la izquierda
+          -textAnchor end-, que es lo que permite ponerlos juntos sin tener que
+          medir cuanto ocupa la palabra: en SVG no hay forma de saberlo sin
+          preguntarselo al navegador, y preguntarlo por cada uno de los 49
+          nodos seria pagar un calculo de diseño por algo que se puede resolver
+          con aritmetica.
+
+          El icono aguanta el zoom mejor que la palabra, pero conviene decir
+          hasta donde: por debajo de media escala no aguanta nada. Con la
+          vista encajada -0,24- este icono mide 2,9 px y no se distingue de
+          ningun otro. Ahi el mapa no se lee por tarjetas, se lee por
+          estructura: los cables encendidos y las zonas hundidas.
+          Donde si gana es en el tramo de en medio, entre media escala y algo
+          mas de uno, que es donde se pasea el mapa: ahi "Ciencias basicas" y
+          "Computacion" ya son la misma mancha gris de 8 px y en cambio un
+          atomo y unas llaves siguen siendo dos cosas distintas. */}
+      {IconoArea && (
+        <IconoArea
+          x={NODO.ancho - NODO.padDer - ICONO_AREA}
+          y={86 - ICONO_AREA + 2.5}
+          width={ICONO_AREA}
+          height={ICONO_AREA}
+          color={acento}
+          opacity={estilo.acento}
+          strokeWidth={2.6}
+        />
+      )}
       <text
-        x={NODO.ancho - NODO.padDer}
+        x={NODO.ancho - NODO.padDer - (IconoArea ? ICONO_AREA + 5 : 0)}
         y={86}
         textAnchor="end"
         fontSize={TEXTO.meta}
