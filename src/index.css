@@ -8,41 +8,31 @@
 :root {
   color-scheme: dark;
 
-  /* Las superficies son casi neutras y en tono CALIDO, y las dos cosas
-     importan.
-
-     Casi neutras porque el color del area se pinta encima como un tinte: sobre
-     una base con color propio el tinte no manda y todas las tarjetas acaban
-     pareciendose entre si.
-
-     Y calidas porque estaban en el tono 262, que es la banda azul donde ya
-     viven dos de las ocho areas -Generales en 248 y Sistemas en 272-. Aunque
-     el croma sea minimo, una superficie del mismo tono que un area deja de
-     leerse como fondo: cada tarjeta sin marcar se leia como "una tarjeta
-     azul" en vez de como una tarjeta neutra teñida de lo suyo. En calido eso
-     no puede pasar, porque ninguna area vive ahi, y ademas es lo que hace el
-     fondo de ARC: un casi-negro tirando a marron.
-     Un neutro calido tambien hace resaltar mas los colores frios, que son
-     cinco de nuestras ocho areas. */
   /* El lienzo oscuro es el de siempre: azul casi negro y su rejilla, sin
-     viñeta ni manchas de luz. Se probo darle la misma profundidad que al
-     claro y no hacia falta: sobre un fondo ya de por si profundo, la viñeta
-     no añade aire, solo ensucia las esquinas. La atmosfera se queda en las
-     variables a cero para que .lienzo-profundo siga valiendo en los dos temas
-     sin necesitar una regla aparte. */
+     viñeta ni manchas. Se probo darle la misma profundidad que al claro y no
+     hacia falta: sobre un fondo ya de por si profundo, la viñeta no añade
+     aire, solo ensucia las esquinas. La atmosfera se queda en las variables a
+     cero para que .lienzo-profundo siga valiendo en los dos temas sin
+     necesitar una regla aparte. */
   --lienzo: #05080e;
   --rejilla: #101a28;
   --lienzo-alza: transparent;
   --lienzo-mancha: transparent;
   --lienzo-vineta: transparent;
-  --panel: oklch(0.178 0.007 40);
-  --panel-borde: oklch(0.305 0.009 40);
-  --panel-suave: oklch(0.205 0.007 40);
-  --nodo: oklch(0.24 0.007 40);
+  /* Las superficies vuelven a su azul de siempre. Hubo una version en calido,
+     buscando que ninguna tarjeta se confundiera con las areas azules, y
+     resolvia un problema que no era ese: lo que teñia de azul las tarjetas era
+     el color del AREA, no el de la superficie, y eso ya se arreglo haciendo
+     que el color de la tarjeta lo ponga el estado. El calido, en cambio, si
+     traia uno nuevo: la cabecera y la portada se veian marrones. */
+  --panel: #0a1018;
+  --panel-borde: #1b2637;
+  --panel-suave: #111b28;
+  --nodo: #121d2c;
   /* La tarjeta bloqueada: a medio camino entre el lienzo y una tarjeta
      normal. Sigue leyendose como objeto, pero se hunde hacia el fondo. */
-  --nodo-hundido: oklch(0.19 0.006 40);
-  --nodo-borde: oklch(0.375 0.01 40);
+  --nodo-hundido: #0b131e;
+  --nodo-borde: #2a3a52;
   --tinta: #eaf1fa;
   --tinta-suave: #b3c4da;
   /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
@@ -82,21 +72,24 @@
      que ya tienes, y es lo que convierte el mapa en un recorrido que se ve de
      lejos en vez de en un tablero de tarjetas parecidas.
 
-     El relleno es verde en los DOS temas, solo cambia de claridad. Se probo
-     blanco en oscuro -contrastaba mas que nada, 17,35 contra el lienzo- y en
-     pantalla no encajaba: una tarjeta blanca no pertenece a una paleta de
-     ocho colores, se lee como un hueco.
+     Es el MISMO verde en los dos temas, no dos versiones del mismo tono. Se
+     probo bajarlo en claro pensando que sobre papel blanco haria falta menos
+     luz, y salio apagado; y no hacia falta, porque lo que separa esta tarjeta
+     de un lienzo casi blanco no es su claridad sino su color: 1,35 de
+     contraste y aun asi imposible de confundir. Que sea uno solo tambien hace
+     el sistema mas facil de leer: aprobada es aprobada se mire donde se mire.
 
-     El tono 150 no es cualquier verde. Es el hueco mas grande que queda libre
-     en la rueda -entre Trabajo de Grado en 95 y Computacion en 176- y es
-     exactamente donde esta el verde de ARC. Ponerlo en turquesa, que es lo
-     primero que se penso, lo habria dejado encima de Computacion: una materia
-     de Computacion CURSANDO se habria parecido a una aprobada. Asi quedan a
-     83,7 de distancia en oscuro y 52,1 en claro.
-     La tinta se invierte porque la tarjeta ya no es oscura. */
+     El tono 150 no es un verde cualquiera. Es el hueco mas grande que queda
+     libre en la rueda -entre Trabajo de Grado en 95 y Computacion en 176- y es
+     exactamente donde esta el verde de ARC. El turquesa, que fue lo primero
+     que se penso, caia encima de Computacion: una materia de Computacion
+     CURSANDO se parecia a una aprobada. Con el verde quedan a 83,7 de
+     distancia en oscuro y 52,1 en claro.
+     La tinta se invierte porque la tarjeta ya no es oscura: nombre en 10,56 y
+     codigo y UC en 5,85. */
   --aprobada-superficie: oklch(0.84 0.2 150);
-  --aprobada-tinta: oklch(0.22 0.05 150);
-  --aprobada-tinta-suave: oklch(0.4 0.06 150);
+  --aprobada-tinta: oklch(0.23 0.055 150);
+  --aprobada-tinta-suave: oklch(0.4 0.065 150);
 
   --estado-aprobada: oklch(0.84 0.2 150);
   --estado-cursando: oklch(0.8 0.19 38);
@@ -134,17 +127,17 @@
 [data-tema='claro'] {
   color-scheme: light;
 
-  --lienzo: oklch(0.955 0.004 40);
-  --rejilla: oklch(0.905 0.005 40);
+  --lienzo: #eef1f7;
+  --rejilla: #dde4ee;
   /* En claro la profundidad se hace al reves: el centro se ACLARA hacia el
      blanco y las esquinas caen a un gris azulado. Bajar el centro sobre un
      fondo ya claro lo ensuciaria en vez de darle aire. */
   --lienzo-alza: oklch(1 0 0 / 0.85);
   --lienzo-mancha: oklch(1 0 0 / 0.55);
-  --lienzo-vineta: oklch(0.55 0.015 40 / 0.16);
+  --lienzo-vineta: oklch(0.55 0.02 262 / 0.16);
   --panel: #ffffff;
-  --panel-borde: oklch(0.885 0.006 40);
-  --panel-suave: oklch(0.975 0.003 40);
+  --panel-borde: #d7dfea;
+  --panel-suave: #f4f7fb;
   --nodo: #ffffff;
   /* En claro hundirse es GRISEARSE, no oscurecerse, y hay que pasarse de
      frenada respecto al oscuro. Sobre un lienzo casi blanco una tarjeta
@@ -154,8 +147,8 @@
      Medido: con el gris de antes quedaban a 1,17 -indistinguibles- y con este
      quedan a 1,46, y el nombre encima sigue por encima del 4,5 de contraste
      que pide la norma. */
-  --nodo-hundido: oklch(0.875 0.006 40);
-  --nodo-borde: oklch(0.835 0.008 40);
+  --nodo-hundido: oklch(0.875 0.008 262);
+  --nodo-borde: #c6d1e0;
   --tinta: #0c1725;
   --tinta-suave: #3a4a61;
   /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
@@ -173,12 +166,6 @@
   --area-sistemas: oklch(0.52 0.19 272);
   --area-gestion: oklch(0.56 0.19 5);
   --area-tesis: oklch(0.64 0.19 95);
-
-  /* Mismo verde, mas oscuro: aqui la tarjeta se apoya en papel blanco y no en
-     un lienzo negro, asi que hay menos sitio hacia arriba. */
-  --aprobada-superficie: oklch(0.76 0.22 150);
-  --aprobada-tinta: oklch(0.24 0.06 150);
-  --aprobada-tinta-suave: oklch(0.4 0.07 150);
 
   --estado-aprobada: oklch(0.6 0.19 150);
   --estado-cursando: oklch(0.63 0.19 38);
