@@ -69,6 +69,18 @@
      Ahora hay 37,3 entre las dos.
      Cursando baja a coral por el mismo motivo con Electronica: en 72 estaban a
      8,3 y en 38 quedan a 34,8. */
+  /* Una materia aprobada no se tiñe: se RELLENA. Es lo que hace ARC con lo
+     que ya tienes, y es lo que convierte el mapa en un recorrido que se ve de
+     lejos en vez de en un tablero de tarjetas parecidas.
+     En oscuro el relleno es blanco. No es un color mas de la paleta a
+     proposito: sobre un lienzo casi negro nada contrasta mas -17,35 contra
+     1,54 del mismo relleno en tema claro-, y ademas deja el verde libre para
+     lo que de verdad lo necesita, que es el anillo de avance.
+     La tinta se invierte porque la tarjeta ya no es oscura. */
+  --aprobada-superficie: oklch(0.95 0.018 200);
+  --aprobada-tinta: oklch(0.22 0.02 262);
+  --aprobada-tinta-suave: oklch(0.42 0.02 262);
+
   --estado-aprobada: oklch(0.84 0.2 150);
   --estado-cursando: oklch(0.8 0.19 38);
   --estado-rojo: oklch(0.68 0.2 22);
@@ -144,6 +156,12 @@
   --area-sistemas: oklch(0.52 0.19 272);
   --area-gestion: oklch(0.56 0.19 5);
   --area-tesis: oklch(0.64 0.19 95);
+
+  /* En claro el blanco no sirve: seria la tarjeta disponible. Aqui el relleno
+     es el turquesa, que sobre papel se lee como "hecho" sin gritar. */
+  --aprobada-superficie: oklch(0.8 0.14 178);
+  --aprobada-tinta: oklch(0.26 0.05 178);
+  --aprobada-tinta-suave: oklch(0.42 0.06 178);
 
   --estado-aprobada: oklch(0.6 0.19 150);
   --estado-cursando: oklch(0.63 0.19 38);
@@ -1075,17 +1093,32 @@ body {
   background-image:
     radial-gradient(130% 110% at 50% 50%, transparent 32%, var(--lienzo-vineta) 100%),
     linear-gradient(var(--rejilla) 1px, transparent 1px),
-    linear-gradient(90deg, var(--rejilla) 1px, transparent 1px),
-    radial-gradient(55% 45% at 14% 86%, var(--lienzo-mancha), transparent 68%),
-    radial-gradient(50% 42% at 86% 16%, var(--lienzo-mancha), transparent 68%),
-    radial-gradient(110% 85% at 50% 36%, var(--lienzo-alza), transparent 62%);
+    linear-gradient(90deg, var(--rejilla) 1px, transparent 1px);
   background-size:
     100% 100%,
     34px 34px,
-    34px 34px,
-    100% 100%,
-    100% 100%,
-    100% 100%;
+    34px 34px;
+}
+
+/* El halo va aparte de la viñeta porque los dos pertenecen a sitios
+   distintos, y meterlos juntos era el error.
+
+   La viñeta enmarca LA VENTANA: oscurece las esquinas de la pantalla y por eso
+   se queda quieta. El halo pertenece AL MAPA, y estaba tambien clavado a la
+   ventana: al alejarse, el grafo encogia hacia una zona y la luz se quedaba
+   donde estaba, iluminando lienzo vacio mientras el mapa se iba a otro lado.
+
+   Ahora es un elemento del tamaño del contenido que recibe la misma
+   transformacion que el <g> del SVG, asi que va pegado al grafo a cualquier
+   zoom. Y la sigue por transform, no recolocando el degradado: el degradado se
+   rastriza una vez y moverlo es trabajo de compositor, mientras que animar la
+   posicion de un fondo obliga a repintar la ventana entera en cada fotograma
+   del arrastre. */
+.halo-mapa {
+  background-image:
+    radial-gradient(48% 60% at 12% 78%, var(--lienzo-mancha), transparent 70%),
+    radial-gradient(44% 55% at 88% 22%, var(--lienzo-mancha), transparent 70%),
+    radial-gradient(72% 120% at 50% 45%, var(--lienzo-alza), transparent 68%);
 }
 
 @media print {

@@ -67,8 +67,15 @@ function Arista({
   retardo,
   velocidad,
 }) {
-  // El cable toma el color de su origen: asi se sigue de donde viene
-  const color = colorNodo({ area, codigo: codigoOrigen })
+  /* El cable toma el color de su origen, asi se sigue de donde viene. Con una
+     excepcion: si ese origen ya esta APROBADO, el cable se pinta del color de
+     lo aprobado y no del de su area.
+     Es lo que hace que el camino recorrido se lea como UN camino. Con el color
+     del area, un tramo de cinco materias aprobadas de cinco areas distintas
+     salia de cinco colores y habia que reconstruirlo a ojo; asi es una sola
+     linea continua desde el primer semestre hasta donde llegaste, que es
+     exactamente lo que se ve en el arbol de ARC. */
+  const color = viva ? 'var(--aprobada-superficie)' : colorNodo({ area, codigo: codigoOrigen })
 
   const estado = atenuada
     ? 'atenuada'

@@ -94,6 +94,25 @@ function GrafoPensum({
 
   return (
     <div ref={contenedorRef} className="lienzo-profundo relative min-w-0 flex-1 overflow-hidden">
+      {/* La luz del lienzo, pegada al grafo. Va por detras del SVG y con la
+          MISMA transformacion que su contenido -ver .halo-mapa-, asi que al
+          alejarse encoge con el mapa en vez de quedarse iluminando el hueco
+          que el mapa acaba de dejar.
+          Se desvanece hasta que la vista encaja, igual que el contenido: sin
+          eso, el primer fotograma enseña el halo a tamaño natural en la
+          esquina antes de que nadie haya visto el mapa. */}
+      <div
+        aria-hidden="true"
+        className="halo-mapa pointer-events-none absolute top-0 left-0 origin-top-left"
+        style={{
+          width: ancho,
+          height: alto,
+          transform: `translate3d(${vista.x}px, ${vista.y}px, 0) scale(${vista.escala})`,
+          opacity: encajado ? 1 : 0,
+          transition: 'opacity 200ms ease-out',
+        }}
+      />
+
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}

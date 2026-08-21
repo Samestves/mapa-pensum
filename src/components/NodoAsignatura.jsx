@@ -48,7 +48,7 @@ const ESTILO = {
   [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.05, acento: 0.34, apagado: 0.68 },
   [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.14, acento: 1, apagado: 1 },
   [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
-  [ESTADO.APROBADA]: { base: 'var(--nodo)', tinte: 0.26, acento: 1, apagado: 1 },
+  [ESTADO.APROBADA]: { base: 'var(--aprobada-superficie)', tinte: 0, acento: 1, apagado: 1 },
 }
 
 function NodoAsignatura({
@@ -72,6 +72,12 @@ function NodoAsignatura({
   const colorBorde = colorBordeEstado(estado, acento)
 
   const aprobada = estado === ESTADO.APROBADA
+  /* Sobre una tarjeta rellena la tinta se invierte entera: nombre, codigo,
+     UC y los dos iconos. Dejar uno solo con el color de antes -el icono del
+     area, por ejemplo- lo volveria invisible, porque los colores de area
+     estan calculados para leerse sobre fondo oscuro. */
+  const tinta = aprobada ? 'var(--aprobada-tinta)' : 'var(--tinta)'
+  const tintaSuave = aprobada ? 'var(--aprobada-tinta-suave)' : 'var(--tinta-suave)'
   const Icono = ICONO_ESTADO[estado]
   const IconoArea = iconoArea(nodo.area)
 
@@ -138,20 +144,6 @@ function NodoAsignatura({
         style={{ transition: 'fill-opacity 180ms ease' }}
       />
 
-      {/* Resplandor de las aprobadas, apilando trazos en vez de usar filtro */}
-      <rect
-        x="-3"
-        y="-3"
-        width={NODO.ancho + 6}
-        height={NODO.alto + 6}
-        rx={NODO.radio + 3}
-        fill="none"
-        stroke={colorBorde}
-        strokeOpacity={aprobada ? 0.45 : 0}
-        strokeWidth="5"
-        style={{ transition: 'stroke-opacity 300ms ease' }}
-      />
-
       {/* El unico trazo que queda, y solo en la tarjeta abierta. No es
           decoracion: es "esta es la que estas mirando", y sin el la ficha
           flotante apuntaria con su piquito a una tarjeta igual que las demas.
@@ -188,7 +180,7 @@ function NodoAsignatura({
         x={NODO.padIzq}
         y={26}
         fontSize={TEXTO.codigo}
-        fill="var(--tinta-suave)"
+        fill={tintaSuave}
         className="tabular-nums tracking-wider"
       >
         {codigoVisible(nodo)}
@@ -200,7 +192,7 @@ function NodoAsignatura({
           x={NODO.padIzq}
           y={primeraLinea + i * TEXTO.altoLinea}
           fontSize={TEXTO.nombre}
-          fill="var(--tinta)"
+          fill={tinta}
           className="font-semibold"
         >
           {linea}
@@ -211,7 +203,7 @@ function NodoAsignatura({
         x={NODO.padIzq}
         y={86}
         fontSize={TEXTO.meta}
-        fill="var(--tinta-suave)"
+        fill={tintaSuave}
         className="tabular-nums"
       >
         {uc} UC
@@ -239,7 +231,7 @@ function NodoAsignatura({
           y={88 - ICONO_AREA}
           width={ICONO_AREA}
           height={ICONO_AREA}
-          color={acento}
+          color={aprobada ? tintaSuave : acento}
           opacity={estilo.acento}
           strokeWidth={2.4}
         />
@@ -251,7 +243,7 @@ function NodoAsignatura({
           y={13}
           width={15}
           height={15}
-          color={estado === ESTADO.BLOQUEADA ? 'var(--tinta-tenue)' : colorBorde}
+          color={aprobada ? tinta : estado === ESTADO.BLOQUEADA ? 'var(--tinta-tenue)' : colorBorde}
           strokeWidth={2.6}
         />
       )}
