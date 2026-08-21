@@ -24,12 +24,17 @@
      fondo de ARC: un casi-negro tirando a marron.
      Un neutro calido tambien hace resaltar mas los colores frios, que son
      cinco de nuestras ocho areas. */
-  --lienzo: oklch(0.135 0.005 40);
-  --rejilla: oklch(0.185 0.006 40);
-  /* Profundidad del lienzo, ver .lienzo-profundo */
-  --lienzo-alza: oklch(0.62 0.015 40 / 0.11);
-  --lienzo-mancha: oklch(0.62 0.015 40 / 0.06);
-  --lienzo-vineta: oklch(0 0 0 / 0.62);
+  /* El lienzo oscuro es el de siempre: azul casi negro y su rejilla, sin
+     viñeta ni manchas de luz. Se probo darle la misma profundidad que al
+     claro y no hacia falta: sobre un fondo ya de por si profundo, la viñeta
+     no añade aire, solo ensucia las esquinas. La atmosfera se queda en las
+     variables a cero para que .lienzo-profundo siga valiendo en los dos temas
+     sin necesitar una regla aparte. */
+  --lienzo: #05080e;
+  --rejilla: #101a28;
+  --lienzo-alza: transparent;
+  --lienzo-mancha: transparent;
+  --lienzo-vineta: transparent;
   --panel: oklch(0.178 0.007 40);
   --panel-borde: oklch(0.305 0.009 40);
   --panel-suave: oklch(0.205 0.007 40);
@@ -171,7 +176,7 @@
 
   /* Mismo verde, mas oscuro: aqui la tarjeta se apoya en papel blanco y no en
      un lienzo negro, asi que hay menos sitio hacia arriba. */
-  --aprobada-superficie: oklch(0.78 0.16 150);
+  --aprobada-superficie: oklch(0.76 0.22 150);
   --aprobada-tinta: oklch(0.24 0.06 150);
   --aprobada-tinta-suave: oklch(0.4 0.07 150);
 
@@ -579,10 +584,10 @@ body {
 @keyframes respirar {
   0%,
   100% {
-    fill-opacity: 0.14;
+    fill-opacity: 0.16;
   }
   50% {
-    fill-opacity: 0.26;
+    fill-opacity: 0.3;
   }
 }
 

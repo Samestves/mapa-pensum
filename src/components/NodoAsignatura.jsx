@@ -17,9 +17,20 @@ import { codigoVisible } from '../data/codigoVisible'
  * La idea es del arbol de habilidades de ARC Raiders, y lo que hace bien no
  * es no tener borde: es que ALLI EL COLOR SIGNIFICA POSESION. Lo que ya
  * tienes viene relleno; lo que no, oscuro. Una sola escala, se lee a un metro
- * de la pantalla. Aqui esa escala tiene cuatro peldaños y sube en el mismo
- * sentido: cuanto mas avanzada esta la materia, mas encendida esta la
- * tarjeta.
+ * de la pantalla.
+ *
+ * De ahi sale la regla de aqui: EL COLOR DE LA TARJETA LO PONE EL ESTADO, NO
+ * EL AREA. Hubo una version en la que el area teñia la tarjeta en los cuatro
+ * estados y no funcionaba, por un motivo que solo se ve con el pensum
+ * delante: los primeros semestres son casi todos Generales y Ciencias
+ * basicas, que son las dos areas azules, asi que media pantalla de materias
+ * sin empezar quedaba azul palida. Se leia como si el azul fuera el color de
+ * "sin estado", que es justo lo que no es.
+ *
+ * Sin marcar, la tarjeta es neutra. El area no se pierde: la dice su icono
+ * -a color pleno si puedes inscribirla, apagado si no- y la dicen los cables
+ * que salen de ella, que son de su color. Lo que cambia es quien manda en la
+ * superficie, y la superficie es lo que se ve de lejos.
  *
  * `base` es lo que hunde a la bloqueada: no se apaga con un borde mas tenue,
  * se acerca al color del lienzo hasta quedarse casi dentro de el. Y `apagado`
@@ -36,18 +47,9 @@ import { codigoVisible } from '../data/codigoVisible'
 const ICONO_AREA = 17
 
 const ESTILO = {
-  /* El techo del tinte no es estetico, es de contraste, y esta medido. Con el
-     color del area al 42% una tarjeta aprobada de Trabajo de Grado -que es
-     amarillo, el area mas clara de las ocho- dejaba su codigo y sus UC en 1,77
-     de contraste: ilegibles. A 26% quedan en 4,69, por encima del 4,5 que pide
-     la norma, y el nombre en 7,3.
-     Se probo tambien igualar la claridad de las ocho areas para poder subir el
-     tinte, y salio peor: con la claridad pareja el unico dato que separa dos
-     areas es el matiz, y la pareja mas parecida caia de 26,7 a 12. Antes que un
-     tinte mas fuerte esta poder distinguir de que area es cada materia. */
-  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0.09, acento: 0.34, apagado: 0.68 },
-  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0.14, acento: 1, apagado: 1 },
-  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.2, acento: 1, apagado: 1 },
+  [ESTADO.BLOQUEADA]: { base: 'var(--nodo-hundido)', tinte: 0, acento: 0.34, apagado: 0.68 },
+  [ESTADO.DISPONIBLE]: { base: 'var(--nodo)', tinte: 0, acento: 1, apagado: 1 },
+  [ESTADO.CURSANDO]: { base: 'var(--nodo)', tinte: 0.22, acento: 1, apagado: 1 },
   [ESTADO.APROBADA]: { base: 'var(--aprobada-superficie)', tinte: 0, acento: 1, apagado: 1 },
 }
 
@@ -118,7 +120,7 @@ function NodoAsignatura({
         width={NODO.ancho}
         height={NODO.alto}
         rx={NODO.radio}
-        fill={acento}
+        fill="var(--estado-cursando)"
         fillOpacity={estilo.tinte}
         className={estado === ESTADO.CURSANDO ? 'respirando' : undefined}
         style={{ transition: 'fill-opacity 300ms ease' }}
