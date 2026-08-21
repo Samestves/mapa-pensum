@@ -2,9 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
-import { calcularLayoutVertical } from '../layout/layoutVertical'
 import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
-import { useEsTelefono } from '../hooks/useEsTelefono'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
 import { usePensum } from '../hooks/usePensum'
@@ -15,7 +13,6 @@ import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
-import MapaVertical from './MapaVertical'
 import PanelProgreso from './PanelProgreso'
 import Horario from './Horario'
 import PlanRuta from './PlanRuta'
@@ -36,16 +33,10 @@ function VistaCarrera({ carrera, alVolver }) {
   const { asignaturas, grupos } = carrera
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
-  const esTelefono = useEsTelefono()
-
-  /* El layout de siempre: columnas por semestre. Lo usa el mapa de
-     escritorio, y tambien la lista, el horario y el planificador, que
-     necesitan sus zonas de electivas y sus columnas. Se calcula siempre. */
   const layout = useMemo(
     () => calcularLayout(asignaturas, grupos, carrera.electivasEnCasillas),
     [asignaturas, grupos, carrera.electivasEnCasillas],
   )
-
 
   const {
     marcas,
@@ -108,23 +99,6 @@ function VistaCarrera({ carrera, alVolver }) {
   useEffect(() => {
     guardar(CLAVE_VISTA, vista)
   }, [vista])
-
-  /* Y una segunda geometria SOLO para el mapa del telefono: una columna con
-     los cables por un canal lateral. No es un reescalado de la otra: en
-     375 px cabe UNA tarjeta por fila, asi que el mapa horizontal encogido no
-     se leeria y el vertical desplegado en un monitor desperdiciaria el ancho
-     entero. Son la misma informacion colocada de dos formas.
-
-     Se calcula solo cuando hace falta -telefono y vista de mapa- porque
-     recorrer las 481 materias y rutear sus cables no es gratis, y en
-     escritorio no se dibuja nunca. */
-  const layoutMovil = useMemo(
-    () =>
-      esTelefono && vista === 'mapa'
-        ? calcularLayoutVertical(asignaturas, grupos, carrera.electivasEnCasillas)
-        : null,
-    [esTelefono, vista, asignaturas, grupos, carrera.electivasEnCasillas],
-  )
 
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
   // un solo valor en vez de un booleano por panel, y no hay que apagar nada.
@@ -319,22 +293,6 @@ function VistaCarrera({ carrera, alVolver }) {
         ) : vista === 'horario' ? (
           <Horario carrera={carrera} estados={estados} />
         ) : vista === 'mapa' ? (
-          esTelefono && layoutMovil ? (
-            <MapaVertical
-              layout={layoutMovil}
-              estados={estados}
-              descarga={descarga}
-              toque={toque}
-              seleccionado={seleccionado}
-              senalado={senalado}
-              enCasilla={enCasilla}
-              alSenalar={setSenalado}
-              alSeleccionar={alternarSeleccion}
-              alAbrirCasilla={abrirCasilla}
-              alMarcar={marcar}
-              casillaDe={casillaDe}
-            />
-          ) : (
           <GrafoPensum
             layout={layout}
             porCodigo={porCodigo}
@@ -351,7 +309,6 @@ function VistaCarrera({ carrera, alVolver }) {
             alAbrirCasilla={abrirCasilla}
             casillaDe={casillaDe}
           />
-          )
         ) : (
           <VistaLista
             layout={layout}

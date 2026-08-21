@@ -40,17 +40,28 @@ function DetalleAsignatura({
   alMarcar,
   enCasilla,
   alCambiarElectiva,
-  comoHoja,
   alCerrar,
 }) {
+  const margen = 12
+  const cabeDerecha = posicion.x + 16 + ANCHO + margen <= medida.ancho
+  const izquierda = cabeDerecha
+    ? posicion.x + 16
+    : Math.max(margen, posicion.x - posicion.ancho - ANCHO - 16)
+
+  // Se sujeta dentro del contenedor para que nunca se salga por abajo
+  const arriba = Math.min(
+    Math.max(margen, posicion.y - 90),
+    Math.max(margen, medida.alto - 360),
+  )
+
   const marca =
     estado === ESTADO.APROBADA || estado === ESTADO.CURSANDO ? estado : null
 
-  /* El contenido es el mismo en las dos formas y por eso vive en una
-     variable: lo unico que cambia es el envoltorio -anclada al nodo en
-     escritorio, subiendo desde abajo en el telefono-, no lo que dice. */
-  const cuerpo = (
-    <>
+  return (
+    <div
+      className="surgir transicion-tema absolute z-20 flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
+      style={{ left: izquierda, top: arriba, width: ANCHO }}
+    >
       {/* Cabecera con fondo generado y desenfocado: el color viene del area
           y la forma del codigo, asi cada materia tiene el suyo. */}
       <div className="relative overflow-hidden border-b border-panel-borde">
@@ -164,56 +175,6 @@ function DetalleAsignatura({
           />
         </div>
       </div>
-    </>
-  )
-
-  /* En el telefono la ficha sube desde abajo en vez de anclarse al nodo.
-     Anclarla ahi seria pegarla a una tarjeta de una columna que se esta
-     desplazando: se iria de la pantalla al primer gesto. Abajo es ademas
-     donde llega el pulgar. */
-  if (comoHoja) {
-    return (
-      <>
-        <button
-          type="button"
-          aria-label="Cerrar"
-          onClick={alCerrar}
-          className="fixed inset-0 z-40 cursor-default bg-black/45"
-        />
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={nodo.nombre}
-          className="surgir transicion-tema fixed inset-x-0 bottom-0 z-50 flex max-h-[80dvh] flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] shadow-2xl"
-        >
-          {cuerpo}
-        </div>
-      </>
-    )
-  }
-
-  /* Anclada al nodo: solo esta forma necesita saber donde esta el nodo en
-     pantalla, asi que el calculo vive aqui dentro. Fuera se ejecutaba
-     tambien en la hoja del telefono, que no recibe posicion, y leia la x de
-     un objeto que no existe. */
-  const margen = 12
-  const cabeDerecha = posicion.x + 16 + ANCHO + margen <= medida.ancho
-  const izquierda = cabeDerecha
-    ? posicion.x + 16
-    : Math.max(margen, posicion.x - posicion.ancho - ANCHO - 16)
-
-  // Se sujeta dentro del contenedor para que nunca se salga por abajo
-  const arriba = Math.min(
-    Math.max(margen, posicion.y - 90),
-    Math.max(margen, medida.alto - 360),
-  )
-
-  return (
-    <div
-      className="surgir transicion-tema absolute z-20 flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
-      style={{ left: izquierda, top: arriba, width: ANCHO }}
-    >
-      {cuerpo}
     </div>
   )
 }
