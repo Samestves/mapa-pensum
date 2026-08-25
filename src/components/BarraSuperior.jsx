@@ -27,6 +27,18 @@ const BASE =
    no hay hover. Un icono suelto en una barra se entiende pulsable sin que
    haya que dibujarle el contorno. */
 const REPOSO = 'text-tinta-suave hover:bg-panel-suave hover:text-tinta'
+
+/* Una tecla dibujada como tecla: cuadrada, con su contorno y su relieve. Un
+   atajo escrito en texto corrido -"Ctrl K"- se lee como una etiqueta mas; con
+   forma de tecla se lee como algo que se pulsa, que es el unico motivo de
+   enseñarlo. */
+function Tecla({ children }) {
+  return (
+    <kbd className="transicion-tema grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border border-panel-borde bg-panel px-1 text-[10px] leading-none font-bold text-tinta-tenue shadow-sm">
+      {children}
+    </kbd>
+  )
+}
 const ACTIVO = 'bg-panel-suave text-tinta'
 
 /**
@@ -112,9 +124,12 @@ function BarraSuperior({
      trae, el de materias, que es lo unico que se puede saber. El title dice
      cual de los dos es, para que el numero no signifique dos cosas distintas
      sin avisar. */
-  /* El simbolo del atajo cambia con el aparato. Escribir "Ctrl K" en un Mac
-     es enseñar una tecla que ese teclado no usa para esto. */
-  const atajo = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'Ctrl K'
+  /* La tecla modificadora cambia con el aparato: ⌘ en un Mac y Ctrl en lo
+     demas. Enseñar ⌘ en Windows seria nombrar una tecla que ese teclado no
+     tiene, y el atajo dejaria de servir para lo unico que sirve un atajo
+     escrito, que es poder pulsarlo. */
+  const esMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+  const modificador = esMac ? '⌘' : 'Ctrl'
 
   const conCreditos = resumen.porcentaje != null
   const avance = conCreditos
@@ -189,13 +204,20 @@ function BarraSuperior({
         title="Buscar materias y acciones"
         aria-label="Buscar materias y acciones"
         aria-keyshortcuts="Meta+K Control+K"
-        className={`${BASE} mr-1 flex gap-2 rounded-lg px-2 sm:px-2.5 ${REPOSO}`}
+        /* Con contorno y fondo hundido: esto no es un boton mas de la fila,
+           es un CAMPO, y tiene que parecerlo antes de pulsarlo. Junto con el
+           mando de vistas son las dos unicas piezas con caja de la barra, y
+           eso es lo que deja que las demas -planificar, tema- se lean como lo
+           que son: acciones sueltas. */
+        className={`${BASE} transicion-tema mr-1 flex gap-2 rounded-lg border border-panel-borde bg-lienzo px-2 text-tinta-tenue hover:text-tinta sm:px-2.5 xl:w-[210px] xl:justify-start`}
       >
         <Search size={15} className="shrink-0" />
-        <span className="hidden text-[12px] font-medium xl:inline">Buscar</span>
-        <kbd className="hidden rounded border border-panel-borde px-1.5 py-px text-[10px] font-bold xl:inline">
-          {atajo}
-        </kbd>
+        <span className="hidden flex-1 text-left text-[12px] font-medium xl:inline">Buscar…</span>
+        {/* Dos teclas y no una cadena de texto: asi se lee como se pulsa */}
+        <span className="hidden shrink-0 items-center gap-1 xl:flex" aria-hidden="true">
+          <Tecla>{modificador}</Tecla>
+          <Tecla>K</Tecla>
+        </span>
       </button>
 
       {/* El anillo abre el detalle del avance, y va donde siempre estuvo: al

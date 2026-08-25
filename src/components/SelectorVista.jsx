@@ -34,15 +34,23 @@ function SelectorVista({ vista, alCambiar }) {
     <div
       role="group"
       aria-label="Vista de la carrera"
-      /* La pista va hundida y el pulgar sale a la altura de la barra: el
-         contraste entre los dos es lo que hace que se lea como un mando
-         fisico de tres posiciones y no como tres botones pintados. */
-      className="transicion-tema relative hidden h-8 shrink-0 grid-cols-3 rounded-xl border border-panel-borde bg-panel-suave p-0.5 sm:h-9 md:grid"
+      /* La pista va HUNDIDA y el pulgar SALE, y hasta ahora estaba al reves:
+         la pista era panel-suave y el pulgar panel, o sea la pista mas clara
+         que el pulgar y las dos mas claras que el lienzo. Resultado, un
+         rectangulo plano; y como en esta barra todo lo demas son botones sin
+         contorno, el mando no se leia como un grupo. Esa es la razon de que
+         Planificar, que va justo al lado, pareciera la cuarta pestaña que se
+         salio: no habia riel visible del que salirse.
+         Ahora la pista es el color del lienzo -mas oscura que la barra, o sea
+         un surco- y el pulgar es panel-suave, mas claro que los dos. Es el
+         mismo truco de un segmentado de iOS, y es lo que hace que tres
+         botones se lean como un mando. */
+      className="transicion-tema relative hidden h-8 shrink-0 grid-cols-3 rounded-xl border border-panel-borde bg-lienzo p-0.5 sm:h-9 md:grid"
     >
       <span
         aria-hidden="true"
         style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista transicion-tema absolute top-0.5 bottom-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded-[0.625rem] bg-panel shadow-sm"
+        className="pulgar-vista transicion-tema absolute top-0.5 bottom-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded-[0.625rem] bg-panel-suave shadow-sm"
       />
 
       {VISTAS.map(({ id, icono: Ico, etiqueta, titulo }) => {
