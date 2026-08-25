@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
+import { CARRERAS } from '../data/carreras'
+import { VISTAS } from '../data/vistas'
 import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
@@ -16,6 +18,7 @@ import GrafoPensum from './GrafoPensum'
 import PanelProgreso from './PanelProgreso'
 import Horario from './Horario'
 import PlanRuta from './PlanRuta'
+import PaletaComandos from './PaletaComandos'
 import SelectorElectiva from './SelectorElectiva'
 import VistaLista from './VistaLista'
 
@@ -122,6 +125,22 @@ function VistaCarrera({ carrera, alVolver }) {
   const cercaDelBorde = useCercaDelBorde(barraOculta)
   const visiblePestana = barraOculta ? cercaDelBorde : cercaCabecera
   const [planAbierto, setPlanAbierto] = useState(false)
+  const [paletaAbierta, setPaletaAbierta] = useState(false)
+
+  /* Ctrl+K, o ⌘K en un Mac. Se escucha en captura para adelantarse a
+     cualquier campo de texto que tenga el foco: si no, escribir en el
+     buscador del horario y pulsar el atajo no habria hecho nada.
+     preventDefault porque en Chrome y Firefox ⌘K abre la barra de
+     direcciones, y sin eso el atajo se lo lleva el navegador. */
+  useEffect(() => {
+    const tecla = (e) => {
+      if (e.key?.toLowerCase() !== 'k' || !(e.metaKey || e.ctrlKey)) return
+      e.preventDefault()
+      setPaletaAbierta((v) => !v)
+    }
+    document.addEventListener('keydown', tecla, true)
+    return () => document.removeEventListener('keydown', tecla, true)
+  }, [])
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
   const [senalado, setSenalado] = useState(null)
@@ -162,6 +181,46 @@ function VistaCarrera({ carrera, alVolver }) {
   // El alternar vive aqui y no en el nodo para que la funcion no dependa de
   // que hay seleccionado: con la forma de actualizacion, React le pasa el
   // valor previo y la identidad se mantiene estable para siempre.
+  /* Lo que la paleta sabe hacer. Se arma aqui y no dentro de ella porque
+     todas estas acciones son estado de ESTA pantalla; la paleta solo las
+     pinta y las ejecuta.
+     `pista` son las palabras por las que tambien se encuentra una accion:
+     nadie escribe "planificar" cuando lo que quiere es saber cuando se
+     gradua. */
+  const accionesPaleta = useMemo(
+    () => [
+      ...VISTAS.filter((v) => v.id !== vista).map((v) => ({
+        id: 'vista-' + v.id,
+        etiqueta: v.titulo,
+        icono: v.icono,
+        pista: v.etiqueta,
+        ejecutar: () => setVista(v.id),
+      })),
+      {
+        id: 'planificar',
+        etiqueta: 'Planificar mi ruta hasta el grado',
+        icono: GraduationCap,
+        pista: 'graduarme semestres que faltan imprimir pdf',
+        ejecutar: () => setPlanAbierto(true),
+      },
+      {
+        id: 'tema',
+        etiqueta: tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro',
+        icono: tema === 'oscuro' ? Sun : Moon,
+        pista: 'tema modo oscuro claro',
+        ejecutar: alternarTema,
+      },
+      {
+        id: 'carreras',
+        etiqueta: 'Ver todas las carreras',
+        icono: ArrowLeft,
+        pista: 'volver inicio portada',
+        ejecutar: () => alVolver(),
+      },
+    ],
+    [vista, tema, alternarTema, alVolver],
+  )
+
   const alternarSeleccion = useCallback((codigo) => {
     setSeleccionado((previo) => (previo === codigo ? null : codigo))
     setAreaFiltrada(null)
@@ -196,6 +255,7 @@ function VistaCarrera({ carrera, alVolver }) {
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
             alPlanificar={() => setPlanAbierto(true)}
+            alBuscar={() => setPaletaAbierta(true)}
             alVolver={alVolver}
           />
           </div>
@@ -246,6 +306,21 @@ function VistaCarrera({ carrera, alVolver }) {
           </button>
         </div>
       </div>
+
+      <PaletaComandos
+        abierta={paletaAbierta}
+        alCerrar={() => setPaletaAbierta(false)}
+        acciones={accionesPaleta}
+        materias={layout.nodos}
+        estados={estados}
+        carreras={CARRERAS.filter((c) => c.slug !== carrera.slug)}
+        alIrAMateria={(codigo) => {
+          setVista('mapa')
+          setAreaFiltrada(null)
+          setSeleccionado(codigo)
+        }}
+        alIrACarrera={alVolver}
+      />
 
       {planAbierto && (
         <PlanRuta
@@ -349,6 +424,7 @@ function VistaCarrera({ carrera, alVolver }) {
             vista={vista}
             alCambiar={setVista}
             alPlanificar={() => setPlanAbierto(true)}
+            alBuscar={() => setPaletaAbierta(true)}
           />
     </div>
   )

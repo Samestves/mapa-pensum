@@ -1,4 +1,4 @@
-import { ArrowLeft, GraduationCap, Moon, Sun } from 'lucide-react'
+import { ArrowLeft, GraduationCap, Moon, Search, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
@@ -104,6 +104,7 @@ function BarraSuperior({
   avisosAbiertos,
   alAlternarAvisos,
   alPlanificar,
+  alBuscar,
   alVolver,
 }) {
   /* El anillo siempre enseña un porcentaje. Donde hay creditos oficiales es
@@ -111,6 +112,10 @@ function BarraSuperior({
      trae, el de materias, que es lo unico que se puede saber. El title dice
      cual de los dos es, para que el numero no signifique dos cosas distintas
      sin avisar. */
+  /* El simbolo del atajo cambia con el aparato. Escribir "Ctrl K" en un Mac
+     es enseñar una tecla que ese teclado no usa para esto. */
+  const atajo = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'Ctrl K'
+
   const conCreditos = resumen.porcentaje != null
   const avance = conCreditos
     ? resumen.porcentaje
@@ -169,6 +174,30 @@ function BarraSuperior({
         </p>
       </div>
 
+      {/* La entrada a la paleta. Va aqui, en el hueco que dejaba el nombre de
+          la carrera, y con el atajo escrito al lado: un atajo que no se
+          enseña en ninguna parte no existe, y el sitio donde se aprende es
+          justo el boton que hace lo mismo.
+          La lupa se queda TAMBIEN en el telefono, y ahi no es un adorno: es
+          la unica puerta a la paleta, porque un movil no tiene Ctrl+K. Y es
+          donde mas falta hace, que es donde recorrer el mapa cuesta mas.
+          La palabra y la tecla solo desde xl, porque se comen 120 px que
+          hacen falta para el nombre de la carrera. */}
+      <button
+        type="button"
+        onClick={alBuscar}
+        title="Buscar materias y acciones"
+        aria-label="Buscar materias y acciones"
+        aria-keyshortcuts="Meta+K Control+K"
+        className={`${BASE} mr-1 flex gap-2 rounded-lg px-2 sm:px-2.5 ${REPOSO}`}
+      >
+        <Search size={15} className="shrink-0" />
+        <span className="hidden text-[12px] font-medium xl:inline">Buscar</span>
+        <kbd className="hidden rounded border border-panel-borde px-1.5 py-px text-[10px] font-bold xl:inline">
+          {atajo}
+        </kbd>
+      </button>
+
       {/* El anillo abre el detalle del avance, y va donde siempre estuvo: al
           principio del bloque de la derecha, pegado al selector de vista.
           Estuvo un tiempo a la izquierda con el nombre de la carrera, porque
@@ -217,6 +246,19 @@ function BarraSuperior({
           de abajo y hay que recolocar el agarre para tocar el borde superior.
           Bajarlo deja la cabecera del telefono con una sola cosa -el anillo
           de avance- y junta en un sitio todo lo que se toca. */}
+      {/* Planificar va DESPUES de una division, y ahi esta el arreglo.
+          Medido antes de tocarlo: el mando de vistas son tres botones de 90 px
+          con icono y palabra, y Planificar media 98 con icono y palabra, a
+          ocho pixeles del ultimo. O sea cuatro piezas del mismo tamaño y el
+          mismo formato en fila, tres montadas en una capsula con un pulgar que
+          se desliza y la cuarta no. No se leia como "esto es de otra clase":
+          se leia como "esto se salio del riel".
+          Las tres vistas son SITIOS y esto es una ACCION -abre un panel encima
+          y te deja donde estabas-, que es la misma distincion que la barra del
+          telefono ya hacia no dejando que su linea llegara hasta aqui. La
+          division dice en la pantalla lo que el codigo ya sabia. */}
+      <Division />
+
       <span className="hidden md:contents">
         <Icono
           icono={GraduationCap}
@@ -225,8 +267,6 @@ function BarraSuperior({
           alPulsar={alPlanificar}
         />
       </span>
-
-      <Division />
 
       {/* Sol y luna se entienden sin palabra en cualquier idioma. El icono
           entra girando: el tema tarda 200ms en cambiar en toda la app y sin
