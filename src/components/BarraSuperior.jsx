@@ -88,28 +88,24 @@ function Division() {
 /**
  * La cabecera de una carrera, en TRES zonas.
  *
- * Izquierda es DONDE ESTAS: de donde vienes, que carrera y cuanto llevas.
+ * Izquierda es DONDE ESTAS: de donde vienes y que carrera.
  * Centro es el BUSCADOR.
- * Derecha es CON QUE MIRAS y QUE HACES.
+ * Derecha es COMO VAS, CON QUE MIRAS y QUE HACES.
  *
  * Antes era una sola fila de siete piezas del mismo peso separadas por ocho
  * pixeles, y con todo al mismo nivel la unica forma de saber que hacia cada
  * cosa era leer su etiqueta.
  *
- * Dos mudanzas concretas, las dos por el mismo motivo:
+ * El anillo de avance se queda en la derecha, delante del mando de vistas,
+ * que es donde la gente ya sabe buscarlo. Lo que cambia es su forma: pasa de
+ * circulo con el numero dentro a insignia con el numero fuera. Encajado entre
+ * el campo y la capsula, un circulo suelto era la pieza que peor caia; con
+ * forma de pastilla se lee como un dato y no como un boton mas de la fila.
  *
- * - El anillo de avance se va a la izquierda. Describe la carrera igual que
- *   su nombre -"Sistemas, 34%" se lee de una vez- y en medio de la barra era
- *   un circulo encajado entre un campo y una capsula, que era la pieza que
- *   peor caia de todas. Hubo una version anterior que lo movio al reves, de
- *   la izquierda al centro, con el argumento de no romper la memoria de quien
- *   ya sabia donde estaba; el argumento sigue siendo bueno pero pierde,
- *   porque entonces no habia buscador y el centro de la barra no existia como
- *   zona.
- * - Planificar sale a la derecha del todo y pasa a ser la unica pieza
- *   elevada. Es una ACCION -abre un panel encima y te deja donde estabas- y
- *   las tres vistas son SITIOS; con el mismo aspecto que ellas parecia su
- *   cuarta pestaña.
+ * Planificar sale a la derecha del todo y pasa a ser la unica pieza elevada.
+ * Es una ACCION -abre un panel encima y te deja donde estabas- y las tres
+ * vistas son SITIOS; con el mismo aspecto que ellas parecia su cuarta
+ * pestaña.
  *
  * El buscador queda centrado de verdad: las dos zonas de los lados llevan
  * flex-1, asi que el campo cae en el eje de la ventana pase lo que pase con
@@ -188,22 +184,6 @@ function BarraSuperior({
           </p>
         </div>
 
-        {/* Redondo y sin borde a proposito: es un indicador que ademas se
-            pulsa. Cuadrado por fuera para que el circulo salga circulo: antes
-            media 36x32 en movil y el 'rounded-full' lo dejaba en una elipse,
-            con el dibujo de 34px asomando por arriba y por abajo. */}
-        <button
-          type="button"
-          onClick={(e) => alAlternarAvance(e.currentTarget)}
-          title={detalleAvance}
-          aria-label={detalleAvance}
-          aria-expanded={avanceAbierto}
-          className={`${BASE} w-9 rounded-full p-0 ${
-            avanceAbierto ? 'bg-panel-suave' : 'hover:bg-panel-suave'
-          }`}
-        >
-          <AnilloAvance valor={avance} tamano={30} activo={avanceAbierto} />
-        </button>
       </div>
 
       {/* El campo de busqueda. Hundido y con contorno: no es un boton mas de
@@ -229,6 +209,34 @@ function BarraSuperior({
       </button>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:flex-1 lg:justify-end">
+        {/* El avance como INSIGNIA: el anillo dibuja y el numero se lee al
+            lado, fuera, a tamaño de texto normal.
+            Antes el porcentaje iba metido dentro del anillo, y a los treinta
+            pixeles que mide aqui eso deja el numero en trece: hay que
+            acercarse para leer justo el dato que se viene a mirar de reojo.
+            Fuera cabe entero, con su signo, y el anillo se queda haciendo lo
+            unico que sabe hacer mejor que un numero, que es enseñar cuanto
+            falta sin que haya que leer nada.
+            Forma de pastilla y no cuadrado: una insignia se lee como un dato,
+            y un cuadrado con hover se lee como un boton mas de la fila. */}
+        <button
+          type="button"
+          onClick={(e) => alAlternarAvance(e.currentTarget)}
+          title={detalleAvance}
+          aria-label={detalleAvance}
+          aria-expanded={avanceAbierto}
+          className={`${BASE} gap-1.5 rounded-full pr-2 pl-1 sm:pr-2.5 ${
+            avanceAbierto ? ACTIVO : FANTASMA
+          }`}
+        >
+          <AnilloAvance valor={avance} tamano={26} grosor={4} activo={avanceAbierto} conNumero={false} />
+          {/* El numero se queda TAMBIEN en el telefono. Escondiendolo, el
+              anillo se quedaba mudo: un arco sin cifra no dice 16, dice
+              "algo empezado". Y en un telefono es donde menos se puede
+              deducir mirando el mapa. */}
+          <span className="text-[12.5px] font-extrabold tabular-nums">{Math.round(avance)}%</span>
+        </button>
+
         {/* Mapa, lista y horario son la misma carrera mirada de tres maneras,
             asi que son un mando de tres posiciones y no tres botones. */}
         <SelectorVista vista={vista} alCambiar={alCambiarVista} />

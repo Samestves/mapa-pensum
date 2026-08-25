@@ -12,15 +12,16 @@ const RADIO = 15
 const CIRCUNFERENCIA = 2 * Math.PI * RADIO
 
 /**
- * Anillo de avance con el porcentaje dentro.
+ * Anillo de avance. Un anillo cerrandose se lee de reojo, sin tener que
+ * comparar longitudes contra un extremo que esta lejos.
  *
- * Sustituye a la barra horizontal de la cabecera. La barra necesitaba ochenta
- * pixeles de ancho para decir lo mismo que aqui dice el propio hueco del
- * anillo, y encima repetia el numero que tenia al lado. Un anillo cerrandose
- * se lee de reojo, sin tener que comparar longitudes contra un extremo que
- * esta lejos.
+ * `conNumero` decide si el porcentaje va DENTRO del anillo o no va. Dentro
+ * solo cabe cuando el anillo es grande; a los treinta pixeles de la cabecera
+ * el numero se queda en trece y hay que acercarse a leerlo, asi que alli el
+ * anillo se dibuja limpio y el numero se pone al lado, fuera, a tamaño de
+ * texto normal. Es el mismo dato y se lee al doble de distancia.
  */
-function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo }) {
+function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo, conNumero = true }) {
   // El numero sube contando en vez de saltar. El hook ya respeta
   // prefers-reduced-motion y tiene red por si la pestaña esta de fondo.
   const animado = useNumeroAnimado(valor)
@@ -58,17 +59,19 @@ function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo }) {
           El punto marca de donde va a salir, que es lo que convierte una
           pista vacia en algo que se puede llenar. */}
       {pct < 1 && <circle cx="18" cy={18 - RADIO} r={grosor / 2} fill="var(--estado-aprobada)" />}
-      <text
-        x="18"
-        y="18"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="13"
-        fill={activo ? 'var(--tinta)' : 'var(--tinta-suave)'}
-        className="font-extrabold tabular-nums"
-      >
-        {Math.round(pct)}
-      </text>
+      {conNumero && (
+        <text
+          x="18"
+          y="18"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="13"
+          fill={activo ? 'var(--tinta)' : 'var(--tinta-suave)'}
+          className="font-extrabold tabular-nums"
+        >
+          {Math.round(pct)}
+        </text>
+      )}
     </svg>
   )
 }
