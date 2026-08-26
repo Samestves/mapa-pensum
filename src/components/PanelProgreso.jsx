@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, RotateCcw, TriangleAlert } from 'lucide-react'
+import { ChevronDown, GraduationCap, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
@@ -212,6 +212,7 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
  * de las dos es la pregunta que trae a nadie aqui.
  */
 function PanelProgreso({
+  alPlanificar,
   progreso,
   avanceGrupos,
   reiniciar,
@@ -308,6 +309,27 @@ function PanelProgreso({
             bloqueadas={progreso.bloqueadas}
             total={total}
           />
+
+          {/* Planificar vive AQUI, y no suelto en la cabecera.
+              Este panel contesta "como voy" y Planificar contesta "cuando
+              termino": es la pregunta siguiente de la misma conversacion, y
+              se hace justo despues de mirar el porcentaje. Arriba, en cambio,
+              estaba al lado del mando de vistas -que son SITIOS- pareciendo
+              su cuarta pestaña, y siendo la unica accion de la fila obligaba
+              a la barra a tener un peso visual solo para ella.
+              En el telefono no sale de aqui porque alli ya esta en la barra
+              de abajo, que es donde llega el pulgar. */}
+          <button
+            type="button"
+            onClick={alPlanificar}
+            className="group hidden w-full items-center justify-center gap-2 rounded-xl bg-aprobada px-3 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98] md:flex"
+          >
+            <GraduationCap
+              size={15}
+              className="shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
+            />
+            Planificar mi ruta hasta el grado
+          </button>
 
           {(grupos.length > 0 || progreso.porArea.length > 0) && (
             <details className="group/mas border-t border-panel-borde pt-3">

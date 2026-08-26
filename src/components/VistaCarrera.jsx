@@ -254,7 +254,6 @@ function VistaCarrera({ carrera, alVolver }) {
             }}
             avisosAbiertos={abierto === 'avisos'}
             alAlternarAvisos={() => alternar('avisos')}
-            alPlanificar={() => setPlanAbierto(true)}
             alBuscar={() => setPaletaAbierta(true)}
             alVolver={alVolver}
           />
@@ -413,6 +412,10 @@ function VistaCarrera({ carrera, alVolver }) {
           alCerrar={cerrar}
           areaFiltrada={areaFiltrada}
           alFiltrarArea={filtrarArea}
+          alPlanificar={() => {
+            cerrar()
+            setPlanAbierto(true)
+          }}
         />
       </div>
 

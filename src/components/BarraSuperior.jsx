@@ -1,4 +1,4 @@
-import { ArrowLeft, GraduationCap, Moon, Search, Sun } from 'lucide-react'
+import { ArrowLeft, Moon, Search, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
@@ -20,7 +20,6 @@ const BASE =
    saber de que clase es cada pieza sin leer su etiqueta:
 
      HUNDIDO   aqui se interactua con algo   el campo de busqueda, el mando
-     ELEVADO   esto ejecuta una accion       Planificar
      FANTASMA  esto es auxiliar              volver, avance, tema
 
    Antes todo era fantasma. Con siete piezas iguales en fila, el mando de
@@ -28,7 +27,6 @@ const BASE =
    su cuarta pestaña, la que se salio del riel. */
 const FANTASMA = 'text-tinta-suave hover:bg-panel-suave hover:text-tinta'
 const HUNDIDO = 'border border-panel-borde bg-lienzo text-tinta-tenue hover:text-tinta'
-const ELEVADO = 'bg-panel-suave text-tinta hover:bg-panel-borde'
 
 const ACTIVO = 'bg-panel-suave text-tinta'
 
@@ -102,10 +100,11 @@ function Division() {
  * el campo y la capsula, un circulo suelto era la pieza que peor caia; con
  * forma de pastilla se lee como un dato y no como un boton mas de la fila.
  *
- * Planificar sale a la derecha del todo y pasa a ser la unica pieza elevada.
- * Es una ACCION -abre un panel encima y te deja donde estabas- y las tres
- * vistas son SITIOS; con el mismo aspecto que ellas parecia su cuarta
- * pestaña.
+ * Planificar ya no vive aqui. Se fue al panel de avance, que es donde encaja:
+ * este panel contesta "como voy" y Planificar contesta "cuando termino", y es
+ * la pregunta siguiente de la misma conversacion. Arriba era la unica ACCION
+ * en una fila de SITIOS, y obligaba a la barra a tener un peso visual solo
+ * para ella.
  *
  * El buscador queda centrado de verdad: las dos zonas de los lados llevan
  * flex-1, asi que el campo cae en el eje de la ventana pase lo que pase con
@@ -122,7 +121,6 @@ function BarraSuperior({
   alAlternarAvance,
   avisosAbiertos,
   alAlternarAvisos,
-  alPlanificar,
   alBuscar,
   alVolver,
 }) {
@@ -197,7 +195,16 @@ function BarraSuperior({
         title="Buscar materias y acciones"
         aria-label="Buscar materias y acciones"
         aria-keyshortcuts="Meta+K Control+K"
-        className={`${BASE} gap-2 rounded-lg px-2 sm:px-3 lg:w-[240px] lg:justify-start ${HUNDIDO}`}
+        /* flex md:hidden lg:flex, y no es un capricho de puntos de corte.
+           Desde lg cabe el campo entero -lupa, palabra y teclas- y se lee como
+           un campo. Por debajo de md no cabe nada mas que la lupa, y ahi tiene
+           que estar igual porque es la unica puerta a la paleta: un telefono
+           no tiene Ctrl+K.
+           En medio, entre md y lg, es donde quedaba mal: una lupa suelta de
+           33 px pegada a la insignia de avance, dos cosas redondeadas y sin
+           relacion una contra otra. Ahi no sale, y no se pierde nada: es el
+           tramo de tablet, donde casi siempre hay teclado o hay dedo. */
+        className={`${BASE} flex gap-2 rounded-lg px-2 md:hidden sm:px-3 lg:flex lg:w-[240px] lg:justify-start ${HUNDIDO}`}
       >
         <Search size={15} className="shrink-0" />
         <span className="hidden flex-1 text-left text-[12px] font-medium lg:inline">Buscar…</span>
@@ -209,32 +216,27 @@ function BarraSuperior({
       </button>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:flex-1 lg:justify-end">
-        {/* El avance como INSIGNIA: el anillo dibuja y el numero se lee al
-            lado, fuera, a tamaño de texto normal.
-            Antes el porcentaje iba metido dentro del anillo, y a los treinta
-            pixeles que mide aqui eso deja el numero en trece: hay que
-            acercarse para leer justo el dato que se viene a mirar de reojo.
-            Fuera cabe entero, con su signo, y el anillo se queda haciendo lo
-            unico que sabe hacer mejor que un numero, que es enseñar cuanto
-            falta sin que haya que leer nada.
-            Forma de pastilla y no cuadrado: una insignia se lee como un dato,
-            y un cuadrado con hover se lee como un boton mas de la fila. */}
+        {/* El avance, en un anillo con el numero dentro.
+            Estuvo un rato con el numero FUERA, en una pastilla, porque a los
+            treinta pixeles de entonces no cabia legible. La respuesta no era
+            sacarlo: era darle sitio. El anillo sube a 34 px y su trazo baja a
+            2,5, y con eso el hueco de dentro pasa de 23 px a 27, que es donde
+            un numero de dos cifras se lee sin apretarse. Mas fino y mas
+            grande, no mas gordo: es lo que hace que se vea un anillo y no una
+            rosquilla.
+            El signo de porcentaje no entra a proposito. Un anillo que se
+            cierra ya dice que eso es una proporcion; el signo solo gastaria
+            el sitio que necesita la cifra. La frase entera vive en el title y
+            en la etiqueta accesible. */}
         <button
           type="button"
           onClick={(e) => alAlternarAvance(e.currentTarget)}
           title={detalleAvance}
           aria-label={detalleAvance}
           aria-expanded={avanceAbierto}
-          className={`${BASE} gap-1.5 rounded-full pr-2 pl-1 sm:pr-2.5 ${
-            avanceAbierto ? ACTIVO : FANTASMA
-          }`}
+          className={`${BASE} w-9 rounded-full p-0 ${avanceAbierto ? ACTIVO : FANTASMA}`}
         >
-          <AnilloAvance valor={avance} tamano={26} grosor={4} activo={avanceAbierto} conNumero={false} />
-          {/* El numero se queda TAMBIEN en el telefono. Escondiendolo, el
-              anillo se quedaba mudo: un arco sin cifra no dice 16, dice
-              "algo empezado". Y en un telefono es donde menos se puede
-              deducir mirando el mapa. */}
-          <span className="text-[12.5px] font-extrabold tabular-nums">{Math.round(avance)}%</span>
+          <AnilloAvance valor={avance} tamano={34} grosor={2.5} activo={avanceAbierto} />
         </button>
 
         {/* Mapa, lista y horario son la misma carrera mirada de tres maneras,
@@ -248,27 +250,6 @@ function BarraSuperior({
           abierto={avisosAbiertos}
           alPulsar={alAlternarAvisos}
         />
-
-        {/* El birrete y no la carretera de antes: lo que hace esto no es
-            dibujarte un camino, es decirte cuanto te falta para graduarte.
-            Se levanta un pelo al pasar por encima, como el gorro que se lanza.
-            En el telefono se va abajo, con las tres vistas: arriba se quedaba
-            solo y en la peor esquina del aparato para un pulgar. */}
-        <span className="hidden md:contents">
-          <button
-            type="button"
-            onClick={alPlanificar}
-            title="Planificar mi ruta hasta el grado y exportarla"
-            aria-label="Planificar mi ruta hasta el grado y exportarla"
-            className={`${BASE} group rounded-lg px-2.5 ${ELEVADO}`}
-          >
-            <GraduationCap
-              size={16}
-              className="shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
-            />
-            <span className="hidden text-[12px] font-bold lg:inline">Planificar</span>
-          </button>
-        </span>
 
         <Division />
 

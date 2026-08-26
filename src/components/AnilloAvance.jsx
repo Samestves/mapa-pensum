@@ -65,9 +65,9 @@ function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo, conNumero = tr
           y="18"
           textAnchor="middle"
           dominantBaseline="central"
-          fontSize="13"
+          fontSize="14"
           fill={activo ? 'var(--tinta)' : 'var(--tinta-suave)'}
-          className="font-extrabold tabular-nums"
+          className="font-bold tabular-nums tracking-tight"
         >
           {Math.round(pct)}
         </text>
