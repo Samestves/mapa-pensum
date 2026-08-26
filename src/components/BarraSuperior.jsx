@@ -215,15 +215,14 @@ function BarraSuperior({
         aria-label="Buscar materias y acciones"
         aria-keyshortcuts="Meta+K Control+K"
         /* Solo desde lg, que es donde cabe el campo ENTERO -lupa, palabra y
-           teclas- y se lee como un campo. Por debajo no sale.
-           Estuvo un tiempo saliendo como lupa suelta cuando no cabia el resto,
-           y quedaba mal en todas partes: 33 px redondeados pegados al anillo
-           de avance, dos cosas sin relacion una contra otra. Una pieza que
-           solo funciona a un tamaño se enseña a ese tamaño y en los demas se
-           busca otro sitio.
-           En telefono ese otro sitio es la barra de abajo, donde Buscar es una
-           accion mas entre acciones. Tenia que estar en alguno: alli no hay
-           Ctrl+K, asi que ese boton es la unica puerta a la paleta. */
+           teclas- y se lee como un campo.
+           Por debajo no sale en ningun sitio, y eso deja el telefono y la
+           tablet sin buscador: es una decision tomada a proposito. La lupa
+           suelta quedaba mal donde se pusiera -33 px redondeados pegados al
+           anillo de avance en la cabecera, una quinta celda en la barra de
+           abajo- y para un pensum de sesenta materias que se recorre con el
+           dedo, buscar es algo que se hace sentado delante de un teclado.
+           La paleta sigue entera en escritorio, con este campo y con Ctrl+K. */
         className={`${BASE} hidden gap-2 rounded-lg px-3 lg:flex lg:w-[240px] lg:justify-start ${HUNDIDO}`}
       >
         <Search size={15} className="shrink-0" />

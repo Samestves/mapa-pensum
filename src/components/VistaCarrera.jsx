@@ -426,7 +426,6 @@ function VistaCarrera({ carrera, alVolver }) {
       <BarraInferior
         vista={vista}
         alCambiar={setVista}
-        alBuscar={() => setPaletaAbierta(true)}
         alPlanificar={() => setPlanAbierto(true)}
       />
     </div>

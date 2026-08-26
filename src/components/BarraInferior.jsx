@@ -1,4 +1,4 @@
-import { GraduationCap, Search } from 'lucide-react'
+import { GraduationCap } from 'lucide-react'
 import { VISTAS, indiceDeVista } from '../data/vistas'
 
 /**
@@ -24,7 +24,7 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * ancho-, no el icono. Da unos 125x56 px por destino, muy por encima de los
  * 44 que se consideran el minimo comodo.
  */
-function BarraInferior({ vista, alCambiar, alBuscar, alPlanificar }) {
+function BarraInferior({ vista, alCambiar, alPlanificar }) {
   const indice = indiceDeVista(vista)
 
   return (
@@ -37,7 +37,7 @@ function BarraInferior({ vista, alCambiar, alBuscar, alPlanificar }) {
        indicador de inicio. */
     <nav
       aria-label="Vistas de la carrera"
-      className="transicion-tema relative z-30 grid shrink-0 grid-cols-5 border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="transicion-tema relative z-30 grid shrink-0 grid-cols-4 border-t border-panel-borde bg-panel pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {/* La linea de arriba de la barra se ENCIENDE bajo la pestaña activa, y
           se desliza de una a otra con la curva de la casa.
@@ -58,7 +58,7 @@ function BarraInferior({ vista, alCambiar, alBuscar, alPlanificar }) {
       <span
         aria-hidden="true"
         style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista pointer-events-none absolute -top-px left-0 flex w-1/5 justify-center"
+        className="pulgar-vista pointer-events-none absolute -top-px left-0 flex w-1/4 justify-center"
       >
         <span className="h-[2.5px] w-9 rounded-full bg-aprobada" />
       </span>
@@ -102,29 +102,6 @@ function BarraInferior({ vista, alCambiar, alBuscar, alPlanificar }) {
           </button>
         )
       })}
-
-      {/* Buscar baja aqui desde la cabecera. Arriba era una lupa suelta de 33
-          px pegada al anillo de avance, dos cosas redondeadas sin relacion
-          una contra otra; abajo es una accion mas entre acciones.
-          Y tenia que quedarse en alguna parte: en un telefono no hay Ctrl+K,
-          asi que este boton es la UNICA puerta a la paleta. Borrarlo sin mas
-          no habria limpiado la cabecera, habria borrado la busqueda del
-          telefono, que ademas es donde mas cuesta encontrar una materia
-          recorriendo el mapa con el dedo. */}
-      <button
-        type="button"
-        onClick={alBuscar}
-        title="Buscar materias y acciones"
-        aria-label="Buscar materias y acciones"
-        className="relative flex flex-col items-center gap-1.5 pt-3 pb-2.5"
-      >
-        <span className="grid h-6 place-items-center text-tinta-tenue transition-transform duration-200 active:scale-90">
-          <Search size={21} strokeWidth={1.7} />
-        </span>
-        <span className="text-[10.5px] leading-none font-semibold tracking-[0.01em] text-tinta-tenue">
-          Buscar
-        </span>
-      </button>
 
       {/* Planificar cierra la fila, y es de otra clase que las tres de al
           lado: aquellas son SITIOS -cambian lo que llena la pantalla- y esta
