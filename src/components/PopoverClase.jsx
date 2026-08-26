@@ -1,9 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
-import PicoPopover from './PicoPopover'
+import Popover from './Popover'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import {
@@ -17,8 +17,6 @@ import {
   enDoceHoras,
 } from '../layout/horario'
 
-const MARGEN = 10
-const HUECO = 12
 const ANCHO = 312
 
 /* Las duraciones de verdad de un pensum: una hora, hora y media, dos y tres.
@@ -53,8 +51,6 @@ const normalizar = (t) =>
  */
 function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones, alGuardar, alQuitar, alCerrar }) {
   const esTelefono = useEsTelefono()
-  const refPanel = useRef(null)
-  const [pos, setPos] = useState(null)
 
   const [codigo, setCodigo] = useState(inicial.codigo ?? '')
   const [dia, setDia] = useState(inicial.dia ?? 0)
@@ -68,32 +64,18 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
 
   useCerrarConEscape(alCerrar)
 
-  /* Se coloca AL LADO del cuadrado, no debajo del punto que se pulso.
+  /* Se coloca AL LADO del cuadrado y no debajo del punto que se pulso.
      Colgando del click, la ficha tapaba la propia franja sobre la que se
      estaba decidiendo; al lado, el cuadrado y sus vecinos siguen a la vista
-     mientras se eligen las horas. A la derecha por defecto, y a la izquierda
-     cuando el dia es viernes y no queda sitio.
-
-     Se mide despues de pintar y antes de que el navegador lo enseñe: si se
-     calculara durante el render no habria alto que medir y el panel daria un
-     salto visible al recolocarse. */
-  useLayoutEffect(() => {
-    if (esTelefono || !refPanel.current) return
-    const alto = refPanel.current.offsetHeight
-    const centro = (ancla.arriba + ancla.abajo) / 2
-
-    const aLaDerecha = ancla.derecha + HUECO
-    const cabeDerecha = aLaDerecha + ANCHO <= window.innerWidth - MARGEN
-    const x = cabeDerecha ? aLaDerecha : Math.max(MARGEN, ancla.izquierda - HUECO - ANCHO)
-
-    // Centrado en el cuadrado, sin salirse por arriba ni por abajo
-    const y = Math.max(
-      MARGEN,
-      Math.min(centro - alto / 2, window.innerHeight - alto - MARGEN),
-    )
-
-    setPos({ x, y, aLaIzquierda: !cabeDerecha, flechaY: Math.max(20, Math.min(centro - y, alto - 20)) })
-  }, [ancla.izquierda, ancla.derecha, ancla.arriba, ancla.abajo, esTelefono, codigo])
+     mientras se eligen las horas. De medirse y de voltearse cuando el dia es
+     viernes y no queda sitio se encarga Popover, que es la misma nubecita que
+     usan el avance, el menu de una clase y la ficha del mapa. */
+  const anclaCaja = {
+    left: ancla.izquierda,
+    right: ancla.derecha,
+    top: ancla.arriba,
+    bottom: ancla.abajo,
+  }
 
   const elegida = codigo ? porCodigo.get(codigo) : null
 
@@ -392,35 +374,18 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
       </div>
     </div>
   ) : (
-    <div className="fixed inset-0 z-50">
-      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer la semana, que
-          es justo lo que se esta mirando para decidir. */}
-      <button
-        type="button"
-        aria-label="Cerrar"
-        onClick={alCerrar}
-        className="absolute inset-0 cursor-default"
-      />
-      <div
-        ref={refPanel}
-        role="dialog"
-        aria-label="Clase"
-        style={{
-          width: ANCHO,
-          transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
-          visibility: pos ? 'visible' : 'hidden',
-        }}
-        className="popover-clase absolute top-0 left-0 rounded-xl border border-panel-borde bg-panel shadow-2xl"
-      >
-        {pos && (
-          <PicoPopover lado={pos.aLaIzquierda ? 'derecha' : 'izquierda'} posicion={pos.flechaY} />
-        )}
-        <div className="relative">{formulario}</div>
-      </div>
-    </div>
+    <Popover
+      ancla={anclaCaja}
+      ancho={ANCHO}
+      preferencia="lado"
+      etiqueta="Clase"
+      alCerrar={alCerrar}
+    >
+      {formulario}
+    </Popover>
   )
 
-  return createPortal(cuerpo, document.body)
+  return esTelefono ? createPortal(cuerpo, document.body) : cuerpo
 }
 
 export default PopoverClase

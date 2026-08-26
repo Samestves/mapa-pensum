@@ -7,60 +7,11 @@ import { fondoMateria } from '../theme/fondos'
 import { codigoVisible } from '../data/codigoVisible'
 import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
 import PicoPopover from './PicoPopover'
+import { CARA } from './Popover'
+import { colocar } from '../layout/popover'
 
 const ANCHO = 300
 const MARGEN = 12
-const HUECO = 14
-/* El piquito asoma 8,5 px a cada lado de su centro y la ficha curva 12: por
-   debajo de esto una de sus puntas cae dentro de la curva. */
-const RADIO = 21
-
-const acotar = (v, min, max) => Math.max(min, Math.min(v, max))
-
-/**
- * Donde se pone la ficha respecto al nodo que se pulso, y por donde le sale
- * el piquito.
- *
- * Se coloca AL LADO y centrada en el nodo, no colgando de el con un desfase
- * fijo. El desfase fijo -"noventa pixeles mas arriba"- venia de una epoca en
- * la que la ficha media siempre lo mismo; hoy crece con las prelaciones que
- * tenga la materia, y una de nueve requisitos se salia por abajo mientras que
- * una suelta quedaba flotando alta y descolgada. Centrandola en el nodo la
- * ficha crece hacia los dos lados por igual y el piquito apunta siempre a la
- * mitad del nodo.
- *
- * Es geometria pura y por eso esta fuera del componente: se lee sola y se
- * puede seguir con un lapiz sin montar React.
- */
-function colocarJuntoAlNodo(posicion, medida, alto) {
-  const ancho = Math.min(ANCHO, medida.ancho - MARGEN * 2)
-  const centroY = posicion.y + posicion.alto / 2
-
-  // A la derecha del nodo, y a la izquierda solo si ahi no cabe
-  const derecha = posicion.x + HUECO
-  const cabeDerecha = derecha + ancho <= medida.ancho - MARGEN
-  const x = cabeDerecha
-    ? derecha
-    : Math.max(MARGEN, posicion.x - posicion.ancho - HUECO - ancho)
-
-  /* Sujeta dentro del contenedor por arriba y por abajo. El maximo se calcula
-     con el alto MEDIDO, no con un numero a ojo: con 360 escrito a mano una
-     ficha mas alta que eso se salia igual, y en una ventana apaisada baja
-     -un telefono girado entra por aqui, no por la hoja- se salian casi todas. */
-  const y = acotar(centroY - alto / 2, MARGEN, Math.max(MARGEN, medida.alto - alto - MARGEN))
-
-  return {
-    x,
-    y,
-    ancho,
-    // El piquito mira hacia el nodo: si la ficha esta a su derecha, sale por
-    // el costado izquierdo de la ficha.
-    flecha: {
-      lado: cabeDerecha ? 'izquierda' : 'derecha',
-      posicion: acotar(centroY - y, RADIO, Math.max(RADIO, alto - RADIO)),
-    },
-  }
-}
 
 function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
@@ -270,7 +221,23 @@ function DetalleAsignatura({
     )
   }
 
-  const pos = colocarJuntoAlNodo(posicion, medida, alto)
+  /* La misma cuenta que usan el avance, el menu de una clase y la ficha del
+     horario, con los limites del lienzo en vez de los de la ventana: esta
+     nubecita vive DENTRO del mapa porque tiene que moverse con el.
+     Se pone AL LADO del nodo y no debajo: colgando de el taparia justo la
+     materia sobre la que se acaba de preguntar. */
+  const ancho = Math.min(ANCHO, medida.ancho - MARGEN * 2)
+  const pos = colocar(
+    {
+      left: posicion.x - posicion.ancho,
+      right: posicion.x,
+      top: posicion.y,
+      bottom: posicion.y + posicion.alto,
+    },
+    { ancho, alto },
+    'lado',
+    { ancho: medida.ancho, alto: medida.alto },
+  )
 
   return (
     /* Se mueve con transform y no con left/top. La ficha se recoloca en cada
@@ -282,12 +249,11 @@ function DetalleAsignatura({
        esquinas. Dentro de ella el piquito habria desaparecido por ese mismo
        recorte. */
     <div
-      className="popover-clase absolute top-0 left-0 z-30"
+      className="menu-clase absolute top-0 left-0 z-30"
       style={{
-        width: pos.ancho,
+        width: ancho,
         transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
-        // Crece desde el piquito, que es por donde sale
-        transformOrigin: `${pos.flecha.lado === 'izquierda' ? 0 : '100%'} ${pos.flecha.posicion}px`,
+        transformOrigin: pos.origen,
       }}
     >
       <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />
@@ -296,7 +262,7 @@ function DetalleAsignatura({
         role="dialog"
         aria-label={nodo.nombre}
         style={{ maxHeight: Math.max(200, medida.alto - MARGEN * 2) }}
-        className="transicion-tema relative flex flex-col overflow-hidden rounded-xl border border-panel-borde bg-panel shadow-2xl"
+        className={`${CARA} flex flex-col overflow-hidden`}
       >
         {contenido}
       </div>

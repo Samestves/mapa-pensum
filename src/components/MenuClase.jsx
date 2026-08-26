@@ -1,7 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
-import { colocarBajoAncla } from '../layout/popover'
+import Popover from './Popover'
 
 const ANCHO = 178
 
@@ -18,38 +15,16 @@ const ANCHO = 178
  * de pulsar obliga a un segundo gesto para nada.
  */
 function MenuClase({ ancla, opciones, alCerrar }) {
-  const refPanel = useRef(null)
-  const [pos, setPos] = useState(null)
-
-  useCerrarConEscape(alCerrar)
-
-  /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
-     el render no hay alto que medir, y colocarlo luego daria un salto. */
-  useLayoutEffect(() => {
-    setPos(colocarBajoAncla(ancla, ANCHO, refPanel.current?.offsetHeight ?? 0))
-  }, [ancla])
-
-  return createPortal(
-    <div className="fixed inset-0 z-50">
-      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer la semana, que
-          es justo lo que se esta mirando. */}
-      <button
-        type="button"
-        aria-label="Cerrar"
-        onClick={alCerrar}
-        className="absolute inset-0 cursor-default"
-      />
-      <div
-        ref={refPanel}
-        role="menu"
-        style={{
-          width: ANCHO,
-          transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
-          transformOrigin: pos?.origen,
-          visibility: pos ? 'visible' : 'hidden',
-        }}
-        className="menu-clase absolute top-0 left-0 flex flex-col rounded-xl border border-panel-borde bg-panel p-1.5 shadow-2xl"
-      >
+  return (
+    <Popover
+      ancla={ancla}
+      ancho={ANCHO}
+      etiqueta="Acciones de la clase"
+      rol="menu"
+      alCerrar={alCerrar}
+      claseContenido="flex flex-col p-1.5"
+    >
+      <>
         {opciones.map(({ id, etiqueta, icono: Icono, peligro, alPulsar }) => (
           <button
             key={id}
@@ -67,9 +42,8 @@ function MenuClase({ ancla, opciones, alCerrar }) {
             {etiqueta}
           </button>
         ))}
-      </div>
-    </div>,
-    document.body,
+      </>
+    </Popover>
   )
 }
 

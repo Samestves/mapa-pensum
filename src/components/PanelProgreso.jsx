@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, GraduationCap, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import { anchoQueCabe, colocarBajoAncla } from '../layout/popover'
 import { colorArea, etiquetaArea } from '../theme/areas'
-import PicoPopover from './PicoPopover'
+import Popover from './Popover'
 
 const ANCHO = 304
 
@@ -229,57 +227,17 @@ function PanelProgreso({
   const porcentaje = useNumeroAnimado(progreso.porcentaje ?? 0)
   const grupos = Object.values(avanceGrupos)
 
-  const refPanel = useRef(null)
-  const [pos, setPos] = useState(null)
-  const [ancho, setAncho] = useState(ANCHO)
-
-  useCerrarConEscape(alCerrar)
-
-  /* Se mide despues de pintar y antes de que el navegador lo enseñe: durante
-     el render no hay alto que medir, y colocarlo luego daria un salto. */
-  useLayoutEffect(() => {
-    if (!abierto || !ancla) return
-    const cabe = anchoQueCabe(ANCHO)
-    setAncho(cabe)
-    setPos(colocarBajoAncla(ancla, cabe, refPanel.current?.offsetHeight ?? 0))
-  }, [abierto, ancla])
-
   if (!abierto || !ancla) return null
 
-  return createPortal(
-    <div className="fixed inset-0 z-50">
-      {/* Fondo invisible: cierra al pulsar fuera sin oscurecer el mapa, que
-          es justo lo que se esta mirando. El cajon traia un velo negro en
-          movil porque tapaba media pantalla; una nubecita no tapa nada. */}
-      <button
-        type="button"
-        aria-label="Cerrar"
-        onClick={alCerrar}
-        className="absolute inset-0 cursor-default"
-      />
-
-      {/* El pico va FUERA del panel y dentro de este envoltorio. El panel
-          lleva overflow-y-auto porque su contenido puede no caber, y un
-          elemento colocado por fuera de una caja que recorta se recorta con
-          ella: el pico habria desaparecido. Aqui los dos comparten la misma
-          traslacion y el mismo origen de animacion, asi que entran juntos. */}
-      <div
-        className="menu-clase absolute top-0 left-0"
-        style={{
-          width: ancho,
-          transform: `translate3d(${pos?.x ?? 0}px, ${pos?.y ?? 0}px, 0)`,
-          transformOrigin: pos?.origen,
-          visibility: pos ? 'visible' : 'hidden',
-        }}
-      >
-        {pos && <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.x} />}
-
-        <div
-          ref={refPanel}
-          role="dialog"
-          aria-label="Tu avance"
-          className="transicion-tema relative flex max-h-[min(78vh,34rem)] w-full flex-col gap-3.5 overflow-y-auto rounded-2xl border border-panel-borde bg-panel p-4 shadow-2xl"
-        >
+  return (
+    <Popover
+      ancla={ancla}
+      ancho={ANCHO}
+      etiqueta="Tu avance"
+      alCerrar={alCerrar}
+      claseContenido="flex max-h-[min(78vh,34rem)] flex-col gap-3.5 overflow-y-auto p-4"
+    >
+        <>
           {/* El porcentaje grande y los creditos debajo. Entero, no un decimal:
               "0.0%" se lee como un error de calculo, y nadie planifica su
               carrera por decimas. */}
@@ -372,10 +330,8 @@ function PanelProgreso({
           <div className="border-t border-panel-borde pt-2.5">
             <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </>
+    </Popover>
   )
 }
 
