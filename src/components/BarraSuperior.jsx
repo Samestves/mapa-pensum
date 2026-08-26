@@ -214,16 +214,17 @@ function BarraSuperior({
         title="Buscar materias y acciones"
         aria-label="Buscar materias y acciones"
         aria-keyshortcuts="Meta+K Control+K"
-        /* flex md:hidden lg:flex, y no es un capricho de puntos de corte.
-           Desde lg cabe el campo entero -lupa, palabra y teclas- y se lee como
-           un campo. Por debajo de md no cabe nada mas que la lupa, y ahi tiene
-           que estar igual porque es la unica puerta a la paleta: un telefono
-           no tiene Ctrl+K.
-           En medio, entre md y lg, es donde quedaba mal: una lupa suelta de
-           33 px pegada a la insignia de avance, dos cosas redondeadas y sin
-           relacion una contra otra. Ahi no sale, y no se pierde nada: es el
-           tramo de tablet, donde casi siempre hay teclado o hay dedo. */
-        className={`${BASE} flex gap-2 rounded-lg px-2 md:hidden sm:px-3 lg:flex lg:w-[240px] lg:justify-start ${HUNDIDO}`}
+        /* Solo desde lg, que es donde cabe el campo ENTERO -lupa, palabra y
+           teclas- y se lee como un campo. Por debajo no sale.
+           Estuvo un tiempo saliendo como lupa suelta cuando no cabia el resto,
+           y quedaba mal en todas partes: 33 px redondeados pegados al anillo
+           de avance, dos cosas sin relacion una contra otra. Una pieza que
+           solo funciona a un tamaño se enseña a ese tamaño y en los demas se
+           busca otro sitio.
+           En telefono ese otro sitio es la barra de abajo, donde Buscar es una
+           accion mas entre acciones. Tenia que estar en alguno: alli no hay
+           Ctrl+K, asi que ese boton es la unica puerta a la paleta. */
+        className={`${BASE} hidden gap-2 rounded-lg px-3 lg:flex lg:w-[240px] lg:justify-start ${HUNDIDO}`}
       >
         <Search size={15} className="shrink-0" />
         <span className="hidden flex-1 text-left text-[12px] font-medium lg:inline">Buscar…</span>

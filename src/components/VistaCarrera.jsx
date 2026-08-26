@@ -424,11 +424,11 @@ function VistaCarrera({ carrera, alVolver }) {
           Asi se lleva su alto del reparto en vez de taparle los ultimos
           pixeles al mapa o a la ultima hora del horario. */}
       <BarraInferior
-            vista={vista}
-            alCambiar={setVista}
-            alPlanificar={() => setPlanAbierto(true)}
-            alBuscar={() => setPaletaAbierta(true)}
-          />
+        vista={vista}
+        alCambiar={setVista}
+        alBuscar={() => setPaletaAbierta(true)}
+        alPlanificar={() => setPlanAbierto(true)}
+      />
     </div>
   )
 }
