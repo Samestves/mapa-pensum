@@ -1,4 +1,4 @@
-import { ArrowLeft, Moon, Search, Sun } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Moon, Search, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
@@ -86,7 +86,8 @@ function Division() {
 /**
  * La cabecera de una carrera, en TRES zonas.
  *
- * Izquierda es DONDE ESTAS: de donde vienes y que carrera.
+ * Izquierda es DONDE ESTAS, en una linea: un rastro que va de "Carreras" a
+ * la carrera abierta.
  * Centro es el BUSCADOR.
  * Derecha es COMO VAS, CON QUE MIRAS y QUE HACES.
  *
@@ -170,17 +171,35 @@ function BarraSuperior({
           <span className="hidden text-[12px] font-bold xl:inline">Carreras</span>
         </button>
 
-        {/* Nombre corto arriba y el completo debajo. El nucleo solo desde xl:
-            en 375 px no cabe y truncado no aporta. */}
-        <div className="min-w-0 flex-1 pl-1">
-          <h1 className="truncate text-base leading-tight font-extrabold tracking-tight text-tinta">
-            {carrera.nombreCorto}
-          </h1>
-          <p className="mt-0.5 truncate text-[11px] leading-tight font-medium text-tinta-tenue">
-            {carrera.nombre}
-            <span className="hidden xl:inline"> · {carrera.nucleo}</span>
-          </p>
-        </div>
+        {/* Una sola linea, y con el nombre entero donde cabe.
+
+            Antes eran dos: "Sistemas" arriba y "Ingenieria de Sistemas ·
+            Nucleo de Monagas — Maturin" debajo. Las dos mitades de esa
+            segunda linea sobraban por motivos distintos. La primera repetia
+            el titulo, solo que mas largo -el nombre corto ES el nombre largo
+            recortado, no otro dato-. Y la segunda es la misma en las nueve
+            carreras: si nunca cambia, no informa de nada, solo alarga. Donde
+            el nucleo si dice algo es en la portada y en la hoja impresa, que
+            es donde alguien puede no saber de que universidad le hablan.
+
+            La flecha con "Carreras" y el nombre de la carrera pasan a leerse
+            como un rastro -de donde vengo, donde estoy- en vez de como un
+            boton con un titulo al lado. El chevron es lo que convierte dos
+            cosas sueltas en un camino, y solo aparece desde lg, que es donde
+            hay sitio para el nombre completo.
+
+            Debajo de lg va el nombre corto: "Licenciatura en Tecnologia de
+            los Alimentos" a 15 px son 330, y en un telefono de 375 eso no es
+            un titulo, es una linea cortada. */}
+        <ChevronRight
+          size={15}
+          aria-hidden="true"
+          className="hidden shrink-0 text-tinta-tenue lg:block"
+        />
+        <h1 className="min-w-0 flex-1 truncate text-[15px] font-extrabold tracking-tight text-tinta">
+          <span className="lg:hidden">{carrera.nombreCorto}</span>
+          <span className="hidden lg:inline">{carrera.nombre}</span>
+        </h1>
 
       </div>
 
