@@ -317,6 +317,8 @@ El aviso de instalar sale abajo, a los dos segundos y medio, y se cierra para si
 ## Estructura
 
 ```
+api/
+└── leer-horario.js         Lee un horario de una imagen. La clave vive aquí, no en el front.
 datos/
 ├── crudo/                  Scrape de la DACE tal cual. No se edita.
 └── overlay.json            Color, créditos y avisos por carrera
@@ -330,12 +332,16 @@ scripts/
 └── serviceworker.js        Genera dist/sw.js con la lista de precarga
 src/
 ├── data/carreras.js        Índice, caché y carga por carrera
+├── data/leerHorario.js     Reduce la imagen y pregunta a /api
 ├── layout/
 │   ├── constantes.js       Toda la geometría del mapa
 │   ├── calcularLayout.js   Asignaturas → coordenadas (función pura)
 │   ├── aristas.js          Ruteo de los cables
 │   ├── relaciones.js       Adyacencia y cadenas de prelaciones
-│   └── planificador.js     Reparto de materias por semestre
+│   ├── planificador.js     Reparto de materias por semestre
+│   ├── horario.js          Medidas de la semana y reglas de convivencia
+│   ├── importarHorario.js  Lo leído → clases de este pensum, con sus avisos
+│   └── pico.js             La forma del piquito de las nubecitas
 ├── hooks/
 │   ├── usePensum.js        Estados, progreso y persistencia
 │   ├── useVistaGrafo.js    Pan, zoom y encaje
@@ -360,6 +366,7 @@ npm run dev
 | `npm run build` | Normaliza, valida, compila, genera la miniatura y prerenderiza |
 | `npm run preview` | Sirve el build ya compilado |
 | `npm run lint` | oxlint |
+| `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
 `src/data/carreras/` está generado y no se versiona: sale minificado y su diff sería una sola línea gigante.
 
@@ -386,6 +393,36 @@ gitGraph
 
 > [!NOTE]
 > La documentación de Vercel sugiere importar desde `@vercel/speed-insights/next`. Eso es para Next.js. Aquí es Vite, y la subruta correcta es **`/react`**.
+
+## Leer un horario de una foto
+
+El horario vacío ofrece dos salidas: **subir una foto** del que dio INTRADACE, o **crearlo a mano**. La primera manda la imagen a Gemini, que devuelve las clases en JSON.
+
+```mermaid
+flowchart LR
+    A["Foto o captura"] --> B["Se reduce a 1600 px<br/>y se pasa a JPEG"]
+    B --> C["/api/leer-horario<br/>(función de Vercel)"]
+    C --> D["Gemini"]
+    D --> C
+    C --> E["Filas de texto"]
+    E --> F["importarHorario.js<br/>empareja y valida"]
+    F --> G["Pantalla de revisión"]
+    G --> H["El horario"]
+```
+
+**La clave no puede vivir en el front.** Vite sustituye las variables `VITE_*` dentro del bundle en tiempo de compilación, así que una clave con ese prefijo queda publicada: cualquiera abre las herramientas del navegador, la copia y quema la cuota. Por eso existe `api/leer-horario.js`, que corre en el servidor y es el único que ve la clave.
+
+Para que funcione hay que poner **`GOOGLE_AI_API_KEY`** en Vercel (*Project → Settings → Environment Variables*), sacada de [aistudio.google.com/apikey](https://aistudio.google.com/apikey). `GOOGLE_AI_MODELO` es opcional y sirve para cambiar de modelo sin desplegar código, que hace falta más a menudo de lo que parece: Google jubila y renombra modelos. Los dos están en `.env.example`.
+
+**El reparto de responsabilidades importa.** La función no decide nada: recibe una imagen, la manda y devuelve filas de texto. Emparejar con el pensum, validar las horas y detectar choques ocurre en el navegador, en `src/layout/importarHorario.js`, que es función pura y tiene sus pruebas. Así las reglas de esta aplicación se comprueban sin red y sin cuota.
+
+**Nada entra sin revisión.** Lo que vuelve es lo que un modelo *creyó ver* en una foto que puede estar torcida o con reflejos, y una materia mal leída no se nota al importarla: se nota el día del parcial. La pantalla de revisión enseña la foto al lado de las filas, marca lo que no cuadra —materia que no está en el pensum, día que no se entendió, clases que se pisan— y deja corregir materia, día y horas antes de confirmar.
+
+> [!NOTE]
+> `npm run dev` no levanta las funciones: Vite devuelve el `index.html` para cualquier ruta. Para probar la lectura en local hace falta `vercel dev`. La aplicación lo detecta y lo dice en vez de fallar con un error que despista.
+
+> [!WARNING]
+> La comprobación de origen de la función es un badén, no una cerradura: una cabecera se falsifica en una línea de `curl`. Frena el uso casual desde otra página, pero un límite por IP de verdad necesitaría un almacén que este proyecto no tiene. Si la cuota empieza a gastarse sola, ahí está la causa.
 
 ## Accesibilidad
 

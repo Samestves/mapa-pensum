@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Claves. La de Google AI Studio vive en las variables de entorno de Vercel,
+# no en el repositorio. .env.example si se sube: no lleva valores, solo dice
+# que variables hacen falta.
+.env
+.env.*
+!.env.example
+
 # Vercel
 .vercel
 

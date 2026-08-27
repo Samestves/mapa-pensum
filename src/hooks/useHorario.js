@@ -76,6 +76,38 @@ export function useHorario(slug) {
     })
   }, [])
 
+  /**
+   * Mete varias clases de golpe.
+   *
+   * Existe por la lectura desde una imagen. Llamar a `guardar` catorce veces
+   * seguidas parece equivalente y no lo es: cada llamada resuelve el id por
+   * su cuenta con Date.now(), y catorce llamadas dentro del mismo tick dan
+   * catorce veces el mismo milisegundo. Las clases que compartieran materia
+   * saldrian con el mismo id y el filtro de `guardar` iria borrando a la
+   * anterior en cada vuelta: se importan catorce y aparecen nueve, sin un
+   * solo error por ningun lado.
+   *
+   * Aqui los ids se resuelven UNA vez y contra la lista entera. Se pasan por
+   * `valida` ademas, que es la misma puerta por la que entra lo que se lee
+   * del almacen: lo que viene de fuera no entra sin mirarse.
+   */
+  const guardarVarias = useCallback((nuevas) => {
+    setSesiones((previas) => {
+      const ocupados = new Set(previas.map((s) => s.id))
+      const limpias = []
+
+      for (const s of nuevas) {
+        if (!valida(s)) continue
+        let id = s.id ?? `${s.codigo}-${Date.now()}`
+        while (ocupados.has(id)) id = `${id}-b`
+        ocupados.add(id)
+        limpias.push({ ...s, id })
+      }
+
+      return [...previas, ...limpias]
+    })
+  }, [])
+
   const quitar = useCallback((id) => {
     setSesiones((previas) => previas.filter((s) => s.id !== id))
   }, [])
@@ -111,5 +143,5 @@ export function useHorario(slug) {
     [sesiones],
   )
 
-  return { sesiones, porDia, guardar, quitar, retocar, duplicar }
+  return { sesiones, porDia, guardar, guardarVarias, quitar, retocar, duplicar }
 }

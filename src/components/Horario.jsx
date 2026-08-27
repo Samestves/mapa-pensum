@@ -9,6 +9,8 @@ import RejillaHorario from './RejillaHorario'
 import HorarioMovil from './HorarioMovil'
 import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
+import HorarioVacio from './HorarioVacio'
+import ImportarHorario from './ImportarHorario'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
    para firmar la imagen en vez de volver a preguntarlo. */
@@ -27,7 +29,7 @@ const CLAVE_NOMBRE = 'mapa-pensum:nombre'
  * conectarlas. Ni dibuja la rejilla ni valida nada.
  */
 function Horario({ carrera, estados }) {
-  const { porDia, sesiones, guardar, quitar, duplicar } = useHorario(carrera.slug)
+  const { porDia, sesiones, guardar, guardarVarias, quitar, duplicar } = useHorario(carrera.slug)
   const esTelefono = useEsTelefono()
 
   /* Que hay abierto. Un solo valor por cosa en vez de booleanos sueltos, para
@@ -35,6 +37,17 @@ function Horario({ carrera, estados }) {
   const [enEdicion, setEnEdicion] = useState(null)
   const [menu, setMenu] = useState(null)
   const [bajando, setBajando] = useState(false)
+
+  /* La imagen que se esta leyendo, si hay alguna. */
+  const [aLeer, setALeer] = useState(null)
+
+  /* Si ya se eligio empezar a mano. No se guarda entre visitas a proposito:
+     un horario vacio SIGUE siendo un horario vacio la proxima vez que se
+     entre, y volver a ofrecer las dos salidas es mas util que devolver a una
+     rejilla en blanco a quien no llego a poner nada. Dentro de la misma
+     visita, en cambio, se recuerda: borrar la ultima clase no puede hacer que
+     la pantalla de bienvenida salte encima de lo que estabas haciendo. */
+  const [empezado, setEmpezado] = useState(false)
 
   const todas = useMemo(
     () => [...carrera.asignaturas, ...carrera.grupos.flatMap((g) => g.asignaturas)],
@@ -92,7 +105,9 @@ function Horario({ carrera, estados }) {
           La rejilla de escritorio es su propio contenedor de desplazamiento
           porque necesita medir la altura para repartirla entre las horas, y
           esa altura solo la conoce quien tiene el overflow. */}
-      {esTelefono ? (
+      {sesiones.length === 0 && !empezado ? (
+        <HorarioVacio alSubir={setALeer} alCrear={() => setEmpezado(true)} />
+      ) : esTelefono ? (
         <HorarioMovil
           porDia={porDia}
           porCodigo={porCodigo}
@@ -183,6 +198,25 @@ function Horario({ carrera, estados }) {
             setEnEdicion(null)
           }}
           alCerrar={() => setEnEdicion(null)}
+        />
+      )}
+
+      {aLeer && (
+        <ImportarHorario
+          /* La key hace que elegir otra imagen sin cerrar el modal vuelva a
+             empezar de cero. Sin ella se reaprovecharia el estado de la
+             lectura anterior y se veria la lista vieja bajo la foto nueva. */
+          key={`${aLeer.name}-${aLeer.lastModified}`}
+          archivo={aLeer}
+          materias={todas}
+          sesiones={sesiones}
+          alImportar={(nuevas) => {
+            guardarVarias(nuevas)
+            setEmpezado(true)
+            setALeer(null)
+          }}
+          alCambiarImagen={setALeer}
+          alCerrar={() => setALeer(null)}
         />
       )}
     </div>
