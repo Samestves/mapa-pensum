@@ -21,11 +21,49 @@
    las lecturas buenas se cortarian a mitad. */
 export const config = { maxDuration: 60 }
 
-/* El modelo se puede cambiar sin tocar codigo: Google renombra y jubila
-   modelos mas rapido de lo que se despliega esto, y quedarse clavado en uno
-   es garantizarse un 404 dentro de unos meses. Los alias '-latest' siguen al
-   vigente de su familia. */
-const MODELO = process.env.GOOGLE_AI_MODELO || 'gemini-flash-latest'
+/* Los modelos a probar, EN ORDEN. Una lista y no uno solo, y aqui las dos
+   razones son distintas:
+
+   Que sea configurable es porque Google renombra y jubila modelos mas rapido
+   de lo que se despliega esto; quedarse clavado en uno es garantizarse un 404
+   dentro de unos meses.
+
+   Que sean VARIOS lo enseño el primer dia de uso real: un alias '-latest'
+   apunta siempre al modelo mas nuevo, y el mas nuevo es justo el que todo el
+   mundo esta probando a la vez, o sea el que devuelve 503 "high demand". El
+   segundo de la lista es una version fijada, mas aburrida y menos llena. Se
+   pasa a ella solo cuando la primera no da senales de vida. */
+const MODELOS_POR_DEFECTO = 'gemini-flash-latest,gemini-2.5-flash'
+
+/* Un 503 es, por definicion, temporal: no es que la peticion este mal, es que
+   ahora mismo no hay sitio. Rendirse al primero convierte un tropiezo de dos
+   segundos en "no se pudo leer tu horario", y quien lo lee cierra la pantalla
+   y no vuelve. Estas son las esperas entre intentos, crecientes: insistir al
+   mismo ritmo contra un servicio lleno es parte del problema. */
+const ESPERAS_POR_DEFECTO = '800,2400'
+
+/* Las dos listas se leen en CADA llamada y no al cargar el modulo. En una
+   funcion sin servidor el entorno esta igual de disponible en los dos
+   momentos, asi que no se pierde nada, y se gana lo unico que importaba: que
+   cambiar la variable en el panel de Vercel surta efecto en la siguiente
+   peticion, sin esperar a que caduque la instancia que estaba caliente. */
+const listaDe = (variable, porDefecto) =>
+  (process.env[variable] || porDefecto)
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+
+/* Cuanto se puede tardar en total antes de devolver algo. La funcion se corta
+   a los 60 s y una respuesta cortada por la plataforma no dice nada; a los 45
+   se para por las buenas y se explica que pasa. */
+const PRESUPUESTO = 45_000
+
+/* Los que merecen otro intento: el servicio esta lleno o se atraganto. Un 400
+   o un 404 no mejoran esperando -la peticion esta mal o el modelo no existe-
+   y reintentarlos solo gasta el tiempo que le queda a la funcion. */
+const REINTENTABLES = new Set([429, 500, 502, 503, 504])
+
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms))
 
 /* Base64 infla un tercio. El cuerpo de una funcion de Vercel se corta en 4,5
    MB, asi que aqui se rechaza antes de intentarlo: mejor un mensaje claro que
@@ -142,45 +180,101 @@ export default async function handler(req, res) {
     .map((m) => ({ codigo: String(m.codigo ?? ''), nombre: String(m.nombre ?? '') }))
     .filter((m) => m.codigo && m.nombre)
 
-  let respuesta
-  try {
-    respuesta = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: instrucciones(listado) },
-                { inline_data: { mime_type: tipo, data: imagen } },
-              ],
-            },
+  const peticion = {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: instrucciones(listado) },
+            { inline_data: { mime_type: tipo, data: imagen } },
           ],
-          generationConfig: {
-            /* A cero. Esto es una lectura, no una redaccion: la misma foto
-               tiene que dar el mismo resultado las dos veces que alguien la
-               suba, y aqui la variedad solo puede empeorar. */
-            temperature: 0,
-            responseMimeType: 'application/json',
-            responseSchema: ESQUEMA,
-          },
-        }),
+        },
+      ],
+      generationConfig: {
+        /* A cero. Esto es una lectura, no una redaccion: la misma foto tiene
+           que dar el mismo resultado las dos veces que alguien la suba, y aqui
+           la variedad solo puede empeorar. */
+        temperature: 0,
+        responseMimeType: 'application/json',
+        responseSchema: ESQUEMA,
       },
-    )
-  } catch (e) {
-    return fallo(res, 502, 'red', String(e?.message ?? e))
+    }),
   }
 
-  if (!respuesta.ok) {
-    /* El mensaje de Google se pasa tal cual. Es lo unico que distingue "ese
-       modelo ya no existe" de "se acabo la cuota de hoy", y sin el, arreglar
-       esto seria adivinar. No lleva la clave: va en una cabecera, no en el
-       cuerpo ni en la URL. */
-    const texto = await respuesta.text().catch(() => '')
-    return fallo(res, 502, 'ia', texto.slice(0, 600))
+  const MODELOS = listaDe('GOOGLE_AI_MODELO', MODELOS_POR_DEFECTO)
+  const ESPERAS = listaDe('GOOGLE_AI_ESPERAS', ESPERAS_POR_DEFECTO).map(Number)
+
+  const arranque = Date.now()
+  const queda = () => PRESUPUESTO - (Date.now() - arranque)
+
+  let respuesta = null
+  let modeloUsado = null
+  let ultimoFallo = null
+  let intentos = 0
+
+  /* Cada modelo con sus reintentos, y se pasa al siguiente solo cuando el
+     anterior se ha agotado. Al reves -alternar modelos en cada intento- se
+     descartaria el bueno por un tropiezo de dos segundos. */
+  buscando: for (const modelo of MODELOS) {
+    for (let vuelta = 0; vuelta <= ESPERAS.length; vuelta++) {
+      if (queda() <= 0) break buscando
+
+      intentos++
+      let r = null
+      try {
+        r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
+          peticion,
+        )
+      } catch (e) {
+        // estado 0 = ni siquiera hubo respuesta: DNS, TLS, la red del telefono
+        ultimoFallo = { estado: 0, texto: String(e?.message ?? e) }
+      }
+
+      if (r?.ok) {
+        respuesta = r
+        modeloUsado = modelo
+        break buscando
+      }
+
+      if (r) {
+        /* El mensaje de Google se guarda tal cual. Es lo unico que distingue
+           "ese modelo ya no existe" de "se acabo la cuota de hoy", y sin el,
+           arreglar esto seria adivinar. No lleva la clave: va en una cabecera,
+           no en el cuerpo ni en la URL. */
+        ultimoFallo = { estado: r.status, texto: (await r.text().catch(() => '')).slice(0, 600) }
+
+        // Lo que no mejora esperando, no espera: se prueba el siguiente modelo
+        if (!REINTENTABLES.has(r.status)) break
+      }
+
+      /* La espera vale igual para un 503 que para una red caida. Antes el
+         fallo de red se saltaba esta linea y volvia a intentarlo al instante:
+         seis peticiones seguidas contra algo que no responde, que es la forma
+         mas rapida de gastar el presupuesto sin darle tiempo a nada. */
+      if (vuelta === ESPERAS.length) break
+      await dormir(Math.min(ESPERAS[vuelta], Math.max(0, queda())))
+    }
+  }
+
+  if (!respuesta) {
+    /* Se separa lo que es culpa de la cuota de lo que es culpa de la
+       capacidad de Google. Para quien mira la pantalla no es lo mismo: "se
+       acabo tu cuota" se arregla esperando a mañana y "esta saturado" se
+       arregla insistiendo en un minuto, y darles el mismo mensaje deja a
+       cualquiera sin saber si volver a intentarlo. */
+    const codigo =
+      ultimoFallo?.estado === 429
+        ? 'cuota'
+        : ultimoFallo?.estado === 0
+          ? 'red'
+          : REINTENTABLES.has(ultimoFallo?.estado)
+            ? 'saturado'
+            : 'ia'
+    return fallo(res, 502, codigo, `${intentos} intento(s) · ${ultimoFallo?.texto ?? ''}`)
   }
 
   const datos = await respuesta.json().catch(() => null)
@@ -201,6 +295,10 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     clases: Array.isArray(leido?.clases) ? leido.clases.slice(0, 60) : [],
-    modelo: MODELO,
+    /* Que modelo contesto y a la cuantas. Es lo unico que permite saber, sin
+       instrumentar nada, si el primero de la lista esta sirviendo o si todo
+       el mundo esta cayendo al de repuesto. */
+    modelo: modeloUsado,
+    intentos,
   })
 }

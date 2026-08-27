@@ -179,24 +179,107 @@ test('la peticion que se le manda a Google', async (t) => {
     assert.equal(cfg.responseSchema.properties.clases.type, 'array')
   })
 
-  await t.test('el modelo sale de la variable de entorno', async () => {
+  await t.test('el modelo sale de la variable de entorno, en caliente', async () => {
     process.env.GOOGLE_AI_MODELO = 'modelo-inventado'
-    /* El modulo lee el modelo al cargarse, asi que hay que traerlo de nuevo
-       para que vea la variable: es la unica forma de comprobar que se puede
-       cambiar sin desplegar codigo, que es justo para lo que existe. */
-    const { default: otro } = await import('./leer-horario.js?nuevo=1')
     const visto = conFetch(respuestaDeGoogle('{"clases":[]}'))
     const { req, res } = llamar(cuerpoValido())
-    await otro(req, res)
+    /* Sin reimportar el modulo: la lista se lee en cada llamada, que es lo
+       que permite cambiarla en el panel de Vercel y que surta efecto en la
+       peticion siguiente en vez de cuando caduque la instancia. */
+    await handler(req, res)
 
     assert.ok(String(visto.url).includes('modelo-inventado'))
     delete process.env.GOOGLE_AI_MODELO
   })
 })
 
+test('cuando Google esta lleno', async (t) => {
+  const antes = globalThis.fetch
+  /* Sin esto la suite tarda veintitres segundos esperando de verdad. Lo que
+     se prueba aqui es CUANTAS veces se insiste y contra que, no el reloj. */
+  process.env.GOOGLE_AI_ESPERAS = '0,0'
+  t.after(() => {
+    globalThis.fetch = antes
+    delete process.env.GOOGLE_AI_ESPERAS
+  })
+  process.env.GOOGLE_AI_API_KEY = 'clave-de-mentira'
+
+  /* Un fetch que falla las primeras `fallos` veces y despues contesta bien.
+     Devuelve la cuenta de llamadas y las URL, que es lo que se quiere mirar. */
+  function tras(fallos, estado = 503) {
+    const visto = { llamadas: 0, urls: [] }
+    globalThis.fetch = async (url) => {
+      visto.llamadas++
+      visto.urls.push(String(url))
+      if (visto.llamadas <= fallos) {
+        return { ok: false, status: estado, text: async () => 'high demand' }
+      }
+      return {
+        ok: true,
+        json: async () => ({ candidates: [{ content: { parts: [{ text: '{"clases":[]}' }] } }] }),
+      }
+    }
+    return visto
+  }
+
+  await t.test('un 503 suelto no se lleva por delante la lectura', async () => {
+    const visto = tras(1)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    assert.equal(res.codigo, 200, 'el segundo intento tenia que salvarla')
+    assert.equal(visto.llamadas, 2)
+    assert.equal(res.cuerpo.intentos, 2)
+  })
+
+  await t.test('si el primer modelo no levanta, se cae al de repuesto', async () => {
+    // Tres fallos agotan los intentos del primero: el cuarto ya es del segundo
+    const visto = tras(3)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    assert.equal(res.codigo, 200)
+    const modelos = [...new Set(visto.urls.map((u) => u.split('/models/')[1].split(':')[0]))]
+    assert.equal(modelos.length, 2, `probo ${modelos.join(' y ')}`)
+    assert.equal(res.cuerpo.modelo, modelos[1], 'y dice cual contesto')
+  })
+
+  await t.test('si NINGUNO levanta, se dice que esta saturado y no otra cosa', async () => {
+    tras(99)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    assert.equal(res.cuerpo.error, 'saturado')
+    assert.ok(res.cuerpo.detalle.includes('high demand'))
+  })
+
+  await t.test('la cuota agotada NO es lo mismo que estar saturado', async () => {
+    tras(99, 429)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    /* Una se arregla insistiendo en un minuto y la otra esperando; con el
+       mismo mensaje nadie sabe cual de las dos le toco. */
+    assert.equal(res.cuerpo.error, 'cuota')
+  })
+
+  await t.test('un modelo que no existe no se reintenta: no mejora esperando', async () => {
+    const visto = tras(99, 404)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    assert.equal(res.cuerpo.error, 'ia')
+    assert.equal(visto.llamadas, 2, 'una por modelo y ninguna repetida')
+  })
+})
+
 test('lo que vuelve', async (t) => {
   const antes = globalThis.fetch
-  t.after(() => (globalThis.fetch = antes))
+  process.env.GOOGLE_AI_ESPERAS = '0,0'
+  t.after(() => {
+    globalThis.fetch = antes
+    delete process.env.GOOGLE_AI_ESPERAS
+  })
   process.env.GOOGLE_AI_API_KEY = 'clave-de-mentira'
 
   await t.test('una lectura buena sale como clases', async () => {

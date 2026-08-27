@@ -412,7 +412,18 @@ flowchart LR
 
 **La clave no puede vivir en el front.** Vite sustituye las variables `VITE_*` dentro del bundle en tiempo de compilación, así que una clave con ese prefijo queda publicada: cualquiera abre las herramientas del navegador, la copia y quema la cuota. Por eso existe `api/leer-horario.js`, que corre en el servidor y es el único que ve la clave.
 
-Para que funcione hay que poner **`GOOGLE_AI_API_KEY`** en Vercel (*Project → Settings → Environment Variables*), sacada de [aistudio.google.com/apikey](https://aistudio.google.com/apikey). `GOOGLE_AI_MODELO` es opcional y sirve para cambiar de modelo sin desplegar código, que hace falta más a menudo de lo que parece: Google jubila y renombra modelos. Los dos están en `.env.example`.
+Para que funcione hay que poner **`GOOGLE_AI_API_KEY`** en Vercel (*Project → Settings → Environment Variables*), sacada de [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Marcarla también para **Preview**, o las ramas de prueba contestarán que falta la clave.
+
+**Los 503 son normales y no son tuyos.** Conviene no confundir dos errores que no se parecen en nada:
+
+| | Qué es | De quién |
+|---|---|---|
+| `429 RESOURCE_EXHAUSTED` | Se pasó de su límite | **Tuyo** |
+| `503 UNAVAILABLE` | El modelo está lleno *ahora mismo* | **De Google** |
+
+El segundo le pasa a todo el mundo a la vez, no cuenta contra la cuota y dura poco. Por eso la función **insiste** —tres intentos por modelo, con esperas crecientes— y **prueba una lista de modelos en orden**, no uno solo: un alias `-latest` apunta al modelo más nuevo, que es justo el que todos están estrenando y el que más se satura. El segundo de la lista es una versión fijada, más aburrida y con más sitio. La respuesta dice qué modelo contestó y a los cuántos intentos.
+
+Ninguna de las dos listas se lee al cargar el módulo sino en cada llamada, así que cambiar `GOOGLE_AI_MODELO` o `GOOGLE_AI_ESPERAS` en el panel surte efecto en la petición siguiente. Los tres están en `.env.example`.
 
 **El reparto de responsabilidades importa.** La función no decide nada: recibe una imagen, la manda y devuelve filas de texto. Emparejar con el pensum, validar las horas y detectar choques ocurre en el navegador, en `src/layout/importarHorario.js`, que es función pura y tiene sus pruebas. Así las reglas de esta aplicación se comprueban sin red y sin cuota.
 

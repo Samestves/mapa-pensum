@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ImageUp,
   Loader2,
+  RotateCw,
   Maximize2,
   Minimize2,
   Sparkles,
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
-import { FORMATOS, leerHorarioDeImagen, prepararImagen } from '../data/leerHorario'
+import { FORMATOS, SE_REINTENTA, leerHorarioDeImagen, prepararImagen } from '../data/leerHorario'
 import { DIAS, aSesiones, avisosDe, marcarChoques, revisar } from '../layout/importarHorario'
 import { aTexto, enDoceHoras } from '../layout/horario'
 
@@ -199,6 +200,12 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
   const [abierta, setAbierta] = useState(null)
   const [ampliada, setAmpliada] = useState(false)
 
+  /* Sube uno para volver a leer LA MISMA imagen. Es una dependencia del
+     efecto y nada mas: sin el no habria forma de reintentar sin cambiar de
+     archivo, y el fallo mas comun -que el modelo este lleno- se arregla
+     exactamente con eso. */
+  const [intento, setIntento] = useState(0)
+
   useCerrarConEscape(alCerrar)
   useFocoAtrapado(refCaja, true, false)
 
@@ -235,7 +242,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
         setFase('revisar')
       } catch (e) {
         if (!vivo || e?.name === 'AbortError') return
-        setFallo({ mensaje: e.message, detalle: e.detalle })
+        setFallo({ codigo: e.codigo, mensaje: e.message, detalle: e.detalle })
         setFase('error')
       }
     })()
@@ -250,7 +257,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
        la lectura por eso costaria otra peticion -y otro trozo de cuota- por
        nada. Lo que importa es que la lectura ocurre UNA vez por imagen. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [archivo])
+  }, [archivo, intento])
 
   const cambiar = (id, cambios) => {
     setCandidatas((previas) => {
@@ -424,14 +431,31 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
               vez de una foto de la pantalla-, y obligar a cerrar, volver a la
               bienvenida y buscar el archivo otra vez para probar eso es
               suficiente friccion para que nadie lo pruebe. */}
+          {fase === 'error' && SE_REINTENTA.has(fallo?.codigo) && (
+            <button
+              type="button"
+              onClick={() => setIntento((n) => n + 1)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98]"
+            >
+              <RotateCw size={15} />
+              Reintentar
+            </button>
+          )}
+
           {(fase === 'error' || (fase === 'revisar' && candidatas.length === 0)) && (
             <button
               type="button"
               onClick={() => refArchivo.current?.click()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98]"
+              className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-extrabold transition-transform active:scale-[0.98] ${
+                fase === 'error' && SE_REINTENTA.has(fallo?.codigo)
+                  ? 'transicion-tema border border-panel-borde text-tinta-suave hover:text-tinta'
+                  : 'flex-1 bg-aprobada text-[var(--lienzo)]'
+              }`}
             >
               <ImageUp size={15} />
-              Probar otra imagen
+              <span className={fase === 'error' && SE_REINTENTA.has(fallo?.codigo) ? 'hidden sm:inline' : ''}>
+                Probar otra imagen
+              </span>
             </button>
           )}
 

@@ -36,6 +36,12 @@ export const EXPLICACION = {
   'sin-materias': 'No se pudo leer el pensum de esta carrera.',
   red: 'No se pudo conectar con el lector. Revisa tu conexión.',
   ia: 'El lector no pudo procesar la imagen. Inténtalo de nuevo en un minuto.',
+  /* Saturado y cuota son cosas distintas y hay que decirlo: una se arregla
+     insistiendo en un minuto y la otra esperando a mañana. Con el mismo
+     mensaje, nadie sabe si volver a intentarlo. */
+  saturado:
+    'El lector de Google está saturado ahora mismo. No es tu cuota: le pasa a todo el mundo a la vez y suele durar poco.',
+  cuota: 'Se agotó la cuota del lector por ahora. Vuelve a intentarlo más tarde.',
   vacia: 'El lector no devolvió nada. Prueba con una foto más nítida.',
   json: 'La respuesta del lector vino mal formada.',
   metodo: 'Petición inválida.',
@@ -154,5 +160,11 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
 
   return datos?.clases ?? []
 }
+
+/* Fallos que mejoran solos con el tiempo. Para estos la accion que sirve es
+   volver a intentarlo con LA MISMA imagen; para el resto, cambiarla. Ofrecer
+   siempre "prueba otra foto" ante un servicio lleno es mandar a buscar el
+   problema donde no esta. */
+export const SE_REINTENTA = new Set(['saturado', 'red', 'ia', 'vacia'])
 
 export { FalloLectura }
