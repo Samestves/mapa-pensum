@@ -31,9 +31,18 @@ export const config = { maxDuration: 60 }
    Que sean VARIOS lo enseño el primer dia de uso real: un alias '-latest'
    apunta siempre al modelo mas nuevo, y el mas nuevo es justo el que todo el
    mundo esta probando a la vez, o sea el que devuelve 503 "high demand". El
-   segundo de la lista es una version fijada, mas aburrida y menos llena. Se
-   pasa a ella solo cuando la primera no da senales de vida. */
-const MODELOS_POR_DEFECTO = 'gemini-flash-latest,gemini-2.5-flash'
+   segundo de la lista es una version anterior, mas aburrida y menos llena. Se
+   pasa a ella solo cuando la primera no da senales de vida.
+
+   Nombres FIJADOS y no alias. El alias parecia lo prudente -no se queda
+   obsoleto- y resulto ser lo contrario: te pone justo en el modelo mas nuevo,
+   que es el mas lleno, y ademas no se sabe cual te toco cuando falla. Con un
+   nombre fijo se sabe siempre contra que se hablo. El precio es que hay que
+   actualizarlos de vez en cuando, y para eso estan en una variable de
+   entorno: se cambian en el panel de Vercel sin desplegar.
+
+   Ninguno de los dos es el ultimo que existe, y es a proposito. */
+const MODELOS_POR_DEFECTO = 'gemini-3.6-flash,gemini-3.5-flash'
 
 /* Un 503 es, por definicion, temporal: no es que la peticion este mal, es que
    ahora mismo no hay sitio. Rendirse al primero convierte un tropiezo de dos
@@ -62,6 +71,26 @@ const PRESUPUESTO = 45_000
    o un 404 no mejoran esperando -la peticion esta mal o el modelo no existe-
    y reintentarlos solo gasta el tiempo que le queda a la funcion. */
 const REINTENTABLES = new Set([429, 500, 502, 503, 504])
+
+/* De que se queja Google, traducido a algo que se pueda ENSEÑAR y sobre lo
+   que se pueda actuar. En una tabla y no en ternarios encadenados porque ya
+   eran cuatro y el proximo error nuevo lo habria convertido en cinco.
+
+   Que el 404 tenga su propio codigo no es cosmetico: un modelo jubilado
+   contestaba lo mismo que un modelo saturado -"intentalo de nuevo en un
+   minuto"- y ese consejo es falso, porque un modelo que ya no existe no va a
+   existir dentro de un minuto. Se arregla cambiando GOOGLE_AI_MODELO, y para
+   eso primero hay que saber que es lo que pasa. */
+const CODIGO_POR_ESTADO = {
+  0: 'red',
+  400: 'peticion',
+  403: 'permiso',
+  404: 'modelo',
+  429: 'cuota',
+}
+
+const codigoDe = (estado) =>
+  CODIGO_POR_ESTADO[estado] ?? (REINTENTABLES.has(estado) ? 'saturado' : 'ia')
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -261,20 +290,14 @@ export default async function handler(req, res) {
   }
 
   if (!respuesta) {
-    /* Se separa lo que es culpa de la cuota de lo que es culpa de la
-       capacidad de Google. Para quien mira la pantalla no es lo mismo: "se
-       acabo tu cuota" se arregla esperando a mañana y "esta saturado" se
-       arregla insistiendo en un minuto, y darles el mismo mensaje deja a
-       cualquiera sin saber si volver a intentarlo. */
-    const codigo =
-      ultimoFallo?.estado === 429
-        ? 'cuota'
-        : ultimoFallo?.estado === 0
-          ? 'red'
-          : REINTENTABLES.has(ultimoFallo?.estado)
-            ? 'saturado'
-            : 'ia'
-    return fallo(res, 502, codigo, `${intentos} intento(s) · ${ultimoFallo?.texto ?? ''}`)
+    /* El detalle lleva los modelos que se probaron. Sin eso, un "no existe"
+       no dice CUAL no existe, que es justo lo unico que hace falta saber. */
+    return fallo(
+      res,
+      502,
+      codigoDe(ultimoFallo?.estado),
+      `${intentos} intento(s) · ${MODELOS.join(', ')} · ${ultimoFallo?.texto ?? ''}`,
+    )
   }
 
   const datos = await respuesta.json().catch(() => null)

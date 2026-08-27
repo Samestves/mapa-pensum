@@ -421,7 +421,17 @@ Para que funcione hay que poner **`GOOGLE_AI_API_KEY`** en Vercel (*Project → 
 | `429 RESOURCE_EXHAUSTED` | Se pasó de su límite | **Tuyo** |
 | `503 UNAVAILABLE` | El modelo está lleno *ahora mismo* | **De Google** |
 
-El segundo le pasa a todo el mundo a la vez, no cuenta contra la cuota y dura poco. Por eso la función **insiste** —tres intentos por modelo, con esperas crecientes— y **prueba una lista de modelos en orden**, no uno solo: un alias `-latest` apunta al modelo más nuevo, que es justo el que todos están estrenando y el que más se satura. El segundo de la lista es una versión fijada, más aburrida y con más sitio. La respuesta dice qué modelo contestó y a los cuántos intentos.
+El segundo le pasa a todo el mundo a la vez, no cuenta contra la cuota y dura poco. Por eso la función **insiste** —tres intentos por modelo, con esperas crecientes— y **prueba una lista de modelos en orden**, no uno solo. La respuesta dice qué modelo contestó y a los cuántos intentos.
+
+**Los modelos van con nombre fijo, no con alias.** `gemini-flash-latest` parecía lo prudente —no se queda obsoleto— y resultó ser lo contrario: te pone justo en el modelo más nuevo, que es el que todo el mundo está estrenando y el que más se satura, y cuando falla no sabes contra cuál hablaste. El precio de fijarlos es tener que actualizarlos de vez en cuando, y para eso están en una variable: se cambian en el panel y surte efecto en la petición siguiente.
+
+Los vigentes están en [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models). Los que alcanza *tu* clave, que no siempre son los mismos:
+
+```bash
+curl -s -H "x-goog-api-key: TU_CLAVE" https://generativelanguage.googleapis.com/v1beta/models | grep -o '"name": "models/[^"]*"'
+```
+
+Google ya no publica tablas de límites del plan gratuito: los movió al panel de cada cuenta, en [aistudio.google.com](https://aistudio.google.com/) → *Usage*.
 
 Ninguna de las dos listas se lee al cargar el módulo sino en cada llamada, así que cambiar `GOOGLE_AI_MODELO` o `GOOGLE_AI_ESPERAS` en el panel surte efecto en la petición siguiente. Los tres están en `.env.example`.
 

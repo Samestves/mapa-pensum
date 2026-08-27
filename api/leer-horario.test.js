@@ -232,6 +232,18 @@ test('cuando Google esta lleno', async (t) => {
     assert.equal(res.cuerpo.intentos, 2)
   })
 
+  await t.test('por defecto hay mas de un modelo al que caer', async () => {
+    tras(99, 503)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+    const probados = res.cuerpo.detalle.split(' · ')[1].split(', ')
+    assert.ok(probados.length >= 2, `solo habia ${probados.join(' y ')}`)
+    assert.ok(
+      probados.every((m) => !m.includes('latest')),
+      'nombres fijados: con un alias no se sabe contra que se hablo',
+    )
+  })
+
   await t.test('si el primer modelo no levanta, se cae al de repuesto', async () => {
     // Tres fallos agotan los intentos del primero: el cuarto ya es del segundo
     const visto = tras(3)
@@ -268,8 +280,29 @@ test('cuando Google esta lleno', async (t) => {
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
 
-    assert.equal(res.cuerpo.error, 'ia')
     assert.equal(visto.llamadas, 2, 'una por modelo y ninguna repetida')
+    /* Y NO sale como 'saturado'. Ese mensaje dice "prueba en un minuto", que
+       es un consejo falso: un modelo jubilado no vuelve. */
+    assert.equal(res.cuerpo.error, 'modelo')
+  })
+
+  await t.test('el detalle dice QUE modelos se probaron', async () => {
+    process.env.GOOGLE_AI_MODELO = 'uno-que-no-existe,otro-tampoco'
+    tras(99, 404)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    // Sin esto, "no existe" no dice cual, que es lo unico que hace falta saber
+    assert.ok(res.cuerpo.detalle.includes('uno-que-no-existe'))
+    assert.ok(res.cuerpo.detalle.includes('otro-tampoco'))
+    delete process.env.GOOGLE_AI_MODELO
+  })
+
+  await t.test('una clave sin permiso para ese modelo se distingue', async () => {
+    tras(99, 403)
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+    assert.equal(res.cuerpo.error, 'permiso')
   })
 })
 

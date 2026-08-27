@@ -42,6 +42,13 @@ export const EXPLICACION = {
   saturado:
     'El lector de Google está saturado ahora mismo. No es tu cuota: le pasa a todo el mundo a la vez y suele durar poco.',
   cuota: 'Se agotó la cuota del lector por ahora. Vuelve a intentarlo más tarde.',
+  /* Estos tres no los arregla el estudiante y no hay que fingir que sí: un
+     modelo jubilado no va a existir dentro de un minuto por mucho que
+     insista. Debajo sale el mensaje de Google, que es lo que hace falta para
+     saber qué modelo poner. */
+  modelo: 'El lector está mal configurado: el modelo que usa ya no está disponible.',
+  permiso: 'La clave del lector no tiene permiso para ese modelo.',
+  peticion: 'La petición al lector no era válida.',
   vacia: 'El lector no devolvió nada. Prueba con una foto más nítida.',
   json: 'La respuesta del lector vino mal formada.',
   metodo: 'Petición inválida.',
