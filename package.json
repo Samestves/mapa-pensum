@@ -10,7 +10,7 @@
     "build": "npm run datos && npm run validar && node scripts/og.js && node scripts/iconos.js && vite build && node scripts/prerenderizar.js && node scripts/serviceworker.js",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node --test \"src/**/*.test.js\""
+    "test": "node --test \"src/**/*.test.js\" \"api/**/*.test.js\""
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
