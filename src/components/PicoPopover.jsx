@@ -1,3 +1,5 @@
+import { LADOS, SALIENTE, trazar } from '../layout/pico'
+
 /**
  * El piquito que sale de una nubecita y apunta a lo que la abrio.
  *
@@ -6,49 +8,50 @@
  * unico indicio era la animacion de entrada, que dura ciento treinta
  * milisegundos y se pierde si miras un momento despues.
  *
- * Es un cuadrado girado cuarenta y cinco grados, no un triangulo dibujado con
- * bordes. El triangulo de bordes CSS no puede llevar borde propio, asi que en
- * un panel perfilado -y todos los de aqui lo estan- se veia una punta de
- * color plano pegada a una caja con contorno. El cuadrado girado hereda el
- * mismo fondo y el mismo borde que el panel y solo enseña sus dos lados de
- * fuera: los otros dos quedan tapados por el panel, que va por encima.
+ * La forma vive en layout/pico.js, que es geometria y se mide sin montar
+ * nada. Aqui solo queda el DONDE, que es lo que este archivo tiene que
+ * explicar bien, porque es lo que estaba mal:
  *
- * Vive en su propio archivo porque lo piden tres paneles -la ficha del mapa,
- * el avance y la clase del horario- y antes cada uno lo dibujaba a mano. Eran
- * tres copias del mismo cuadrado con tres tamaños distintos: 10, 12 y ninguno.
- */
-
-/* Cuanto asoma por fuera del panel. Es la mitad del lado menos el pixel del
-   borde, para que la juntura no se vea como una linea partida. */
-const SALIENTE = -5
-
-const LADOS = {
-  arriba: { borde: 'border-t border-l', eje: 'top', cruce: 'left', centrar: '-translate-x-1/2' },
-  abajo: { borde: 'border-b border-r', eje: 'bottom', cruce: 'left', centrar: '-translate-x-1/2' },
-  izquierda: { borde: 'border-b border-l', eje: 'left', cruce: 'top', centrar: '-translate-y-1/2' },
-  derecha: { borde: 'border-t border-r', eje: 'right', cruce: 'top', centrar: '-translate-y-1/2' },
-}
-
-/**
- * @param lado      borde del panel por el que asoma: el que mira al ancla.
- * @param posicion  px desde el inicio de ese borde hasta el centro del ancla.
+ * El pico va DELANTE del panel, no detras. El panel lleva contorno en los
+ * cuatro lados, asi que con el pico detras esa linea recta le cruzaba entera
+ * por la base: lo que se veia no era una nubecita con pico, era una caja
+ * perfilada con un rombo asomando. Delante, el relleno del pico -que es del
+ * color del panel- borra ese trozo de linea, y el contorno del panel entra
+ * por un lado del pico y sale por el otro sin cortarse. Una sola silueta.
+ *
+ * De ahi salen las otras dos cosas raras de este componente, que no son
+ * capricho:
+ *
+ *   - pointer-events-none, porque ahora hay una caja transparente flotando
+ *     sobre el borde del panel y sin esto se comeria las pulsaciones de lo
+ *     que quede debajo;
+ *   - overflow visible, porque la punta toca justo el borde del dibujo y la
+ *     mitad de fuera del trazo se saldria de la caja. Un SVG recorta por
+ *     defecto, y la punta habria salido cortada en plano.
  */
 function PicoPopover({ lado, posicion }) {
   const config = LADOS[lado]
   if (!config) return null
 
+  const { w, h, eje, cruce } = config
+
   return (
-    <span
+    <svg
       aria-hidden="true"
-      style={{ [config.eje]: SALIENTE, [config.cruce]: posicion }}
-      /* El centrado y el giro salen como translate y rotate sueltos, no
-         dentro de un transform: son las propiedades individuales, y el
-         navegador las aplica siempre en ese orden. Es justo el que hace
-         falta, porque asi la media flecha se corre sobre el eje del panel,
-         sin girar; metidas en un transform al reves, el desplazamiento
-         saldria en diagonal. */
-      className={`transicion-tema absolute size-3 ${config.centrar} rotate-45 border-panel-borde bg-panel ${config.borde}`}
-    />
+      focusable="false"
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      style={{ [eje]: SALIENTE, [cruce]: posicion, overflow: 'visible' }}
+      className={`pico-popover pointer-events-none absolute ${
+        cruce === 'left' ? '-translate-x-1/2' : '-translate-y-1/2'
+      }`}
+    >
+      {/* Relleno primero y contorno encima: asi el trazo se dibuja sobre su
+          propio relleno y no se lo come por la mitad. */}
+      <path d={trazar(lado, true)} fill="var(--panel)" />
+      <path d={trazar(lado, false)} fill="none" stroke="var(--panel-borde)" strokeWidth="1" />
+    </svg>
   )
 }
 

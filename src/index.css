@@ -257,6 +257,16 @@ body {
     color 200ms ease;
 }
 
+/* El piquito de las nubecitas es un SVG, y un SVG no se pinta con background
+   ni con border sino con fill y stroke: 'transicion-tema' no le llega. Sin
+   esta regla el panel se funde de un tema a otro en 200 ms y su pico salta de
+   golpe, que es justo el detalle que delata que son dos cosas y no una. */
+.pico-popover path {
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease;
+}
+
 /* ------------------------------------------------------------------
    Animaciones del grafo.
    Todas las aristas llevan pathLength="100", asi que los recorridos se

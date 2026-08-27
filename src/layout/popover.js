@@ -1,14 +1,24 @@
 const MARGEN = 10
-const HUECO = 8
 
-/* El piquito se aparta de las esquinas RADIO px, que no es un numero redondo
-   elegido a ojo: el panel curva 16 px y el piquito, girado, asoma 8,5 a cada
-   lado de su centro. Con menos de esos 24,5 una de sus puntas cae dentro de
-   la curva y se dibuja mordida, que parece un error de pintado y no una
-   flecha. */
-const RADIO = 25
+/* Hueco entre el ancla y el panel. Tiene que ser mayor que el ALTO del
+   piquito -11,1- o la punta acabaria metida dentro de aquello a lo que
+   apunta. Los dos que sobran son el aire que deja la punta antes de tocarlo. */
+const HUECO = 13
+
+/* El piquito se aparta de las esquinas RADIO px. Sale de sumar: el panel curva
+   16 y el pico mide 23,1 de base, o sea 11,6 a cada lado de su centro. Con
+   menos de 27,6 una de sus faldas caeria sobre la curva y la juntura -que es
+   lo unico que hace que pico y panel se lean como una sola silueta- se veria
+   rota. Los 30 son esos 27,6 con dos y medio de aire. */
+const RADIO = 30
 
 const acotar = (v, min, max) => Math.max(min, Math.min(v, max))
+
+/* Donde cae el piquito a lo largo de un borde de `largo` px. En un panel tan
+   corto que no quepan dos RADIOS no hay sitio legal en ninguna parte, y
+   centrarlo es lo unico que no queda peor. */
+const situarPico = (v, largo) =>
+  largo < RADIO * 2 ? Math.round(largo / 2) : Math.round(acotar(v, RADIO, largo - RADIO))
 
 /**
  * Donde cabe un popover respecto a lo que lo abrio, y por donde le sale el
@@ -17,8 +27,8 @@ const acotar = (v, min, max) => Math.max(min, Math.min(v, max))
  * Una sola funcion para los dos casos que existen en la aplicacion, porque
  * son el mismo problema con los ejes cambiados:
  *
- *   'abajo'  cuelga DEBAJO del ancla y se alinea a un lado. Es lo que quiere
- *            un boton de una barra: el avance, el menu de una clase.
+ *   'abajo'  cuelga DEBAJO del ancla. Es lo que quiere un boton de una barra:
+ *            el avance, el menu de una clase.
  *   'lado'   se pone AL LADO del ancla y se centra en vertical. Es lo que
  *            quiere una celda dentro de una rejilla o un nodo del mapa: si
  *            colgara debajo, taparia justo aquello sobre lo que se decide.
@@ -27,11 +37,14 @@ const acotar = (v, min, max) => Math.max(min, Math.min(v, max))
  * cambia si no cabe. El eje secundario no voltea, se sujeta dentro de la
  * ventana.
  *
- * En 'abajo' el eje secundario se alinea por el borde DERECHO del ancla y no
- * por el izquierdo. Los botones que abren estas cosas viven en la parte
- * derecha de su barra, asi que uno que creciera hacia la derecha se saldria
- * de la ventana; creciendo hacia la izquierda se queda debajo de su propio
- * boton.
+ * En 'abajo' el eje secundario se coloca poniendo el borde derecho del panel a
+ * RADIO del CENTRO DEL ANCLA. Antes se alineaban los bordes derechos de los
+ * dos, y con un boton de 36 px eso deja su centro a 18 del borde del panel:
+ * dentro de la zona donde el piquito no puede ponerse sin morderse con la
+ * esquina redondeada, asi que el pico se quedaba clavado en el limite y
+ * apuntaba siete pixeles al lado del boton. Naciendo del centro apunta al
+ * boton, y como RADIO es mayor que medio boton el panel sigue creciendo hacia
+ * la izquierda, que es lo que hace falta para que no se salga por la derecha.
  *
  * Devuelve tambien el origen de la transformacion, que es lo que hace que
  * parezca salir del ancla en vez de aparecer en un sitio. Apunta al CENTRO
@@ -79,7 +92,7 @@ export function colocar(ancla, medida, preferencia = 'abajo', limites) {
       origen: `${cabeDerecha ? 'left' : 'right'} ${Math.round(origenY)}px`,
       flecha: {
         lado: cabeDerecha ? 'izquierda' : 'derecha',
-        posicion: Math.round(acotar(origenY, RADIO, Math.max(RADIO, alto - RADIO))),
+        posicion: situarPico(origenY, alto),
       },
     }
   }
@@ -88,11 +101,11 @@ export function colocar(ancla, medida, preferencia = 'abajo', limites) {
   const cabeAbajo = abajo + alto <= tope.alto - MARGEN
   const y = cabeAbajo ? abajo : Math.max(MARGEN, ancla.top - HUECO - alto)
 
-  const aLaIzquierda = ancla.right - ancho
-  const x =
-    aLaIzquierda >= MARGEN
-      ? aLaIzquierda
-      : Math.min(ancla.left, tope.ancho - ancho - MARGEN)
+  const x = acotar(
+    centroX + RADIO - ancho,
+    MARGEN,
+    Math.max(MARGEN, tope.ancho - ancho - MARGEN),
+  )
   const origenX = acotar(centroX - x, 0, ancho)
 
   return {
@@ -101,7 +114,7 @@ export function colocar(ancla, medida, preferencia = 'abajo', limites) {
     origen: `${Math.round(origenX)}px ${cabeAbajo ? 'top' : 'bottom'}`,
     flecha: {
       lado: cabeAbajo ? 'arriba' : 'abajo',
-      posicion: Math.round(acotar(origenX, RADIO, Math.max(RADIO, ancho - RADIO))),
+      posicion: situarPico(origenX, ancho),
     },
   }
 }

@@ -256,7 +256,6 @@ function DetalleAsignatura({
         transformOrigin: pos.origen,
       }}
     >
-      <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />
       <div
         ref={refFicha}
         role="dialog"
@@ -266,6 +265,9 @@ function DetalleAsignatura({
       >
         {contenido}
       </div>
+      {/* Detras del panel su base quedaba partida por el borde de la ficha.
+          Delante, el relleno del pico tapa ese trozo de linea. */}
+      <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />
     </div>
   )
 }

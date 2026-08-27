@@ -33,11 +33,19 @@ export const CARA =
  * - saca el piquito por el lado que mira al ancla;
  * - se cierra con Escape y pulsando fuera.
  *
- * El piquito va FUERA del panel y dentro del envoltorio. El panel puede
- * llevar overflow-y-auto porque su contenido no siempre cabe, y un elemento
- * colocado por fuera de una caja que recorta se recorta con ella: el piquito
- * habria desaparecido. Aqui los dos comparten la misma traslacion y el mismo
- * origen, asi que entran juntos.
+ * El piquito va FUERA del panel y DESPUES de el. Las dos cosas por un motivo
+ * distinto y las dos obligatorias:
+ *
+ *   Fuera, porque el panel puede llevar overflow-y-auto -su contenido no
+ *   siempre cabe- y un elemento colocado por fuera de una caja que recorta se
+ *   recorta con ella: el piquito habria desaparecido.
+ *
+ *   Despues, porque el panel lleva contorno en los cuatro lados. Con el pico
+ *   detras, esa linea recta le cruzaba entera por la base y se veian dos
+ *   figuras pegadas en vez de una. Delante, el relleno del pico tapa ese
+ *   trozo de borde y el contorno sigue por el sin corte.
+ *
+ * Comparten la misma traslacion y el mismo origen, asi que entran juntos.
  */
 function Popover({
   ancla,
@@ -94,8 +102,6 @@ function Popover({
           visibility: pos ? 'visible' : 'hidden',
         }}
       >
-        {pos && <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />}
-
         <div
           ref={refPanel}
           role={rol}
@@ -104,6 +110,8 @@ function Popover({
         >
           {children}
         </div>
+
+        {pos && <PicoPopover lado={pos.flecha.lado} posicion={pos.flecha.posicion} />}
       </div>
     </div>,
     document.body,
