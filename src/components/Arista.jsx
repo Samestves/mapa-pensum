@@ -117,20 +117,18 @@ function Arista({
     // grosor, opacidad-, y eso no debe cambiar porque su destino ya este
     // aprobado. Fundirlos en uno apagaria el brillo de medio mapa.
     <g color={color} data-encendida={encendida || undefined} data-corriente={conCorriente || undefined}>
-      <path
-        {...comun}
-        stroke={color}
-        strokeOpacity={encendida ? 0.12 : 0}
-        strokeWidth={grosor + 12}
-        style={suave}
-      />
-      <path
-        {...comun}
-        stroke={color}
-        strokeOpacity={encendida ? 0.2 : 0}
-        strokeWidth={grosor + 6}
-        style={suave}
-      />
+      {/* El resplandor, solo en los cables encendidos. Antes se dibujaban
+          siempre con opacidad 0 en los apagados, y un elemento invisible
+          sigue costando: son ochenta y seis por pensum que no pintan nada.
+          Se pueden montar y desmontar sin miedo porque no llevan animacion;
+          lo que no se puede desmontar son las estelas, que si la llevan y al
+          volver arrancarian de cero. */}
+      {encendida && (
+        <>
+          <path {...comun} stroke={color} strokeOpacity={0.12} strokeWidth={grosor + 12} style={suave} />
+          <path {...comun} stroke={color} strokeOpacity={0.2} strokeWidth={grosor + 6} style={suave} />
+        </>
+      )}
 
       <path
         {...comun}

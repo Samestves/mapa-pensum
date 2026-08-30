@@ -82,7 +82,7 @@ function NodoAsignatura({
           fontSize={TEXTO.nombre}
           fill="var(--tinta)"
           fillOpacity={piel.texto}
-          className="font-bold tracking-[-0.01em]"
+          className="detalle-nodo font-bold tracking-[-0.01em]"
         >
           {linea}
         </text>
@@ -96,13 +96,14 @@ function NodoAsignatura({
         fontSize={TEXTO.meta}
         fill="var(--tinta)"
         fillOpacity={piel.dato}
-        className="tabular-nums tracking-wide"
+        className="detalle-nodo tabular-nums tracking-wide"
       >
         {codigoVisible(nodo)} · {uc} UC
       </text>
 
       {Icono && (
         <Icono
+          className="detalle-nodo"
           x={NODO.ancho - NODO.padDer - 16}
           y={NODO.alto - 28}
           width={16}

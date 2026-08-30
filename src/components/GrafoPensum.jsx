@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
+import { hayDetalle } from '../layout/detalle'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import ContenidoGrafo from './ContenidoGrafo'
@@ -137,6 +138,12 @@ function GrafoPensum({
             revela con una transicion corta de opacidad, que el compositor
             resuelve sin repintar los mil seiscientos elementos. */}
         <g
+          /* 'lejos' apaga por CSS el texto y los iconos de las tarjetas
+             cuando el mapa esta tan alejado que ya no se leen. Va aqui y no
+             como prop en los nodos porque este <g> ya se repinta en cada
+             gesto: los 494 nodos de dentro no se enteran y su memo sigue
+             sirviendo. El porque esta en layout/detalle.js. */
+          className={hayDetalle(vista.escala) ? undefined : 'lejos'}
           transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}
           style={{
             opacity: encajado ? 1 : 0,

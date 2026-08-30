@@ -80,7 +80,7 @@ function NodoElectiva({
           fontSize={TEXTO.meta + 1.5}
           fill="var(--tinta)"
           fillOpacity={piel.texto}
-          className="font-bold"
+          className="detalle-nodo font-bold"
         >
           {linea}
         </text>
@@ -92,13 +92,14 @@ function NodoElectiva({
         fontSize={9}
         fill={colorPie}
         fillOpacity={piel.dato}
-        className="tabular-nums"
+        className="detalle-nodo tabular-nums"
       >
         {pie}
       </text>
 
       {Icono && (
         <Icono
+          className="detalle-nodo"
           x={NODO.ancho - NODO.padDer - 13}
           y={ELECTIVAS.alto - 22}
           width={13}

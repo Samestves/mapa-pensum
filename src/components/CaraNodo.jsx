@@ -39,7 +39,7 @@ function CaraNodo({
           verdad: en un rect de SVG no se aplica -comprobado mirandolo- y
           metiendo cada tarjeta en un foreignObject para conseguirlo el mapa
           baja de 92 fotogramas a 25. */}
-      <rect {...comun} fill="url(#brillo-nodo)" />
+      <rect {...comun} className="detalle-nodo" fill="url(#brillo-nodo)" />
 
       {/* Señalar y seleccionar suben la luz, no dibujan un borde. */}
       <rect

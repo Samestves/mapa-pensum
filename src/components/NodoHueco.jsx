@@ -110,6 +110,7 @@ function NodoHueco({
             fillOpacity={0.1}
           />
           <Plus
+            className="detalle-nodo"
             x={NODO.ancho / 2 - 8}
             y={28}
             width={16}
@@ -130,7 +131,7 @@ function NodoHueco({
             textAnchor="middle"
             fontSize={TEXTO.nombre}
             fill="var(--tinta-suave)"
-            className="font-semibold"
+            className="detalle-nodo font-semibold"
           >
             {nombre}
           </text>
@@ -151,7 +152,7 @@ function NodoHueco({
               fontSize={TEXTO.nombre}
               fill="var(--tinta)"
               fillOpacity={piel.texto}
-              className="font-bold tracking-[-0.01em]"
+              className="detalle-nodo font-bold tracking-[-0.01em]"
             >
               {linea}
             </text>
@@ -163,13 +164,14 @@ function NodoHueco({
             fontSize={TEXTO.meta}
             fill="var(--tinta)"
             fillOpacity={piel.dato}
-            className="tabular-nums tracking-wide"
+            className="detalle-nodo tabular-nums tracking-wide"
           >
             {codigoVisible(electiva)} · {electiva.uc} UC
           </text>
 
           {Icono && (
             <Icono
+              className="detalle-nodo"
               x={NODO.ancho - NODO.padDer - 16}
               y={NODO.alto - 28}
               width={16}

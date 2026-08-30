@@ -302,6 +302,27 @@ body {
     repeating-linear-gradient(to bottom, var(--rejilla) 0 1px, transparent 1px 34px);
 }
 
+/* Nivel de detalle del mapa.
+
+   Con el mapa encajado en un telefono, una tarjeta mide veinte pixeles y el
+   nombre de la materia 1,2. Dibujar ahi el texto y los iconos son mil ciento
+   sesenta y cinco elementos de SVG rasterizandose dentro de una franja de mil
+   pixeles, y hay aparatos que no lo aguantan: en un Mali-G52 el propio Chrome
+   pierde texturas -"non-existent mailbox" en su registro- y pinta basura
+   repetida en bandas. Encaja con el sintoma: alejado se rompe, acercado va
+   perfecto, porque acercado hay treinta elementos en pantalla en vez de mil.
+
+   No se pierde nada. A 1,2 px una palabra no es una palabra, es una mancha
+   gris que ademas ensucia el color de la tarjeta, que es lo unico que si se
+   lee de lejos.
+
+   display:none y no opacity ni visibility: los otros dos siguen ocupando su
+   sitio en el arbol de pintado, y lo que hace falta aqui es que el navegador
+   NO tenga que resolverlos. */
+.lejos .detalle-nodo {
+  display: none;
+}
+
 .transicion-tema {
   transition:
     background-color 200ms ease,
