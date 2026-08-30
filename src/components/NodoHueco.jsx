@@ -3,7 +3,9 @@ import { Plus } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
-import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
+import { pielDe } from '../theme/superficie'
+import { iconoDeMateria } from '../theme/iconosMateria'
+import CaraNodo from './CaraNodo'
 import { codigoVisible } from '../data/codigoVisible'
 
 /**
@@ -29,19 +31,25 @@ import { codigoVisible } from '../data/codigoVisible'
  * obligatorias, asi que dibujarla distinta la dejaria en un limbo visual que
  * no corresponde a nada real.
  */
-function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, alVerFicha }) {
+function NodoHueco({
+  nodo,
+  electiva,
+  estado,
+  resaltado,
+  atenuado,
+  seleccionado,
+  alAbrir,
+  alVerFicha,
+}) {
   const { x, y, nombre } = nodo
   const vacia = electiva == null
 
   const acento = electiva ? colorNodo(electiva) : 'var(--tinta-tenue)'
-  const colorBorde = electiva ? colorBordeEstado(estado, acento) : acento
-  const Icono = electiva ? ICONO_ESTADO[estado] : null
-  const aprobada = estado === ESTADO.APROBADA
+  const piel = pielDe(estado)
+  const Icono = electiva ? (piel.sello ?? iconoDeMateria(electiva.nombre)) : null
   const bloqueada = estado === ESTADO.BLOQUEADA
 
-  const primeraLinea = electiva
-    ? TEXTO.centroNombre - ((electiva.lineasNombre.length - 1) * TEXTO.altoLinea) / 2
-    : 0
+  const primeraLinea = TEXTO.arribaNombre
 
   return (
     <g
@@ -64,36 +72,22 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
           : `${codigoVisible(electiva)} — ${electiva.nombre} · ${electiva.uc} UC · ${estado}`}
       </title>
 
-      <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />
+      {/* La casilla vacia se hunde en vez de rodearse de rayas.
 
-      {!vacia && (
-        <rect
-          width={NODO.ancho}
-          height={NODO.alto}
-          rx={NODO.radio}
-          fill={aprobada ? 'var(--estado-aprobada)' : acento}
-          fillOpacity={aprobada ? 0.2 : bloqueada ? 0 : 0.08}
-          style={{ transition: 'fill-opacity 300ms ease' }}
-        />
-      )}
+          El borde discontinuo era lo que peor envejecia del mapa: hasta ocho
+          casillas por carrera, y ocho rectangulos a rayas en la misma pantalla
+          se leen como un patron de fondo, no como ocho huecos. Ademas, por
+          debajo del 50 % de zoom los guiones se juntan y el borde parece una
+          linea entera mal pintada.
 
-      {/* El borde. Discontinuo mientras esta vacia -es el unico sitio del mapa
-          donde ese trazo significa "aqui todavia no hay nada"- y entero en
-          cuanto tiene materia, que es cuando deja de ser un hueco. */}
-      <rect
-        width={NODO.ancho}
-        height={NODO.alto}
-        rx={NODO.radio}
-        fill="none"
-        stroke={colorBorde}
-        strokeOpacity={vacia ? 0.42 : bloqueada ? 0.4 : 1}
-        strokeWidth={seleccionado ? 2.6 : vacia ? 1.5 : bloqueada ? 1.25 : 1.8}
-        /* Guiones mas largos y con la punta redonda: a 6-5 el trazo se lee
-           como una linea intencionada y no como un borde roto, que es lo que
-           parecia a 5-4 con punta cuadrada. */
-        strokeDasharray={vacia ? '6 5' : undefined}
-        strokeLinecap={vacia ? 'round' : undefined}
-        style={{ transition: 'stroke 300ms ease, stroke-width 160ms ease' }}
+          Vacia usa la piel de bloqueada -que es lo que es, un sitio donde
+          todavia no puedes hacer nada- y en cuanto tiene materia pasa a la de
+          esa materia, como cualquier otra tarjeta. */}
+      <CaraNodo
+        alto={NODO.alto}
+        piel={piel}
+        resaltado={!vacia && resaltado}
+        seleccionado={seleccionado}
       />
 
       {vacia ? (
@@ -116,11 +110,8 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
             width={30}
             height={30}
             rx={9}
-            fill={acento}
-            fillOpacity={0.08}
-            stroke={acento}
-            strokeOpacity={0.3}
-            strokeWidth={1.25}
+            fill="var(--tinta)"
+            fillOpacity={0.1}
           />
           <Plus
             x={NODO.ancho / 2 - 8}
@@ -163,9 +154,10 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
           <text
             x={NODO.padIzq}
             y={26}
-            fontSize={TEXTO.codigo}
-            fill="var(--tinta-tenue)"
-            className="font-mono tracking-wider"
+            fontSize={TEXTO.meta}
+            fill="var(--tinta)"
+            fillOpacity={piel.dato}
+            className="tabular-nums tracking-wide"
           >
             {codigoVisible(electiva)}
           </text>
@@ -199,8 +191,9 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
               y={13}
               width={15}
               height={15}
-              color={bloqueada ? 'var(--tinta-tenue)' : colorBorde}
-              strokeWidth={2.6}
+              color="var(--tinta)"
+              opacity={piel.icono}
+              strokeWidth={2}
             />
           )}
         </>

@@ -22,6 +22,17 @@ function DefsGrafo() {
         </feMerge>
       </filter>
 
+      {/* El brillo de las tarjetas: un degradado vertical de blanco a nada,
+          compartido por las 494 materias del pensum. Se define una vez aqui y
+          cada tarjeta lo referencia por url(), asi que no hay coste por
+          tarjeta. Es lo que sustituye al contorno: una superficie con la luz
+          cayendo por arriba se lee como una lamina delante del fondo. */}
+      <linearGradient id="brillo-nodo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.10" />
+        <stop offset="52%" stopColor="#ffffff" stopOpacity="0.025" />
+        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+      </linearGradient>
+
       <filter id="glow-fuerte" x="-80%" y="-80%" width="260%" height="260%">
         <feGaussianBlur stdDeviation="5" result="borroso" />
         <feMerge>

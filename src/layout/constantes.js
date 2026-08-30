@@ -4,11 +4,13 @@
 export const NODO = {
   ancho: 224,
   alto: 96,
-  radio: 12,
-  padIzq: 20, // deja sitio a la barra de acento del area
+  radio: 14,
+  /* Los dos paddings son iguales desde que la barra de acento del area
+     desaparecio: ese hueco extra de la izquierda existia solo para ella. El
+     area ya no tiñe la tarjeta -lo hace el estado- y su icono va a la
+     derecha. */
+  padIzq: 16,
   padDer: 16,
-  // Barra vertical de color que identifica el area
-  barra: { x: 8, ancho: 3, y: 14, alto: 68 },
 }
 
 // Ancho util para el texto dentro del nodo
@@ -37,13 +39,16 @@ export const ELECTIVAS = {
 export const ALTO_ENCABEZADO = 56
 
 export const TEXTO = {
-  codigo: 10,
-  nombre: 12.5,
-  meta: 9.5,
-  altoLinea: 14,
+  nombre: 13,
+  meta: 10,
+  altoLinea: 15,
   maxLineas: 3,
-  // Centro vertical del bloque de nombre dentro del nodo
-  centroNombre: 56,
+  /* Linea de base de la PRIMERA linea del nombre. Antes el bloque se centraba
+     en la tarjeta, y eso hacia que una materia de una linea y otra de tres
+     empezaran a alturas distintas: en una fila de siete, los nombres no
+     compartian linea de base y la columna se leia desordenada. Apoyado
+     arriba, todas las tarjetas de una columna empiezan igual. */
+  arribaNombre: 30,
 }
 
 // El minimo es muy bajo a proposito: en un movil el mapa completo solo cabe

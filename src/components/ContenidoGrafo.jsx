@@ -75,102 +75,96 @@ function ContenidoGrafo({
   return (
     <>
       {/* Cabecera de cada semestre.
-          Cuatro cosas, ordenadas por lo que cada una vale:
 
-            01                   el numero, lo unico que se lee de lejos
-            SEMESTRE             la etiqueta, identica en las diez columnas
-            6 materias · 17 UC   el dato
-            ────────────         una regla que ademas dice cuanto llevas
+          LA PREGUNTA ES QUE TIENE QUE DECIR, no como se adorna. Un estudiante
+          que recorre las diez columnas quiere saber tres cosas y en este orden:
+          cual es, cuanto lleva hecho de ella, y cuanto pesa. Nada mas.
 
-          Estaba plano: los tres textos iban en tinta plena y extrabold, o sea
-          los tres con el mismo peso, y encima con un contorno de 7 px que los
-          emborronaba. El contorno estaba para separarlos de la rejilla del
-          fondo y no hacia falta: medido en tema claro, la tinta tiene 14,08
-          de contraste contra la linea de rejilla y el minimo para texto
-          grande es 3. Un halo sobre 14 a 1 no separa nada.
+          Antes decia cuatro cosas y tres estaban susurradas: el numero a 46 px
+          y, apretados a su derecha, "6 materias · 17 UC" a 11 px y la palabra
+          SEMESTRE a 8,5 con mucho espaciado. Y el avance era una linea de 1,5
+          px que casi nadie veia.
 
-          El numero cambia de tipografia. Iba en JetBrains Mono, que es una
-          fuente para LEER CODIGO -cero punteado, terminales marcadas, formas
-          pensadas para distinguir un 0 de una O en una linea diminuta-, y
-          como numero de display eso se lee tecnico y no rotundo. Manrope a
-          peso 800 da cifras cerradas y geometricas. Estaba en mono por la
-          alineacion de las diez columnas, y resulta que no hacia falta:
-          medido, Manrope trae cifras tabulares, asi que "01" y "10" ocupan
-          exactamente lo mismo. Se gana la letra sin perder la rejilla y sin
-          descargar una tercera fuente. */}
+          Lo que se va: la palabra SEMESTRE. Es identica en las diez columnas,
+          o sea que no distingue nada, y diez repeticiones de la misma palabra
+          en una fila son ruido puro. La informacion no se pierde: el <title>
+          accesible la dice, que es donde hace falta.
+
+          Lo que sube de rango: EL AVANCE. Es la unica de las tres que cambia
+          contigo, y era la mas fina. Pasa a ser una barra de pildora de 5 px
+          -el mismo lenguaje que las barras de vida de la referencia- y ocupa
+          el ancho completo de la columna, asi que las diez juntas se leen como
+          un perfil de tu carrera de un vistazo.
+
+          Y todo se apila a la izquierda, alineado con el borde de las tarjetas
+          de abajo. La cabecera deja de ser un numero con dos notas colgando al
+          lado y pasa a ser la primera fila de la columna. */}
       {columnas.map((columna) => {
         const vivo = porColumna.get(columna.semestre) ?? { uc: 0, hechas: 0, total: 0 }
         const avance = vivo.total ? vivo.hechas / vivo.total : 0
         return (
           <g key={columna.semestre}>
-            {/* De una pieza y de un solo color. Se probo a apagar el cero de
-                relleno para destacar el digito que cuenta y era peor: dos
-                tonos dentro de un mismo numero se leen como dos cosas, y
-                "01" es una cosa. Un numero no se subraya por dentro. */}
+            <title>{`Semestre ${columna.semestre}: ${vivo.hechas} de ${vivo.total} materias aprobadas, ${vivo.uc} UC`}</title>
+
+            {/* El numero. De una pieza y de un solo color: se probo a apagar
+                el cero de relleno para destacar el digito que cuenta y era
+                peor, porque dos tonos dentro de un mismo numero se leen como
+                dos cosas y "01" es una cosa. */}
             <text
               x={columna.x}
-              y={MARGEN.top + 31}
-              fontSize="46"
+              y={MARGEN.top + 30}
+              fontSize="40"
               fill="var(--tinta)"
-              className="font-extrabold tracking-[-0.05em]"
+              className="font-extrabold tabular-nums tracking-[-0.055em]"
             >
               {String(columna.semestre).padStart(2, '0')}
             </text>
 
-            {/* El numero manda sobre la unidad: se lee el 6 y el 17, no
-                "materias" y "UC", que son siempre las mismas dos palabras. */}
+            {/* El dato, a la derecha del numero y en su linea de base. El
+                numero manda sobre la unidad: se lee el 6 y el 17, no las dos
+                palabras que se repiten en las diez columnas. */}
             <text
-              x={columna.x + 66}
-              y={MARGEN.top + 18}
+              x={columna.x + 58}
+              y={MARGEN.top + 30}
               fontSize="11"
               fill="var(--tinta-tenue)"
-              className="font-mono font-semibold"
+              className="tabular-nums font-semibold"
             >
-              <tspan fill="var(--tinta-suave)">{columna.cantidad}</tspan> materias
-              <tspan dx="4">·</tspan>
-              <tspan dx="4" fill="var(--tinta-suave)">
+              <tspan fill="var(--tinta)" fillOpacity="0.8">
+                {vivo.hechas}
+              </tspan>
+              <tspan dx="3">de</tspan>
+              <tspan dx="3" fill="var(--tinta)" fillOpacity="0.8">
+                {columna.cantidad}
+              </tspan>
+              <tspan dx="6">·</tspan>
+              <tspan dx="6" fill="var(--tinta)" fillOpacity="0.8">
                 {vivo.uc}
-              </tspan>{' '}
-              UC
+              </tspan>
+              <tspan dx="3">UC</tspan>
             </text>
 
-            <text
-              x={columna.x + 66}
-              y={MARGEN.top + 31}
-              fontSize="8.5"
-              fill="var(--tinta-tenue)"
-              className="font-semibold tracking-[0.24em]"
-            >
-              SEMESTRE
-            </text>
-
-            {/* La regla hace dos trabajos y por eso no ensucia.
-                Ya estaba ahi separando la cabecera de las tarjetas; ahora
-                ademas se llena con lo que llevas aprobado de ese semestre.
-                Un indicador de avance que no ocupa ni un pixel de mas es la
-                unica clase de indicador que cabe en un mapa con diez columnas:
-                cualquier barra añadida encima habria que restarsela al sitio
-                de las materias. */}
-            <line
-              x1={columna.x}
-              y1={MARGEN.top + 42}
-              x2={columna.x + NODO.ancho}
-              y2={MARGEN.top + 42}
-              stroke="var(--tinta-tenue)"
-              strokeOpacity="0.28"
-              strokeWidth="1.5"
-              strokeLinecap="round"
+            {/* La barra de avance. El canal siempre esta -si solo se dibujara
+                cuando hay progreso, las columnas vacias perderian su linea de
+                base y la fila de cabeceras se desalinearia-. */}
+            <rect
+              x={columna.x}
+              y={MARGEN.top + 40}
+              width={NODO.ancho}
+              height={5}
+              rx={2.5}
+              fill="var(--tinta)"
+              fillOpacity="0.1"
             />
             {avance > 0 && (
-              <line
-                x1={columna.x}
-                y1={MARGEN.top + 42}
-                x2={columna.x + NODO.ancho * avance}
-                y2={MARGEN.top + 42}
-                stroke="var(--estado-aprobada)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                style={{ transition: 'stroke-width 200ms ease' }}
+              <rect
+                x={columna.x}
+                y={MARGEN.top + 40}
+                width={Math.max(5, NODO.ancho * avance)}
+                height={5}
+                rx={2.5}
+                fill="var(--estado-aprobada)"
+                style={{ transition: 'width 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
               />
             )}
           </g>
@@ -237,6 +231,9 @@ function ContenidoGrafo({
                donde esta, no quien es. */
             atenuado={atenuado(enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
             seleccionado={seleccionado === (enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
+            /* Por el mismo motivo que el atenuado: la cadena se calcula con el
+               codigo de la MATERIA, no con el de la casilla que ocupa. */
+            resaltado={cadena != null && cadena.has(enCasilla(nodo.codigo)?.codigo)}
             alAbrir={alAbrirCasilla}
             alVerFicha={alVerFicha}
           />

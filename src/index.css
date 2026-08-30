@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/geist';
 @import '@fontsource-variable/jetbrains-mono';
 
 /* ------------------------------------------------------------------
@@ -16,6 +16,27 @@
   --panel-suave: #111b28;
   --nodo: #121d2c;
   --nodo-borde: #2a3a52;
+
+  /* Las cuatro tarjetas del mapa, una por estado. No hay una quinta ni hay
+     excepciones: el estado es lo UNICO que decide el color de una materia.
+
+     Antes lo decidia a medias con el area, y el area solo esta clasificada en
+     Ingenieria de Sistemas; en las otras ocho el color caia a un hash del
+     codigo, o sea que dos materias recien desbloqueadas salian una azul y
+     otra rosa sin que eso significara nada. Y el color de reserva era un gris
+     que coincidia con el de bloqueada.
+
+     Las tres activas comparten claridad y solo cambian de tono: la claridad
+     contesta "¿puedo cursarla?" y el tono contesta "¿en que voy?". Mezclar
+     las dos preguntas en un eje es lo que impedia leer el mapa de lejos.
+
+     Comprobado: nombre y codigo por encima de 4,5 de contraste sobre cada
+     tarjeta en los DOS temas, y cada par de estados a mas de 24 de distancia
+     de color. */
+  --tarjeta-bloqueada: #0f151e;
+  --tarjeta-disponible: #252f3e;
+  --tarjeta-cursando: #43311a;
+  --tarjeta-aprobada: #0d3d35;
   --tinta: #eaf1fa;
   --tinta-suave: #b3c4da;
   /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
@@ -73,6 +94,16 @@
   --panel-suave: #f4f7fb;
   --nodo: #ffffff;
   --nodo-borde: #c6d1e0;
+
+  /* En claro la direccion se invierte: hundido es mas OSCURO que el lienzo y
+     disponible es blanco. Por eso son tokens y no una formula. Y aqui las
+     tres activas no pueden compartir claridad: partiendo del blanco no queda
+     techo para teñir hacia arriba -cursando salia #fffff3, o sea blanco-, asi
+     que se tiñen hacia abajo, que es lo natural sobre fondo claro. */
+  --tarjeta-bloqueada: #dbe1ec;
+  --tarjeta-disponible: #ffffff;
+  --tarjeta-cursando: #fef4e6;
+  --tarjeta-aprobada: #e7faf4;
   --tinta: #0c1725;
   --tinta-suave: #3a4a61;
   /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
@@ -122,7 +153,11 @@
   --color-aprobada: var(--estado-aprobada);
   --color-cursando: var(--estado-cursando);
 
-  --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Geist en vez de Manrope. Manrope es redonda y amable; este mapa es denso
+     y tecnico, y Geist -geometrica, de aperturas cerradas, hecha para
+     interfaces- aguanta mejor un nombre de materia en 192 px. Medido: la
+     misma linea ocupa menos, asi que cabe mas nombre antes de partirse. */
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
 
