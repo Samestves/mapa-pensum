@@ -1,8 +1,6 @@
 import { memo } from 'react'
 import { Plus } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
-import { ESTADO } from '../data/estados'
-import { colorNodo } from '../theme/areas'
 import { pielDe } from '../theme/superficie'
 import { iconoDeMateria } from '../theme/iconosMateria'
 import CaraNodo from './CaraNodo'
@@ -44,10 +42,8 @@ function NodoHueco({
   const { x, y, nombre } = nodo
   const vacia = electiva == null
 
-  const acento = electiva ? colorNodo(electiva) : 'var(--tinta-tenue)'
   const piel = pielDe(estado)
   const Icono = electiva ? (piel.sello ?? iconoDeMateria(electiva.nombre)) : null
-  const bloqueada = estado === ESTADO.BLOQUEADA
 
   const primeraLinea = TEXTO.arribaNombre
 
@@ -141,27 +137,12 @@ function NodoHueco({
         </>
       ) : (
         <>
-          <rect
-            x={NODO.barra.x}
-            y={NODO.barra.y}
-            width={NODO.barra.ancho}
-            height={NODO.barra.alto}
-            rx={NODO.barra.ancho / 2}
-            fill={acento}
-            fillOpacity={bloqueada ? 0.4 : 1}
-          />
-
-          <text
-            x={NODO.padIzq}
-            y={26}
-            fontSize={TEXTO.meta}
-            fill="var(--tinta)"
-            fillOpacity={piel.dato}
-            className="tabular-nums tracking-wide"
-          >
-            {codigoVisible(electiva)}
-          </text>
-
+          {/* Exactamente la misma composicion que una materia obligatoria:
+              nombre arriba, codigo y UC en una linea abajo, icono a la
+              derecha. Que no se distinga es EL PUNTO. Una vez elegida, esa
+              electiva es tu pensum -se aprueba, cuenta UC y se cursa igual-,
+              asi que dibujarla con otro lenguaje la dejaria en un limbo visual
+              que no corresponde a nada real. */}
           {electiva.lineasNombre.map((linea, i) => (
             <text
               key={i}
@@ -169,7 +150,8 @@ function NodoHueco({
               y={primeraLinea + i * TEXTO.altoLinea}
               fontSize={TEXTO.nombre}
               fill="var(--tinta)"
-              className="font-semibold"
+              fillOpacity={piel.texto}
+              className="font-bold tracking-[-0.01em]"
             >
               {linea}
             </text>
@@ -177,20 +159,21 @@ function NodoHueco({
 
           <text
             x={NODO.padIzq}
-            y={86}
+            y={NODO.alto - 16}
             fontSize={TEXTO.meta}
-            fill="var(--tinta-tenue)"
-            className="font-mono"
+            fill="var(--tinta)"
+            fillOpacity={piel.dato}
+            className="tabular-nums tracking-wide"
           >
-            {electiva.uc} UC
+            {codigoVisible(electiva)} · {electiva.uc} UC
           </text>
 
           {Icono && (
             <Icono
-              x={NODO.ancho - NODO.padDer - 15}
-              y={13}
-              width={15}
-              height={15}
+              x={NODO.ancho - NODO.padDer - 16}
+              y={NODO.alto - 28}
+              width={16}
+              height={16}
               color="var(--tinta)"
               opacity={piel.icono}
               strokeWidth={2}
