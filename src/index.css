@@ -354,20 +354,36 @@ body {
   .cometa[data-capa='2'] {
     display: none;
   }
+}
 
-  /* 3. Y solo se anima el cable por el que la corriente significa algo: el
-        que va de una materia aprobada a una que eso acaba de abrir.
-        Antes bastaba con que el origen estuviera aprobado, y eso incluia los
-        cables que llegan a materias TAMBIEN aprobadas: corriente viajando
-        hacia algo terminado. No decia nada y ademas escalaba al reves, con
-        mas animaciones cuanto mas avanzada la carrera. Medido en Sistemas,
-        63 cables animados con el pensum casi entero contra 20 asi.
-        El cable sigue viendose encendido: lo que se apaga es la estela, no
-        el brillo. Se quita con display y no con animation:none, que dejaria
-        el guion parado a mitad del cable como una mancha. */
-  g:not([data-corriente]) > .cometa {
-    display: none;
-  }
+/* La corriente solo viaja por el cable donde significa algo: el que va de una
+   materia aprobada a una que eso acaba de abrir. Ni por los que llegan a algo
+   ya terminado -corriente hacia un sitio donde no hay nada que hacer- ni por
+   los que salen de una materia que todavia no has aprobado.
+
+   Esta regla ya existia, pero vivia DENTRO de la media query del tactil, asi
+   que en escritorio no se aplicaba y se animaban los 215 elementos del mapa a
+   la vez, siempre, estuvieras haciendo algo o mirando la pantalla quieto.
+   stroke-dashoffset y offset-distance son las dos propiedades que el
+   compositor no puede tocar: cada fotograma es un repintado y un recalculo de
+   geometria del SVG entero.
+
+   Medido con el perfilador del navegador, mapa QUIETO, tres segundos:
+
+     con la regla solo en tactil    8350 ms de trabajo   304 pinturas
+     con la regla en todas partes    390 ms de trabajo     4 pinturas
+
+   Veintiuna veces menos, y sin que se vea ninguna diferencia mientras no
+   tengas materias aprobadas, porque entonces no hay ninguna corriente que
+   tenga sentido enseñar. Con el pensum casi entero son unos veinte cables,
+   que es como debe escalar: mas progreso, mas corriente.
+
+   El cable sigue viendose encendido: lo que se apaga es la estela, no el
+   brillo. Con display y no con animation:none, que dejaria el guion parado a
+   mitad del cable como una mancha. */
+g:not([data-corriente]) > .cometa,
+g:not([data-corriente]) > .particula {
+  display: none;
 }
 
 /* currentColor es el color del area, que se fija en el <g> de cada arista */
