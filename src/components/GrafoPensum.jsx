@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { hayDetalle } from '../layout/detalle'
+import { vistaDeArranque } from '../layout/vistaInicial'
+import { ESTADO } from '../data/estados'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import ContenidoGrafo from './ContenidoGrafo'
@@ -26,6 +28,12 @@ function GrafoPensum({
 }) {
   const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, ancho, alto } = layout
 
+  /* El mapa no se abre encajado sino en el semestre por el que va el
+     estudiante. Ver vistaInicial.js: encajar el pensum entero en un telefono
+     deja el nombre de las materias en 1,2 px, que ni se lee ni se entiende. */
+  const arranque = (medida) =>
+    vistaDeArranque(medida, columnas, nodos, (codigo) => estados[codigo] === ESTADO.APROBADA)
+
   const {
     contenedorRef,
     vista,
@@ -39,7 +47,7 @@ function GrafoPensum({
     acercar,
     alejar,
     controlesArrastre,
-  } = useVistaGrafo(ancho, alto)
+  } = useVistaGrafo(ancho, alto, arranque)
 
   // El dock se apaga si nadie toca el mapa en dos segundos
   const { quieto, despertar } = useInactividad(2000)

@@ -56,7 +56,7 @@ export function acotarVista(v, medida, anchoContenido, altoContenido) {
  * transform sobre un <g>, no tocando el viewBox: asi el fondo se queda
  * quieto y solo se mueve el contenido.
  */
-export function useVistaGrafo(anchoContenido, altoContenido) {
+export function useVistaGrafo(anchoContenido, altoContenido, arranque) {
   const contenedorRef = useRef(null)
   const [vista, setVista] = useState({ x: 0, y: 0, escala: 1 })
 
@@ -171,19 +171,29 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     })
   }, [medida, anchoContenido, altoContenido, aplicarVista])
 
-  /* Encaje automatico la primera vez que se conoce el tamaño del contenedor.
+  /* Colocacion automatica la primera vez que se conoce el tamaño del contenedor.
+     Quien llama decide DONDE se abre; si no lo decide, se encaja el mapa entero.
      Hasta que ocurre, la vista vale {0, 0, escala 1}: el mapa entero dibujado
      a tamaño natural desde la esquina. Eso es un fotograma valido que NO hay
      que enseñar -es el tiron que se veia al volver del horario al mapa-, asi
      que se avisa de cuando ya esta colocado y el grafo se revela ahi. */
   const [encajado, setEncajado] = useState(false)
   const yaEncajado = useRef(false)
+
+  /* La vista de arranque se pide UNA vez y por eso va en una ref: recalcularla
+     al cambiar las marcas moveria el mapa por debajo del usuario cada vez que
+     aprueba una materia. */
+  const arranqueRef = useRef(arranque)
+  arranqueRef.current = arranque
+
   useEffect(() => {
     if (yaEncajado.current || !medida.ancho) return
     yaEncajado.current = true
-    encajar()
+    const inicial = arranqueRef.current?.(medida)
+    if (inicial) aplicarVista(inicial)
+    else encajar()
     setEncajado(true)
-  }, [medida, encajar])
+  }, [medida, encajar, aplicarVista])
 
   // Cuadro y red de la animacion de los botones
   const animacion = useRef(0)
