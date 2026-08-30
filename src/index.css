@@ -285,6 +285,23 @@ body {
   -webkit-user-select: text;
 }
 
+/* La rejilla del fondo del mapa.
+
+   Era un <pattern> de SVG y ahora es un fondo de CSS, y el cambio no es de
+   gusto. En un telefono Android el mapa aparecia roto en bandas horizontales
+   con el contenido repetido y desplazado, desde el primer fotograma y sin
+   tocarlo. Un <pattern> es el UNICO elemento del mapa que se dibuja repitiendo
+   una baldosa, y "contenido repetido en baldosas" es exactamente la forma que
+   tenia el fallo: el sospechoso con la silueta correcta.
+
+   Dos degradados repetidos hacen la misma cuadricula sin rasterizar ninguna
+   textura intermedia, y el navegador los compone como cualquier otro fondo. */
+.rejilla-mapa {
+  background-image:
+    repeating-linear-gradient(to right, var(--rejilla) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(to bottom, var(--rejilla) 0 1px, transparent 1px 34px);
+}
+
 .transicion-tema {
   transition:
     background-color 200ms ease,

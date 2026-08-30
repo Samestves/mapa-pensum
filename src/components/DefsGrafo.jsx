@@ -1,27 +1,25 @@
 /**
- * Definiciones reutilizables del SVG: rejilla de fondo y filtros de glow.
+ * Lo unico que el mapa comparte por referencia: el brillo de las tarjetas.
  *
- * Los filtros solo se aplican a lo que esta encendido (aristas vivas, cadena
- * resaltada, nodos aprobados). Ponerlos en los 49 nodos a la vez cuesta caro
- * en repintado y no aporta nada.
+ * Aqui vivian ademas un <pattern> para la rejilla del fondo y dos filtros de
+ * desenfoque. Los tres se fueron.
+ *
+ * LOS FILTROS estaban definidos y no los usaba nadie: el resplandor de los
+ * cables se hace apilando trazos, porque feGaussianBlur usa objectBoundingBox
+ * y en un cable horizontal la region tiene altura cero y no pinta nada. Eran
+ * quince lineas de codigo muerto.
+ *
+ * EL PATTERN se fue por algo mas serio. En un telefono Android el mapa salia
+ * roto en bandas horizontales con el contenido repetido y desplazado, desde el
+ * primer fotograma y sin tocarlo. Un <pattern> es el UNICO elemento del mapa
+ * que se dibuja repitiendo una baldosa, y "contenido repetido en baldosas" es
+ * exactamente la forma que tenia el fallo. La rejilla pasa a ser un fondo de
+ * CSS en el contenedor: dos degradados repetidos, que el navegador compone sin
+ * rasterizar ninguna textura intermedia.
  */
 function DefsGrafo() {
   return (
     <defs>
-      <pattern id="rejilla" width="34" height="34" patternUnits="userSpaceOnUse">
-        <path d="M34 0H0V34" fill="none" stroke="var(--rejilla)" strokeWidth="1" />
-      </pattern>
-
-      {/* El glow toma el color de lo que ilumina: se difumina el propio trazo
-          y se vuelve a pintar el original encima, nitido. */}
-      <filter id="glow-suave" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="2.5" result="borroso" />
-        <feMerge>
-          <feMergeNode in="borroso" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-
       {/* El brillo de las tarjetas: un degradado vertical de blanco a nada,
           compartido por las 494 materias del pensum. Se define una vez aqui y
           cada tarjeta lo referencia por url(), asi que no hay coste por
@@ -32,15 +30,6 @@ function DefsGrafo() {
         <stop offset="52%" stopColor="#ffffff" stopOpacity="0.025" />
         <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
       </linearGradient>
-
-      <filter id="glow-fuerte" x="-80%" y="-80%" width="260%" height="260%">
-        <feGaussianBlur stdDeviation="5" result="borroso" />
-        <feMerge>
-          <feMergeNode in="borroso" />
-          <feMergeNode in="borroso" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
     </defs>
   )
 }

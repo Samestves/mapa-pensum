@@ -93,7 +93,7 @@ function GrafoPensum({
   )
 
   return (
-    <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
+    <div ref={contenedorRef} className="rejilla-mapa relative min-w-0 flex-1 overflow-hidden">
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
@@ -115,11 +115,17 @@ function GrafoPensum({
       >
         <DefsGrafo />
 
-        {/* Click en el vacio: cierra la seleccion */}
+        {/* Click en el vacio: cierra la seleccion.
+
+            Transparente y no "none": con fill="none" el rectangulo deja de
+            recibir pulsaciones y pulsar el fondo dejaria de cerrar nada.
+            Antes este mismo rectangulo pintaba ademas la rejilla con un
+            <pattern>; la rejilla se fue al CSS del contenedor y aqui solo
+            queda su trabajo de blanco de tiro. */}
         <rect
           width="100%"
           height="100%"
-          fill="url(#rejilla)"
+          fill="transparent"
           onClick={() => {
             if (!huboMovimiento.current) alSeleccionar(null)
           }}
