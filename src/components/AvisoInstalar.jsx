@@ -122,7 +122,7 @@ function AvisoInstalar() {
               {[
                 `evento ${porque.hayEvento ? 'sí' : 'NO'}`,
                 `instalada ${porque.instalada ? 'sí' : 'no'}`,
-                `descartada ${porque.descartada ? 'sí' : 'no'}`,
+                `descartada ${porque.descartada ? 'sí' : 'no'}${porque.veces ? ` (${porque.veces}×)` : ''}`,
                 porque.movil ? 'móvil' : 'escritorio',
                 porque.ios ? 'ios' : null,
               ]

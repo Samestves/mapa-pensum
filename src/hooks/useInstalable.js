@@ -1,13 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
-import { guardar, leer } from '../data/almacen'
+import { guardarJSON, leer, leerJSON } from '../data/almacen'
 
 const CLAVE = 'mapa-pensum:instalar-descartado'
 
-/* Descartar caduca. Estuvo siendo para siempre, y "para siempre" es mucho
-   para un gesto que casi siempre es "ahora no": basta un toque sin querer en
-   la X -o una tarde probando- para que el aviso no vuelva a salir en ese
-   navegador nunca. Un mes despues se puede volver a preguntar una vez. */
-const CADUCIDAD = 30 * 24 * 60 * 60 * 1000
+/* Descartar no dura siempre ni dura lo mismo cada vez: se espacia.
+
+   Un solo toque en la X no quiere decir "no me interesa", casi siempre quiere
+   decir "ahora no". Cobrarselo con un mes de silencio es pasarse; volver a
+   preguntar al refrescar es acoso. La escalera dice lo que un plazo fijo no
+   sabe decir: la PRIMERA negativa apenas cuenta, la tercera ya es una
+   respuesta.
+
+   Tres dias, dos semanas, tres meses. A la tercera se deja de insistir en la
+   practica: quien ha cerrado el aviso tres veces ya dijo que no. */
+const ESPERA = [3, 14, 90].map((dias) => dias * 24 * 60 * 60 * 1000)
+
+/**
+ * Lo guardado, en el formato que sea. Hubo tres:
+ * el 'si' original sin fecha, el sello de tiempo suelto, y ahora {n, t}.
+ * Los dos viejos se leen para no castigar a quien ya venia con algo puesto.
+ */
+function leerDescarte() {
+  const crudo = leer(CLAVE)
+  if (!crudo) return null
+  if (crudo === 'si') return { n: 1, t: 0 } // sin fecha: caducado hace mucho
+  const suelto = Number(crudo)
+  if (Number.isFinite(suelto)) return { n: 1, t: suelto }
+  return leerJSON(CLAVE, null)
+}
 
 const yaInstalada = () =>
   window.__instalada === true ||
@@ -29,18 +49,22 @@ const esIOS = () =>
  * No vale mirar el ancho de la ventana: una ventana estrecha en un portatil
  * sigue siendo un portatil.
  */
+/* Lo que espera en el PC antes de aparecer. Estuvo en 7 segundos y era
+   demasiado: para entonces ya estas eligiendo carrera y el aviso llega a
+   interrumpir algo empezado, que es peor que llegar pronto. Cuatro dan para
+   ver de que va la pagina sin que te pille a media tarea. */
+const ESPERA_PC = 4000
+
 const esMovil = () => {
   if (window.navigator.userAgentData) return window.navigator.userAgentData.mobile === true
   return window.matchMedia('(pointer: coarse)').matches
 }
 
 function descartadoSigueVigente() {
-  const guardado = leer(CLAVE)
-  if (!guardado) return false
-  // Lo que se guardaba antes era 'si' a secas, sin fecha: se da por caducado
-  const cuando = Number(guardado)
-  if (!Number.isFinite(cuando)) return false
-  return Date.now() - cuando < CADUCIDAD
+  const d = leerDescarte()
+  if (!d) return false
+  const espera = ESPERA[Math.min(d.n, ESPERA.length) - 1]
+  return Date.now() - d.t < espera
 }
 
 /* Escotilla para poder VER el aviso cuando toca comprobarlo.
@@ -80,6 +104,7 @@ export function useInstalable() {
     const estado = {
       instalada: yaInstalada(),
       descartada: descartadoSigueVigente(),
+      veces: leerDescarte()?.n ?? 0,
       hayEvento: !!window.__instalable,
       ios: esIOS(),
       movil: esMovil(),
@@ -111,7 +136,7 @@ export function useInstalable() {
       if (guardado) {
         setEvento(guardado)
         const movil = esMovil()
-        mostrar(movil ? 'movil' : 'escritorio', movil ? 2600 : 7000)
+        mostrar(movil ? 'movil' : 'escritorio', movil ? 2600 : ESPERA_PC)
       }
     }
 
@@ -150,8 +175,9 @@ export function useInstalable() {
   }, [evento])
 
   const descartar = useCallback(() => {
-    // Se guarda CUANDO, no un si: es lo que deja que caduque
-    guardar(CLAVE, String(Date.now()))
+    // Cuenta las veces, no solo la ultima: es lo que hace la escalera
+    const previo = leerDescarte()
+    guardarJSON(CLAVE, { n: (previo?.n ?? 0) + 1, t: Date.now() })
     setModo(null)
   }, [])
 
