@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- viewport-fit=cover no: la app no dibuja hasta el borde y con el
          notch quedaria contenido debajo de la barra del sistema. -->
-    <title>Mapa de Pensum — UDO Núcleo de Monagas</title>
+    <title>Mapa de Pensum</title>
     <meta
       name="description"
       content="Mapa interactivo de los pensums de la Universidad de Oriente, Núcleo de Monagas. Nueve carreras con sus materias, prelaciones y avance."
@@ -73,8 +73,10 @@
         } catch (e) {
           /* Sin almacen se decide por lo que pida el sistema */
         }
+        /* Oscuro por defecto. Tiene que decir lo MISMO que useTema.js o la
+           pagina abre de un tema y React la cambia al otro al montar. */
         if (tema !== 'claro' && tema !== 'oscuro') {
-          tema = matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro'
+          tema = 'oscuro'
         }
         document.documentElement.dataset.tema = tema
         /* Que la barra del navegador acompañe: con el color fijo en oscuro,

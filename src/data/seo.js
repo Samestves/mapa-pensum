@@ -6,9 +6,14 @@ const SITIO = 'https://mapa-pensum.vercel.app'
  * como numeros) o null para el selector.
  */
 export function ponerMeta(carrera) {
+  /* Corto. En la pestaña de un navegador caben unos veinte caracteres antes
+     de que el texto se corte, asi que "Mapa de Pensum — UDO Núcleo de
+     Monagas" se leia como "Mapa de Pensu...". Lo que sobraba no era
+     informacion, era relleno: el nucleo y la universidad ya los dice la
+     meta description, que es la que usan los buscadores para el resumen. */
   document.title = carrera
-    ? `Pensum de ${carrera.nombre} — UDO Núcleo de Monagas`
-    : 'Mapa de Pensum — UDO Núcleo de Monagas'
+    ? `${carrera.nombre} — Pensum`
+    : 'Mapa de Pensum'
 
   const descripcion = carrera
     ? `Mapa interactivo del pensum de ${carrera.nombre} en la UDO Núcleo de Monagas: ` +

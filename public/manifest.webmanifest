@@ -1,6 +1,6 @@
 {
-  "name": "Mapa de Pensum — UDO Núcleo de Monagas",
-  "short_name": "Mapa de Pensum",
+  "name": "Mapa de Pensum",
+  "short_name": "Pensum UDO",
   "description": "Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto te falta.",
   "id": "/",
   "start_url": "/",
@@ -11,7 +11,10 @@
   "theme_color": "#05080e",
   "lang": "es-VE",
   "dir": "ltr",
-  "categories": ["education", "productivity"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",

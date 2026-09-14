@@ -6,8 +6,13 @@ const CLAVE = 'mapa-pensum:tema'
 function temaInicial() {
   const guardado = leer(CLAVE)
   if (guardado === 'claro' || guardado === 'oscuro') return guardado
-  // Si el sistema pide claro se respeta; si no, oscuro por defecto
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro'
+  /* Oscuro siempre, sin preguntarle al sistema. Antes se respetaba
+     prefers-color-scheme, y el resultado era que a quien lleva Windows en
+     claro -o sea, casi todo el mundo- la aplicacion se le abria en claro sin
+     haberlo pedido. El mapa esta pensado en oscuro: los ocho colores de area
+     estan calibrados sobre lienzo negro y es ahi donde se distinguen mejor.
+     Quien prefiera claro lo elige una vez y se le recuerda. */
+  return 'oscuro'
 }
 
 export function useTema() {
