@@ -100,6 +100,80 @@ export function crearLienzo(ANCHO, ALTO) {
     }
   }
 
+  /**
+   * Rellena una lista de poligonos con regla PAR-IMPAR, que es la que hace
+   * que los subtrazos interiores salgan como huecos en vez de como manchas.
+   * Es lo que necesita la rosa de los vientos del logotipo: su calco tiene
+   * trece subtrazos y varios van por dentro.
+   *
+   * El suavizado se hace muestreando cuatro sub-lineas por fila de pixeles y
+   * repartiendo cobertura fraccionaria en los extremos de cada tramo. Sin
+   * eso, una estrella de puntas finas sale con los bordes en escalera justo
+   * donde mas se nota, que es en la punta.
+   */
+  function poligonos(lista, color, alfa = 1) {
+    if (!lista.length) return
+
+    let minX = Infinity
+    let maxX = -Infinity
+    let minY = Infinity
+    let maxY = -Infinity
+    for (const poli of lista) {
+      for (const [px, py] of poli) {
+        if (px < minX) minX = px
+        if (px > maxX) maxX = px
+        if (py < minY) minY = py
+        if (py > maxY) maxY = py
+      }
+    }
+
+    const x0 = Math.max(0, Math.floor(minX))
+    const x1 = Math.min(ANCHO - 1, Math.ceil(maxX))
+    const y0 = Math.max(0, Math.floor(minY))
+    const y1 = Math.min(ALTO - 1, Math.ceil(maxY))
+    if (x1 < x0 || y1 < y0) return
+
+    const ancho = x1 - x0 + 1
+    const cobertura = new Float32Array(ancho)
+    const MUESTRAS = 4
+
+    for (let y = y0; y <= y1; y++) {
+      cobertura.fill(0)
+
+      for (let m = 0; m < MUESTRAS; m++) {
+        const linea = y + (m + 0.5) / MUESTRAS
+        const cruces = []
+
+        for (const poli of lista) {
+          for (let k = 0; k < poli.length; k++) {
+            const [ax, ay] = poli[k]
+            const [bx, by] = poli[(k + 1) % poli.length]
+            // Un solo extremo cuenta como dentro, o los vertices se pintan dos veces
+            if ((ay <= linea && by > linea) || (by <= linea && ay > linea)) {
+              cruces.push(ax + ((linea - ay) / (by - ay)) * (bx - ax))
+            }
+          }
+        }
+        if (cruces.length < 2) continue
+        cruces.sort((a, b) => a - b)
+
+        for (let k = 0; k + 1 < cruces.length; k += 2) {
+          const desde = Math.max(cruces[k], x0)
+          const hasta = Math.min(cruces[k + 1], x1 + 1)
+          if (hasta <= desde) continue
+          for (let px = Math.floor(desde); px < hasta; px++) {
+            const trozo = Math.min(px + 1, hasta) - Math.max(px, desde)
+            cobertura[px - x0] += trozo / MUESTRAS
+          }
+        }
+      }
+
+      for (let k = 0; k < ancho; k++) {
+        if (cobertura[k] > 0.002) punto(x0 + k, y, color, Math.min(1, cobertura[k]) * alfa)
+      }
+    }
+  }
+
   /** Circulo con borde suavizado por cobertura del pixel */
   function circulo(cx, cy, radio, color, alfa = 1) {
     const desde = Math.floor(cx - radio - 1)
@@ -161,6 +235,7 @@ export function crearLienzo(ANCHO, ALTO) {
   return {
     punto,
     rellenar,
+    poligonos,
     circulo,
     segmento,
     rectangulo,
