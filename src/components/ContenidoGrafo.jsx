@@ -1,6 +1,8 @@
 import { memo, useMemo } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
+import { SITUACION, tramoDe } from '../layout/situacion'
+import { SEGMENTO } from '../theme/situacion'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'
@@ -14,20 +16,16 @@ import Arista from './Arista'
  * El transform de pan y zoom vive en el <g> de fuera y cambia en cada
  * fotograma del arrastre. Con este contenido escrito dentro de GrafoPensum,
  * cada uno de esos fotogramas obligaba a React a recrear ciento treinta y un
- * elementos y a correr ciento treinta y una comparaciones de memo para
- * acabar cambiando un solo atributo. Medido: 15,2 ms por movimiento con
- * React contra 6,7 ms escribiendo el transform a mano.
- *
- * Aqui dentro nada depende de la vista, asi que al mover el mapa React
- * compara UNA prop, se sale, y el subarbol entero ni se toca.
+ * elementos para acabar cambiando un solo atributo. Medido: 15,2 ms por
+ * movimiento con React contra 6,7 ms escribiendo el transform a mano.
  *
  * La consecuencia es que sus props tienen que mantener la identidad entre
  * renders. Las funciones vienen fijadas con useCallback desde arriba
- * -incluida `atenuado`, que se calcula en useFocoGrafo-. Si alguna volviera
- * a crearse en cada render, esto dejaria de servir en silencio y solo se
- * notaria en un telefono.
+ * -incluida `atenuado`-. Si alguna volviera a crearse en cada render, esto
+ * dejaria de servir en silencio y solo se notaria en un telefono.
  */
 function ContenidoGrafo({
+  situaciones,
   columnas,
   aristas,
   nodos,
@@ -48,164 +46,55 @@ function ContenidoGrafo({
   alVerFicha,
   alMarcar,
 }) {
-  /* Lo que la cabecera dice de cada semestre, ya con lo que el estudiante ha
-     hecho y elegido. Se calcula una vez para las diez columnas en vez de
-     recorrer los nodos dentro de cada una.
+  /* `situaciones` llega calculada desde GrafoPensum y baja a cada tarjeta como
+     texto. Calcularla dentro de cada una obligaria a pasarles el mapa entero
+     de estados, que cambia de identidad con cada marca, y todas se volverian
+     a pintar al aprobar una sola.
 
-     Las UC suman las electivas que hayas COLOCADO. La cabecera cuenta la
-     casilla como una materia del semestre -y esta bien, porque vas a cursar
-     algo ahi-, asi que sus creditos tienen que entrar en cuanto se sepan
-     cuales son. Vacia aporta cero, que es lo honesto: todavia no lo has
-     decidido, y el mapa no se lo inventa. */
+     Lo que la cabecera de cada semestre necesita, de una pasada: sus UC, una
+     situacion por materia en el orden en que estan dibujadas -eso es la barra
+     segmentada- y los recuentos para la frase de estado.
+
+     Las UC suman las electivas que hayas COLOCADO. La casilla cuenta como una
+     materia del semestre, porque vas a cursar algo ahi; vacia aporta cero UC,
+     que es lo honesto: todavia no lo has decidido. */
   const porColumna = useMemo(() => {
     const mapa = new Map()
-    for (const nodo of nodos) {
-      if (!mapa.has(nodo.semestre)) mapa.set(nodo.semestre, { uc: 0, hechas: 0, total: 0 })
+    const ordenados = [...nodos].sort((a, b) => a.y - b.y)
+    for (const nodo of ordenados) {
+      if (!mapa.has(nodo.semestre)) {
+        mapa.set(nodo.semestre, { uc: 0, segmentos: [], cuenta: {} })
+      }
       const fila = mapa.get(nodo.semestre)
-      fila.total += 1
-
       const materia = nodo.esHueco ? enCasilla(nodo.codigo) : nodo
-      if (!materia) continue
-      fila.uc += materia.uc ?? 0
-      if (estados[materia.codigo] === ESTADO.APROBADA) fila.hechas += 1
+      const situacion = materia ? situaciones.get(materia.codigo) : SITUACION.LEJANA
+      fila.segmentos.push(situacion)
+      fila.cuenta[situacion] = (fila.cuenta[situacion] ?? 0) + 1
+      if (materia) fila.uc += materia.uc ?? 0
     }
     return mapa
-  }, [nodos, estados, enCasilla])
+  }, [nodos, enCasilla, situaciones])
 
   return (
     <>
-      {/* Cabecera de cada semestre.
-          Cuatro cosas, ordenadas por lo que cada una vale:
+      {columnas.map((columna) => (
+        <CabeceraSemestre
+          key={columna.semestre}
+          columna={columna}
+          datos={porColumna.get(columna.semestre)}
+        />
+      ))}
 
-            01                   el numero, lo unico que se lee de lejos
-            SEMESTRE             la etiqueta, identica en las diez columnas
-            6 materias · 17 UC   el dato
-            ────────────         una regla que ademas dice cuanto llevas
-
-          Estaba plano: los tres textos iban en tinta plena y extrabold, o sea
-          los tres con el mismo peso, y encima con un contorno de 7 px que los
-          emborronaba. El contorno estaba para separarlos de la rejilla del
-          fondo y no hacia falta: medido en tema claro, la tinta tiene 14,08
-          de contraste contra la linea de rejilla y el minimo para texto
-          grande es 3. Un halo sobre 14 a 1 no separa nada.
-
-          El numero cambia de tipografia. Iba en JetBrains Mono, que es una
-          fuente para LEER CODIGO -cero punteado, terminales marcadas, formas
-          pensadas para distinguir un 0 de una O en una linea diminuta-, y
-          como numero de display eso se lee tecnico y no rotundo. Manrope a
-          peso 800 da cifras cerradas y geometricas. Estaba en mono por la
-          alineacion de las diez columnas, y no hace falta una mono para eso:
-          basta pedir cifras tabulares con tabular-nums.
-
-          Aqui decia que la fuente las traia de serie y que por eso no hacia
-          falta pedirlas. Era falso, y con el cambio a Geist se notaba: medido
-          a 46 px y peso 800, "08" mide 63,81 px y "10" mide 53,14, o sea diez
-          pixeles y medio de diferencia entre dos cabeceras que estan una al
-          lado de la otra. Con tabular-nums las diez miden 59,63 exactos. */}
-      {columnas.map((columna) => {
-        const vivo = porColumna.get(columna.semestre) ?? { uc: 0, hechas: 0, total: 0 }
-        const avance = vivo.total ? vivo.hechas / vivo.total : 0
-        return (
-          <g key={columna.semestre}>
-            {/* De una pieza y de un solo color. Se probo a apagar el cero de
-                relleno para destacar el digito que cuenta y era peor: dos
-                tonos dentro de un mismo numero se leen como dos cosas, y
-                "01" es una cosa. Un numero no se subraya por dentro. */}
-            <text
-              x={columna.x}
-              y={MARGEN.top + 31}
-              fontSize="46"
-              fill="var(--tinta)"
-              className="font-extrabold tabular-nums tracking-[-0.05em]"
-            >
-              {String(columna.semestre).padStart(2, '0')}
-            </text>
-
-            {/* El numero manda sobre la unidad: se lee el 6 y el 17, no
-                "materias" y "UC", que son siempre las mismas dos palabras. */}
-            <text
-              x={columna.x + 66}
-              y={MARGEN.top + 18}
-              fontSize="11"
-              fill="var(--tinta-tenue)"
-              className="font-mono font-semibold"
-            >
-              <tspan fill="var(--tinta-suave)">{columna.cantidad}</tspan> materias
-              <tspan dx="4">·</tspan>
-              <tspan dx="4" fill="var(--tinta-suave)">
-                {vivo.uc}
-              </tspan>{' '}
-              UC
-            </text>
-
-            <text
-              x={columna.x + 66}
-              y={MARGEN.top + 31}
-              fontSize="8.5"
-              fill="var(--tinta-tenue)"
-              className="font-semibold tracking-[0.24em]"
-            >
-              SEMESTRE
-            </text>
-
-            {/* La regla hace dos trabajos y por eso no ensucia.
-                Ya estaba ahi separando la cabecera de las tarjetas; ahora
-                ademas se llena con lo que llevas aprobado de ese semestre.
-                Un indicador de avance que no ocupa ni un pixel de mas es la
-                unica clase de indicador que cabe en un mapa con diez columnas:
-                cualquier barra añadida encima habria que restarsela al sitio
-                de las materias. */}
-            <line
-              x1={columna.x}
-              y1={MARGEN.top + 42}
-              x2={columna.x + NODO.ancho}
-              y2={MARGEN.top + 42}
-              stroke="var(--tinta-tenue)"
-              strokeOpacity="0.28"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            {avance > 0 && (
-              <line
-                x1={columna.x}
-                y1={MARGEN.top + 42}
-                x2={columna.x + NODO.ancho * avance}
-                y2={MARGEN.top + 42}
-                stroke="var(--estado-aprobada)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                style={{ transition: 'stroke-width 200ms ease' }}
-              />
-            )}
-          </g>
-        )
-      })}
-
-      {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza
-          que ninguno pasa por encima de un nodo. */}
+      {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza que
+          ninguno pasa por encima de un nodo. */}
       <g>
-        {aristas.map((arista, i) => (
+        {aristas.map((arista) => (
           <Arista
             key={arista.id}
             d={arista.d}
             x2={arista.x2}
             y2={arista.y2}
-            area={arista.area}
-            codigoOrigen={arista.origen}
-            // Retardo y velocidad distintos por cable: sincronizados
-            // todos se veria como un metronomo. Se calculan del indice,
-            // asi que son estables y no reinician la animacion.
-            retardo={(i % 7) * 0.55}
-            velocidad={3.8 + (i % 5) * 0.35}
-            viva={estados[arista.origen] === ESTADO.APROBADA}
-            /* Lleva corriente el cable que va de algo aprobado a algo que
-               eso acaba de abrir. Es lo que el efecto siempre quiso decir, y
-               de paso es lo unico que no crece sin freno segun avanza la
-               carrera: la frontera de lo inscribible siempre es pequeña. */
-            desbloqueando={
-              estados[arista.origen] === ESTADO.APROBADA &&
-              estados[arista.destino] === ESTADO.DISPONIBLE
-            }
+            tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
             resaltada={cadena != null && cadena.has(arista.origen) && cadena.has(arista.destino)}
             atenuada={atenuado(arista.origen) || atenuado(arista.destino)}
             descargando={descarga?.codigo === arista.origen}
@@ -214,37 +103,31 @@ function ContenidoGrafo({
         ))}
       </g>
 
-      {/* Los huecos de electiva no son materias: ni estado, ni marca, ni
-          ficha. Se dibujan aparte para no meter ese caso dentro del nodo
-          normal, que ya tiene cuatro estados que atender. */}
+      {/* Los huecos de electiva se dibujan aparte para no meter ese caso dentro
+          de la tarjeta normal. */}
       {nodos
         .filter((nodo) => nodo.esHueco)
-        .map((nodo) => (
-          <NodoHueco
-            key={nodo.codigo}
-            nodo={nodo}
-            electiva={enCasilla(nodo.codigo)}
-            estado={estados[enCasilla(nodo.codigo)?.codigo]}
-            /* El foco y la seleccion preguntan por la ELECTIVA cuando la hay,
-               y solo por la casilla cuando esta vacia.
-
-               Aqui habia un fallo que apagaba el mapa entero. Una casilla
-               llena dibuja una materia, pero lo hacia bajo el codigo de la
-               casilla -casilla-humanistica-1-, mientras que la cadena de
-               prelaciones se calcula con el codigo real de la materia
-               -0113053-. Al pulsarla, la cadena no contenia NI UN nodo de los
-               que estan dibujados, asi que los cuarenta y nueve nodos y las
-               ocho casillas se iban a opacidad 0,14 a la vez. Medido: 49/49 y
-               8/8 atenuados.
-
-               Una materia tiene un codigo. Que ademas ocupe una casilla es
-               donde esta, no quien es. */
-            atenuado={atenuado(enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
-            seleccionado={seleccionado === (enCasilla(nodo.codigo)?.codigo ?? nodo.codigo)}
-            alAbrir={alAbrirCasilla}
-            alVerFicha={alVerFicha}
-          />
-        ))}
+        .map((nodo) => {
+          const electiva = enCasilla(nodo.codigo)
+          /* El foco y la seleccion preguntan por la ELECTIVA cuando la hay, y
+             solo por la casilla cuando esta vacia. Una casilla llena dibuja
+             una materia, y la cadena de prelaciones se calcula con el codigo
+             real de esa materia: preguntando por el de la casilla, al pulsarla
+             no coincidia nada y el mapa entero se apagaba. */
+          const codigo = electiva?.codigo ?? nodo.codigo
+          return (
+            <NodoHueco
+              key={nodo.codigo}
+              nodo={nodo}
+              electiva={electiva}
+              situacion={electiva ? situaciones.get(electiva.codigo) : null}
+              atenuado={atenuado(codigo)}
+              seleccionado={seleccionado === codigo}
+              alAbrir={alAbrirCasilla}
+              alVerFicha={alVerFicha}
+            />
+          )
+        })}
 
       {nodos
         .filter((nodo) => !nodo.esHueco)
@@ -252,13 +135,13 @@ function ContenidoGrafo({
           <NodoAsignatura
             key={nodo.codigo}
             nodo={nodo}
-            estado={estados[nodo.codigo]}
+            situacion={situaciones.get(nodo.codigo)}
             seleccionado={seleccionado === nodo.codigo}
             resaltado={cadena != null && cadena.has(nodo.codigo)}
             atenuado={atenuado(nodo.codigo)}
             destellando={
               descarga != null &&
-              estados[nodo.codigo] === ESTADO.DISPONIBLE &&
+              situaciones.get(nodo.codigo) === SITUACION.INSCRIBIBLE &&
               (nodo.prerrequisitos ?? []).includes(descarga.codigo)
             }
             claveDestello={descarga?.n}
@@ -279,53 +162,22 @@ function ContenidoGrafo({
             y1={grupo.yTitulo + 4}
             x2={ancho - MARGEN.right}
             y2={grupo.yTitulo + 4}
-            stroke="var(--tinta-tenue)"
-            strokeOpacity="0.22"
+            stroke="var(--tinta)"
+            strokeOpacity="0.08"
             strokeWidth="1"
-            strokeDasharray="2 8"
           />
-          {/* Titulo y cuota son UN solo texto con dos tramos, no dos textos
-              colocados cada uno por su cuenta.
-
-              La cuota salia antes a 300 px del margen izquierdo, un numero
-              que valia mientras el titulo fuese corto: "ELECTIVAS TECNICAS"
-              acaba en 248 y cabia, pero "ELECTIVAS SOCIOHUMANISTICAS" acaba
-              en 358 y se le montaba encima diez pixeles. Cualquier otro
-              numero fijo solo mueve el titulo a partir del cual vuelve a
-              romperse.
-
-              Con dos tspan y un dx, el segundo tramo arranca donde acaba el
-              primero: lo coloca el propio SVG y la separacion es la misma
-              diga lo que diga el titulo, sin medir texto ni llevar refs.
-
-              Anclarla al extremo derecho tambien evitaba el choque, pero era
-              peor: a la escala en que el mapa entra entero, once pixeles y
-              medio se dibujan a poco mas de cuatro y no se leen, asi que la
-              cuota solo se lee acercandose -y acercandose, el otro extremo de
-              la franja cae a tres mil pixeles del titulo-. Se leeria "elige
-              15 UC de 25 opciones" sin ver de que grupo. Juntas o no sirve.
-
-              Aqui tambien se fue el halo, por lo mismo que en la cabecera de
-              semestre: la tinta tiene catorce veces el contraste que hace
-              falta contra la rejilla, asi que un contorno de 4 px no separaba
-              nada y solo engordaba los bordes. Quitarlo en un sitio de dos
-              habria dejado el mapa con dos criterios distintos para el mismo
-              problema. */}
+          {/* Titulo y cuota son UN texto con dos tramos: el segundo arranca
+              donde acaba el primero, diga lo que diga el titulo. Con la cuota
+              a una x fija, "ELECTIVAS SOCIOHUMANISTICAS" se le montaba encima. */}
           <text x={MARGEN.left} y={grupo.yTitulo + 34}>
-            <tspan
-              fontSize="15"
-              fill="var(--tinta)"
-              className="font-extrabold tracking-[0.16em]"
-            >
+            <tspan fontSize="14" fill="var(--tinta)" className="font-semibold tracking-[0.14em]">
               {grupo.titulo}
             </tspan>
-            {/* La cuota sale del pensum, no del componente. Donde no la hay
-                se dice cuantas opciones existen y nada mas. */}
             <tspan
-              dx="18"
+              dx="16"
               fontSize="11.5"
-              fill="var(--tinta-suave)"
-              className="font-mono font-semibold tabular-nums"
+              fill="var(--tinta-tenue)"
+              className="font-mono tabular-nums"
             >
               {grupo.cuota != null
                 ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`
@@ -339,7 +191,7 @@ function ContenidoGrafo({
         <NodoElectiva
           key={nodo.codigo}
           nodo={nodo}
-          estado={estados[nodo.codigo]}
+          situacion={situaciones.get(nodo.codigo)}
           // Primer requisito pendiente, para decirlo en la tarjeta
           requisito={
             (nodo.prerrequisitos ?? [])
@@ -355,6 +207,113 @@ function ContenidoGrafo({
         />
       ))}
     </>
+  )
+}
+
+/**
+ * Cabecera de un semestre. Tres lineas, cada una con un trabajo:
+ *
+ *   SEMESTRE              17 UC     que es y cuanto pesa
+ *   05             2 por inscribir  el numero, y lo que te dice HOY
+ *   ▰▰▰▰▱▱▱                         una materia, un segmento
+ *
+ * La barra sustituye a la regla que se iba llenando en proporcion. Una regla
+ * al 40 % no dice si ese 40 % son materias aprobadas o en curso, ni si lo que
+ * falta se puede inscribir ya o queda lejos. Un segmento por materia, pintado
+ * con el mismo color que su tarjeta, lo dice todo sin leer nada: a la escala
+ * del mapa entero en un telefono, donde ninguna letra se lee, se sigue viendo
+ * que semestres estan hechos, cual esta en curso y donde esta tu frontera.
+ *
+ * La frase de la derecha dice solo la cosa mas urgente del semestre, en este
+ * orden: si esta completo, si tienes algo en curso, si hay algo que inscribir
+ * o si algo se abre el que viene. Si no hay nada de eso, calla.
+ */
+function CabeceraSemestre({ columna, datos }) {
+  const { x, semestre } = columna
+  const top = MARGEN.top
+  const segmentos = datos?.segmentos ?? []
+  const cuenta = datos?.cuenta ?? {}
+  const total = segmentos.length
+
+  const HUECO = 3
+  const anchoSegmento = total ? (NODO.ancho - HUECO * (total - 1)) / total : NODO.ancho
+
+  const estado =
+    total > 0 && cuenta[SITUACION.HECHA] === total
+      ? { texto: 'Completo', color: 'var(--estado-aprobada)' }
+      : cuenta[SITUACION.CURSANDO]
+        ? { texto: `${cuenta[SITUACION.CURSANDO]} en curso`, color: 'var(--estado-cursando)' }
+        : cuenta[SITUACION.INSCRIBIBLE]
+          ? { texto: `${cuenta[SITUACION.INSCRIBIBLE]} por inscribir`, color: 'var(--tinta)' }
+          : cuenta[SITUACION.PROXIMA]
+            ? { texto: `${cuenta[SITUACION.PROXIMA]} el próximo`, color: 'var(--tinta-suave)' }
+            : cuenta[SITUACION.HECHA]
+              ? { texto: `${cuenta[SITUACION.HECHA]} de ${total}`, color: 'var(--tinta-tenue)' }
+              : null
+
+  return (
+    <g>
+      <text
+        x={x}
+        y={top + 8}
+        fontSize="9"
+        fill="var(--tinta-tenue)"
+        className="font-semibold tracking-[0.22em]"
+      >
+        SEMESTRE
+      </text>
+      <text
+        x={x + NODO.ancho}
+        y={top + 8}
+        textAnchor="end"
+        fontSize="10"
+        fill="var(--tinta-tenue)"
+        className="font-mono tabular-nums"
+      >
+        {datos?.uc ?? 0} UC
+      </text>
+
+      <text
+        x={x - 1}
+        y={top + 38}
+        fontSize="30"
+        fill="var(--tinta)"
+        className="font-semibold tabular-nums tracking-[-0.04em]"
+      >
+        {String(semestre).padStart(2, '0')}
+      </text>
+      {estado && (
+        <text
+          x={x + NODO.ancho}
+          y={top + 37}
+          textAnchor="end"
+          fontSize="11"
+          className="font-semibold"
+          style={{ fill: estado.color, transition: 'fill 240ms ease' }}
+        >
+          {estado.texto}
+        </text>
+      )}
+
+      {segmentos.map((situacion, i) => {
+        const s = SEGMENTO[situacion]
+        return (
+          <rect
+            key={i}
+            x={x + i * (anchoSegmento + HUECO)}
+            y={top + 46}
+            width={anchoSegmento}
+            height={4}
+            rx={2}
+            style={{
+              fill: s.color,
+              fillOpacity: s.opacidad,
+              transition: 'fill 240ms ease, fill-opacity 240ms ease',
+            }}
+          />
+        )
+      })}
+    </g>
   )
 }
 

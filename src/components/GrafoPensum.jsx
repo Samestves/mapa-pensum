@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
@@ -6,6 +6,8 @@ import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
+import LeyendaMapa from './LeyendaMapa'
+import { situacionDe } from '../layout/situacion'
 
 function GrafoPensum({
   layout,
@@ -39,6 +41,22 @@ function GrafoPensum({
     alejar,
     controlesArrastre,
   } = useVistaGrafo(ancho, alto)
+
+  /* Situacion de cada materia -hecha, cursando, inscribible, proxima o
+     lejana-. Se calcula aqui y no dentro del mapa porque la usan dos: las
+     tarjetas y la leyenda que las cuenta. Cambia de identidad solo cuando
+     cambian los estados, que es cuando de verdad hay que repintar. */
+  const situaciones = useMemo(() => {
+    const mapa = new Map()
+    const poner = (a) => {
+      if (a && !mapa.has(a.codigo)) {
+        mapa.set(a.codigo, situacionDe(a.codigo, a.prerrequisitos, estados))
+      }
+    }
+    for (const nodo of nodos) poner(nodo.esHueco ? enCasilla(nodo.codigo) : nodo)
+    for (const nodo of electivas) poner(nodo)
+    return mapa
+  }, [nodos, electivas, estados, enCasilla])
 
   // El dock se apaga si nadie toca el mapa en dos segundos
   const { quieto, despertar } = useInactividad(2000)
@@ -97,14 +115,10 @@ function GrafoPensum({
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
-      {/* lienzo-en-gesto congela las estelas mientras el mapa se mueve. Son
-          doscientas y pico animaciones que el navegador no puede componer en
-          la GPU, y repintarlas ademas de mover el mapa es lo que hace que en
-          un telefono el arrastre vaya a tirones. */}
       <svg
         width="100%"
         height="100%"
-        className={`select-none ${enGesto ? 'lienzo-en-gesto' : ''} ${
+        className={`select-none ${
           arrastrando ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         style={{ touchAction: 'none' }}
@@ -141,6 +155,7 @@ function GrafoPensum({
               es lo unico que cambia al desplazar o acercar, y su unico hijo
               se salta el render entero comparando una prop. */}
           <ContenidoGrafo
+            situaciones={situaciones}
             columnas={columnas}
             aristas={aristas}
             nodos={nodos}
@@ -179,6 +194,7 @@ function GrafoPensum({
         />
       )}
 
+      <LeyendaMapa situaciones={situaciones} nodos={nodos} enCasilla={enCasilla} />
       <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
     </div>
   )

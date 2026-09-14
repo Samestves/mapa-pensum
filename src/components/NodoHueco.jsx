@@ -1,10 +1,10 @@
 import { memo } from 'react'
 import { Plus } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
-import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
-import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
+import { ETIQUETA_SITUACION } from '../theme/situacion'
 import { codigoVisible } from '../data/codigoVisible'
+import CaraTarjeta from './CaraTarjeta'
 
 /**
  * La casilla de electiva: el sitio que el pensum reserva para una materia que
@@ -29,19 +29,10 @@ import { codigoVisible } from '../data/codigoVisible'
  * obligatorias, asi que dibujarla distinta la dejaria en un limbo visual que
  * no corresponde a nada real.
  */
-function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, alVerFicha }) {
+function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir, alVerFicha }) {
   const { x, y, nombre } = nodo
   const vacia = electiva == null
-
-  const acento = electiva ? colorNodo(electiva) : 'var(--tinta-tenue)'
-  const colorBorde = electiva ? colorBordeEstado(estado, acento) : acento
-  const Icono = electiva ? ICONO_ESTADO[estado] : null
-  const aprobada = estado === ESTADO.APROBADA
-  const bloqueada = estado === ESTADO.BLOQUEADA
-
-  const primeraLinea = electiva
-    ? TEXTO.centroNombre - ((electiva.lineasNombre.length - 1) * TEXTO.altoLinea) / 2
-    : 0
+  const acento = 'var(--tinta-tenue)'
 
   return (
     <g
@@ -61,40 +52,29 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
       <title>
         {vacia
           ? `${nombre} — casilla libre: pulsa para elegir una`
-          : `${codigoVisible(electiva)} — ${electiva.nombre} · ${electiva.uc} UC · ${estado}`}
+          : `${codigoVisible(electiva)} — ${electiva.nombre} · ${electiva.uc} UC · ${ETIQUETA_SITUACION[situacion]}`}
       </title>
 
-      <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />
-
-      {!vacia && (
-        <rect
-          width={NODO.ancho}
-          height={NODO.alto}
-          rx={NODO.radio}
-          fill={aprobada ? 'var(--estado-aprobada)' : acento}
-          fillOpacity={aprobada ? 0.2 : bloqueada ? 0 : 0.08}
-          style={{ transition: 'fill-opacity 300ms ease' }}
-        />
+      {vacia && (
+        <>
+          <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />
+          {/* El borde discontinuo es el unico del mapa que queda, y justo por
+              eso significa algo: "aqui todavia no hay nada". Con guiones en
+              las bloqueadas ademas, el mismo trazo decia dos cosas. */}
+          <rect
+            width={NODO.ancho}
+            height={NODO.alto}
+            rx={NODO.radio}
+            fill="none"
+            stroke="var(--tinta)"
+            strokeOpacity={seleccionado ? 0.7 : 0.26}
+            strokeWidth={seleccionado ? 2 : 1.25}
+            strokeDasharray="6 5"
+            strokeLinecap="round"
+            style={{ transition: 'stroke-opacity 200ms ease' }}
+          />
+        </>
       )}
-
-      {/* El borde. Discontinuo mientras esta vacia -es el unico sitio del mapa
-          donde ese trazo significa "aqui todavia no hay nada"- y entero en
-          cuanto tiene materia, que es cuando deja de ser un hueco. */}
-      <rect
-        width={NODO.ancho}
-        height={NODO.alto}
-        rx={NODO.radio}
-        fill="none"
-        stroke={colorBorde}
-        strokeOpacity={vacia ? 0.42 : bloqueada ? 0.4 : 1}
-        strokeWidth={seleccionado ? 2.6 : vacia ? 1.5 : bloqueada ? 1.25 : 1.8}
-        /* Guiones mas largos y con la punta redonda: a 6-5 el trazo se lee
-           como una linea intencionada y no como un borde roto, que es lo que
-           parecia a 5-4 con punta cuadrada. */
-        strokeDasharray={vacia ? '6 5' : undefined}
-        strokeLinecap={vacia ? 'round' : undefined}
-        style={{ transition: 'stroke 300ms ease, stroke-width 160ms ease' }}
-      />
 
       {vacia ? (
         <>
@@ -149,61 +129,14 @@ function NodoHueco({ nodo, electiva, estado, atenuado, seleccionado, alAbrir, al
           </text>
         </>
       ) : (
-        <>
-          <rect
-            x={NODO.barra.x}
-            y={NODO.barra.y}
-            width={NODO.barra.ancho}
-            height={NODO.barra.alto}
-            rx={NODO.barra.ancho / 2}
-            fill={acento}
-            fillOpacity={bloqueada ? 0.4 : 1}
-          />
-
-          <text
-            x={NODO.padIzq}
-            y={26}
-            fontSize={TEXTO.codigo}
-            fill="var(--tinta-tenue)"
-            className="font-mono tracking-wider"
-          >
-            {codigoVisible(electiva)}
-          </text>
-
-          {electiva.lineasNombre.map((linea, i) => (
-            <text
-              key={i}
-              x={NODO.padIzq}
-              y={primeraLinea + i * TEXTO.altoLinea}
-              fontSize={TEXTO.nombre}
-              fill="var(--tinta)"
-              className="font-semibold"
-            >
-              {linea}
-            </text>
-          ))}
-
-          <text
-            x={NODO.padIzq}
-            y={86}
-            fontSize={TEXTO.meta}
-            fill="var(--tinta-tenue)"
-            className="font-mono"
-          >
-            {electiva.uc} UC
-          </text>
-
-          {Icono && (
-            <Icono
-              x={NODO.ancho - NODO.padDer - 15}
-              y={13}
-              width={15}
-              height={15}
-              color={bloqueada ? 'var(--tinta-tenue)' : colorBorde}
-              strokeWidth={2.6}
-            />
-          )}
-        </>
+        <CaraTarjeta
+          situacion={situacion}
+          codigo={codigoVisible(electiva)}
+          lineasNombre={electiva.lineasNombre}
+          uc={electiva.uc}
+          acento={colorNodo(electiva)}
+          seleccionado={seleccionado}
+        />
       )}
     </g>
   )

@@ -1,21 +1,27 @@
 import { memo } from 'react'
+import { Check } from 'lucide-react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
-import { ESTADO } from '../data/estados'
+import { SITUACION } from '../layout/situacion'
 import { colorNodo } from '../theme/areas'
-import { ICONO_ESTADO, colorBordeEstado } from '../theme/estados'
+import { ASPECTO, ETIQUETA_SITUACION } from '../theme/situacion'
 import { codigoVisible } from '../data/codigoVisible'
+import { Etiqueta } from './CaraTarjeta'
+
+// Recorta un nombre para la linea de requisito de la tarjeta compacta
+const corto = (texto, max = 24) => (texto.length > max ? `${texto.slice(0, max - 1)}…` : texto)
 
 /**
  * Tarjeta compacta de la zona de electivas. Mas baja que la de una materia
  * obligatoria a proposito: son opcionales y no deben competir con la malla.
+ *
+ * Habla el mismo idioma que la tarjeta grande -mismo fondo, mismo borde y
+ * misma pastilla por situacion-, porque es la misma pregunta: puedo meterla o
+ * no. Lo unico propio es el pie. Esta zona no lleva cables, asi que lo que te
+ * falta se dice con palabras.
  */
-// Recorta un nombre para la linea de requisito de la tarjeta compacta
-const corto = (texto, max = 26) =>
-  texto.length > max ? `${texto.slice(0, max - 1)}…` : texto
-
 function NodoElectiva({
   nodo,
-  estado,
+  situacion,
   requisito,
   resaltado,
   atenuado,
@@ -25,29 +31,18 @@ function NodoElectiva({
   alDejarDeSenalar,
 }) {
   const { x, y, nombre, uc, lineasNombre } = nodo
-  const acento = colorNodo(nodo)
-  const aprobada = estado === ESTADO.APROBADA
-  const cursando = estado === ESTADO.CURSANDO
-  const bloqueada = estado === ESTADO.BLOQUEADA
+  const a = ASPECTO[situacion]
+  const alto = ELECTIVAS.alto
+  const libre = (nodo.prerrequisitos ?? []).length === 0
 
-  // La zona de electivas no lleva cables, asi que la dependencia se dice
-  // con palabras: que te falta si esta bloqueada, o que es de libre acceso.
-  const pie = bloqueada
-    ? `Requiere ${corto(requisito ?? '…')}`
-    : (nodo.prerrequisitos ?? []).length === 0
-      ? 'Libre · sin requisitos'
-      : aprobada || cursando
-        ? `${codigoVisible(nodo)} · ${uc} UC`
-        : 'Disponible · requisitos cumplidos'
-  const colorPie = bloqueada
-    ? 'var(--tinta-tenue)'
-    : (nodo.prerrequisitos ?? []).length === 0 && !aprobada && !cursando
-      ? 'var(--estado-aprobada)'
-      : 'var(--tinta-tenue)'
+  const pie =
+    situacion === SITUACION.LEJANA || situacion === SITUACION.PROXIMA
+      ? `Requiere ${corto(requisito ?? '…')}`
+      : libre
+        ? `${uc} UC · sin requisitos`
+        : `${uc} UC`
 
-  const colorBorde = colorBordeEstado(estado, acento)
-
-  const Icono = ICONO_ESTADO[estado]
+  const opacidadBorde = seleccionado ? 1 : resaltado ? Math.max(a.opacidadBorde, 0.62) : a.opacidadBorde
 
   return (
     <g
@@ -59,71 +54,54 @@ function NodoElectiva({
       className="grupo-nodo cursor-pointer"
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
-      <title>{`${codigoVisible(nodo)} — ${nombre} · ${uc} UC · ${estado}`}</title>
-
-      <rect width={NODO.ancho} height={ELECTIVAS.alto} rx={10} fill="var(--nodo)" />
-      <rect
-        width={NODO.ancho}
-        height={ELECTIVAS.alto}
-        rx={10}
-        fill={aprobada ? 'var(--estado-aprobada)' : acento}
-        fillOpacity={aprobada ? 0.14 : resaltado ? 0.07 : 0}
-        style={{ transition: 'fill-opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
-      />
-      <rect
-        width={NODO.ancho}
-        height={ELECTIVAS.alto}
-        rx={10}
-        fill="none"
-        stroke={colorBorde}
-        strokeOpacity={bloqueada ? 0.35 : aprobada || cursando ? 1 : 0.6}
-        strokeWidth={seleccionado ? 2.4 : aprobada || cursando ? 1.8 : 1.2}
-        strokeDasharray={bloqueada ? '5 4' : undefined}
-        style={{ transition: 'stroke 320ms ease, stroke-opacity 320ms ease' }}
-      />
+      <title>{`${codigoVisible(nodo)} — ${nombre} · ${uc} UC · ${ETIQUETA_SITUACION[situacion]}`}</title>
 
       <rect
-        x={8}
-        y={12}
-        width={3}
-        height={ELECTIVAS.alto - 24}
-        rx={1.5}
-        fill={acento}
-        fillOpacity={bloqueada ? 0.45 : 1}
+        width={NODO.ancho}
+        height={alto}
+        rx={10}
+        style={{
+          fill: a.fondo,
+          stroke: a.borde,
+          strokeOpacity: opacidadBorde,
+          strokeWidth: seleccionado ? a.grosor + 1 : a.grosor,
+          transition: 'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease',
+        }}
       />
 
       {lineasNombre.map((linea, i) => (
         <text
           key={i}
-          x={NODO.padIzq}
-          y={22 + i * 12}
+          x={14}
+          y={21 + i * 12}
           fontSize={TEXTO.meta + 1.5}
-          fill="var(--tinta)"
           className="font-semibold"
+          style={{ fill: a.nombre }}
         >
           {linea}
         </text>
       ))}
 
-      <text
-        x={NODO.padIzq}
-        y={ELECTIVAS.alto - 10}
-        fontSize={8.5}
-        fill={colorPie}
-        className="font-mono"
-      >
+      <circle cx={17} cy={alto - 13} r={2.5} fill={colorNodo(nodo)} />
+      <text x={24} y={alto - 10} fontSize={8.5} fill="var(--tinta-tenue)" className="font-mono">
         {pie}
       </text>
 
-      {Icono && (
-        <Icono
-          x={NODO.ancho - NODO.padDer - 13}
-          y={ELECTIVAS.alto - 22}
-          width={13}
-          height={13}
-          color={bloqueada ? 'var(--tinta-tenue)' : colorBorde}
-          strokeWidth={2.6}
-        />
+      {situacion === SITUACION.HECHA && (
+        <>
+          <circle cx={NODO.ancho - 18} cy={alto - 16} r={7} fill="var(--estado-aprobada)" />
+          <Check
+            x={NODO.ancho - 22.5}
+            y={alto - 20.5}
+            width={9}
+            height={9}
+            color="var(--nodo)"
+            strokeWidth={3.4}
+          />
+        </>
+      )}
+      {a.etiqueta && situacion !== SITUACION.PROXIMA && (
+        <Etiqueta {...a.etiqueta} x={NODO.ancho - 10 - a.etiqueta.ancho} y={alto - 25} />
       )}
     </g>
   )

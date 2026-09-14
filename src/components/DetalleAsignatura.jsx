@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
+import { ArrowRight, Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { colorNodo, etiquetaArea } from '../theme/areas'
@@ -45,6 +45,69 @@ function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
  * Ninguna de las dos oscurece el mapa. Un velo apagaria justo lo que la ficha
  * esta explicando.
  */
+/* Quien falta, dicho con nombre. Una lista de dos se dice "A y B"; de tres o
+   mas, las dos primeras y cuantas quedan, para que el aviso no crezca hasta
+   repetir la lista de prelaciones que ya esta justo debajo. */
+function nombrar(materias) {
+  const n = materias.map((m) => m.asignatura.nombre)
+  if (n.length <= 2) return n.join(' y ')
+  return `${n.slice(0, 2).join(', ')} y ${n.length - 2} más`
+}
+
+/**
+ * La frase que responde "¿puedo inscribirla?". Antes solo existia para las
+ * bloqueadas, y decia lo mismo a todas: "te falta aprobar sus
+ * prerrequisitos". Pero a la que se abre si apruebas lo que estas cursando
+ * eso le queda corto, y es justo la que importa al planificar: lo util es
+ * decirle QUE tienes que aprobar para meterla el semestre que viene.
+ */
+function AvisoSituacion({ estado, prerrequisitos }) {
+  const clase =
+    'mx-3.5 mb-3 flex shrink-0 items-start gap-1.5 rounded-lg px-2.5 py-2 text-[11px] leading-snug'
+
+  if (estado === ESTADO.DISPONIBLE) {
+    return (
+      <p className={`${clase} bg-panel-suave text-tinta`}>
+        <ArrowRight size={12} className="mt-0.5 shrink-0" />
+        Puedes inscribirla: tienes aprobadas todas sus prelaciones.
+      </p>
+    )
+  }
+  if (estado !== ESTADO.BLOQUEADA) return null
+
+  const pendientes = prerrequisitos.filter((p) => p.estado !== ESTADO.APROBADA)
+  const sinEmpezar = pendientes.filter((p) => p.estado !== ESTADO.CURSANDO)
+
+  if (pendientes.length > 0 && sinEmpezar.length === 0) {
+    return (
+      <p className={`${clase} bg-panel-suave text-tinta-suave`}>
+        <CircleDot size={12} className="mt-0.5 shrink-0 text-cursando" />
+        <span>
+          Se abre el próximo semestre si apruebas{' '}
+          <strong className="font-semibold text-tinta">{nombrar(pendientes)}</strong>.
+        </span>
+      </p>
+    )
+  }
+
+  return (
+    <p className={`${clase} bg-panel-suave text-tinta-suave`}>
+      <Lock size={12} className="mt-0.5 shrink-0" />
+      <span>
+        {sinEmpezar.length > 0 ? (
+          <>
+            Aún te falta{sinEmpezar.length > 1 ? 'n' : ''}{' '}
+            <strong className="font-semibold text-tinta">{nombrar(sinEmpezar)}</strong>.
+          </>
+        ) : (
+          'Te falta aprobar sus prelaciones.'
+        )}{' '}
+        Puedes marcarla igual si ya la viste.
+      </span>
+    </p>
+  )
+}
+
 function DetalleAsignatura({
   nodo,
   estado,
@@ -88,7 +151,14 @@ function DetalleAsignatura({
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -inset-8"
-          style={{ background: fondoMateria(nodo.codigo, colorNodo(nodo)), filter: 'blur(26px)' }}
+          style={{
+            background: fondoMateria(nodo.codigo, colorNodo(nodo)),
+            filter: 'blur(26px)',
+            /* A plena fuerza, el naranja de Electronica o el rosa de Gestion
+               eran lo mas vistoso de la pantalla, por encima del propio mapa.
+               La ficha acompaña a una tarjeta; no deberia gritar mas que ella. */
+            opacity: 0.45,
+          }}
         />
         <div className="relative flex items-start gap-2.5 px-4 py-3.5">
           <span
@@ -159,12 +229,7 @@ function DetalleAsignatura({
         </button>
       )}
 
-      {estado === ESTADO.BLOQUEADA && (
-        <p className="mx-3.5 mb-3 flex shrink-0 items-start gap-1.5 rounded-lg bg-panel-suave px-2.5 py-2 text-[11px] leading-snug text-tinta-suave">
-          <Lock size={12} className="mt-0.5 shrink-0" />
-          Te falta aprobar sus prerrequisitos. Puedes marcarla igual si ya la viste.
-        </p>
-      )}
+      <AvisoSituacion estado={estado} prerrequisitos={prerrequisitos} />
 
       <div className="max-h-52 min-h-0 flex-1 overflow-y-auto border-t border-panel-borde px-3.5 py-3">
         <ListaPrelaciones

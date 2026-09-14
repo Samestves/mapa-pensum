@@ -34,6 +34,14 @@
   --estado-cursando: #ffb454;
   --estado-rojo: #ff6b7d;
 
+  /* Fondo de la tarjeta que puedes inscribir. Va por tema y no calculado en
+     el componente porque "levantar" no es lo mismo en los dos: sobre lienzo
+     negro se levanta aclarando, y sobre blanco aclarar no es posible -una
+     mezcla con tinta la oscurecia y la dejaba con cara de desactivada, justo
+     al reves de lo que tiene que decir-. En claro se queda blanca y la
+     levantan el borde y el halo. */
+  --inscribible-fondo: color-mix(in oklab, var(--tinta) 6%, var(--nodo));
+
   /* Los colores que una clase del horario puede tomar. Son los ocho de area
      reordenados: ya estan ajustados para los dos temas, asi que el horario no
      inventa una paleta que no se parezca al resto de la aplicacion. */
@@ -56,11 +64,6 @@
      fondo que tenga debajo y se lee como una linea de lapiz. */
   --horario-linea: rgba(255, 255, 255, 0.11);
 
-  /* Filamento del cable: se mezcla con el color del area. Sobre fondo oscuro
-     tira casi a blanco; en tema claro apenas se aclara, porque un nucleo
-     blanco sobre lienzo claro seria invisible. */
-  --nucleo: #ffffff;
-  --nucleo-fuerza: 72%;
 }
 
 [data-tema='claro'] {
@@ -90,6 +93,7 @@
   --estado-aprobada: #0a9781;
   --estado-cursando: #c8650d;
   --estado-rojo: #d92d45;
+  --inscribible-fondo: var(--nodo);
 
   --clase-1: #0b7aa8;
   --clase-2: #0a9781;
@@ -101,9 +105,6 @@
   --clase-8: #56677e;
 
   --horario-linea: #cfd9e6;
-
-  --nucleo: #ffffff;
-  --nucleo-fuerza: 14%;
 }
 
 /* @theme inline hace que las utilidades emitan var(--x) en vez del valor
@@ -274,119 +275,22 @@ body {
 
 /* ------------------------------------------------------------------
    Animaciones del grafo.
-   Todas las aristas llevan pathLength="100", asi que los recorridos se
-   miden en porcentaje y no hace falta getTotalLength() en JS.
+
+   Solo quedan tres, y las tres son RESPUESTA a algo que hiciste: la luz que
+   recorre un cable al aprobar, el destello de lo que eso te abrio y el anillo
+   de la tarjeta que tocaste. Se montan lo que duran y se desmontan.
+
+   Se fueron las perpetuas: la estela y la perla de cada cable, y el borde que
+   respiraba en las materias en curso. Eran 215 animaciones en Sistemas que no
+   paraban nunca, y ni stroke-dashoffset ni offset-distance las puede componer
+   la GPU, asi que cada fotograma se rasterizaban en el hilo principal. Con el
+   mapa quieto, en un PC, 22 de cada 150 fotogramas se pasaban de 16,7 ms; sin
+   ellas, ninguno. Tambien se fue todo lo que habia para contenerlas -pausarlas
+   al arrastrar, esconder capas en tactil-, porque ya no hay nada que contener.
    ------------------------------------------------------------------ */
 
-@keyframes viajar {
-  from {
-    stroke-dashoffset: 100;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-/* Cometa: varias capas con el MISMO guion corto, desfasadas unas centesimas
-   entre si. La de delante va fina y brillante y las de atras mas anchas y
-   tenues, asi se lee como una luz con estela y no como un guion deslizandose.
-   El guion suma 100 con su hueco, asi que el bucle cierra sin salto.
-
-   --vel se fija una vez por cable y nunca cambia: variar la velocidad entre
-   cables quita el aire mecanico, pero cambiarla en caliente reiniciaria la
-   animacion y se veria un tiron. */
-.cometa {
-  stroke-dasharray: 2.5 97.5;
-  animation: viajar var(--vel, 4.2s) linear infinite;
-}
-
-/* Perla de luz que viaja por el trazado real del cable. offset-path acepta
-   el mismo path que dibuja la arista, asi que sigue la curva exacta.
-   Va ligeramente adelantada respecto a la estela para quedar justo en su
-   cabeza: la estela es la cola, esta es la bola. */
-@keyframes recorrer {
-  from {
-    offset-distance: 0%;
-  }
-  to {
-    offset-distance: 100%;
-  }
-}
-
-.particula {
-  offset-path: var(--ruta);
-  offset-rotate: 0deg;
-  animation: recorrer var(--vel, 4.2s) linear infinite;
-}
-
-/* ---- El coste real de los cables ----------------------------------------
-   Ni stroke-dashoffset ni offset-distance los puede componer la GPU: cada
-   fotograma el navegador vuelve a rasterizar el elemento en el hilo
-   principal. Medido en Sistemas: 43 cables por cinco animaciones cada uno
-   son 215 animaciones perpetuas. En un escritorio sobra musculo; en un
-   telefono de gama media eso solo se paga bajando a veinte o treinta
-   cuadros por segundo. De ahi las tres podas que siguen. */
-
-/* 1. En tactil, mientras se arrastra o se hace zoom, las animaciones se
-      congelan. Es el momento en el que el tiron se nota, y es justo cuando
-      nadie esta mirando la corriente: se esta mirando a donde va el mapa.
-      Pausar no reinicia nada, asi que al soltar siguen donde estaban.
-
-      Solo en tactil, y esto se aprendio en caliente: en escritorio pausar
-      cuesta mas de lo que ahorra. Cambiar la clase del <svg> obliga a
-      recalcular el estilo de las doscientas quince animaciones de golpe, y
-      ese recalculo cae entero en el primer fotograma del gesto -se notaba
-      como un tiron justo al empezar a mover, y solo al empezar-. En un
-      escritorio el arrastre ya iba sobrado sin pausar nada; en el telefono
-      quedan como mucho veintitantas animaciones que recalcular, asi que ahi
-      el cambio sale barato y el ahorro es real. */
-
-/* 2. En pantallas tactiles se va la perla y quedan solo dos capas de estela.
-      La perla es lo mas caro de las dos -offset-path recalcula la posicion
-      sobre la curva en cada cuadro- y es tambien lo mas pequeño: a la escala
-      a la que se ve un mapa entero en un telefono, casi no se distingue.
-      El cable no pierde su color, ni su brillo, ni su punto de soldadura. */
-@media (hover: none) and (pointer: coarse) {
-  .lienzo-en-gesto .cometa,
-  .lienzo-en-gesto .particula {
-    animation-play-state: paused;
-  }
-
-  .particula {
-    display: none;
-  }
-
-  .cometa[data-capa='2'] {
-    display: none;
-  }
-
-  /* 3. Y solo se anima el cable por el que la corriente significa algo: el
-        que va de una materia aprobada a una que eso acaba de abrir.
-        Antes bastaba con que el origen estuviera aprobado, y eso incluia los
-        cables que llegan a materias TAMBIEN aprobadas: corriente viajando
-        hacia algo terminado. No decia nada y ademas escalaba al reves, con
-        mas animaciones cuanto mas avanzada la carrera. Medido en Sistemas,
-        63 cables animados con el pensum casi entero contra 20 asi.
-        El cable sigue viendose encendido: lo que se apaga es la estela, no
-        el brillo. Se quita con display y no con animation:none, que dejaria
-        el guion parado a mitad del cable como una mancha. */
-  g:not([data-corriente]) > .cometa {
-    display: none;
-  }
-}
-
-/* currentColor es el color del area, que se fija en el <g> de cada arista */
-.filamento {
-  stroke: color-mix(in oklab, var(--nucleo) var(--nucleo-fuerza), currentColor);
-}
-
-.filamento-relleno {
-  fill: color-mix(in oklab, var(--nucleo) var(--nucleo-fuerza), currentColor);
-}
-
-/* ---- Descarga: el golpe de corriente al aprobar una materia -------------
-   Se monta solo durante la animacion. Misma idea de cometa, pero de una
-   pasada, mas rapido al principio y frenando al llegar. */
+/* La luz al aprobar. Todas las aristas llevan pathLength="100", asi que el
+   recorrido se mide en porcentaje y no hace falta getTotalLength() en JS. */
 @keyframes descarga {
   0% {
     stroke-dashoffset: 100;
@@ -405,62 +309,19 @@ body {
 }
 
 .descarga {
-  stroke-dasharray: 9 91;
+  stroke-dasharray: 14 86;
   animation: descarga 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
 }
 
-/* Chispa que encabeza la descarga, sobre la curva real del cable */
-@keyframes chispa {
-  0% {
-    offset-distance: 0%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    offset-distance: 100%;
-    opacity: 0;
-  }
-}
-
-.chispa {
-  offset-path: var(--ruta);
-  offset-rotate: 0deg;
-  animation: chispa 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
-}
-
-/* Onda al impactar en el punto de soldadura del destino. El retardo la
-   sincroniza con la llegada de la chispa, no con el disparo. */
-@keyframes onda {
-  0% {
-    r: 3;
-    opacity: 0;
-  }
-  30% {
-    opacity: 0.65;
-  }
-  100% {
-    r: 26;
-    opacity: 0;
-  }
-}
-
-.onda {
-  animation: onda 620ms cubic-bezier(0.2, 0.7, 0.3, 1) 640ms forwards;
-}
-
-/* Destello del nodo que se acaba de desbloquear. Tambien espera a que la
-   corriente llegue: encenderse antes que el cable se ve mal. */
+/* Destello de la materia que se acaba de abrir. Espera a que la luz llegue
+   por el cable: encenderse antes que el cable se ve mal. Va en tinta y flojo,
+   porque la tarjeta ya pasa a ser la mas brillante del mapa por si sola. */
 @keyframes destello {
   0% {
     opacity: 0;
   }
-  25% {
-    opacity: 0.5;
+  30% {
+    opacity: 0.22;
   }
   100% {
     opacity: 0;
@@ -471,11 +332,10 @@ body {
   animation: destello 800ms ease-out 600ms forwards;
 }
 
-/* Anillo que se expande cada vez que una materia cambia de estado.
-   Se remonta con key={estado}, asi que se reproduce en cada cambio. */
+/* Anillo que se expande en la tarjeta que se acaba de tocar */
 @keyframes anillo {
   from {
-    opacity: 0.85;
+    opacity: 0.7;
     stroke-width: 2;
   }
   to {
@@ -486,21 +346,6 @@ body {
 
 .anillo-cambio {
   animation: anillo 620ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-
-/* Latido lento del borde de una asignatura en curso */
-@keyframes respirar {
-  0%,
-  100% {
-    stroke-opacity: 0.55;
-  }
-  50% {
-    stroke-opacity: 1;
-  }
-}
-
-.respirando {
-  animation: respirar 2.6s ease-in-out infinite;
 }
 
 /* Entrada de tarjetas y paneles: arranca casi en su sitio y asienta sin
@@ -1324,13 +1169,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cometa,
-  .particula,
-  .chispa,
-  .onda,
   .descarga,
   .destello,
-  .respirando,
   .anillo-cambio,
   .logo-entrada,
   .surgir,
