@@ -169,7 +169,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
           una carrera de otra de un vistazo, asi que se lleva el sitio bueno y
           crece con la pantalla en vez de quedarse en su franja fija. */}
       <div
-        className="relative mt-4 h-20 xl:mt-5 xl:h-24"
+        className="silueta-carrera relative mt-4 h-20 xl:mt-5 xl:h-24"
         style={{ transform: giro ? 'translateZ(28px)' : undefined }}
       >
         <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />

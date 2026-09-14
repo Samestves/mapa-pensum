@@ -1,8 +1,9 @@
-import { Moon, Sun, Waypoints } from 'lucide-react'
+import { GraduationCap, Moon, Sun } from 'lucide-react'
 import { CARRERAS } from '../data/carreras'
 import { ultimaCarrera } from '../data/ultimaCarrera'
 import { useTema } from '../hooks/useTema'
 import AvisoInstalar from './AvisoInstalar'
+import Logo from './Logo'
 import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
 
@@ -30,7 +31,14 @@ function SelectorCarrera({ alElegir }) {
   const ultima = ultimaCarrera()
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="relative h-full overflow-y-auto">
+      {/* Veladura de color arriba. Va aqui fuera y no dentro del contenedor
+          centrado para que cruce todo el ancho de la pantalla: una luz que
+          se corta en el margen del contenido se ve como un rectangulo. */}
+      <div className="ambiente-portada" aria-hidden="true">
+        <span className="velo-oscuro" />
+        <span className="velo-claro" />
+      </div>
       {/* El ancho crece con la pantalla en vez de quedarse clavado en 1024px:
           en un monitor grande unas tarjetas apretadas al centro dejan medio
           lienzo vacio y se ven de juguete.
@@ -39,37 +47,88 @@ function SelectorCarrera({ alElegir }) {
           hacia falta ese ancho para que las tarjetas no salieran pequeñas,
           con tres a 1600 saldrian de 520 px y la silueta, que nunca llena a
           lo ancho, quedaria nadando en hueco. */}
-      <div className="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
-        <header className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            {/* La marca crece y se redondea mas. Un cuadrado de esquinas
-                suaves a 11 px de radio se lee como icono de aplicacion, que
-                es lo que es; con el radio anterior parecia un boton mas. */}
-            <span
-              className="grid size-11 shrink-0 place-items-center rounded-2xl xl:size-12"
-              style={{
-                backgroundColor: 'color-mix(in oklab, var(--estado-aprobada) 16%, transparent)',
-                color: 'var(--estado-aprobada)',
-              }}
-            >
-              <Waypoints size={22} strokeWidth={2.4} />
+      <div className="portada mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
+        {/* Cabecera.
+
+            Sin filete divisorio y sin contrapesos a la derecha. Lo unico que
+            ordena esto es la jerarquia de tamaño: el titulo manda, la linea
+            de universidad acompaña, y la marca sujeta las dos. Todo lo demas
+            que se probo aqui -un pelo difuminado, un contador de carreras en
+            versalitas- eran cosas puestas para llenar el ancho, y el ancho no
+            hay que llenarlo.
+
+            El orden es titulo primero y universidad debajo. Estuvo al reves,
+            con la universidad de cejilla encima en mono y versalitas anchas,
+            y se leia como una ficha tecnica: lo primero que decia la pagina
+            era donde queda la universidad, no que esto es un mapa de pensum.
+            Lo que nombra la cosa va primero. */}
+        <header className="relative flex items-center justify-between gap-6">
+          <div className="flex min-w-0 items-center gap-3 xl:gap-3.5">
+            {/* La marca vuelve a tener caja, y es a proposito.
+
+                Estuvo suelta sobre el lienzo y quedaba flotando en el margen:
+                sin nada que la sujete, una estrella de puntas finas no tiene
+                borde con el que alinearse y se lee como despegada del titulo.
+                La caja le da ese borde.
+
+                No es la caja de antes -un cuadrado con verde plano al 16 %,
+                que es color de relleno y no material-, sino uno cuyo contorno
+                es un degradado de un pixel: se enciende por una esquina y se
+                apaga por el resto, asi que nunca hay cuatro lados a la vez.
+                Ver .marca-caja.
+
+                En pantalla grande la caja NO crece. Es un apoyo, y un apoyo
+                que se hace mas grande que lo que sujeta deja de apoyar. */}
+            <span className="relative grid size-12 shrink-0 place-items-center sm:size-14">
+              <span className="marca-caja" aria-hidden="true" />
+              <Logo
+                animado
+                className="transicion-tema relative size-[30px] text-tinta sm:size-[35px]"
+              />
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-[22px] leading-none font-extrabold tracking-tight text-tinta sm:text-2xl xl:text-3xl">
+              {/* Semibold y no extrabold. Un titulo en extrabold a 22 px
+                  grita para que se le note un tamaño que no tiene; a 40 el
+                  tamaño ya esta, y lo que hace falta entonces no es peso sino
+                  cerrar el tracking. Geist aguanta -0,04em sin que las letras
+                  se toquen, que es justo para lo que se cambio de fuente. */}
+              <h1 className="truncate text-[25px] leading-[1.06] font-semibold tracking-[-0.032em] text-tinta sm:text-[29px] xl:text-[26px] xl:tracking-[-0.03em]">
                 Mapa de Pensum
               </h1>
-              {/* En el telefono la universidad va abreviada, y no es una
+              {/* En caja baja y peso normal. Estuvo en versalitas anchas y
+                  chillaba mas que el titulo teniendo un tercio de su tamaño:
+                  el espaciado ancho estira una linea corta hasta que compite
+                  por el ancho, y entonces las dos cosas piden el mismo turno.
+
+                  En el telefono la universidad va abreviada, y no es una
                   rebaja: "Universidad de Oriente · Núcleo de Monagas" son
                   cuarenta y un caracteres que a 375 px partian en dos lineas
                   -"...Núcleo de" arriba y "Monagas" solo abajo-, y una
                   segunda linea con una palabra suelta es justo lo que hacia
                   que la cabecera se viera a medio terminar. UDO es ademas
-                  como la llama todo el mundo en Monagas, asi que no se pierde
-                  nada; el nombre entero vuelve en cuanto hay ancho. */}
-              <p className="mt-1 truncate text-[11.5px] leading-none font-medium text-tinta-tenue xl:mt-1.5 xl:text-[13px]">
-                <span className="sm:hidden">UDO</span>
-                <span className="hidden sm:inline">Universidad de Oriente</span>
-                {' · Núcleo de Monagas'}
+                  como la llama todo el mundo en Monagas. */}
+              <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[12.5px] leading-none font-medium text-tinta-tenue sm:text-[13px] xl:mt-1.5 xl:text-[12.5px]">
+                {/* Un birrete diminuto delante. La linea estaba sola y se
+                    leia como un pie de foto; con una marca delante se lee
+                    como una credencial, que es lo que es.
+
+                    Va del tamaño de la altura-x de la letra que acompaña y no
+                    del cuerpo entero: un icono a la altura de las mayusculas
+                    se ve siempre mas grande que el texto y acaba pareciendo
+                    un boton. Y lleva el punto del separador como divisoria
+                    -el que ya estaba entre universidad y nucleo-, en vez de
+                    inventar una linea nueva. */}
+                <GraduationCap
+                  size={13}
+                  strokeWidth={2.1}
+                  className="shrink-0 opacity-80"
+                  aria-hidden="true"
+                />
+                <span className="truncate">
+                  <span className="sm:hidden">UDO</span>
+                  <span className="hidden sm:inline">Universidad de Oriente</span>
+                  {' · Núcleo de Monagas'}
+                </span>
               </p>
             </div>
           </div>
@@ -106,7 +165,7 @@ function SelectorCarrera({ alElegir }) {
         {/* Tres columnas y no cuatro: son nueve carreras, asi que 3x3 cierra
             exacto. Con cuatro la ultima fila se quedaba con una tarjeta sola
             y la cuadricula parecia rota por abajo. */}
-        <div className="mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-8 xl:mb-12 xl:gap-5 2xl:gap-6">
+        <div className="rejilla-carreras mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
           {CARRERAS.map((carrera) => (
             <TarjetaCarrera
               key={carrera.slug}

@@ -94,10 +94,14 @@ function ContenidoGrafo({
           pensadas para distinguir un 0 de una O en una linea diminuta-, y
           como numero de display eso se lee tecnico y no rotundo. Manrope a
           peso 800 da cifras cerradas y geometricas. Estaba en mono por la
-          alineacion de las diez columnas, y resulta que no hacia falta:
-          medido, Manrope trae cifras tabulares, asi que "01" y "10" ocupan
-          exactamente lo mismo. Se gana la letra sin perder la rejilla y sin
-          descargar una tercera fuente. */}
+          alineacion de las diez columnas, y no hace falta una mono para eso:
+          basta pedir cifras tabulares con tabular-nums.
+
+          Aqui decia que la fuente las traia de serie y que por eso no hacia
+          falta pedirlas. Era falso, y con el cambio a Geist se notaba: medido
+          a 46 px y peso 800, "08" mide 63,81 px y "10" mide 53,14, o sea diez
+          pixeles y medio de diferencia entre dos cabeceras que estan una al
+          lado de la otra. Con tabular-nums las diez miden 59,63 exactos. */}
       {columnas.map((columna) => {
         const vivo = porColumna.get(columna.semestre) ?? { uc: 0, hechas: 0, total: 0 }
         const avance = vivo.total ? vivo.hechas / vivo.total : 0
@@ -112,7 +116,7 @@ function ContenidoGrafo({
               y={MARGEN.top + 31}
               fontSize="46"
               fill="var(--tinta)"
-              className="font-extrabold tracking-[-0.05em]"
+              className="font-extrabold tabular-nums tracking-[-0.05em]"
             >
               {String(columna.semestre).padStart(2, '0')}
             </text>
