@@ -43,7 +43,7 @@ const GUION = {
  * peor que no tenerlo.
  */
 function AvisoInstalar() {
-  const { modo, instalar, descartar } = useInstalable()
+  const { modo, instalar, descartar, porque, hayEvento, forzado } = useInstalable()
   const [saliendo, setSaliendo] = useState(false)
 
   if (!modo) return null
@@ -106,11 +106,36 @@ function AvisoInstalar() {
             <button
               type="button"
               onClick={instalar}
-              className="mt-3 flex items-center gap-2 rounded-lg bg-aprobada px-3 py-2 text-[11.5px] font-bold text-[var(--lienzo)] transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none"
+              disabled={!hayEvento}
+              className="mt-3 flex items-center gap-2 rounded-lg bg-aprobada px-3 py-2 text-[11.5px] font-bold text-[var(--lienzo)] transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
             >
               <Download size={14} />
               {guion.boton}
             </button>
+          )}
+
+          {/* Solo con ?instalar=forzar. Dice POR QUE no saldria por su cuenta,
+              que es lo unico que se puede hacer cuando el aparato donde falla
+              es el telefono de otro y no hay consola donde mirar. */}
+          {forzado && porque && (
+            <p className="mt-3 border-t border-panel-borde pt-2 font-mono text-[9.5px] leading-relaxed text-tinta-tenue">
+              {[
+                `evento ${porque.hayEvento ? 'sí' : 'NO'}`,
+                `instalada ${porque.instalada ? 'sí' : 'no'}`,
+                `descartada ${porque.descartada ? 'sí' : 'no'}`,
+                porque.movil ? 'móvil' : 'escritorio',
+                porque.ios ? 'ios' : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              {!porque.hayEvento && !porque.ios && (
+                <>
+                  <br />
+                  Sin evento el botón no puede abrir el diálogo. Chrome no lo da si ya está
+                  instalada.
+                </>
+              )}
+            </p>
           )}
         </div>
 
