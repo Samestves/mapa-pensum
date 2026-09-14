@@ -85,6 +85,42 @@
         if (meta) meta.setAttribute('content', tema === 'claro' ? '#eef1f7' : '#05080e')
       })()
     </script>
+
+    <!--
+      Captura de beforeinstallprompt, y tiene que estar AQUI por la misma
+      razon que el tema: porque despues ya es tarde.
+
+      Chrome dispara ese evento en cuanto decide que la pagina es instalable,
+      y lo hace muy pronto -normalmente antes de que el JavaScript de la
+      aplicacion se haya terminado de descargar-. El hook lo escuchaba desde
+      un useEffect, o sea despues de montar React, y para entonces el evento
+      ya habia pasado. No se vuelve a disparar: se pierde y no hay aviso.
+
+      De ahi que el aviso apareciera "a veces". No era aleatorio: aparecia
+      cuando la red iba lo bastante lenta como para que el evento llegara
+      despues de React, y no aparecia cuando la aplicacion cargaba rapido. O
+      sea que fallaba justo donde mejor funcionaba todo lo demas.
+
+      Aqui el evento se guarda en window y se queda esperando a que alguien
+      lo recoja, llegue React cuando llegue.
+    -->
+    <script>
+      ;(function () {
+        window.__instalable = null
+        window.__instalada = false
+        addEventListener('beforeinstallprompt', function (e) {
+          /* Sin esto Chrome enseña ademas su propia barra y salen dos avisos */
+          e.preventDefault()
+          window.__instalable = e
+          dispatchEvent(new Event('instalable'))
+        })
+        addEventListener('appinstalled', function () {
+          window.__instalable = null
+          window.__instalada = true
+          dispatchEvent(new Event('instalable'))
+        })
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

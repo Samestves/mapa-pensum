@@ -593,6 +593,55 @@ body {
 }
 
 /* ------------------------------------------------------------------
+   Panel de cristal. Mismo idioma que la caja de la marca -contorno de un
+   pixel hecho con un degradado recortado, no una linea uniforme- pero para
+   algo que flota de verdad sobre el contenido y por tanto si lleva sombra.
+
+   Aqui el desenfoque de fondo hace un trabajo real y no decorativo: detras
+   pasan las tarjetas de carrera, con sus siluetas de colores, y verlas
+   emborronadas a traves del panel es lo que dice "esto esta por encima".
+   Sobre un fondo liso un backdrop-filter no desenfoca nada y el cristal se
+   queda en un gris; sobre esto, se nota.
+   ------------------------------------------------------------------ */
+.panel-cristal {
+  position: relative;
+  background: color-mix(in oklab, var(--panel) 80%, transparent);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  box-shadow: 0 20px 52px -22px rgb(0 0 0 / 0.6);
+  transition: background 200ms ease;
+}
+
+[data-tema='claro'] .panel-cristal {
+  background: color-mix(in oklab, var(--panel) 78%, transparent);
+  box-shadow: 0 20px 48px -24px rgb(12 23 37 / 0.34);
+}
+
+.panel-cristal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    148deg,
+    color-mix(in oklab, var(--tinta) 26%, transparent),
+    color-mix(in oklab, var(--tinta) 6%, transparent) 38%,
+    transparent 58%,
+    color-mix(in oklab, var(--tinta) 12%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
    Ambiente de la portada: una veladura de color muy floja arriba, de donde
    arranca la lectura. Sustituye al filete divisorio que habia -y que no
    convencia- por algo que no traza ninguna linea: la cabecera se separa de
