@@ -1119,6 +1119,75 @@ body {
   transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* La cadena en la lista: al abrir una materia, lo que no tiene que ver con
+   ella se apaga despacio, y lo que si, se queda. */
+.fila-lista {
+  transition: opacity 320ms ease;
+}
+
+.fila-lista[data-enfoque='otra'] {
+  opacity: 0.4;
+}
+
+/* La linea de la cadena crece desde su centro, como si se encendiera */
+@keyframes marca-cadena {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.marca-cadena {
+  animation: marca-cadena 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Las pastillas del camino entran una tras otra desde la izquierda, en el
+   sentido en que se lee "esta abre estas". */
+@keyframes chip-entrar {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.chip-entrar {
+  animation: chip-entrar 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* El punto de cada semestre en el recorrido. Lleno y con check si esta
+   completo; con un halo de luz fija si es el que te toca; un anillo si ya
+   empezaste; apenas un contorno si queda por delante. */
+.nodo-semestre {
+  background: var(--lienzo);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tinta) 20%, transparent);
+  transition:
+    background-color 400ms ease,
+    box-shadow 400ms ease;
+}
+
+.nodo-semestre[data-estado='empezado'] {
+  box-shadow: inset 0 0 0 1.5px var(--estado-aprobada);
+}
+
+.nodo-semestre[data-estado='completo'] {
+  background: var(--estado-aprobada);
+  box-shadow: none;
+}
+
+.nodo-semestre[data-estado='actual'] {
+  box-shadow:
+    inset 0 0 0 1.5px var(--sit-inscribible-luz),
+    0 0 0 4px color-mix(in oklab, var(--sit-inscribible-luz) 16%, transparent);
+}
+
 /* ---- Horario vacio: la semana de muestra ---------------------------------- */
 
 /* Cada clase entra como si alguien la colocara: crece desde un poco mas
@@ -1742,6 +1811,8 @@ body {
   .lista-entrar,
   .marca-pulso,
   .fila-destello,
+  .marca-cadena,
+  .chip-entrar,
   .clase-muestra,
   .semana-muestra[data-foco='foto'] .escaneo-muestra {
     animation: none;
