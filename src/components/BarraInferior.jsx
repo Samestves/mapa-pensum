@@ -30,7 +30,7 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * transparencia, el cristal pasa a panel opaco (ver .barra-cristal).
  *
  * El area de toque de cada pestaña es su tercio entero de la capsula, unos
- * 90 x 60 px: de sobra por encima de los 44 que se consideran el minimo.
+ * 76 x 46 px: por encima de los 44 que se consideran el minimo.
  */
 function BarraInferior({ vista, alCambiar, alPlanificar }) {
   const indice = indiceDeVista(vista)
@@ -49,17 +49,20 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
        quedaria encima del indicador de inicio. */
     <nav
       aria-label="Vistas de la carrera"
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] md:hidden"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
     >
-      <div className="barra-cristal pointer-events-auto relative grid h-[62px] max-w-[330px] flex-1 grid-cols-3 rounded-full p-[5px]">
-        {/* La lente: una pastilla de luz detras de la pestaña activa, que se
-            desliza hasta la nueva con un rebote corto al llegar. Es la unica
-            cosa de la barra que se mueve. */}
+      {/* Ancho fijo y no a todo lo ancho: una isla centrada pesa menos en la
+          pantalla que una barra de borde a borde, y deja ver mas contenido a
+          los lados. 76 px por pestaña siguen siendo un blanco comodo. */}
+      <div className="barra-cristal pointer-events-auto relative grid h-[54px] w-[236px] grid-cols-3 rounded-full p-1">
+        {/* La lente: una gota de cristal mas clara detras de la pestaña
+            activa, que se desliza hasta la nueva con un rebote corto al
+            llegar. Es la unica cosa de la barra que se mueve. */}
         <span
           aria-hidden="true"
-          className="lente-cristal pointer-events-none absolute inset-y-[5px] left-[5px] rounded-full"
+          className="lente-cristal pointer-events-none absolute inset-y-1 left-1 rounded-full"
           style={{
-            width: 'calc((100% - 10px) / 3)',
+            width: 'calc((100% - 8px) / 3)',
             transform: `translateX(${indice * 100}%)`,
           }}
         />
@@ -74,20 +77,20 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
               title={titulo}
               aria-label={titulo}
               aria-current={activo ? 'page' : undefined}
-              className="group relative flex flex-col items-center justify-center gap-[5px] rounded-full"
+              className="group relative flex flex-col items-center justify-center gap-1 rounded-full"
             >
               {/* El acuse del toque va en el icono: encoger la pestaña entera
                   se lee como que se hunde la barra, encoger el icono se lee
                   como pulsar algo. */}
               <span
-                className={`grid h-[22px] place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
+                className={`grid h-5 place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
                   activo ? 'text-aprobada' : 'text-tinta-suave'
                 }`}
               >
-                <Ico size={20} strokeWidth={activo ? 2 : 1.6} />
+                <Ico size={18} strokeWidth={activo ? 2 : 1.6} />
               </span>
               <span
-                className={`text-[10px] leading-none tracking-[0.01em] transition-colors duration-200 ${
+                className={`text-[9.5px] leading-none tracking-[0.01em] transition-colors duration-200 ${
                   activo ? 'font-medium text-tinta' : 'text-tinta-tenue'
                 }`}
               >
@@ -103,10 +106,10 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
         onClick={alPlanificar}
         title="Planificar mi ruta hasta el grado y exportarla"
         aria-label="Planificar mi ruta hasta el grado y exportarla"
-        className="barra-cristal group pointer-events-auto relative grid size-[62px] shrink-0 place-items-center rounded-full text-tinta-suave"
+        className="barra-cristal group pointer-events-auto relative grid size-[54px] shrink-0 place-items-center rounded-full text-tinta-suave"
       >
         <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
-          <GraduationCap size={22} strokeWidth={1.6} />
+          <GraduationCap size={20} strokeWidth={1.6} />
         </span>
       </button>
     </nav>
