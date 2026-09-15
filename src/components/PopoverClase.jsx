@@ -29,7 +29,7 @@ const etiquetaDuracion = (min) =>
 
 const CAMPO =
   'seleccionable w-full rounded-lg border border-panel-borde bg-panel-suave px-2 py-1.5 text-[12px] text-tinta outline-none placeholder:text-tinta-tenue focus:border-aprobada'
-const ROTULO = 'text-[9.5px] font-bold tracking-wide text-tinta-tenue uppercase'
+const ROTULO = 'text-[9.5px] font-medium tracking-[0.14em] text-tinta-tenue uppercase'
 
 /** Quita tildes y baja a minusculas para poder buscar sin acentos */
 const normalizar = (t) =>
@@ -146,12 +146,12 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
             style={{ backgroundColor: color ? colorIndice(color) : colorNodo(elegida) }}
           />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[12px] font-bold text-tinta">{elegida.nombre}</span>
+            <span className="block truncate text-[12.5px] font-medium text-tinta">{elegida.nombre}</span>
             <span className="block font-mono text-[9px] text-tinta-tenue">
               {codigoVisible(elegida)} · {elegida.uc} UC
             </span>
           </span>
-          <span className="shrink-0 text-[10px] font-bold text-tinta-tenue">Cambiar</span>
+          <span className="shrink-0 text-[10.5px] font-medium text-tinta-tenue">Cambiar</span>
         </button>
       ) : (
         <>
@@ -198,7 +198,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
                     className="size-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: colorNodo(a) }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-tinta">
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-normal text-tinta">
                     {a.nombre}
                   </span>
                   <span className="shrink-0 font-mono text-[9px] text-tinta-tenue">{a.uc} UC</span>
@@ -260,7 +260,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
                 key={min}
                 type="button"
                 onClick={() => setFin(aTexto(Math.min(CIERRA, minInicio + min)))}
-                className={`flex-1 rounded-lg border py-1 text-[11px] font-bold transition-colors ${
+                className={`flex-1 rounded-lg border py-1 text-[11px] font-medium transition-colors ${
                   activo
                     ? 'border-transparent bg-aprobada text-[var(--lienzo)]'
                     : 'border-panel-borde text-tinta-suave hover:text-tinta'
@@ -349,7 +349,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
         <button
           type="submit"
           disabled={!!problema}
-          className="h-8 flex-1 rounded-lg bg-aprobada text-[11.5px] font-bold text-[var(--lienzo)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-8 flex-1 rounded-lg bg-aprobada text-[11.5px] font-semibold text-[var(--lienzo)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {inicial.id ? 'Guardar cambios' : 'Agregar al horario'}
         </button>

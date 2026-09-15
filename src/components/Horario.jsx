@@ -62,6 +62,15 @@ function Horario({ carrera, estados }) {
     () => todas.filter((a) => estados[a.codigo] === ESTADO.DISPONIBLE),
     [todas, estados],
   )
+  /* Para la pantalla de inicio cuentan solo las obligatorias: con las
+     electivas del catalogo el numero se inflaria con veintitantas opciones
+     de las que se cursan unas pocas. */
+  const disponibles = useMemo(
+    () =>
+      carrera.asignaturas.filter((a) => !a.esHueco && estados[a.codigo] === ESTADO.DISPONIBLE)
+        .length,
+    [carrera, estados],
+  )
 
   const cajaDe = (elemento) => {
     const c = elemento?.getBoundingClientRect()
@@ -106,7 +115,11 @@ function Horario({ carrera, estados }) {
           porque necesita medir la altura para repartirla entre las horas, y
           esa altura solo la conoce quien tiene el overflow. */}
       {sesiones.length === 0 && !empezado ? (
-        <HorarioVacio alSubir={setALeer} alCrear={() => setEmpezado(true)} />
+        <HorarioVacio
+          disponibles={disponibles}
+          alSubir={setALeer}
+          alCrear={() => setEmpezado(true)}
+        />
       ) : esTelefono ? (
         <HorarioMovil
           porDia={porDia}
@@ -136,7 +149,7 @@ function Horario({ carrera, estados }) {
           onClick={bajar}
           disabled={bajando}
           title="Descargar el horario como imagen PNG"
-          className="transicion-tema absolute right-5 bottom-5 z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-bold text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
+          className="transicion-tema absolute right-5 bottom-5 z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-medium text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
         >
           {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           Descargar Horario

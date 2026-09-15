@@ -154,7 +154,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
             type="button"
             onClick={() => irA(i)}
             aria-current={i === dia ? 'true' : undefined}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-[12px] font-extrabold tracking-[0.08em] uppercase transition-colors ${
+            className={`flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase transition-colors ${
               i === dia ? 'bg-panel text-tinta shadow-sm' : 'text-tinta-tenue'
             }`}
           >
@@ -207,7 +207,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
               <span
                 key={min}
                 style={{ top: aY(min) }}
-                className="pointer-events-none absolute left-3 translate-y-1 text-[10.5px] font-semibold tracking-wide tabular-nums text-tinta-tenue"
+                className="pointer-events-none absolute left-3 translate-y-1 text-[10.5px] font-light tracking-wide tabular-nums text-tinta-tenue"
               >
                 {etiquetaHoraMovil(min, i > 0 ? todas[i - 1] : null)}
               </span>

@@ -34,7 +34,7 @@ function MenuClase({ ancla, opciones, alCerrar }) {
               alPulsar()
               alCerrar()
             }}
-            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-semibold transition-colors hover:bg-panel-suave ${
+            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-normal transition-colors hover:bg-panel-suave ${
               peligro ? 'text-[var(--estado-rojo)]' : 'text-tinta'
             }`}
           >

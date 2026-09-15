@@ -162,7 +162,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
         {DIAS.map((dia) => (
           <span
             key={dia}
-            className={`flex flex-1 items-center justify-center border-l ${LINEA} py-4 text-[13.5px] font-extrabold tracking-[0.12em] text-tinta uppercase`}
+            className={`flex flex-1 items-center justify-center border-l ${LINEA} py-4 text-[11.5px] font-medium tracking-[0.24em] text-tinta-suave uppercase`}
           >
             {dia}
           </span>
@@ -183,7 +183,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
             <span
               key={min}
               style={{ top: aY(min) }}
-              className="absolute right-4 translate-y-1.5 text-[12.5px] font-semibold tabular-nums text-tinta-tenue"
+              className="absolute right-4 translate-y-1.5 text-[11.5px] font-light tabular-nums text-tinta-tenue"
             >
               {etiquetaHora(min)}
             </span>
@@ -216,7 +216,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
                     height:
                       (arrastrando.propuesta.fin - arrastrando.propuesta.inicio) * pxPorMinuto - 4,
                   }}
-                  className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-bold tabular-nums text-aprobada"
+                  className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-medium tabular-nums text-aprobada"
                 >
                   {enDoceHoras(arrastrando.propuesta.inicio)} –{' '}
                   {enDoceHoras(arrastrando.propuesta.fin)}

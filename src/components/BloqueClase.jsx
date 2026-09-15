@@ -65,7 +65,7 @@ function BloqueClase({
           solo le quita jerarquia a la unica que identifica la clase. */}
       <span
         style={{ color: `color-mix(in oklab, ${color} 58%, var(--tinta))` }}
-        className={`text-[13px] leading-tight font-extrabold ${
+        className={`text-[13px] leading-tight font-semibold tracking-[-0.01em] ${
           alto >= CABE_PIE ? 'line-clamp-2' : 'block truncate'
         }`}
       >
@@ -95,13 +95,13 @@ function BloqueClase({
       </button>
 
       {alto >= CABE_HORA && (
-        <span className="mt-1 block truncate text-[11.5px] font-semibold tabular-nums text-tinta-suave">
+        <span className="mt-1 block truncate text-[11.5px] font-normal tabular-nums text-tinta-suave">
           {enDoceHoras(sesion.inicio)} – {enDoceHoras(sesion.fin)}
         </span>
       )}
 
       {alto >= CABE_PIE && pie.length > 0 && (
-        <span className="mt-1 block truncate text-[11px] font-medium text-tinta-tenue">
+        <span className="mt-1 block truncate text-[11px] font-normal text-tinta-tenue">
           {pie.join('  ·  ')}
         </span>
       )}

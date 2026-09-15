@@ -37,7 +37,7 @@ function HuecoPropuesto({ franja, pxPorMinuto, etiqueta, sangria = 'inset-x-1.5'
       <span className="grid size-6 place-items-center rounded-full border border-tinta-tenue/40 text-tinta-tenue">
         <Plus size={13} strokeWidth={1.75} />
       </span>
-      <span className="text-[11px] font-semibold tracking-wide text-tinta-tenue">{etiqueta}</span>
+      <span className="text-[11px] font-medium tracking-wide text-tinta-tenue">{etiqueta}</span>
     </span>
   )
 }

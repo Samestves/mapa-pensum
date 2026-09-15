@@ -83,7 +83,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
 
         <div className="min-w-0 flex-1">
           <p
-            className={`truncate text-[13px] font-bold ${
+            className={`truncate text-[13px] font-medium ${
               materia ? 'text-tinta' : 'text-tinta-tenue italic'
             }`}
           >
@@ -102,7 +102,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
           )}
 
           {roto && (
-            <p className="mt-1.5 flex items-start gap-1.5 text-[10.5px] leading-snug font-bold text-[var(--estado-cursando)]">
+            <p className="mt-1.5 flex items-start gap-1.5 text-[10.5px] leading-snug font-medium text-[var(--estado-cursando)]">
               <TriangleAlert size={12} className="mt-px shrink-0" />
               {avisos.map((a) => AVISO[a]).join(' · ')}
             </p>
@@ -305,7 +305,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
       >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-panel-borde px-4 py-3.5 sm:px-5">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-tinta">
+            <h2 className="flex items-center gap-2 text-[15px] font-normal tracking-[-0.01em] text-tinta">
               <Sparkles
                 size={15}
                 className={`shrink-0 ${
@@ -352,7 +352,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
         {fase === 'leyendo' && (
           <div className="flex min-h-[180px] flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
             <Loader2 size={22} className="animate-spin text-[var(--estado-aprobada)]" />
-            <p className="text-[12.5px] font-bold text-tinta">
+            <p className="text-[13px] font-normal text-tinta">
               {imagen ? 'Buscando tus clases…' : 'Preparando la imagen…'}
             </p>
             <p className="max-w-[34ch] text-[11px] leading-snug text-tinta-tenue">
@@ -364,7 +364,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
         {fase === 'error' && (
           <div className="flex min-h-[180px] flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
             <TriangleAlert size={22} className="text-[var(--estado-rojo)]" />
-            <p className="text-[12.5px] font-bold text-tinta">{fallo?.mensaje}</p>
+            <p className="text-[13px] font-normal text-tinta">{fallo?.mensaje}</p>
             {/* El detalle tecnico se enseña porque es lo unico que distingue
                 "se acabo la cuota" de "ese modelo ya no existe". Sin el,
                 arreglarlo seria adivinar. */}
@@ -380,7 +380,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
           <>
             {candidatas.length === 0 ? (
               <div className="flex min-h-[160px] flex-1 flex-col items-center justify-center gap-2 px-6 py-10 text-center">
-                <p className="text-[12.5px] font-bold text-tinta">No encontré clases ahí.</p>
+                <p className="text-[13px] font-normal text-tinta">No encontré clases ahí.</p>
                 <p className="max-w-[34ch] text-[11px] leading-snug text-tinta-tenue">
                   Prueba con una captura de pantalla o una foto más recta y con buena luz.
                 </p>
@@ -421,7 +421,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
           <button
             type="button"
             onClick={alCerrar}
-            className="transicion-tema rounded-xl border border-panel-borde px-4 py-2.5 text-[12.5px] font-bold text-tinta-suave transition-colors hover:text-tinta"
+            className="transicion-tema rounded-xl border border-panel-borde px-4 py-2.5 text-[12.5px] font-medium text-tinta-suave transition-colors hover:text-tinta"
           >
             {fase === 'revisar' && listas.length ? 'Cancelar' : 'Volver'}
           </button>
@@ -435,7 +435,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
             <button
               type="button"
               onClick={() => setIntento((n) => n + 1)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98]"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-semibold text-[var(--lienzo)] transition-transform active:scale-[0.98]"
             >
               <RotateCw size={15} />
               Reintentar
@@ -446,7 +446,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
             <button
               type="button"
               onClick={() => refArchivo.current?.click()}
-              className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-extrabold transition-transform active:scale-[0.98] ${
+              className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-transform active:scale-[0.98] ${
                 fase === 'error' && SE_REINTENTA.has(fallo?.codigo)
                   ? 'transicion-tema border border-panel-borde text-tinta-suave hover:text-tinta'
                   : 'flex-1 bg-aprobada text-[var(--lienzo)]'
@@ -476,7 +476,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
               type="button"
               disabled={!listas.length}
               onClick={() => alImportar(aSesiones(candidatas))}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98] disabled:opacity-45"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-aprobada px-4 py-2.5 text-[12.5px] font-semibold text-[var(--lienzo)] transition-transform active:scale-[0.98] disabled:opacity-45"
             >
               {listas.length
                 ? `Añadir ${listas.length} ${listas.length === 1 ? 'clase' : 'clases'}`
