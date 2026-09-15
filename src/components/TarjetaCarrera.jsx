@@ -11,12 +11,14 @@ const GIRO = 7
 /**
  * Una cifra del encabezado de la tarjeta.
  *
- * El numero va en JetBrains Mono y la palabra en versalita apretada. No es un
- * capricho: la versalita de 10px en negrita es exactamente el estilo de
- * etiqueta que ya usan el panel de avance y la leyenda, asi que la tarjeta
- * habla el mismo idioma que el resto de la app sin traer una tercera fuente.
- * Y en un proyecto que presume de no gastarle datos a nadie, una fuente mas
- * por dos palabras no se justificaba.
+ * Numero y palabra en Inter, los dos finos, a juego con el nombre de la
+ * carrera. El numero estuvo en JetBrains Mono y en negrita, y la palabra en
+ * versalita negrita: al lado de un titulo en peso 300 eran lo mas grueso de
+ * la tarjeta, y el ojo iba a "49 OBLIGATORIAS" antes que a "Sistemas".
+ *
+ * El numero sube un punto porque fino lo necesita, y la palabra conserva las
+ * versalitas espaciadas pero en peso medio: el espaciado ya la separa como
+ * rotulo, no hace falta ademas la negrita.
  *
  * tabular-nums mantiene las cifras en columna: sin eso, 49 y 10 ocupan anchos
  * distintos y las tarjetas quedan desalineadas entre si.
@@ -24,10 +26,10 @@ const GIRO = 7
 function Cifra({ valor, etiqueta }) {
   return (
     <span className="flex items-baseline gap-1.5">
-      <span className="font-mono text-[13px] leading-none font-bold text-tinta tabular-nums xl:text-[15px]">
+      <span className="text-[15px] leading-none font-light text-tinta tabular-nums xl:text-[17px]">
         {valor}
       </span>
-      <span className="text-[10px] leading-none font-bold tracking-[0.09em] text-tinta-tenue uppercase">
+      <span className="text-[10px] leading-none font-medium tracking-[0.1em] text-tinta-tenue uppercase">
         {etiqueta}
       </span>
     </span>
