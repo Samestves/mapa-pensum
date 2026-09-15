@@ -227,10 +227,10 @@ function ContenidoGrafo({
 /**
  * Cabecera de un semestre.
  *
- *   Semestre 5                     • 17 UC   3/7
+ *   Semestre 05                    • 17 UC · 3/7
  *   ━━━━━━━━━━━━━━━━━━━───────────────────────────
  *
- * El titulo dice "Semestre 5", en palabras y del tamaño de un titulo. Estuvo
+ * El titulo dice "Semestre 05", en palabras y del tamaño de un titulo. Estuvo
  * como un "05" grande con un "Semestre" diminuto al lado, y el numero solo no
  * dice que es: podia ser un codigo, un orden o un recuento, y la palabra que
  * lo explicaba era lo mas pequeño de la fila.
@@ -265,8 +265,19 @@ function CabeceraSemestre({ columna, datos }) {
 
   return (
     <g>
-      <text x={x} y={top + 30} fontSize="17" fill="var(--tinta)" className="font-semibold tracking-[-0.01em]">
-        Semestre <tspan className="tabular-nums">{semestre}</tspan>
+      {/* "Semestre" en peso medio y apagado, el numero en seminegrita y tinta
+          plena: la palabra dice que es y el numero cual, y ese pequeño
+          contraste de peso es lo que hace que se lea de un golpe sin que
+          ninguna de las dos grite. El numero va con dos cifras y tabulares,
+          para que "Semestre 09" y "Semestre 10" midan lo mismo y las diez
+          cabeceras queden alineadas. */}
+      <text x={x} y={top + 30} fontSize="18" className="font-display tracking-[-0.02em]">
+        <tspan fill="var(--tinta-suave)" className="font-medium">
+          Semestre
+        </tspan>
+        <tspan dx="5" fill="var(--tinta)" className="font-semibold tabular-nums">
+          {String(semestre).padStart(2, '0')}
+        </tspan>
       </text>
 
       <text

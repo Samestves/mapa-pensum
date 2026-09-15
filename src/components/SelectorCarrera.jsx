@@ -92,7 +92,7 @@ function SelectorCarrera({ alElegir }) {
                   tamaño ya esta, y lo que hace falta entonces no es peso sino
                   cerrar el tracking. Geist aguanta -0,04em sin que las letras
                   se toquen, que es justo para lo que se cambio de fuente. */}
-              <h1 className="truncate text-[25px] leading-[1.06] font-semibold tracking-[-0.032em] text-tinta sm:text-[29px] xl:text-[26px] xl:tracking-[-0.03em]">
+              <h1 className="font-display truncate text-[26px] leading-[1.06] font-semibold tracking-[-0.025em] text-tinta sm:text-[30px] xl:text-[28px]">
                 Mapa de Pensum
               </h1>
               {/* En caja baja y peso normal. Estuvo en versalitas anchas y

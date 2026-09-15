@@ -112,7 +112,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[15px] leading-tight font-extrabold text-tinta xl:text-lg">
+          <h2 className="font-display text-[16px] leading-tight font-semibold tracking-[-0.015em] text-tinta xl:text-[18px]">
             {carrera.nombreCorto}
           </h2>
           {/* Antes esto era una frase corrida en 10px tinta-tenue. El

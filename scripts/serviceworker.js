@@ -80,7 +80,10 @@ const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png'])
  * De 172 kB de fuentes a 64. En un telefono con datos caros, 108 kB de
  * alfabetos que no se van a dibujar es descarga pagada por nada.
  */
-const SUBCONJUNTO_QUE_USAMOS = /-latin-wght-/
+/* wght son Geist y JetBrains Mono. opsz es Inter, que se carga con el eje de
+   tamaño optico y por eso su archivo se llama distinto: sin esto quedaba
+   fuera de la precarga y los titulos salian en Geist sin conexion. */
+const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz)-normal/
 
 const recursos = todos
   .map(aUrl)
