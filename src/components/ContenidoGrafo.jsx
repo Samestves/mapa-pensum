@@ -2,7 +2,6 @@ import { memo, useMemo } from 'react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { SITUACION, tramoDe } from '../layout/situacion'
-import { SEGMENTO } from '../theme/situacion'
 import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'
@@ -26,6 +25,7 @@ import Arista from './Arista'
  */
 function ContenidoGrafo({
   situaciones,
+  foco,
   columnas,
   aristas,
   nodos,
@@ -52,8 +52,8 @@ function ContenidoGrafo({
      a pintar al aprobar una sola.
 
      Lo que la cabecera de cada semestre necesita, de una pasada: sus UC, una
-     situacion por materia en el orden en que estan dibujadas -eso es la barra
-     segmentada- y los recuentos para la frase de estado.
+     situacion por materia en el orden en que estan dibujadas y cuantas hay de
+     cada una, que es de donde sale su linea de progreso.
 
      Las UC suman las electivas que hayas COLOCADO. La casilla cuenta como una
      materia del semestre, porque vas a cursar algo ahi; vacia aporta cero UC,
@@ -88,13 +88,18 @@ function ContenidoGrafo({
       {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza que
           ninguno pasa por encima de un nodo. */}
       <g>
-        {aristas.map((arista) => (
+        {aristas.map((arista, i) => (
           <Arista
             key={arista.id}
             d={arista.d}
             x2={arista.x2}
             y2={arista.y2}
             tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
+            /* Retraso negativo y estable, sacado del indice: cada luz de la
+               frontera nace ya a mitad de su viaje y a un punto distinto que
+               las demas. Todas a la vez se verian como un metronomo. */
+            retraso={`-${((i * 7) % 11) * 0.26}s`}
+            foco={foco}
             resaltada={cadena != null && cadena.has(arista.origen) && cadena.has(arista.destino)}
             atenuada={atenuado(arista.origen) || atenuado(arista.destino)}
             descargando={descarga?.codigo === arista.origen}
@@ -211,104 +216,104 @@ function ContenidoGrafo({
 }
 
 /**
- * Cabecera de un semestre. Tres lineas, cada una con un trabajo:
+ * Cabecera de un semestre.
  *
- *   SEMESTRE              17 UC     que es y cuanto pesa
- *   05             2 por inscribir  el numero, y lo que te dice HOY
- *   ▰▰▰▰▱▱▱                         una materia, un segmento
+ *   05  Semestre · 17 UC            ●  3/7
+ *   ━━━━━━━━━━━━━━━━───────────────────────
  *
- * La barra sustituye a la regla que se iba llenando en proporcion. Una regla
- * al 40 % no dice si ese 40 % son materias aprobadas o en curso, ni si lo que
- * falta se puede inscribir ya o queda lejos. Un segmento por materia, pintado
- * con el mismo color que su tarjeta, lo dice todo sin leer nada: a la escala
- * del mapa entero en un telefono, donde ninguna letra se lee, se sigue viendo
- * que semestres estan hechos, cual esta en curso y donde esta tu frontera.
+ * Una linea de texto y una linea de progreso, y nada mas. Estuvo en tres
+ * pisos -rotulo en versalitas, numero con frase de estado y una barra de un
+ * segmento por materia- y cada piso decia un pedazo de lo mismo con su propia
+ * tipografia. Siete segmentos con huecos se leian como puntos sueltos, no
+ * como avance.
  *
- * La frase de la derecha dice solo la cosa mas urgente del semestre, en este
- * orden: si esta completo, si tienes algo en curso, si hay algo que inscribir
- * o si algo se abre el que viene. Si no hay nada de eso, calla.
+ * La linea de progreso se llena de izquierda a derecha en el orden en que se
+ * vive un semestre: primero lo aprobado en verde, luego lo que cursas en
+ * ambar. Lo que queda es riel vacio. Al aprobar, el tramo verde crece con una
+ * transicion en vez de saltar.
+ *
+ * Lo inscribible NO entra en la linea. Entro, en tinta, y un semestre sin
+ * nada aprobado salia con la barra al setenta por ciento al lado de un "0/7":
+ * se leia como avance y era todo lo contrario, trabajo pendiente.
+ *
+ * El punto de la derecha solo aparece si en ese semestre hay algo que puedes
+ * inscribir, y brilla con el mismo degradado que esas tarjetas: es la forma
+ * de encontrar tu frontera sin acercarte a leer.
  */
 function CabeceraSemestre({ columna, datos }) {
   const { x, semestre } = columna
   const top = MARGEN.top
-  const segmentos = datos?.segmentos ?? []
+  const total = datos?.segmentos.length ?? 0
   const cuenta = datos?.cuenta ?? {}
-  const total = segmentos.length
+  const hechas = cuenta[SITUACION.HECHA] ?? 0
+  const completo = total > 0 && hechas === total
+  const hayInscribibles = (cuenta[SITUACION.INSCRIBIBLE] ?? 0) > 0
 
-  const HUECO = 3
-  const anchoSegmento = total ? (NODO.ancho - HUECO * (total - 1)) / total : NODO.ancho
+  const RIEL = top + 44
+  const tramos = [
+    { n: hechas, color: 'var(--estado-aprobada)', opacidad: 1 },
+    { n: cuenta[SITUACION.CURSANDO] ?? 0, color: 'var(--estado-cursando)', opacidad: 1 },
+  ]
+  let desde = 0
 
-  const estado =
-    total > 0 && cuenta[SITUACION.HECHA] === total
-      ? { texto: 'Completo', color: 'var(--estado-aprobada)' }
-      : cuenta[SITUACION.CURSANDO]
-        ? { texto: `${cuenta[SITUACION.CURSANDO]} en curso`, color: 'var(--estado-cursando)' }
-        : cuenta[SITUACION.INSCRIBIBLE]
-          ? { texto: `${cuenta[SITUACION.INSCRIBIBLE]} por inscribir`, color: 'var(--tinta)' }
-          : cuenta[SITUACION.PROXIMA]
-            ? { texto: `${cuenta[SITUACION.PROXIMA]} el próximo`, color: 'var(--tinta-suave)' }
-            : cuenta[SITUACION.HECHA]
-              ? { texto: `${cuenta[SITUACION.HECHA]} de ${total}`, color: 'var(--tinta-tenue)' }
-              : null
+  const suave = 'x 520ms cubic-bezier(0.32, 0.72, 0, 1), width 520ms cubic-bezier(0.32, 0.72, 0, 1)'
 
   return (
     <g>
       <text
-        x={x}
-        y={top + 8}
-        fontSize="9"
-        fill="var(--tinta-tenue)"
-        className="font-semibold tracking-[0.22em]"
-      >
-        SEMESTRE
-      </text>
-      <text
-        x={x + NODO.ancho}
-        y={top + 8}
-        textAnchor="end"
-        fontSize="10"
-        fill="var(--tinta-tenue)"
-        className="font-mono tabular-nums"
-      >
-        {datos?.uc ?? 0} UC
-      </text>
-
-      <text
         x={x - 1}
-        y={top + 38}
-        fontSize="30"
+        y={top + 30}
+        fontSize="24"
         fill="var(--tinta)"
-        className="font-semibold tabular-nums tracking-[-0.04em]"
+        className="font-semibold tabular-nums tracking-[-0.03em]"
       >
         {String(semestre).padStart(2, '0')}
       </text>
-      {estado && (
-        <text
-          x={x + NODO.ancho}
-          y={top + 37}
-          textAnchor="end"
-          fontSize="11"
-          className="font-semibold"
-          style={{ fill: estado.color, transition: 'fill 240ms ease' }}
-        >
-          {estado.texto}
-        </text>
-      )}
+      <text x={x + 36} y={top + 29} fontSize="11" fill="var(--tinta-tenue)" className="font-medium">
+        Semestre · {datos?.uc ?? 0} UC
+      </text>
 
-      {segmentos.map((situacion, i) => {
-        const s = SEGMENTO[situacion]
+      {hayInscribibles && (
+        <circle cx={x + NODO.ancho - 32} cy={top + 25.5} r={3.5} fill="url(#brillo-inscribible)" />
+      )}
+      <text
+        x={x + NODO.ancho}
+        y={top + 29}
+        textAnchor="end"
+        fontSize="11"
+        className="font-mono tabular-nums"
+        style={{
+          fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-suave)',
+          transition: 'fill 240ms ease',
+        }}
+      >
+        {completo ? '✓' : `${hechas}/${total}`}
+      </text>
+
+      <rect
+        x={x}
+        y={RIEL}
+        width={NODO.ancho}
+        height={2}
+        rx={1}
+        fill="var(--tinta)"
+        fillOpacity={0.08}
+      />
+      {tramos.map((tramo, i) => {
+        const inicio = desde
+        desde += tramo.n
         return (
           <rect
             key={i}
-            x={x + i * (anchoSegmento + HUECO)}
-            y={top + 46}
-            width={anchoSegmento}
-            height={4}
-            rx={2}
+            y={RIEL}
+            height={2}
+            rx={1}
             style={{
-              fill: s.color,
-              fillOpacity: s.opacidad,
-              transition: 'fill 240ms ease, fill-opacity 240ms ease',
+              x: x + (total ? (NODO.ancho * inicio) / total : 0),
+              width: total ? (NODO.ancho * tramo.n) / total : 0,
+              fill: tramo.color,
+              fillOpacity: tramo.opacidad,
+              transition: suave,
             }}
           />
         )

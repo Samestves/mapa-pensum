@@ -2,47 +2,39 @@ import { memo } from 'react'
 import { TRAMO } from '../layout/situacion'
 
 /**
- * Como se ve cada clase de cable. El color ya no sale del area del
- * prerrequisito: con ocho colores de area cruzandose, el mapa era un arcoiris
- * de curvas y no se podia seguir ninguna. Ahora el cable dice UNA cosa, la que
- * importa para inscribir.
+ * Como se ve cada clase de cable. El color no sale del area del
+ * prerrequisito: con ocho colores de area cruzandose el mapa era un arcoiris
+ * de curvas. El cable dice UNA cosa, la que importa para inscribir.
  */
 const TRAZO = {
-  // Por aqui sigue tu carrera: lo unico encendido del mapa
-  [TRAMO.FRONTERA]: { color: 'var(--tinta)', opacidad: 0.85, grosor: 1.75 },
-  // Camino ya hecho: presente, pero de fondo
-  [TRAMO.RECORRIDO]: { color: 'var(--estado-aprobada)', opacidad: 0.4, grosor: 1.5 },
-  // Lo que se abre el semestre que viene
-  [TRAMO.PROXIMA]: { color: 'var(--tinta)', opacidad: 0.3, grosor: 1.25 },
-  // Todo lo demas, casi transparente: se intuye la estructura, no estorba
-  [TRAMO.LEJANA]: { color: 'var(--tinta)', opacidad: 0.09, grosor: 1 },
+  [TRAMO.FRONTERA]: { color: 'var(--tinta)', opacidad: 0.32, grosor: 1.75 },
+  [TRAMO.RECORRIDO]: { color: 'var(--estado-aprobada)', opacidad: 0.34, grosor: 1.5 },
+  [TRAMO.PROXIMA]: { color: 'var(--tinta)', opacidad: 0.2, grosor: 1.25 },
+  [TRAMO.LEJANA]: { color: 'var(--tinta)', opacidad: 0.07, grosor: 1 },
 }
 
 /**
  * Cable entre un prerrequisito y la materia que desbloquea.
  *
- * Era cada uno nueve elementos -tres trazos de resplandor, el cable, tres
- * capas de estela, dos perlas y un punto de soldadura- con cinco animaciones
- * que no paraban nunca. En Sistemas, 215 animaciones perpetuas que ni
- * stroke-dashoffset ni offset-distance dejan pasar a la GPU: cada fotograma
- * se volvian a rasterizar en el hilo principal. Medido con el mapa QUIETO,
- * 22 de cada 150 fotogramas se pasaban de 16,7 ms en un PC; con esas
- * animaciones pausadas, cero.
+ * Tres animaciones, y ninguna en todos los cables a la vez:
  *
- * Ahora es un trazo. Lo que decia la corriente -"de aqui se llega alli"- lo
- * dice el color, y lo dice sin gastar nada mientras nadie toca el mapa.
+ *   flujo    solo en la frontera -de lo aprobado a lo que puedes inscribir-.
+ *            Una luz corta que viaja hacia la materia. Es la unica perpetua,
+ *            y en un avance normal son de dos a ocho cables, no los cuarenta
+ *            y tres de Sistemas: lo que costaba era animarlos TODOS.
+ *   trazar   al mirar una materia, su cadena se dibuja de origen a destino.
+ *            Se relanza con cada materia nueva porque va con key={foco}.
+ *   descarga la pasada de luz verde al aprobar.
  *
- * vector-effect="non-scaling-stroke" deja el grosor en pixeles de pantalla.
- * Sin el, un cable de 1,5 se dibujaba a 0,49 px con el mapa encajado -o sea
- * que la diferencia entre encendido y apagado no se veia- y a 3,7 px con el
- * mapa acercado, gordo como un tubo.
+ * Sin vector-effect="non-scaling-stroke". Lo tuvo, y con el las animaciones
+ * se veian rotas: pathLength normaliza la longitud en coordenadas del dibujo
+ * y ese atributo mide el trazo en pixeles de pantalla, asi que el guion de
+ * la luz salia de otro tamaño que el calculado y a saltos al hacer zoom.
  */
-function Arista({ d, x2, y2, tramo, resaltada, atenuada, descargando, claveDescarga }) {
+function Arista({ d, x2, y2, tramo, retraso, resaltada, atenuada, foco, descargando, claveDescarga }) {
   const t = TRAZO[tramo]
-  const opacidad = atenuada ? 0.03 : resaltada ? Math.max(t.opacidad, 0.9) : t.opacidad
-  const color = resaltada && tramo === TRAMO.LEJANA ? 'var(--tinta)' : t.color
-  const grosor = resaltada ? Math.max(t.grosor, 2) : t.grosor
-  const conPunto = tramo === TRAMO.FRONTERA || resaltada
+  const opacidad = atenuada ? 0.03 : resaltada ? 0.14 : t.opacidad
+  const frontera = tramo === TRAMO.FRONTERA
 
   return (
     <g>
@@ -50,25 +42,55 @@ function Arista({ d, x2, y2, tramo, resaltada, atenuada, descargando, claveDesca
         d={d}
         fill="none"
         strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
         style={{
-          stroke: color,
+          stroke: resaltada ? 'var(--tinta)' : t.color,
           strokeOpacity: opacidad,
-          strokeWidth: grosor,
-          transition: 'stroke 240ms ease, stroke-opacity 240ms ease, stroke-width 240ms ease',
+          strokeWidth: t.grosor,
+          transition: 'stroke 240ms ease, stroke-opacity 240ms ease',
         }}
       />
 
-      {/* Punto de llegada, solo donde se sigue un camino: en la frontera y en
-          la cadena que se esta mirando. En los cuarenta y tantos cables a la
-          vez eran cuarenta y tantos puntos que no apuntaban a nada. */}
-      {conPunto && !atenuada && (
-        <circle cx={x2} cy={y2} r={3} style={{ fill: color, fillOpacity: opacidad }} />
+      {/* La luz de la frontera: un halo ancho y tenue y un nucleo fino encima,
+          los dos con el mismo guion y el mismo reloj. Se apaga mientras la
+          cadena que se mira es otra, para no competir con ella. */}
+      {frontera && !atenuada && (
+        <>
+          <path
+            d={d}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="flujo"
+            style={{ stroke: 'var(--tinta)', strokeWidth: 6, strokeOpacity: 0.14, animationDelay: retraso }}
+          />
+          <path
+            d={d}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="flujo"
+            style={{ stroke: 'var(--tinta)', strokeWidth: 2, strokeOpacity: 0.95, animationDelay: retraso }}
+          />
+        </>
       )}
 
-      {/* La descarga al aprobar: una sola pasada de luz por el cable, montada
-          lo que dura y desmontada despues. Es la unica animacion de los
-          cables, y solo existe cuando acabas de hacer algo. */}
+      {/* La cadena de la materia que se mira, dibujandose */}
+      {resaltada && (
+        <path
+          key={foco}
+          d={d}
+          fill="none"
+          pathLength="100"
+          strokeLinecap="round"
+          className="trazar"
+          style={{ stroke: 'var(--tinta)', strokeWidth: 2, strokeOpacity: 0.9 }}
+        />
+      )}
+
+      {(frontera || resaltada) && !atenuada && (
+        <circle cx={x2} cy={y2} r={3} style={{ fill: 'var(--tinta)', fillOpacity: resaltada ? 0.9 : 0.7 }} />
+      )}
+
       {descargando && (
         <path
           key={claveDescarga}
@@ -76,7 +98,6 @@ function Arista({ d, x2, y2, tramo, resaltada, atenuada, descargando, claveDesca
           fill="none"
           pathLength="100"
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
           className="descarga"
           style={{ stroke: 'var(--estado-aprobada)', strokeWidth: 3 }}
         />

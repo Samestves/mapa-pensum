@@ -16,8 +16,9 @@ const mezcla = (color, pct, base = 'var(--nodo)') => `color-mix(in oklab, ${colo
  *   hecha        se retira. Un tinte verde apenas, texto apagado y un check.
  *                Ya paso; sirve de suelo, no de protagonista.
  *   cursando     se marca en ambar, sin llamar mas que eso.
- *   inscribible  es lo unico que brilla: fondo levantado, borde en tinta
- *                plena y la etiqueta en negativo. Es donde sigue tu carrera.
+ *   inscribible  es lo unico que brilla: un degradado recorre su borde y su
+ *                etiqueta, y un halo del mismo color la despega del resto.
+ *                Es donde sigue tu carrera.
  *   proxima      contorno fino y una etiqueta sin relleno: se ve que viene.
  *   lejana       casi fundida con el lienzo.
  *
@@ -47,13 +48,25 @@ export const ASPECTO = {
       tinta: 'var(--estado-cursando)',
     },
   },
+  /* El borde es el degradado que gira, definido en DefsGrafo. No es tinta
+     plena: con blanco a secas la tarjeta se leia como "seleccionada", que es
+     otra cosa, y con tres tarjetas inscribibles parecia que habias pulsado
+     tres. El brillo que recorre el contorno dice "esta viva" sin confundirse
+     con el foco. */
   [SITUACION.INSCRIBIBLE]: {
     fondo: 'var(--inscribible-fondo)',
-    borde: 'var(--tinta)',
-    opacidadBorde: 0.82,
+    borde: 'url(#brillo-inscribible)',
+    opacidadBorde: 1,
     grosor: 1.5,
     nombre: 'var(--tinta)',
-    etiqueta: { texto: 'Inscribible', ancho: 66, fondo: 'var(--tinta)', tinta: 'var(--nodo)' },
+    brilla: true,
+    etiqueta: {
+      texto: 'Inscribible',
+      ancho: 66,
+      fondo: mezcla('var(--tinta)', 9),
+      tinta: 'var(--tinta)',
+      contorno: 'url(#brillo-inscribible)',
+    },
   },
   [SITUACION.PROXIMA]: {
     fondo: 'var(--nodo)',
@@ -66,7 +79,7 @@ export const ASPECTO = {
       ancho: 52,
       fondo: 'none',
       tinta: 'var(--tinta-suave)',
-      contorno: true,
+      contorno: 'color-mix(in oklab, var(--tinta) 26%, transparent)',
     },
   },
   [SITUACION.LEJANA]: {
@@ -85,13 +98,4 @@ export const ETIQUETA_SITUACION = {
   [SITUACION.INSCRIBIBLE]: 'Puedes inscribirla',
   [SITUACION.PROXIMA]: 'Se abre el próximo semestre',
   [SITUACION.LEJANA]: 'Aún lejos',
-}
-
-/** Color del segmento que cada materia ocupa en la barra de su semestre */
-export const SEGMENTO = {
-  [SITUACION.HECHA]: { color: 'var(--estado-aprobada)', opacidad: 1 },
-  [SITUACION.CURSANDO]: { color: 'var(--estado-cursando)', opacidad: 1 },
-  [SITUACION.INSCRIBIBLE]: { color: 'var(--tinta)', opacidad: 0.9 },
-  [SITUACION.PROXIMA]: { color: 'var(--tinta)', opacidad: 0.3 },
-  [SITUACION.LEJANA]: { color: 'var(--tinta)', opacidad: 0.12 },
 }

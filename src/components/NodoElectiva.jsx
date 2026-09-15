@@ -56,10 +56,21 @@ function NodoElectiva({
     >
       <title>{`${codigoVisible(nodo)} — ${nombre} · ${uc} UC · ${ETIQUETA_SITUACION[situacion]}`}</title>
 
+      {a.brilla && (
+        <rect
+          x={-3}
+          y={-3}
+          width={NODO.ancho + 6}
+          height={alto + 6}
+          rx={14}
+          fill="none"
+          style={{ stroke: a.borde, strokeOpacity: 0.14, strokeWidth: 3 }}
+        />
+      )}
       <rect
         width={NODO.ancho}
         height={alto}
-        rx={10}
+        rx={11}
         style={{
           fill: a.fondo,
           stroke: a.borde,
@@ -88,17 +99,14 @@ function NodoElectiva({
       </text>
 
       {situacion === SITUACION.HECHA && (
-        <>
-          <circle cx={NODO.ancho - 18} cy={alto - 16} r={7} fill="var(--estado-aprobada)" />
-          <Check
-            x={NODO.ancho - 22.5}
-            y={alto - 20.5}
-            width={9}
-            height={9}
-            color="var(--nodo)"
-            strokeWidth={3.4}
-          />
-        </>
+        <Check
+          x={NODO.ancho - 24}
+          y={alto - 23}
+          width={12}
+          height={12}
+          color="var(--estado-aprobada)"
+          strokeWidth={2.8}
+        />
       )}
       {a.etiqueta && situacion !== SITUACION.PROXIMA && (
         <Etiqueta {...a.etiqueta} x={NODO.ancho - 10 - a.etiqueta.ancho} y={alto - 25} />

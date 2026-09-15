@@ -41,22 +41,22 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
 
   return (
     <>
-      {/* Halo de la inscribible. UN rectangulo quieto, no un filtro ni una
-          animacion: basta para que se despegue del resto a cualquier escala,
-          incluida la del mapa entero en un telefono, donde el texto ya no se
-          lee pero un contorno luminoso si. */}
-      {(situacion === SITUACION.INSCRIBIBLE || seleccionado) && (
+      {/* Halo de la inscribible: un rectangulo ancho y tenue con el mismo
+          degradado que su borde, no un filtro. Basta para que se despegue del
+          resto a cualquier escala, incluida la del mapa entero en un telefono,
+          donde el texto ya no se lee pero un contorno de color si. */}
+      {(a.brilla || seleccionado) && (
         <rect
-          x={-4}
-          y={-4}
-          width={ancho + 8}
-          height={alto + 8}
-          rx={radio + 4}
+          x={-3}
+          y={-3}
+          width={ancho + 6}
+          height={alto + 6}
+          rx={radio + 3}
           fill="none"
           style={{
-            stroke: seleccionado ? a.borde : 'var(--tinta)',
-            strokeOpacity: seleccionado ? 0.24 : 0.1,
-            strokeWidth: 4,
+            stroke: a.borde,
+            strokeOpacity: seleccionado ? 0.4 : 0.14,
+            strokeWidth: 3,
             transition: SUAVE,
           }}
         />
@@ -86,18 +86,18 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         {codigo}
       </text>
 
+      {/* El check de la aprobada va suelto, sin disco lleno detras. Con disco
+          era un sello: lo mas contundente de la tarjeta, en la materia que
+          menos atencion necesita. */}
       {situacion === SITUACION.HECHA && (
-        <>
-          <circle cx={ancho - 22} cy={20} r={8} fill="var(--estado-aprobada)" />
-          <Check
-            x={ancho - 27.5}
-            y={14.5}
-            width={11}
-            height={11}
-            color="var(--nodo)"
-            strokeWidth={3.2}
-          />
-        </>
+        <Check
+          x={ancho - 28}
+          y={13}
+          width={13}
+          height={13}
+          color="var(--estado-aprobada)"
+          strokeWidth={2.8}
+        />
       )}
       {lejana && (
         <Lock
@@ -158,8 +158,7 @@ export function Etiqueta({ texto, ancho, fondo, tinta, contorno, x, y }) {
         rx={8.5}
         style={{
           fill: fondo,
-          stroke: contorno ? 'var(--tinta)' : 'none',
-          strokeOpacity: 0.26,
+          stroke: contorno ?? 'none',
           strokeWidth: 1,
         }}
       />

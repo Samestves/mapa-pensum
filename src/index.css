@@ -276,21 +276,60 @@ body {
 /* ------------------------------------------------------------------
    Animaciones del grafo.
 
-   Solo quedan tres, y las tres son RESPUESTA a algo que hiciste: la luz que
-   recorre un cable al aprobar, el destello de lo que eso te abrio y el anillo
-   de la tarjeta que tocaste. Se montan lo que duran y se desmontan.
+   Cuatro, y solo una es perpetua, y esa solo en los cables de la frontera
+   -de lo aprobado a lo que puedes inscribir-, que en un avance normal son
+   entre dos y ocho. Lo caro nunca fue animar: fue animar los cuarenta y tres
+   cables de Sistemas a la vez, cinco capas cada uno, doscientas quince
+   animaciones que la GPU no compone. Las otras tres responden a algo que
+   hiciste y se desmontan al terminar.
 
-   Se fueron las perpetuas: la estela y la perla de cada cable, y el borde que
-   respiraba en las materias en curso. Eran 215 animaciones en Sistemas que no
-   paraban nunca, y ni stroke-dashoffset ni offset-distance las puede componer
-   la GPU, asi que cada fotograma se rasterizaban en el hilo principal. Con el
-   mapa quieto, en un PC, 22 de cada 150 fotogramas se pasaban de 16,7 ms; sin
-   ellas, ninguno. Tambien se fue todo lo que habia para contenerlas -pausarlas
-   al arrastrar, esconder capas en tactil-, porque ya no hay nada que contener.
+   Todas las aristas llevan pathLength="100", asi que los recorridos se miden
+   en porcentaje. Y ninguna lleva vector-effect="non-scaling-stroke": con el,
+   el guion se mide en pixeles de pantalla mientras pathLength lo normaliza en
+   coordenadas del dibujo, y la luz salia de otro tamaño y a saltos.
    ------------------------------------------------------------------ */
 
-/* La luz al aprobar. Todas las aristas llevan pathLength="100", asi que el
-   recorrido se mide en porcentaje y no hace falta getTotalLength() en JS. */
+/* La luz que viaja por la frontera hacia lo que puedes inscribir. Nace y
+   muere apagada, para que no aparezca de golpe en el origen ni choque contra
+   la tarjeta: se enciende al salir y se funde al llegar. */
+@keyframes fluir {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.flujo {
+  stroke-dasharray: 8 92;
+  animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
+}
+
+/* Al mirar una materia, su cadena se dibuja de origen a destino */
+@keyframes trazar {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.trazar {
+  stroke-dasharray: 100;
+  animation: trazar 560ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* La pasada de luz verde al aprobar */
 @keyframes descarga {
   0% {
     stroke-dashoffset: 100;
@@ -1169,7 +1208,14 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Sin animacion el guion de la luz se quedaria clavado al principio del
+     cable como una mancha. Fuera. */
+  .flujo {
+    display: none;
+  }
+
   .descarga,
+  .trazar,
   .destello,
   .anillo-cambio,
   .logo-entrada,

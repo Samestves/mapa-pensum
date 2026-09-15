@@ -6,7 +6,6 @@ import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
-import LeyendaMapa from './LeyendaMapa'
 import { situacionDe } from '../layout/situacion'
 
 function GrafoPensum({
@@ -43,9 +42,8 @@ function GrafoPensum({
   } = useVistaGrafo(ancho, alto)
 
   /* Situacion de cada materia -hecha, cursando, inscribible, proxima o
-     lejana-. Se calcula aqui y no dentro del mapa porque la usan dos: las
-     tarjetas y la leyenda que las cuenta. Cambia de identidad solo cuando
-     cambian los estados, que es cuando de verdad hay que repintar. */
+     lejana-. Cambia de identidad solo cuando cambian los estados, que es
+     cuando de verdad hay que repintar. */
   const situaciones = useMemo(() => {
     const mapa = new Map()
     const poner = (a) => {
@@ -156,6 +154,7 @@ function GrafoPensum({
               se salta el render entero comparando una prop. */}
           <ContenidoGrafo
             situaciones={situaciones}
+            foco={seleccionado ?? senalado}
             columnas={columnas}
             aristas={aristas}
             nodos={nodos}
@@ -194,7 +193,6 @@ function GrafoPensum({
         />
       )}
 
-      <LeyendaMapa situaciones={situaciones} nodos={nodos} enCasilla={enCasilla} />
       <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
     </div>
   )
