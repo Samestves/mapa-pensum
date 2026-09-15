@@ -42,7 +42,7 @@ function NodoElectiva({
         ? `${uc} UC · sin requisitos`
         : `${uc} UC`
 
-  const opacidadBorde = seleccionado ? 1 : resaltado ? Math.max(a.opacidadBorde, 0.62) : a.opacidadBorde
+  const borde = seleccionado || resaltado ? a.fuerte : a.borde
 
   return (
     <g
@@ -73,8 +73,7 @@ function NodoElectiva({
         rx={11}
         style={{
           fill: a.fondo,
-          stroke: a.borde,
-          strokeOpacity: opacidadBorde,
+          stroke: borde,
           strokeWidth: seleccionado ? a.grosor + 1 : a.grosor,
           transition: 'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease',
         }}
@@ -94,7 +93,7 @@ function NodoElectiva({
       ))}
 
       <circle cx={17} cy={alto - 13} r={2.5} fill={colorNodo(nodo)} />
-      <text x={24} y={alto - 10} fontSize={8.5} fill="var(--tinta-tenue)" className="font-mono">
+      <text x={24} y={alto - 10} fontSize={8.5} fill="var(--sit-codigo)" className="font-mono">
         {pie}
       </text>
 

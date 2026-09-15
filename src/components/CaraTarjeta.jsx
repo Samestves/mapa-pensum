@@ -27,11 +27,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
   const a = ASPECTO[situacion]
   const { ancho, alto, radio } = NODO
 
-  const opacidadBorde = seleccionado
-    ? 1
-    : resaltado
-      ? Math.max(a.opacidadBorde, 0.62)
-      : a.opacidadBorde
+  const borde = seleccionado || resaltado ? a.fuerte : a.borde
   const grosor = seleccionado ? a.grosor + 1 : a.grosor
 
   // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
@@ -54,7 +50,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           rx={radio + 3}
           fill="none"
           style={{
-            stroke: a.borde,
+            stroke: a.fuerte,
             strokeOpacity: seleccionado ? 0.4 : 0.14,
             strokeWidth: 3,
             transition: SUAVE,
@@ -68,8 +64,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         rx={radio}
         style={{
           fill: a.fondo,
-          stroke: a.borde,
-          strokeOpacity: opacidadBorde,
+          stroke: borde,
           strokeWidth: grosor,
           transition: SUAVE,
         }}
@@ -79,8 +74,8 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         x={NODO.padIzq}
         y={24}
         fontSize={9.5}
-        fill="var(--tinta-tenue)"
-        fillOpacity={lejana ? 0.7 : 1}
+        fill="var(--sit-codigo)"
+        fillOpacity={lejana ? 0.75 : 1}
         className="font-mono tracking-wide"
       >
         {codigo}
@@ -105,9 +100,9 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           y={13}
           width={12}
           height={12}
-          color="var(--tinta-tenue)"
+          color="var(--sit-codigo)"
           strokeWidth={2.2}
-          opacity={0.7}
+          opacity={0.75}
         />
       )}
 
@@ -135,7 +130,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         x={NODO.padIzq + 11}
         y={alto - 11.5}
         fontSize={9.5}
-        fill="var(--tinta-tenue)"
+        fill="var(--sit-codigo)"
         className="font-mono tabular-nums"
       >
         {uc} UC

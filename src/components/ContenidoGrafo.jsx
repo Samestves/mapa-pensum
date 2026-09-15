@@ -94,6 +94,8 @@ function ContenidoGrafo({
             d={arista.d}
             x2={arista.x2}
             y2={arista.y2}
+            area={arista.area}
+            codigoOrigen={arista.origen}
             tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
             /* Retraso negativo y estable, sacado del indice: cada luz de la
                frontera nace ya a mitad de su viaje y a un punto distinto que

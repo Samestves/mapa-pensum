@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
@@ -84,20 +84,43 @@ function GrafoPensum({
      moviendo, no inspeccionando lo que le pasa por debajo.
      Se consulta una ref y no el estado para no cambiar de identidad, que es
      lo unico que mantiene vivo el memo. */
+  /* Soltar el señalado espera un poco; cambiarlo, no.
+
+     Entre dos tarjetas hay hueco, asi que al pasar de una a otra el puntero
+     SALE de la primera antes de ENTRAR en la segunda. Con el soltado
+     inmediato habia un instante sin nada señalado: el mapa entero volvia a
+     encenderse y enseguida se apagaba otra vez para la segunda, y como las
+     opacidades llevan transicion, ese ida y vuelta se veia como un destello
+     de todas las tarjetas antes del resaltado bueno.
+
+     Ahora salir solo PROGRAMA soltar, y entrar en otra tarjeta lo cancela y
+     cambia directamente de una cadena a otra. Si de verdad te fuiste al
+     lienzo vacio, a los 160 ms se suelta igual. Cruzar la fila de 26 px entre
+     dos tarjetas lleva bastante menos que eso a cualquier velocidad normal. */
+  const relojSoltar = useRef(null)
+
   const senalar = useCallback(
     (codigo) => {
       if (refEnGesto.current) return
+      clearTimeout(relojSoltar.current)
       alSenalar(codigo)
     },
     [alSenalar, refEnGesto],
   )
-  const dejarDeSenalar = useCallback(() => alSenalar(null), [alSenalar])
+  const dejarDeSenalar = useCallback(() => {
+    clearTimeout(relojSoltar.current)
+    relojSoltar.current = setTimeout(() => alSenalar(null), 160)
+  }, [alSenalar])
+
+  useEffect(() => () => clearTimeout(relojSoltar.current), [])
 
   /* Y al empezar a mover, lo que hubiera resaltado se apaga. Arrastrar el
      mapa con media pantalla atenuada estorba para ver a donde se va, y de
      paso deja el gesto con el arbol en su estado mas barato. */
   useEffect(() => {
-    if (enGesto) alSenalar(null)
+    if (!enGesto) return
+    clearTimeout(relojSoltar.current)
+    alSenalar(null)
   }, [enGesto, alSenalar])
   const verFicha = useCallback(
     (codigo) => {

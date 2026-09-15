@@ -34,13 +34,39 @@
   --estado-cursando: #ffb454;
   --estado-rojo: #ff6b7d;
 
-  /* Fondo de la tarjeta que puedes inscribir. Va por tema y no calculado en
-     el componente porque "levantar" no es lo mismo en los dos: sobre lienzo
-     negro se levanta aclarando, y sobre blanco aclarar no es posible -una
-     mezcla con tinta la oscurecia y la dejaba con cara de desactivada, justo
-     al reves de lo que tiene que decir-. En claro se queda blanca y la
-     levantan el borde y el halo. */
-  --inscribible-fondo: color-mix(in oklab, var(--tinta) 6%, var(--nodo));
+  /* ---- Tarjetas del mapa, por situacion ------------------------------
+     Colores propios de cada tema, no mezclas calculadas. Una mezcla sirve en
+     oscuro -un 9 % de verde sobre casi negro ya se ve- y falla en claro: el
+     mismo 9 % sobre blanco es blanco, y un borde al 8 % no existe. Por eso
+     cada tema dice sus propios valores, elegidos para que se lea cada tarjeta.
+
+     La tarjeta que puedes inscribir tampoco se "levanta" igual en los dos: en
+     oscuro aclarando, y en claro no es posible aclarar -una mezcla con tinta
+     la oscurecia y la dejaba con cara de desactivada-, asi que se queda
+     blanca y la levantan el borde y el halo. */
+  --sit-hecha-fondo: color-mix(in oklab, var(--estado-aprobada) 9%, var(--nodo));
+  --sit-hecha-borde: color-mix(in oklab, var(--estado-aprobada) 30%, transparent);
+  --sit-hecha-nombre: var(--tinta-suave);
+  --sit-cursando-fondo: color-mix(in oklab, var(--estado-cursando) 9%, var(--nodo));
+  --sit-cursando-borde: color-mix(in oklab, var(--estado-cursando) 72%, transparent);
+  --sit-cursando-texto: var(--estado-cursando);
+  --sit-cursando-pastilla: color-mix(in oklab, var(--estado-cursando) 18%, var(--nodo));
+  --sit-inscribible-fondo: color-mix(in oklab, var(--tinta) 6%, var(--nodo));
+  --sit-inscribible-pastilla: color-mix(in oklab, var(--tinta) 9%, var(--nodo));
+  --sit-proxima-fondo: var(--nodo);
+  --sit-proxima-borde: color-mix(in oklab, var(--tinta) 24%, transparent);
+  --sit-proxima-nombre: var(--tinta-suave);
+  --sit-proxima-pastilla: color-mix(in oklab, var(--tinta) 26%, transparent);
+  --sit-lejana-fondo: color-mix(in oklab, var(--lienzo) 40%, var(--nodo));
+  --sit-lejana-borde: color-mix(in oklab, var(--tinta) 8%, transparent);
+  --sit-lejana-nombre: var(--tinta-tenue);
+  --sit-codigo: var(--tinta-tenue);
+  --sit-resalte: color-mix(in oklab, var(--tinta) 62%, transparent);
+
+  /* La luz que viaja por un cable es su propio color aclarado hacia el
+     blanco: sobre negro, un nucleo casi blanco con el tinte del area. */
+  --flujo-luz: #ffffff;
+  --flujo-mezcla: 50%;
 
   /* Los colores que una clase del horario puede tomar. Son los ocho de area
      reordenados: ya estan ajustados para los dos temas, asi que el horario no
@@ -93,7 +119,29 @@
   --estado-aprobada: #0a9781;
   --estado-cursando: #c8650d;
   --estado-rojo: #d92d45;
-  --inscribible-fondo: var(--nodo);
+  --sit-hecha-fondo: #e9f6f2;
+  --sit-hecha-borde: #91d2c2;
+  --sit-hecha-nombre: #1d3d38;
+  --sit-cursando-fondo: #fff5ea;
+  --sit-cursando-borde: #e39a55;
+  --sit-cursando-texto: #9a4a06;
+  --sit-cursando-pastilla: #fde3c7;
+  --sit-inscribible-fondo: #ffffff;
+  --sit-inscribible-pastilla: #eef2f8;
+  --sit-proxima-fondo: #ffffff;
+  --sit-proxima-borde: #b6c2d2;
+  --sit-proxima-nombre: #22324a;
+  --sit-proxima-pastilla: #aab7c9;
+  --sit-lejana-fondo: #f4f6fa;
+  --sit-lejana-borde: #d5dce6;
+  --sit-lejana-nombre: #66748a;
+  --sit-codigo: #64738a;
+  --sit-resalte: color-mix(in oklab, var(--tinta) 55%, transparent);
+
+  /* En claro la luz no puede ir hacia el blanco: se perderia en el lienzo.
+     Va hacia la tinta, o sea el mismo color del area un poco mas profundo. */
+  --flujo-luz: var(--tinta);
+  --flujo-mezcla: 18%;
 
   --clase-1: #0b7aa8;
   --clase-2: #0a9781;
@@ -312,6 +360,13 @@ body {
 .flujo {
   stroke-dasharray: 8 92;
   animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
+}
+
+/* El nucleo de la luz es el color del cable llevado hacia --flujo-luz: el
+   blanco en oscuro, la tinta en claro. currentColor es el color del area, que
+   se fija en el <g> de cada arista. */
+.flujo-nucleo {
+  stroke: color-mix(in oklab, var(--flujo-luz) var(--flujo-mezcla), currentColor);
 }
 
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
