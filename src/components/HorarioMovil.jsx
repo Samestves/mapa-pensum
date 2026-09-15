@@ -185,7 +185,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
         {...gestos}
         onClick={tocarHueco}
         style={{ touchAction: 'pan-y' }}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-[var(--reserva-barra)]"
       >
         {/* La key rearranca la animacion en cada cambio de dia, y el sentido
             decide por que lado entra: sin eso, pasar de dia no diria si se

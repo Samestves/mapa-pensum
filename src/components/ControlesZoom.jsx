@@ -34,7 +34,7 @@ export default function ControlesZoom({ acercar, alejar, encajar, atenuado }) {
   return (
     <div
       data-atenuado={atenuado}
-      className="dock-lienzo transicion-tema absolute right-4 bottom-4 z-20 flex flex-col divide-y divide-panel-borde overflow-hidden rounded-xl border border-panel-borde bg-panel/85 backdrop-blur"
+      className="dock-lienzo transicion-tema absolute right-4 bottom-[calc(var(--reserva-barra)+1rem)] z-20 flex flex-col divide-y divide-panel-borde overflow-hidden rounded-xl border border-panel-borde bg-panel/85 backdrop-blur"
     >
       <BotonDock icono={Plus} titulo="Acercar" alPulsar={acercar} />
       <BotonDock icono={Minus} titulo="Alejar" alPulsar={alejar} />

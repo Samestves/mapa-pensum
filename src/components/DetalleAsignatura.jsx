@@ -281,7 +281,7 @@ function DetalleAsignatura({
       <div
         role="dialog"
         aria-label={nodo.nombre}
-        className="hoja-ficha transicion-tema absolute inset-x-0 bottom-0 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-panel-borde bg-panel shadow-2xl"
+        className="hoja-ficha transicion-tema absolute inset-x-0 bottom-0 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-panel-borde bg-panel pb-[var(--reserva-barra)] shadow-2xl"
       >
         {/* El asidero no arrastra nada: dice "esto es una hoja" con la unica
             señal que ya conoce cualquiera que use un telefono. */}

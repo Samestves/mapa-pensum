@@ -1349,6 +1349,127 @@ body {
    La transicion va aqui y no en una utilidad por lo mismo que en
    .pestana-barra: esta regla vive fuera de @layer y gana, asi que declararla
    en un solo sitio evita que una utilidad de Tailwind la reemplace a medias. */
+/* ---- Barra inferior de cristal (telefono) -------------------------------
+   Lo que reserva cada vista para que su final no quede debajo de la capsula
+   flotante: su alto, la separacion del borde y un poco de aire. Cero en
+   escritorio, donde la barra no existe. Las vistas lo suman a su propio
+   margen de abajo en vez de adivinar la medida. */
+.vista-carrera {
+  --reserva-barra: 0px;
+}
+
+@media (max-width: 767.98px) {
+  .vista-carrera {
+    --reserva-barra: calc(env(safe-area-inset-bottom) + 86px);
+  }
+}
+
+/* El cristal. Tres capas y ninguna mas:
+   1. el fondo: el panel a medias con el contenido de detras desenfocado y
+      algo saturado, que es lo que da el color vivo del cristal de Apple en
+      vez de un gris lechoso;
+   2. el filo (::before): un contorno de un pixel que brilla arriba a la
+      izquierda y se apaga hacia abajo, como luz cayendo sobre el borde;
+   3. el brillo (::after): un reflejo muy suave en la mitad de arriba.
+   El desenfoque va a 16 px y no a 30: pasado cierto radio el cristal no se
+   ve mejor y el coste sigue subiendo. */
+.barra-cristal {
+  background: color-mix(in oklab, var(--panel) 58%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow:
+    0 12px 32px -12px rgb(0 0 0 / 0.6),
+    0 2px 8px -2px rgb(0 0 0 / 0.25);
+}
+
+.barra-cristal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgb(255 255 255 / 0.3),
+    rgb(255 255 255 / 0.07) 40%,
+    rgb(255 255 255 / 0.03) 60%,
+    rgb(255 255 255 / 0.14)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.barra-cristal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.06), transparent 55%);
+  pointer-events: none;
+}
+
+[data-tema='claro'] .barra-cristal {
+  background: color-mix(in oklab, #ffffff 62%, transparent);
+  box-shadow:
+    0 12px 30px -14px rgb(12 23 37 / 0.35),
+    0 2px 6px -2px rgb(12 23 37 / 0.12);
+}
+
+[data-tema='claro'] .barra-cristal::before {
+  background: linear-gradient(
+    160deg,
+    rgb(255 255 255 / 0.95),
+    rgb(12 23 37 / 0.06) 45%,
+    rgb(12 23 37 / 0.1)
+  );
+}
+
+[data-tema='claro'] .barra-cristal::after {
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.35), transparent 60%);
+}
+
+/* La lente de la pestaña activa: otra capa de cristal, mas clara, dentro de
+   la capsula. Se desliza con una curva que se pasa un poco y vuelve, el
+   rebote corto que hace que se sienta liquida y no mecanica. */
+.lente-cristal {
+  background: color-mix(in oklab, var(--tinta) 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  transition: transform 460ms cubic-bezier(0.34, 1.36, 0.64, 1);
+}
+
+[data-tema='claro'] .lente-cristal {
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 1px 3px rgb(12 23 37 / 0.08);
+}
+
+/* Sin desenfoque disponible, o si el sistema pide menos transparencia, el
+   cristal se vuelve panel: medio transparente sin desenfocar solo seria
+   texto encima de texto. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .barra-cristal {
+    background: var(--panel);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .barra-cristal {
+    background: var(--panel);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .pulgar-vista {
   transition:
     transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
@@ -1613,6 +1734,7 @@ body {
   .barra-contenido,
   .pestana-barra,
   .pulgar-vista,
+  .lente-cristal,
   .tarjeta-carrera,
   .tarjeta-carrera > *,
   .plegable,

@@ -259,7 +259,7 @@ function VistaCarrera({ carrera, alVolver }) {
   }, [])
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden" style={tonos}>
+    <div className="vista-carrera relative flex h-full flex-col overflow-hidden" style={tonos}>
       {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
           ancla a su borde inferior con top-full, asi que al plegarse la barra
           sube pegada a ella sin animar nada aparte. */}

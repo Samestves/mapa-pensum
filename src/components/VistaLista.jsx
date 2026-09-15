@@ -487,7 +487,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto flex max-w-2xl flex-col px-4 pt-4 pb-24">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pt-4 pb-[calc(var(--reserva-barra)+3rem)] md:pb-24">
         <Resumen progreso={progreso} semestres={semestres} alIr={(n) => ir(`semestre-${n}`)} />
 
         {/* Filtros. Pegados arriba al desplazarse: son la forma de moverse

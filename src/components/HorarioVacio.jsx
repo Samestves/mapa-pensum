@@ -196,7 +196,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 [@media(max-height:760px)]:py-3"
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pb-[var(--reserva-barra)] [@media(max-height:760px)]:pt-3"
       /* Soltar la imagen encima funciona en toda la zona, no solo sobre la
          tarjeta: en un escritorio, arrastrar la captura desde el escritorio a
          "por ahi en medio" es el gesto natural, y obligar a acertar un
@@ -229,7 +229,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
           deja que el contenido empiece arriba y se pueda desplazar. Con
           justify-center la parte de arriba se saldria por encima, fuera del
           alcance del scroll. */}
-      <div className="my-auto flex w-full max-w-[400px] flex-col items-center py-5 text-center">
+      <div className="my-auto flex w-full max-w-[400px] flex-col items-center py-5 text-center [@media(max-height:660px)]:py-3">
         <div className="lista-entrar flex w-full justify-center">
           <SemanaMuestra foco={foco} soltando={encima} />
         </div>
