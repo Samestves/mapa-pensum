@@ -339,7 +339,13 @@ body {
 
 /* La luz que viaja por la frontera hacia lo que puedes inscribir. Nace y
    muere apagada, para que no aparezca de golpe en el origen ni choque contra
-   la tarjeta: se enciende al salir y se funde al llegar. */
+   la tarjeta: se enciende al salir y se funde al llegar.
+
+   Halo y estela comparten guion: 14 de 100. La cabeza es un guion de 5 que va
+   9 por delante, o sea al final de la estela y no al principio. Se consigue
+   corriendo su dashoffset esos 9 puntos -de 91 a -9 en vez de 100 a 0- y no
+   con un patron "0 9 5 86": un guion de longitud cero con punta redonda pinta
+   un punto, y saldria una gota fija detras de cada luz. */
 @keyframes fluir {
   0% {
     stroke-dashoffset: 100;
@@ -357,16 +363,31 @@ body {
   }
 }
 
+@keyframes fluir-cabeza {
+  0% {
+    stroke-dashoffset: 91;
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -9;
+    opacity: 0;
+  }
+}
+
 .flujo {
-  stroke-dasharray: 8 92;
+  stroke-dasharray: 14 86;
   animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
 }
 
-/* El nucleo de la luz es el color del cable llevado hacia --flujo-luz: el
-   blanco en oscuro, la tinta en claro. currentColor es el color del area, que
-   se fija en el <g> de cada arista. */
-.flujo-nucleo {
-  stroke: color-mix(in oklab, var(--flujo-luz) var(--flujo-mezcla), currentColor);
+.flujo-cabeza {
+  stroke-dasharray: 5 95;
+  animation-name: fluir-cabeza;
 }
 
 /* Al mirar una materia, su cadena se dibuja de origen a destino */

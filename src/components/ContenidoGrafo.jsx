@@ -91,16 +91,23 @@ function ContenidoGrafo({
         {aristas.map((arista, i) => (
           <Arista
             key={arista.id}
+            id={arista.id}
             d={arista.d}
+            x1={arista.x1}
+            y1={arista.y1}
             x2={arista.x2}
             y2={arista.y2}
             area={arista.area}
             codigoOrigen={arista.origen}
+            areaDestino={porCodigo.get(arista.destino)?.area}
+            codigoDestino={arista.destino}
             tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
             /* Retraso negativo y estable, sacado del indice: cada luz de la
                frontera nace ya a mitad de su viaje y a un punto distinto que
                las demas. Todas a la vez se verian como un metronomo. */
             retraso={`-${((i * 7) % 11) * 0.26}s`}
+            // Y cada una a su paso, entre 2,6 y 3,2 s: iguales se verian en fila
+            duracion={`${(2.6 + ((i * 5) % 7) * 0.1).toFixed(1)}s`}
             foco={foco}
             resaltada={cadena != null && cadena.has(arista.origen) && cadena.has(arista.destino)}
             atenuada={atenuado(arista.origen) || atenuado(arista.destino)}
