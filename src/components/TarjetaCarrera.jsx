@@ -9,34 +9,6 @@ import MiniMapa from './MiniMapa'
 const GIRO = 7
 
 /**
- * Una cifra del encabezado de la tarjeta.
- *
- * Numero y palabra en Inter, los dos finos, a juego con el nombre de la
- * carrera. El numero estuvo en JetBrains Mono y en negrita, y la palabra en
- * versalita negrita: al lado de un titulo en peso 300 eran lo mas grueso de
- * la tarjeta, y el ojo iba a "49 OBLIGATORIAS" antes que a "Sistemas".
- *
- * El numero sube un punto porque fino lo necesita, y la palabra conserva las
- * versalitas espaciadas pero en peso medio: el espaciado ya la separa como
- * rotulo, no hace falta ademas la negrita.
- *
- * tabular-nums mantiene las cifras en columna: sin eso, 49 y 10 ocupan anchos
- * distintos y las tarjetas quedan desalineadas entre si.
- */
-function Cifra({ valor, etiqueta }) {
-  return (
-    <span className="flex items-baseline gap-1.5">
-      <span className="text-[15px] leading-none font-light text-tinta tabular-nums xl:text-[17px]">
-        {valor}
-      </span>
-      <span className="text-[10px] leading-none font-medium tracking-[0.1em] text-tinta-tenue uppercase">
-        {etiqueta}
-      </span>
-    </span>
-  )
-}
-
-/**
  * Tarjeta de una carrera en el selector.
  *
  * El 3D es solo de escritorio y solo con puntero fino: en un telefono no hay
@@ -112,64 +84,47 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
         }}
       />
 
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {/* Peso fino y un punto mas grande. En seminegrita a 16 px el nombre
-              pesaba lo mismo que las cifras de debajo y la tarjeta no tenia
-              un protagonista. Fino hace falta mas cuerpo -un trazo de 300 a
-              16 px se deshace sobre el fondo oscuro-, y a 19-22 px Inter ya
-              toma su dibujo de titular por el tamaño optico, que es el que
-              aguanta el peso fino con la letra apretada. */}
-          <h2 className="font-display text-[19px] leading-tight font-light tracking-[-0.02em] text-tinta xl:text-[22px]">
-            {carrera.nombreCorto}
-          </h2>
-          {/* Antes esto era una frase corrida en 10px tinta-tenue. El
-              contraste cumplia AA de sobra -medido: 5.43 en claro, 6.40 en
-              oscuro-, pero a ese cuerpo y en peso normal el trazo es tan fino
-              que igual no se leia. La cifra sube a tinta plena y la palabra
-              se queda de etiqueta: se lee el dato antes que el texto. */}
-          {/* Las dos cifras que DISTINGUEN a una carrera de otra.
-              Aqui salia el numero de semestres y no decia nada: las nueve
-              carreras tienen diez, asi que el dato era identico en las nueve
-              tarjetas y no ayudaba a elegir ninguna. Y encima estaba dibujado
-              -la silueta lleva un punto por semestre, o sea diez columnas-,
-              con lo que se repetia a si mismo dos veces.
-              En su sitio van las electivas, que si cambian mucho -de 16 en
-              Recursos Humanos a 49 en Agronomica- y ya venian en el indice
-              sin que nadie las enseñara.
-              "Obligatorias" y no "materias" porque ahora hay dos numeros al
-              lado: con "materias" no se sabria si las electivas estan dentro
-              de esa cuenta o aparte. Estan aparte. */}
-          <div className="mt-2 flex items-center gap-2.5">
-            <Cifra valor={carrera.asignaturas} etiqueta="obligatorias" />
-            <span aria-hidden="true" className="h-3 w-px shrink-0 bg-panel-borde" />
-            <Cifra valor={carrera.electivas} etiqueta="electivas" />
-          </div>
-        </div>
-        {/* La insignia va aqui arriba y no encima del titulo porque ahi
-            empujaba el contenido hacia abajo: la tarjeta con "Continuar"
-            crecia treinta pixeles y la rejilla estiraba a las otras tres de
-            su fila, que es exactamente el defecto que veniamos a corregir.
-            Al lado de la flecha, el alto de la fila lo sigue mandando el
-            bloque del titulo y ninguna tarjeta cambia de tamaño. */}
-        <div className="flex shrink-0 items-center gap-2">
-          {esUltima && (
-            <span
-              className="rounded-full px-2 py-0.5 text-[9px] leading-none font-bold tracking-wide uppercase"
-              style={{
-                color,
-                backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)`,
-              }}
-            >
-              Continuar
-            </span>
-          )}
+      {/* Solo el nombre. Debajo llevo las cifras de obligatorias y electivas,
+          y la silueta ya dice lo mismo -un punto por materia- sin tener que
+          leer: eran dos lecturas del mismo dato. */}
+      <div className="relative flex items-center justify-between gap-3">
+        {/* Peso fino y cuerpo de titular: a 19-22 px Inter toma su dibujo
+            optico de titular, que es el que aguanta el peso 300 sin
+            deshacerse sobre el fondo oscuro. */}
+        <h2 className="min-w-0 font-display text-[19px] leading-tight font-light tracking-[-0.02em] text-tinta xl:text-[22px]">
+          {carrera.nombreCorto}
+        </h2>
+
+        {/* La carrera donde lo dejaste no lleva una insignia AL LADO de la
+            flecha: la flecha se mete dentro y el conjunto es un solo boton,
+            "Continuar ↗". Eran dos piezas -una pastilla de versalitas en
+            negrita y la flecha suelta- con dos pesos y dos alineaciones
+            distintas junto a un titulo fino, y por eso no cuadraba.
+            Cabe en la altura del titulo, asi que ninguna tarjeta crece ni
+            estira a las demas de su fila. */}
+        {esUltima ? (
+          <span
+            className="flex shrink-0 items-center gap-1 rounded-full border py-[5px] pr-2 pl-2.5 text-[11px] leading-none font-medium transition-colors duration-300"
+            style={{
+              color,
+              borderColor: `color-mix(in oklab, ${color} ${giro ? 55 : 32}%, transparent)`,
+              backgroundColor: `color-mix(in oklab, ${color} ${giro ? 14 : 8}%, transparent)`,
+            }}
+          >
+            Continuar
+            <ArrowUpRight
+              size={13}
+              strokeWidth={2}
+              className="shrink-0 transition-transform duration-300 group-hover:translate-x-px group-hover:-translate-y-px"
+            />
+          </span>
+        ) : (
           <ArrowUpRight
             size={16}
             className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
             style={{ color: giro ? color : undefined }}
           />
-        </div>
+        )}
       </div>
 
       {/* La miniatura flota sobre el fondo de la tarjeta: es lo que le da
