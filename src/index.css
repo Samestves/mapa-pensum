@@ -66,6 +66,11 @@
   --sit-codigo: var(--tinta-tenue);
   --sit-resalte: color-mix(in oklab, var(--tinta) 62%, transparent);
 
+  /* Ficha de la cabecera de semestre. En oscuro, una veladura de tinta; en
+     claro esa misma veladura es gris y ensucia, asi que ahi es blanca. */
+  --cabecera-fondo: color-mix(in oklab, var(--tinta) 3.5%, transparent);
+  --cabecera-borde: color-mix(in oklab, var(--tinta) 8%, transparent);
+
   /* La luz que viaja por un cable es su propio color aclarado hacia el
      blanco: sobre negro, un nucleo casi blanco con el tinte del area. */
   --flujo-luz: #ffffff;
@@ -140,6 +145,8 @@
   --sit-lejana-nombre: #66748a;
   --sit-codigo: #64738a;
   --sit-resalte: color-mix(in oklab, var(--tinta) 55%, transparent);
+  --cabecera-fondo: rgb(255 255 255 / 0.72);
+  --cabecera-borde: #d5dce6;
 
   /* En claro la luz no puede ir hacia el blanco: se perderia en el lienzo.
      Va hacia la tinta, o sea el mismo color del area un poco mas profundo. */
