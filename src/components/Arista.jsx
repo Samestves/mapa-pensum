@@ -38,10 +38,9 @@ const idDe = (id) => `flujo-${id.replace(/[^a-zA-Z0-9]/g, '_')}`
  * con luz, y su luz CAMBIA de tono mientras viaja hasta llegar pintada como
  * la tarjeta a la que te lleva. Ver los degradados, mas abajo.
  *
- * La luz son tres trazos con el mismo reloj: un halo ancho y tenue, una estela
- * corta y una cabeza brillante al frente. Con ocho cables de frontera, que es
- * un avance tipico, son veinticuatro animaciones; las 215 del principio eran
- * de animar los cuarenta y tres cables a la vez.
+ * La luz es un solo trazo fino. Con ocho cables de frontera, que es un avance
+ * tipico, son ocho animaciones; las 215 del principio eran de animar los
+ * cuarenta y tres cables a la vez, cinco capas cada uno.
  *
  * Sin vector-effect="non-scaling-stroke": con el, el guion se medía en pixeles
  * de pantalla mientras pathLength lo normaliza en coordenadas del dibujo, y la
@@ -143,33 +142,21 @@ function Arista({
         }}
       />
 
+      {/* La luz de la frontera: UN trazo fino, sin halo ni estela. Tuvo las
+          dos cosas -un resplandor ancho debajo y una cola detras de la
+          cabeza- y juntas se leian como una sombra alrededor de la luz, una
+          capsula mas que un destello. El color ya hace el trabajo: sale del
+          area de la que viene, gira de tono por el camino y llega con el de
+          la tarjeta a la que lleva. */}
       {conLuz && (
-        <>
-          <path
-            d={d}
-            fill="none"
-            pathLength="100"
-            strokeLinecap="round"
-            className="flujo"
-            style={{ stroke: `url(#${gid})`, strokeWidth: 8, strokeOpacity: 0.2, ...ritmo }}
-          />
-          <path
-            d={d}
-            fill="none"
-            pathLength="100"
-            strokeLinecap="round"
-            className="flujo"
-            style={{ stroke: `url(#${gid})`, strokeWidth: 2.25, strokeOpacity: 0.5, ...ritmo }}
-          />
-          <path
-            d={d}
-            fill="none"
-            pathLength="100"
-            strokeLinecap="round"
-            className="flujo flujo-cabeza"
-            style={{ stroke: `url(#${gid}-vivo)`, strokeWidth: 3, ...ritmo }}
-          />
-        </>
+        <path
+          d={d}
+          fill="none"
+          pathLength="100"
+          strokeLinecap="round"
+          className="flujo"
+          style={{ stroke: `url(#${gid}-vivo)`, strokeWidth: 2.25, ...ritmo }}
+        />
       )}
 
       {/* La cadena de la materia que se mira, dibujandose en su color */}

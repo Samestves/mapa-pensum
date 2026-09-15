@@ -55,7 +55,7 @@
      solo color, el mismo del filo quieto, de la luz que da la vuelta y del
      icono de estado. */
   --sit-inscribible-luz: color-mix(in oklab, #ffffff 70%, var(--area-sistemas));
-  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 28%, transparent);
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 22%, transparent);
   --sit-proxima-fondo: var(--nodo);
   --sit-proxima-borde: color-mix(in oklab, var(--tinta) 24%, transparent);
   --sit-proxima-nombre: var(--tinta-suave);
@@ -130,7 +130,7 @@
   --sit-inscribible-fondo: #ffffff;
   /* En claro la luz no puede ser blanca: se usa el azul profundo de la casa */
   --sit-inscribible-luz: #2f5bd8;
-  --sit-inscribible-borde: #a9bbe0;
+  --sit-inscribible-borde: #b7c6e4;
   --sit-proxima-fondo: #ffffff;
   --sit-proxima-borde: #b6c2d2;
   --sit-proxima-nombre: #22324a;
@@ -343,11 +343,8 @@ body {
    muere apagada, para que no aparezca de golpe en el origen ni choque contra
    la tarjeta: se enciende al salir y se funde al llegar.
 
-   Halo y estela comparten guion: 14 de 100. La cabeza es un guion de 5 que va
-   9 por delante, o sea al final de la estela y no al principio. Se consigue
-   corriendo su dashoffset esos 9 puntos -de 91 a -9 en vez de 100 a 0- y no
-   con un patron "0 9 5 86": un guion de longitud cero con punta redonda pinta
-   un punto, y saldria una gota fija detras de cada luz. */
+   Un guion de 9 sobre 100: suficiente para leerse como luz y no como punto,
+   corto para que no parezca que el cable se esta dibujando. */
 @keyframes fluir {
   0% {
     stroke-dashoffset: 100;
@@ -365,48 +362,9 @@ body {
   }
 }
 
-@keyframes fluir-cabeza {
-  0% {
-    stroke-dashoffset: 91;
-    opacity: 0;
-  }
-  14% {
-    opacity: 1;
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -9;
-    opacity: 0;
-  }
-}
-
 .flujo {
-  stroke-dasharray: 14 86;
-  animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
-}
-
-.flujo-cabeza {
-  stroke-dasharray: 5 95;
-  animation-name: fluir-cabeza;
-}
-
-/* La luz que da la vuelta al borde de una materia inscribible. Lenta y
-   lineal: no es una alerta, es algo vivo esperando. Cada tarjeta arranca en
-   un punto distinto del recorrido. */
-@keyframes recorrer-borde {
-  from {
-    stroke-dashoffset: 100;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.luz-borde {
   stroke-dasharray: 9 91;
-  animation: recorrer-borde 7s linear infinite;
+  animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
 }
 
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
@@ -1305,8 +1263,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   /* Sin animacion el guion de la luz se quedaria clavado al principio del
      cable como una mancha. Fuera. */
-  .flujo,
-  .luz-borde {
+  .flujo {
     display: none;
   }
 

@@ -5,16 +5,6 @@ import { FormaSituacion } from './IconoSituacion'
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
 
-/* Retraso estable por materia para la luz del borde. Sacado del codigo y no
-   al azar, para que no cambie en cada render ni en cada visita; y distinto
-   por tarjeta, porque ocho luces dando la vuelta a la vez parecen un
-   salvapantallas. */
-function retrasoDe(codigo) {
-  let h = 0
-  for (let i = 0; i < codigo.length; i++) h = (h * 31 + codigo.charCodeAt(i)) >>> 0
-  return `-${(h % 70) / 10}s`
-}
-
 /**
  * La cara de una tarjeta de materia: lo que se DIBUJA, sin la interaccion.
  * La usan la materia obligatoria y la casilla de electiva ya llena, que por
@@ -45,9 +35,9 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
 
   return (
     <>
-      {/* Halo quieto: separa la tarjeta del lienzo a cualquier escala, tambien
-          con el mapa entero en un telefono, donde la luz del borde ya no se
-          distingue pero un contorno ancho y tenue si. */}
+      {/* Halo quieto y muy tenue: casi no se nota de cerca, pero con el mapa
+          entero en un telefono, donde el filo ya no se distingue, sigue
+          separando la tarjeta del lienzo. */}
       {(a.brilla || seleccionado) && (
         <rect
           x={-3}
@@ -58,7 +48,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           fill="none"
           style={{
             stroke: a.fuerte,
-            strokeOpacity: seleccionado ? 0.38 : 0.16,
+            strokeOpacity: seleccionado ? 0.38 : 0.09,
             strokeWidth: 3,
             transition: SUAVE,
           }}
@@ -72,53 +62,21 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
 
+      {/* El filo de la marca: la misma luz que se enciende arriba a la
+          izquierda y se apaga por el resto en la cajita del logo y en el aviso
+          de instalar. Quieto. Tuvo encima una luz que daba la vuelta al
+          contorno, y con varias inscribibles en pantalla eran varias lineas
+          moviendose en la periferia de la vista: el ojo se va a lo que se
+          mueve, y se iba ahi en vez de al nombre. */}
       {a.brilla && (
-        <>
-          {/* El filo de la marca: la misma luz que se enciende arriba a la
-              izquierda y se apaga por el resto en la cajita del logo y en el
-              aviso de instalar. Es el borde de la casa, no uno nuevo. */}
-          <rect
-            width={ancho}
-            height={alto}
-            rx={radio}
-            fill="none"
-            stroke="url(#filo-inscribible)"
-            strokeWidth={1.5}
-          />
-          {/* Y una luz que recorre el contorno despacio, de un solo color.
-              El degradado de tres colores que giraba se leia como algo pegado
-              encima; esta es la luz del filo dando la vuelta. Dos rectangulos
-              con el mismo reloj: un nucleo fino y su resplandor. */}
-          <rect
-            width={ancho}
-            height={alto}
-            rx={radio}
-            fill="none"
-            pathLength="100"
-            strokeLinecap="round"
-            className="luz-borde"
-            style={{
-              stroke: 'var(--sit-inscribible-luz)',
-              strokeWidth: 5,
-              strokeOpacity: 0.22,
-              animationDelay: retrasoDe(codigo),
-            }}
-          />
-          <rect
-            width={ancho}
-            height={alto}
-            rx={radio}
-            fill="none"
-            pathLength="100"
-            strokeLinecap="round"
-            className="luz-borde"
-            style={{
-              stroke: 'var(--sit-inscribible-luz)',
-              strokeWidth: 1.75,
-              animationDelay: retrasoDe(codigo),
-            }}
-          />
-        </>
+        <rect
+          width={ancho}
+          height={alto}
+          rx={radio}
+          fill="none"
+          stroke="url(#filo-inscribible)"
+          strokeWidth={1.25}
+        />
       )}
 
       <text

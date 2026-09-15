@@ -227,27 +227,23 @@ function ContenidoGrafo({
 /**
  * Cabecera de un semestre.
  *
- *   05  Semestre · 17 UC            ●  3/7
- *   ━━━━━━━━━━━━━━━━───────────────────────
+ *   Semestre 5                     • 17 UC   3/7
+ *   ━━━━━━━━━━━━━━━━━━━───────────────────────────
  *
- * Una linea de texto y una linea de progreso, y nada mas. Estuvo en tres
- * pisos -rotulo en versalitas, numero con frase de estado y una barra de un
- * segmento por materia- y cada piso decia un pedazo de lo mismo con su propia
- * tipografia. Siete segmentos con huecos se leian como puntos sueltos, no
- * como avance.
+ * El titulo dice "Semestre 5", en palabras y del tamaño de un titulo. Estuvo
+ * como un "05" grande con un "Semestre" diminuto al lado, y el numero solo no
+ * dice que es: podia ser un codigo, un orden o un recuento, y la palabra que
+ * lo explicaba era lo mas pequeño de la fila.
  *
- * La linea de progreso se llena de izquierda a derecha en el orden en que se
- * vive un semestre: primero lo aprobado en verde, luego lo que cursas en
- * ambar. Lo que queda es riel vacio. Al aprobar, el tramo verde crece con una
- * transicion en vez de saltar.
+ * A la derecha, lo que pesa y cuanto llevas, en pequeño y apagado: es dato de
+ * consulta, no titulo. El punto delante aparece solo si en ese semestre hay
+ * algo que puedes inscribir, del mismo color que la luz de esas tarjetas.
  *
- * Lo inscribible NO entra en la linea. Entro, en tinta, y un semestre sin
- * nada aprobado salia con la barra al setenta por ciento al lado de un "0/7":
- * se leia como avance y era todo lo contrario, trabajo pendiente.
- *
- * El punto de la derecha solo aparece si en ese semestre hay algo que puedes
- * inscribir, y es del mismo color que la luz de esas tarjetas: es la forma
- * de encontrar tu frontera sin acercarte a leer.
+ * Debajo, un riel fino que se llena en el orden en que se vive un semestre:
+ * primero lo aprobado en verde, luego lo que cursas en ambar. Al aprobar, el
+ * tramo crece con una transicion en vez de saltar. Lo inscribible no entra: un
+ * semestre sin nada aprobado salia con la barra al setenta por ciento junto a
+ * un "0/7", y se leia como avance siendo trabajo pendiente.
  */
 function CabeceraSemestre({ columna, datos }) {
   const { x, semestre } = columna
@@ -269,39 +265,36 @@ function CabeceraSemestre({ columna, datos }) {
 
   return (
     <g>
-      <text
-        x={x - 1}
-        y={top + 30}
-        fontSize="24"
-        fill="var(--tinta)"
-        className="font-semibold tabular-nums tracking-[-0.03em]"
-      >
-        {String(semestre).padStart(2, '0')}
-      </text>
-      <text x={x + 36} y={top + 29} fontSize="11" fill="var(--tinta-tenue)" className="font-medium">
-        Semestre · {datos?.uc ?? 0} UC
+      <text x={x} y={top + 30} fontSize="17" fill="var(--tinta)" className="font-semibold tracking-[-0.01em]">
+        Semestre <tspan className="tabular-nums">{semestre}</tspan>
       </text>
 
-      {hayInscribibles && (
-        <circle
-          cx={x + NODO.ancho - 32}
-          cy={top + 25.5}
-          r={3.5}
-          style={{ fill: 'var(--sit-inscribible-luz)' }}
-        />
-      )}
       <text
         x={x + NODO.ancho}
         y={top + 29}
         textAnchor="end"
         fontSize="11"
         className="font-mono tabular-nums"
-        style={{
-          fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-suave)',
-          transition: 'fill 240ms ease',
-        }}
       >
-        {completo ? '✓' : `${hechas}/${total}`}
+        {hayInscribibles && (
+          <tspan style={{ fill: 'var(--sit-inscribible-luz)' }} fontSize="13">
+            •{' '}
+          </tspan>
+        )}
+        <tspan fill="var(--tinta-tenue)">{datos?.uc ?? 0} UC</tspan>
+        {/* Separador: sin el, "18 UC 5/7" se leia como un solo numero */}
+        <tspan fill="var(--tinta-tenue)" fillOpacity="0.5" dx="5">
+          ·
+        </tspan>
+        <tspan
+          dx="5"
+          style={{
+            fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-suave)',
+            transition: 'fill 240ms ease',
+          }}
+        >
+          {completo ? '✓' : `${hechas}/${total}`}
+        </tspan>
       </text>
 
       <rect
