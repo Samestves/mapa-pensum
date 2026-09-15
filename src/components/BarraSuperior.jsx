@@ -196,7 +196,10 @@ function BarraSuperior({
           aria-hidden="true"
           className="hidden shrink-0 text-tinta-tenue lg:block"
         />
-        <h1 className="min-w-0 flex-1 truncate text-[15px] font-extrabold tracking-tight text-tinta">
+        {/* Peso fino, como el nombre en las tarjetas de la portada: es la
+            misma carrera, y en extrabold era lo mas pesado de toda la barra.
+            Un punto mas de cuerpo compensa el trazo delgado. */}
+        <h1 className="min-w-0 flex-1 truncate text-[16px] font-light tracking-[-0.015em] text-tinta">
           <span className="lg:hidden">{carrera.nombreCorto}</span>
           <span className="hidden lg:inline">{carrera.nombre}</span>
         </h1>

@@ -1032,6 +1032,105 @@ body {
   min-height: 0;
 }
 
+/* ---- Vista de lista -------------------------------------------------------
+   Todo lo que se mueve aqui se mueve con la misma curva de hoja de iOS que la
+   barra: sale rapido y frena al final. Nada se anima en bucle; cada
+   movimiento responde a algo que hiciste. */
+
+/* Plegar y desplegar con el alto real: el mismo truco de 1fr a 0fr. La
+   opacidad acompaña para que al cerrarse no se vea un recorte. */
+.plegable {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 360ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 220ms ease;
+}
+
+.plegable[data-abierto='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.plegable > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Cada seccion entra subiendo un poco y fundiendose, escalonada desde fuera
+   con animation-delay. Tambien al cambiar de filtro, que la remonta. */
+@keyframes lista-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lista-entrar {
+  animation: lista-entrar 480ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* El icono de estado al tocarlo: se encoge y rebota apenas. Confirma el
+   toque sin necesitar un aviso. */
+@keyframes marca-pulso {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.78);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.marca-pulso {
+  animation: marca-pulso 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La materia que tu aprobacion acaba de abrir se enciende y se apaga, con la
+   luz fria de lo disponible. Espera un poco para llegar despues del pulso. */
+@keyframes fila-destello {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fila-destello {
+  background: color-mix(in oklab, var(--sit-inscribible-luz) 12%, transparent);
+  animation: fila-destello 1100ms ease-out 180ms both;
+}
+
+.selector-pastilla {
+  transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.riel-tramo {
+  transition:
+    width 600ms cubic-bezier(0.32, 0.72, 0, 1),
+    left 600ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.barra-semestre {
+  transition:
+    height 600ms cubic-bezier(0.32, 0.72, 0, 1),
+    bottom 600ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* El contenido se desvanece y sube un pelo mientras la fila se cierra:
    asi no se ve como un recorte, sino como que la barra se retira. */
 .barra-contenido {
@@ -1355,7 +1454,10 @@ body {
   .popover-clase,
   .menu-clase,
   .icono-relevo,
-  .aviso-entrando {
+  .aviso-entrando,
+  .lista-entrar,
+  .marca-pulso,
+  .fila-destello {
     animation: none;
   }
 
@@ -1369,7 +1471,11 @@ body {
   .pestana-barra,
   .pulgar-vista,
   .tarjeta-carrera,
-  .tarjeta-carrera > * {
+  .tarjeta-carrera > *,
+  .plegable,
+  .selector-pastilla,
+  .riel-tramo,
+  .barra-semestre {
     transition: none;
   }
 

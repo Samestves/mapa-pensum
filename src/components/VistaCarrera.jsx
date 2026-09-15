@@ -420,7 +420,10 @@ function VistaCarrera({ carrera, alVolver }) {
           <VistaLista
             layout={layout}
             estados={estados}
+            progreso={progreso}
             avanceGrupos={avanceGrupos}
+            toque={toque}
+            descarga={descarga}
             alMarcar={marcar}
           />
         )}
