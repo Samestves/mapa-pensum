@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowRight, ImageUp, PencilLine, Plus } from 'lucide-react'
+import { ArrowRight, ImagePlus, PencilLine, Plus } from 'lucide-react'
 import { FORMATOS } from '../data/leerHorario'
 import { SITUACION } from '../layout/situacion'
 import { ASPECTO } from '../theme/situacion'
@@ -33,12 +33,16 @@ const FILAS = 5
  * linea de lectura, y con "Crearlo a mano" aparece un hueco con un mas donde
  * iria la siguiente clase. Es la misma accion, contada en pequeño antes de
  * pulsar.
+ *
+ * El alto de cada fila es una variable que encoge en pantallas bajas: es lo
+ * primero que cede para que todo quepa sin desplazarse, porque un dibujo
+ * sigue leyendose igual un poco mas aplastado y un boton no.
  */
 function SemanaMuestra({ foco, soltando }) {
   return (
     <div
       aria-hidden="true"
-      className="semana-muestra transicion-tema relative w-full max-w-[340px] overflow-hidden rounded-2xl border border-panel-borde bg-panel p-3"
+      className="semana-muestra transicion-tema relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-panel-borde bg-panel p-3"
       data-foco={soltando ? 'foto' : foco}
     >
       <div className="grid grid-cols-5 gap-1.5 pb-2">
@@ -54,7 +58,7 @@ function SemanaMuestra({ foco, soltando }) {
 
       <div
         className="relative grid grid-cols-5 gap-1.5"
-        style={{ gridTemplateRows: `repeat(${FILAS}, 18px)` }}
+        style={{ gridTemplateRows: `repeat(${FILAS}, var(--fila-muestra))` }}
       >
         {/* Las lineas de las horas, detras de todo */}
         {Array.from({ length: FILAS - 1 }, (_, i) => (
@@ -100,49 +104,55 @@ function SemanaMuestra({ foco, soltando }) {
 }
 
 /**
- * Una de las dos salidas. Es un boton, no una tarjeta con un boton dentro:
- * toda la superficie responde, que es lo que se espera de algo de este
- * tamaño, y de paso llega con Tab en un solo salto.
+ * Una de las dos salidas, como una fila de accion: icono, dos lineas y una
+ * flecha. Es un boton entero -toda la superficie responde- y no una tarjeta
+ * con un boton dentro.
+ *
+ * Fila y no tarjeta alta porque en un telefono las dos tarjetas de antes
+ * median casi 400 px juntas y obligaban a desplazarse para ver la segunda:
+ * justo la opcion que media carrera va a usar quedaba debajo del pliegue. En
+ * una fila caben las dos en 150 px y se comparan de un vistazo.
+ *
+ * La destacada no se distingue por un fondo de color sino por su filo: el
+ * mismo contorno de luz de la cajita del logo, que se enciende en una
+ * esquina, y una flecha llena. La otra, filo neutro y flecha de contorno.
  */
-function Salida({ icono: Ico, titulo, detalle, pie, destacada, alPulsar, alEnfocar, ...resto }) {
+function Accion({ icono: Ico, titulo, detalle, destacada, alPulsar, alEnfocar }) {
   return (
     <button
       type="button"
       onClick={alPulsar}
       onPointerEnter={alEnfocar}
       onFocus={alEnfocar}
-      className={`group transicion-tema relative flex flex-1 items-start gap-3.5 rounded-2xl border p-4 text-left transition-[transform,border-color,background-color] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 active:scale-[0.99] sm:flex-col sm:gap-4 sm:p-5 ${
-        destacada
-          ? 'border-[color-mix(in_oklab,var(--estado-aprobada)_32%,var(--panel-borde))] bg-[color-mix(in_oklab,var(--estado-aprobada)_5%,var(--panel))] hover:border-[color-mix(in_oklab,var(--estado-aprobada)_70%,transparent)]'
-          : 'border-panel-borde bg-panel hover:border-[color-mix(in_oklab,var(--tinta)_30%,transparent)]'
-      }`}
-      {...resto}
+      data-destacada={destacada || undefined}
+      /* Sin transicion-tema ni utilidades de transicion: .accion-horario
+         declara la suya, y dos declaraciones se pisarian entre si. */
+      className="accion-horario group relative flex w-full items-center gap-3.5 rounded-[20px] p-3 text-left active:scale-[0.985] sm:py-3.5"
     >
       <span
-        className={`grid size-10 shrink-0 place-items-center rounded-xl border transition-transform duration-300 group-hover:scale-105 ${
-          destacada
-            ? 'border-[color-mix(in_oklab,var(--estado-aprobada)_35%,transparent)] text-[var(--estado-aprobada)]'
-            : 'border-panel-borde text-tinta-suave'
+        className={`relative grid size-11 shrink-0 place-items-center rounded-[14px] transition-transform duration-300 group-hover:scale-105 ${
+          destacada ? 'text-[var(--estado-aprobada)]' : 'text-tinta-suave'
         }`}
       >
-        <Ico size={18} strokeWidth={1.5} />
+        <span className="marca-caja" aria-hidden="true" />
+        <Ico size={19} strokeWidth={1.5} className="relative" />
       </span>
 
-      <span className="flex min-w-0 flex-1 flex-col gap-1 self-stretch">
-        <span className="flex items-center gap-1.5 text-[15.5px] tracking-[-0.01em] text-tinta">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] leading-tight font-medium tracking-[-0.015em] text-tinta">
           {titulo}
-          <ArrowRight
-            size={14}
-            strokeWidth={1.5}
-            className="-translate-x-1 text-tinta-tenue opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100"
-          />
         </span>
-        <span className="text-[12.5px] leading-relaxed text-tinta-tenue">{detalle}</span>
-        {pie && (
-          <span className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2 text-[10.5px] font-medium tracking-[0.12em] text-tinta-tenue uppercase">
-            {pie}
-          </span>
-        )}
+        <span className="mt-1 block truncate text-[12px] text-tinta-tenue">{detalle}</span>
+      </span>
+
+      <span
+        className={`grid size-9 shrink-0 place-items-center rounded-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${
+          destacada
+            ? 'bg-aprobada text-[var(--lienzo)]'
+            : 'border border-panel-borde text-tinta-suave'
+        }`}
+      >
+        <ArrowRight size={16} strokeWidth={destacada ? 2 : 1.5} />
       </span>
     </button>
   )
@@ -170,9 +180,10 @@ function Salida({ icono: Ico, titulo, detalle, pie, destacada, alPulsar, alEnfoc
  * se siente como una trampa, y decirlo antes convierte esa misma lista en lo
  * que es, una comprobacion rapida.
  *
- * Tipografia fina, como la lista y la portada: el titulo en peso ligero y
- * los datos pequeños en versalitas espaciadas. Lo unico con peso es lo que
- * se pulsa.
+ * Tiene que caber entera sin desplazarse, tambien en un telefono: una
+ * pantalla de bienvenida con scroll esconde justo lo que viene a ofrecer.
+ * Todo va en una columna estrecha y centrada, y en pantallas bajas encogen
+ * primero el dibujo y los espacios, nunca los botones.
  */
 function HorarioVacio({ disponibles, alSubir, alCrear }) {
   const refArchivo = useRef(null)
@@ -185,7 +196,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 justify-center overflow-y-auto px-5 py-8 sm:items-center"
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 [@media(max-height:760px)]:py-3"
       /* Soltar la imagen encima funciona en toda la zona, no solo sobre la
          tarjeta: en un escritorio, arrastrar la captura desde el escritorio a
          "por ahi en medio" es el gesto natural, y obligar a acertar un
@@ -204,7 +215,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
       }}
     >
       {/* Al arrastrar una imagen, toda la pantalla se convierte en el sitio
-          donde soltarla: un marco discontinuo que respira dentro del borde. */}
+          donde soltarla: un marco discontinuo dentro del borde. */}
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-3 rounded-3xl border-2 border-dashed transition-[opacity,border-color] duration-300 ${
@@ -214,77 +225,71 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
         }`}
       />
 
-      <div className="w-full max-w-[560px]">
-        <div className="flex flex-col items-center text-center">
-          <div className="lista-entrar flex w-full justify-center">
-            <SemanaMuestra foco={foco} soltando={encima} />
-          </div>
-
-          <p
-            className="lista-entrar mt-7 text-[10.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase"
-            style={{ animationDelay: '60ms' }}
-          >
-            Mi horario
-          </p>
-          <h2
-            className="lista-entrar mt-2 text-[26px] leading-tight font-light tracking-[-0.025em] text-balance text-tinta sm:text-[30px]"
-            style={{ animationDelay: '90ms' }}
-          >
-            {encima ? 'Suéltala para leerla' : 'Arma tu semana'}
-          </h2>
-          <p
-            className="lista-entrar mt-2.5 max-w-[44ch] text-[13.5px] leading-relaxed text-tinta-suave"
-            style={{ animationDelay: '120ms' }}
-          >
-            Sube la foto del horario que te dieron y lo copiamos por ti, o colócalo tú mismo
-            probando combinaciones.
-          </p>
-
-          {/* Lo que el pensum ya te deja inscribir. Es el dato con el que se
-              arma un horario, y decirlo aqui convierte la pantalla vacia en
-              un punto de partida con numeros. */}
-          {disponibles > 0 && (
-            <p
-              className="lista-entrar mt-4 flex items-center gap-2 rounded-full border border-panel-borde px-3 py-1.5 text-[12px] text-tinta-suave"
-              style={{ animationDelay: '150ms' }}
-            >
-              <IconoSituacion
-                situacion={SITUACION.INSCRIBIBLE}
-                color={ASPECTO[SITUACION.INSCRIBIBLE].marca.color}
-                size={12}
-              />
-              <span>
-                <span className="text-tinta tabular-nums">{disponibles}</span>{' '}
-                {disponibles === 1 ? 'materia disponible' : 'materias disponibles'} para inscribir
-              </span>
-            </p>
-          )}
+      {/* my-auto y no justify-center: centra cuando sobra alto y, cuando no,
+          deja que el contenido empiece arriba y se pueda desplazar. Con
+          justify-center la parte de arriba se saldria por encima, fuera del
+          alcance del scroll. */}
+      <div className="my-auto flex w-full max-w-[400px] flex-col items-center py-5 text-center">
+        <div className="lista-entrar flex w-full justify-center">
+          <SemanaMuestra foco={foco} soltando={encima} />
         </div>
 
+        <p
+          className="lista-entrar mt-6 text-[10.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase [@media(max-height:760px)]:mt-4"
+          style={{ animationDelay: '60ms' }}
+        >
+          Mi horario
+        </p>
+        <h2
+          className="lista-entrar mt-1.5 text-[27px] leading-tight font-light tracking-[-0.03em] text-tinta sm:text-[30px]"
+          style={{ animationDelay: '90ms' }}
+        >
+          {encima ? 'Suéltala para leerla' : 'Arma tu semana'}
+        </h2>
+        <p
+          className="lista-entrar mt-2 max-w-[34ch] text-[13px] leading-relaxed text-balance text-tinta-suave"
+          style={{ animationDelay: '120ms' }}
+        >
+          Sube la foto de tu horario y lo copiamos por ti, o créalo tú probando combinaciones.
+        </p>
+
+        {/* Lo que el pensum ya te deja inscribir. Es el dato con el que se
+            arma un horario, y decirlo aqui convierte la pantalla vacia en
+            un punto de partida con numeros. */}
+        {disponibles > 0 && (
+          <p
+            className="lista-entrar mt-3.5 flex items-center gap-2 rounded-full border border-panel-borde px-3 py-1.5 text-[12px] text-tinta-suave"
+            style={{ animationDelay: '150ms' }}
+          >
+            <IconoSituacion
+              situacion={SITUACION.INSCRIBIBLE}
+              color={ASPECTO[SITUACION.INSCRIBIBLE].marca.color}
+              size={12}
+            />
+            <span>
+              <span className="text-tinta tabular-nums">{disponibles}</span>{' '}
+              {disponibles === 1 ? 'materia disponible' : 'materias disponibles'} para inscribir
+            </span>
+          </p>
+        )}
+
         <div
-          className="lista-entrar mt-7 flex flex-col gap-3 sm:flex-row"
+          className="lista-entrar mt-6 flex w-full flex-col gap-2.5 [@media(max-height:760px)]:mt-4"
           style={{ animationDelay: '190ms' }}
           onPointerLeave={() => setFoco(null)}
         >
-          <Salida
+          <Accion
             destacada
-            icono={ImageUp}
+            icono={ImagePlus}
             titulo="Subir una foto"
-            detalle="La captura de INTRADACE o una foto de tu horario. Leemos materias, días y horas."
-            pie={<span className="text-[var(--estado-aprobada)]">Lo revisas antes de guardar</span>}
+            detalle="Captura o foto · la revisas antes"
             alPulsar={() => refArchivo.current?.click()}
             alEnfocar={() => setFoco('foto')}
           />
-
-          <Salida
+          <Accion
             icono={PencilLine}
             titulo="Crearlo a mano"
-            detalle="Pulsa un hueco de la semana y añade cada clase. Se arrastran para moverlas."
-            /* Las dos llevan pie. No es simetria por simetria: sin el, la
-               segunda tarjeta deja su contenido arriba y un hueco muerto
-               abajo, y ese desequilibrio se lee como que la opcion vale
-               menos, cuando para media carrera es la que va a usar. */
-            pie="Al instante · sin conexión"
+            detalle="Toca un hueco y añade clases"
             alPulsar={alCrear}
             alEnfocar={() => setFoco('mano')}
           />
@@ -293,7 +298,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
         {/* Solo en escritorio: en un telefono no se arrastra nada, y la linea
             seria una instruccion imposible ocupando sitio. */}
         <p
-          className="lista-entrar mt-5 hidden text-center text-[11.5px] text-tinta-tenue sm:block"
+          className="lista-entrar mt-4 hidden text-[11.5px] text-tinta-tenue sm:block"
           style={{ animationDelay: '230ms' }}
         >
           También puedes arrastrar la imagen a esta pantalla

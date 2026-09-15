@@ -1138,6 +1138,86 @@ body {
   animation: colocar-clase 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+/* El alto de cada fila de la semana, que es lo primero que cede en pantallas
+   bajas para que la bienvenida quepa sin desplazarse. Aqui y no en clases de
+   Tailwind: las dos consultas se solapan, y solo en este orden gana la mas
+   estrecha. */
+.semana-muestra {
+  --fila-muestra: 17px;
+}
+
+@media (max-height: 760px) {
+  .semana-muestra {
+    --fila-muestra: 13px;
+  }
+}
+
+@media (max-height: 660px) {
+  .semana-muestra {
+    --fila-muestra: 9px;
+  }
+}
+
+/* Las dos acciones. Fondo de panel y un contorno de un pixel hecho con
+   degradado, como la caja de la marca: se enciende arriba a la izquierda y se
+   apaga hacia el otro lado. La destacada lo enciende con el verde de la casa
+   y lleva un velo de ese verde por dentro, casi imperceptible. */
+.accion-horario {
+  background: var(--panel);
+  transition:
+    transform 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 200ms ease;
+}
+
+.accion-horario[data-destacada] {
+  background:
+    radial-gradient(
+      120% 140% at 0% 0%,
+      color-mix(in oklab, var(--estado-aprobada) 10%, transparent),
+      transparent 60%
+    ),
+    var(--panel);
+}
+
+.accion-horario::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--tinta) 22%, transparent),
+    color-mix(in oklab, var(--tinta) 7%, transparent) 45%,
+    color-mix(in oklab, var(--tinta) 11%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.accion-horario[data-destacada]::before {
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--estado-aprobada) 70%, transparent),
+    color-mix(in oklab, var(--estado-aprobada) 18%, transparent) 45%,
+    color-mix(in oklab, var(--estado-aprobada) 30%, transparent)
+  );
+}
+
+@media (hover: hover) {
+  .accion-horario:hover {
+    background-color: color-mix(in oklab, var(--tinta) 3%, var(--panel));
+  }
+}
+
 /* El hueco con el mas solo existe mientras miras "Crearlo a mano" */
 .hueco-muestra {
   opacity: 0;
