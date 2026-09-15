@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ZOOM } from '../layout/constantes'
+import { capaCubre, mismaVista, transformRelativo } from '../layout/vistaViva'
 
 const MARGEN_ENCAJE = 28
 /* Lo que tarda el zoom de los botones en llegar a su destino */
@@ -69,18 +70,60 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   const vistaRef = useRef(vista)
   const [medida, setMedida] = useState({ ancho: 0, alto: 0 })
 
+  /* El pellizco en vivo, ver layout/vistaViva.js.
+     capaRef es el <svg> del contenido; pintadaRef, la vista con la que esta
+     pintado ahora mismo. Mientras los dedos se mueven, vistaRef se adelanta
+     y la diferencia entre las dos se aplica a la capa como transform CSS. */
+  const capaRef = useRef(null)
+  const pintadaRef = useRef(vista)
+
+  const estirarCapa = useCallback(() => {
+    const capa = capaRef.current
+    if (!capa) return
+    const viva = vistaRef.current
+    const pintada = pintadaRef.current
+    if (mismaVista(viva, pintada)) {
+      capa.style.transform = ''
+      return
+    }
+    const { k, x, y } = transformRelativo(viva, pintada)
+    capa.style.transform = `translate(${x}px, ${y}px) scale(${k})`
+  }, [])
+
+  /* Cuando React pinta una vista nueva, la capa se reajusta en el mismo
+     cuadro, antes de que se vea: si los dedos ya van por delante, queda
+     estirada lo que falte; si no, sin transform. Hacerlo en un efecto normal
+     dejaria un cuadro con el mapa nuevo y el estiramiento viejo encima. */
+  useLayoutEffect(() => {
+    pintadaRef.current = vista
+    estirarCapa()
+  }, [vista, estirarCapa])
+
   /* Todo pasa por aqui -arrastre, rueda, pellizco, botones y encaje-, asi que
      acotar en este punto y en ninguno mas basta para que no exista ninguna
      forma de dejar el mapa fuera de la pantalla. Ponerlo en cada gesto seria
-     cuatro sitios donde acordarse. */
+     cuatro sitios donde acordarse.
+
+     `enVivo` lo pide solo el pellizco. Si estirar la capa basta, no se toca
+     React; si no -se destaparia un borde o ya se ve borroso-, se pinta de
+     verdad ese cuadro y el gesto sigue estirando desde ahi. */
   const aplicarVista = useCallback(
-    (siguiente) => {
+    (siguiente, enVivo = false) => {
       const acotada = acotarVista(siguiente, medida, anchoContenido, altoContenido)
       vistaRef.current = acotada
+      if (enVivo && capaCubre(acotada, pintadaRef.current, medida, anchoContenido, altoContenido)) {
+        estirarCapa()
+        return
+      }
       setVista(acotada)
     },
-    [medida, anchoContenido, altoContenido],
+    [medida, anchoContenido, altoContenido, estirarCapa],
   )
+
+  /* Al acabar el pellizco se pinta la vista a la que llegaron los dedos */
+  const asentarVista = useCallback(() => {
+    if (!mismaVista(vistaRef.current, pintadaRef.current)) setVista(vistaRef.current)
+  }, [])
   const [arrastrando, setArrastrando] = useState(false)
 
   /* Cierto mientras se mueve el mapa: arrastre, pellizco o rueda. Sirve para
@@ -199,9 +242,9 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   // Zoom manteniendo fijo el punto bajo el cursor. Inmediato: la rueda y el
   // pellizco ya son continuos, el suavizado lo pone la mano del usuario.
   const zoomEn = useCallback(
-    (factor, puntoX, puntoY) => {
+    (factor, puntoX, puntoY, enVivo = false) => {
       marcarGesto()
-      aplicarVista(conZoom(vistaRef.current, factor, puntoX, puntoY))
+      aplicarVista(conZoom(vistaRef.current, factor, puntoX, puntoY), enVivo)
     },
     [marcarGesto, aplicarVista],
   )
@@ -339,7 +382,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     if (punteros.current.size >= 2 && pellizco.current) {
       const ahora = medirPellizco()
       if (pellizco.current.distancia > 0) {
-        zoomEn(ahora.distancia / pellizco.current.distancia, ahora.centroX, ahora.centroY)
+        zoomEn(ahora.distancia / pellizco.current.distancia, ahora.centroX, ahora.centroY, true)
       }
       pellizco.current = ahora
       huboMovimiento.current = true
@@ -372,6 +415,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     }
     // Al levantar un dedo del pellizco no se reanuda el arrastre con el otro:
     // haria un salto feo. Hace falta volver a tocar.
+    if (pellizco.current) asentarVista()
     pellizco.current = null
     arrastre.current = null
     if (punteros.current.size === 0) setArrastrando(false)
@@ -379,6 +423,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
 
   return {
     contenedorRef,
+    capaRef,
     vista,
     medida,
     encajado,

@@ -400,6 +400,32 @@ body {
   }
 }
 
+/* La capa del contenido del mapa, la que se estira durante el pellizco.
+
+   No atrapa el puntero ella misma, solo lo que tiene dibujado: asi el click
+   en el hueco entre tarjetas llega a la rejilla de debajo, que es la que
+   cierra la seleccion.
+
+   will-change solo en tactil. Es lo que la sube a su propia capa de GPU de
+   antemano, para que el primer cuadro del pellizco no tenga que crearla; y
+   con ella, estirarla no vuelve a rasterizar nada. En escritorio no hace
+   falta -no hay pellizco- y una capa propia le quitaria al texto el
+   suavizado de subpixel de Windows. */
+.capa-grafo {
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
+.capa-grafo > svg > g {
+  pointer-events: auto;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .capa-grafo {
+    will-change: transform;
+  }
+}
+
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
 @keyframes trazar {
   from {

@@ -28,6 +28,7 @@ function GrafoPensum({
 
   const {
     contenedorRef,
+    capaRef,
     vista,
     medida,
     encajado,
@@ -133,85 +134,105 @@ function GrafoPensum({
 
   return (
     <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
-      {/* Los *Capture avisan de actividad en fase de captura, antes de que
+      {/* El lienzo: aqui van los gestos, y no en el contenedor, para que la
+          ficha y los botones de zoom -hermanos de este div- no arranquen un
+          arrastre al pulsarlos.
+
+          Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
-      {/* lienzo-en-gesto congela la luz de los cables mientras el mapa se
-          mueve. Ver .lienzo-en-gesto en index.css.
-
-          textRendering geometricPrecision es por el pellizco. Chrome dibuja
-          el texto de un SVG recalculando la letra al tamaño al que se ve en
-          pantalla, asi que cada cuadro de zoom rehace la maqueta de los
-          doscientos y pico textos del mapa. Con geometricPrecision usa el
-          tamaño declarado y escala los glifos, y esa maqueta deja de
-          rehacerse: medido a CPU x4, de 40-45 ms por cuadro a 16-17, y el
-          pellizco de 15 a 24-28 cuadros por segundo. En una pantalla de
-          telefono no se distingue; es lo que se recomienda justo para texto
-          que se escala. */}
-      <svg
-        width="100%"
-        height="100%"
-        className={`select-none ${enGesto ? 'lienzo-en-gesto' : ''} ${
-          arrastrando ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-        style={{ touchAction: 'none', textRendering: 'geometricPrecision' }}
+      <div
+        className={`absolute inset-0 select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ touchAction: 'none' }}
         {...controlesArrastre}
         onPointerMoveCapture={despertar}
         onPointerDownCapture={despertar}
         onWheelCapture={despertar}
       >
-        <DefsGrafo />
+        {/* Dos <svg> y no uno: la rejilla del fondo se queda quieta, y el
+            contenido va en su propia capa para poder estirarla entera
+            durante el pellizco (ver layout/vistaViva.js). Un <g> no se puede
+            estirar en la GPU; una capa HTML si. */}
+        <svg width="100%" height="100%" className="absolute inset-0">
+          <DefsGrafo />
 
-        {/* Click en el vacio: cierra la seleccion */}
-        <rect
-          width="100%"
-          height="100%"
-          fill="url(#rejilla)"
-          onClick={() => {
-            if (!huboMovimiento.current) alSeleccionar(null)
-          }}
-        />
-
-        {/* Oculto hasta que la vista se encaja. El primer fotograma tras
-            montar dibuja el mapa a tamaño natural desde la esquina, y
-            enseñarlo era el tiron que se veia al volver del horario. Se
-            revela con una transicion corta de opacidad, que el compositor
-            resuelve sin repintar los mil seiscientos elementos. */}
-        <g
-          transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}
-          style={{
-            opacity: encajado ? 1 : 0,
-            transition: 'opacity 200ms ease-out',
-          }}
-        >
-          {/* Todo el contenido del mapa vive memoizado ahi dentro. Este <g>
-              es lo unico que cambia al desplazar o acercar, y su unico hijo
-              se salta el render entero comparando una prop. */}
-          <ContenidoGrafo
-            situaciones={situaciones}
-            foco={seleccionado ?? senalado}
-            columnas={columnas}
-            aristas={aristas}
-            nodos={nodos}
-            electivas={electivas}
-            gruposElectivas={gruposElectivas}
-            porCodigo={porCodigo}
-            estados={estados}
-            descarga={descarga}
-            toque={toque}
-            seleccionado={seleccionado}
-            cadena={cadena}
-            atenuado={atenuado}
-            enCasilla={enCasilla}
-            alAbrirCasilla={alAbrirCasilla}
-            ancho={ancho}
-            alSenalar={senalar}
-            alDejarDeSenalar={dejarDeSenalar}
-            alVerFicha={verFicha}
-            alMarcar={alMarcar}
+          {/* Click en el vacio: cierra la seleccion. Le llega a traves de la
+              capa del contenido, que solo atrapa lo que tiene dibujado. */}
+          <rect
+            width="100%"
+            height="100%"
+            fill="url(#rejilla)"
+            onClick={() => {
+              if (!huboMovimiento.current) alSeleccionar(null)
+            }}
           />
-        </g>
-      </svg>
+        </svg>
+
+        {/* La capa que se estira es un div y no el propio <svg>. Medido:
+            cambiar el transform CSS del <svg> hace a Chrome rehacer la
+            maqueta de todo su texto igual que cambiar el del <g>, porque lo
+            toma como un cambio de escala del dibujo; el de un div que lo
+            envuelve no le afecta, y el cuadro pasa de 3,8 ms a 0,01.
+
+            lienzo-en-gesto congela la luz de los cables mientras el mapa se
+            mueve. Ver .lienzo-en-gesto en index.css.
+
+            textRendering geometricPrecision es por el zoom que si repinta.
+            Chrome dibuja el texto de un SVG recalculando la letra al tamaño
+            al que se ve en pantalla, asi que cada cuadro de zoom rehace la
+            maqueta de los doscientos y pico textos del mapa. Con
+            geometricPrecision usa el tamaño declarado y escala los glifos:
+            medido a CPU x4, de 40-45 ms por cuadro a 16-17. En pantalla no se
+            distingue. */}
+        <div ref={capaRef} className="capa-grafo absolute inset-0">
+          <svg
+            width="100%"
+            height="100%"
+            className={enGesto ? 'lienzo-en-gesto' : undefined}
+            style={{ textRendering: 'geometricPrecision' }}
+          >
+            {/* Oculto hasta que la vista se encaja. El primer fotograma tras
+                montar dibuja el mapa a tamaño natural desde la esquina, y
+                enseñarlo era el tiron que se veia al volver del horario. Se
+                revela con una transicion corta de opacidad, que el compositor
+                resuelve sin repintar los mil seiscientos elementos. */}
+            <g
+              transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}
+              style={{
+                opacity: encajado ? 1 : 0,
+                transition: 'opacity 200ms ease-out',
+              }}
+            >
+              {/* Todo el contenido del mapa vive memoizado ahi dentro. Este <g>
+                  es lo unico que cambia al desplazar o acercar, y su unico
+                  hijo se salta el render entero comparando una prop. */}
+              <ContenidoGrafo
+                situaciones={situaciones}
+                foco={seleccionado ?? senalado}
+                columnas={columnas}
+                aristas={aristas}
+                nodos={nodos}
+                electivas={electivas}
+                gruposElectivas={gruposElectivas}
+                porCodigo={porCodigo}
+                estados={estados}
+                descarga={descarga}
+                toque={toque}
+                seleccionado={seleccionado}
+                cadena={cadena}
+                atenuado={atenuado}
+                enCasilla={enCasilla}
+                alAbrirCasilla={alAbrirCasilla}
+                ancho={ancho}
+                alSenalar={senalar}
+                alDejarDeSenalar={dejarDeSenalar}
+                alVerFicha={verFicha}
+                alMarcar={alMarcar}
+              />
+            </g>
+          </svg>
+        </div>
+      </div>
 
       {detalle && (
         <DetalleAsignatura
