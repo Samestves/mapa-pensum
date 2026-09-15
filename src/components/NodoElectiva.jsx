@@ -1,11 +1,10 @@
 import { memo } from 'react'
-import { Check } from 'lucide-react'
 import { NODO, ELECTIVAS, TEXTO } from '../layout/constantes'
 import { SITUACION } from '../layout/situacion'
 import { colorNodo } from '../theme/areas'
 import { ASPECTO, ETIQUETA_SITUACION } from '../theme/situacion'
 import { codigoVisible } from '../data/codigoVisible'
-import { Etiqueta } from './CaraTarjeta'
+import { FormaSituacion } from './IconoSituacion'
 
 // Recorta un nombre para la linea de requisito de la tarjeta compacta
 const corto = (texto, max = 24) => (texto.length > max ? `${texto.slice(0, max - 1)}…` : texto)
@@ -15,7 +14,7 @@ const corto = (texto, max = 24) => (texto.length > max ? `${texto.slice(0, max -
  * obligatoria a proposito: son opcionales y no deben competir con la malla.
  *
  * Habla el mismo idioma que la tarjeta grande -mismo fondo, mismo borde y
- * misma pastilla por situacion-, porque es la misma pregunta: puedo meterla o
+ * mismo icono de estado-, porque es la misma pregunta: puedo meterla o
  * no. Lo unico propio es el pie. Esta zona no lleva cables, asi que lo que te
  * falta se dice con palabras.
  */
@@ -56,6 +55,10 @@ function NodoElectiva({
     >
       <title>{`${codigoVisible(nodo)} — ${nombre} · ${uc} UC · ${ETIQUETA_SITUACION[situacion]}`}</title>
 
+      {/* Aqui solo el halo quieto, sin la luz que da la vuelta: el catalogo
+          de abajo tiene treinta y tantas electivas sin requisitos, todas
+          inscribibles, y treinta luces girando serian otra vez el problema de
+          animar todo a la vez. */}
       {a.brilla && (
         <rect
           x={-3}
@@ -64,7 +67,7 @@ function NodoElectiva({
           height={alto + 6}
           rx={14}
           fill="none"
-          style={{ stroke: a.borde, strokeOpacity: 0.14, strokeWidth: 3 }}
+          style={{ stroke: a.fuerte, strokeOpacity: 0.14, strokeWidth: 3 }}
         />
       )}
       <rect
@@ -78,6 +81,16 @@ function NodoElectiva({
           transition: 'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease',
         }}
       />
+      {a.brilla && (
+        <rect
+          width={NODO.ancho}
+          height={alto}
+          rx={11}
+          fill="none"
+          stroke="url(#filo-inscribible)"
+          strokeWidth={1.5}
+        />
+      )}
 
       {lineasNombre.map((linea, i) => (
         <text
@@ -97,19 +110,11 @@ function NodoElectiva({
         {pie}
       </text>
 
-      {situacion === SITUACION.HECHA && (
-        <Check
-          x={NODO.ancho - 24}
-          y={alto - 23}
-          width={12}
-          height={12}
-          color="var(--estado-aprobada)"
-          strokeWidth={2.8}
-        />
-      )}
-      {a.etiqueta && situacion !== SITUACION.PROXIMA && (
-        <Etiqueta {...a.etiqueta} x={NODO.ancho - 10 - a.etiqueta.ancho} y={alto - 25} />
-      )}
+      {/* Solo el icono, sin palabra: la tarjeta compacta no tiene sitio para
+          las dos junto al pie, y el icono es lo que se reconoce de un vistazo. */}
+      <g transform={`translate(${NODO.ancho - 26}, ${alto - 22})`}>
+        <FormaSituacion situacion={situacion} color={a.marca.color} />
+      </g>
     </g>
   )
 }

@@ -1,22 +1,15 @@
-/* Se lee una vez al cargar el modulo. La animacion del brillo es SMIL y no
-   CSS, asi que la regla prefers-reduced-motion del CSS no la alcanza: hay que
-   decidir desde aqui si se dibuja. */
-const sinMovimiento =
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
 /**
- * Definiciones reutilizables del SVG: la rejilla de fondo y el brillo de las
+ * Definiciones reutilizables del SVG: la rejilla de fondo y el filo de las
  * materias que puedes inscribir.
  *
- * El brillo es un degradado de tres tonos -tinta, el azul de sistemas y el
- * verde de aprobada- que gira despacio. Lo usan el borde y el halo de cada
- * tarjeta inscribible, y al vivir aqui una sola vez es UNA animacion para
- * todas: con ocho inscribibles no son ocho relojes, es uno que las mueve a la
- * vez.
+ * El filo es el borde de la casa: la luz que en la cajita del logo y en el
+ * aviso de instalar se enciende arriba a la izquierda, se apaga por el medio y
+ * vuelve floja abajo a la derecha. Aqui va quieto -la luz que da la vuelta es
+ * aparte, en CaraTarjeta- y en objectBoundingBox, que en un rectangulo es
+ * seguro: una tarjeta nunca tiene alto cero.
  *
- * Gira en objectBoundingBox, o sea sobre la propia tarjeta, asi que el color
- * recorre el contorno en vez de desplazarse por el mapa. Da la sensacion de
- * que la tarjeta esta "viva" sin que nada se mueva de sitio.
+ * Sustituye al degradado de tinta, azul y verde que giraba. Se veia como un
+ * efecto puesto encima, de otro lenguaje que el resto de la aplicacion.
  */
 function DefsGrafo() {
   return (
@@ -25,21 +18,11 @@ function DefsGrafo() {
         <path d="M34 0H0V34" fill="none" stroke="var(--rejilla)" strokeWidth="1" />
       </pattern>
 
-      <linearGradient id="brillo-inscribible" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" style={{ stopColor: 'var(--tinta)' }} />
-        <stop offset="0.38" style={{ stopColor: 'var(--area-sistemas)' }} />
-        <stop offset="0.68" style={{ stopColor: 'var(--estado-aprobada)' }} />
-        <stop offset="1" style={{ stopColor: 'var(--tinta)' }} />
-        {!sinMovimiento && (
-          <animateTransform
-            attributeName="gradientTransform"
-            type="rotate"
-            from="0 0.5 0.5"
-            to="360 0.5 0.5"
-            dur="6s"
-            repeatCount="indefinite"
-          />
-        )}
+      <linearGradient id="filo-inscribible" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style={{ stopColor: 'var(--sit-inscribible-luz)', stopOpacity: 0.9 }} />
+        <stop offset="0.32" style={{ stopColor: 'var(--sit-inscribible-luz)', stopOpacity: 0.16 }} />
+        <stop offset="0.58" style={{ stopColor: 'var(--sit-inscribible-luz)', stopOpacity: 0 }} />
+        <stop offset="1" style={{ stopColor: 'var(--sit-inscribible-luz)', stopOpacity: 0.24 }} />
       </linearGradient>
     </defs>
   )

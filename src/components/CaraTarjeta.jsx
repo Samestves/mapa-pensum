@@ -1,27 +1,34 @@
-import { Check, Lock } from 'lucide-react'
 import { NODO, TEXTO } from '../layout/constantes'
-import { SITUACION } from '../layout/situacion'
 import { ASPECTO } from '../theme/situacion'
+import { FormaSituacion } from './IconoSituacion'
 
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
 
+/* Retraso estable por materia para la luz del borde. Sacado del codigo y no
+   al azar, para que no cambie en cada render ni en cada visita; y distinto
+   por tarjeta, porque ocho luces dando la vuelta a la vez parecen un
+   salvapantallas. */
+function retrasoDe(codigo) {
+  let h = 0
+  for (let i = 0; i < codigo.length; i++) h = (h * 31 + codigo.charCodeAt(i)) >>> 0
+  return `-${(h % 70) / 10}s`
+}
+
 /**
  * La cara de una tarjeta de materia: lo que se DIBUJA, sin la interaccion.
  * La usan la materia obligatoria y la casilla de electiva ya llena, que por
- * eso se ven exactamente iguales -una electiva elegida es tu pensum, no una
- * cosa aparte-.
+ * eso se ven exactamente iguales.
  *
- * Tres filas y nada mas:
+ *   0713632            Inscribible ◉      codigo | estado, palabra e icono
+ *   Teoria de Sistemas                    nombre, protagonista
+ *   ● 2 UC                                area en un punto y UC
  *
- *   0713463                     ✓      codigo, y a la derecha el sello
- *   Circuitos y Sistemas               nombre, protagonista
- *   ● 3 UC               Inscribible   area en un punto, UC y situacion
- *
- * Se fue la etiqueta con el nombre del area: la decia el color del punto y la
- * dice la ficha, y en la tarjeta era la cuarta cosa de colores compitiendo
- * por el mismo sitio. Se fueron tambien la barra vertical de acento, el
- * resplandor del aprobado y el borde discontinuo del bloqueado.
+ * El estado vive en UN sitio, arriba a la derecha. Estuvo repartido: el check
+ * y el candado arriba y las pastillas "Cursando", "Inscribible" y "Proximo"
+ * abajo, con lo que habia que mirar dos esquinas para saber lo mismo y la
+ * fila de abajo competia con las UC. Ahora la esquina dice que es y la fila
+ * de abajo solo cuanto pesa.
  */
 function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado, resaltado }) {
   const a = ASPECTO[situacion]
@@ -31,16 +38,16 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
   const grosor = seleccionado ? a.grosor + 1 : a.grosor
 
   // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
-  const primeraLinea =
-    TEXTO.centroNombre - 2 - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
-  const lejana = situacion === SITUACION.LEJANA
+  const primeraLinea = TEXTO.centroNombre - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
+
+  const ICONO = 14
+  const xIcono = ancho - 14 - ICONO
 
   return (
     <>
-      {/* Halo de la inscribible: un rectangulo ancho y tenue con el mismo
-          degradado que su borde, no un filtro. Basta para que se despegue del
-          resto a cualquier escala, incluida la del mapa entero en un telefono,
-          donde el texto ya no se lee pero un contorno de color si. */}
+      {/* Halo quieto: separa la tarjeta del lienzo a cualquier escala, tambien
+          con el mapa entero en un telefono, donde la luz del borde ya no se
+          distingue pero un contorno ancho y tenue si. */}
       {(a.brilla || seleccionado) && (
         <rect
           x={-3}
@@ -51,7 +58,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           fill="none"
           style={{
             stroke: a.fuerte,
-            strokeOpacity: seleccionado ? 0.4 : 0.14,
+            strokeOpacity: seleccionado ? 0.38 : 0.16,
             strokeWidth: 3,
             transition: SUAVE,
           }}
@@ -62,49 +69,84 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         width={ancho}
         height={alto}
         rx={radio}
-        style={{
-          fill: a.fondo,
-          stroke: borde,
-          strokeWidth: grosor,
-          transition: SUAVE,
-        }}
+        style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
+
+      {a.brilla && (
+        <>
+          {/* El filo de la marca: la misma luz que se enciende arriba a la
+              izquierda y se apaga por el resto en la cajita del logo y en el
+              aviso de instalar. Es el borde de la casa, no uno nuevo. */}
+          <rect
+            width={ancho}
+            height={alto}
+            rx={radio}
+            fill="none"
+            stroke="url(#filo-inscribible)"
+            strokeWidth={1.5}
+          />
+          {/* Y una luz que recorre el contorno despacio, de un solo color.
+              El degradado de tres colores que giraba se leia como algo pegado
+              encima; esta es la luz del filo dando la vuelta. Dos rectangulos
+              con el mismo reloj: un nucleo fino y su resplandor. */}
+          <rect
+            width={ancho}
+            height={alto}
+            rx={radio}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="luz-borde"
+            style={{
+              stroke: 'var(--sit-inscribible-luz)',
+              strokeWidth: 5,
+              strokeOpacity: 0.22,
+              animationDelay: retrasoDe(codigo),
+            }}
+          />
+          <rect
+            width={ancho}
+            height={alto}
+            rx={radio}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="luz-borde"
+            style={{
+              stroke: 'var(--sit-inscribible-luz)',
+              strokeWidth: 1.75,
+              animationDelay: retrasoDe(codigo),
+            }}
+          />
+        </>
+      )}
 
       <text
         x={NODO.padIzq}
         y={24}
         fontSize={9.5}
         fill="var(--sit-codigo)"
-        fillOpacity={lejana ? 0.75 : 1}
         className="font-mono tracking-wide"
       >
         {codigo}
       </text>
 
-      {/* El check de la aprobada va suelto, sin disco lleno detras. Con disco
-          era un sello: lo mas contundente de la tarjeta, en la materia que
-          menos atencion necesita. */}
-      {situacion === SITUACION.HECHA && (
-        <Check
-          x={ancho - 28}
-          y={13}
-          width={13}
-          height={13}
-          color="var(--estado-aprobada)"
-          strokeWidth={2.8}
-        />
+      {/* Estado: palabra y, pegado a ella, su icono */}
+      {a.marca.texto && (
+        <text
+          x={xIcono - 6}
+          y={24}
+          textAnchor="end"
+          fontSize={9.5}
+          className="font-semibold"
+          style={{ fill: a.marca.color, transition: 'fill 280ms ease' }}
+        >
+          {a.marca.texto}
+        </text>
       )}
-      {lejana && (
-        <Lock
-          x={ancho - 28}
-          y={13}
-          width={12}
-          height={12}
-          color="var(--sit-codigo)"
-          strokeWidth={2.2}
-          opacity={0.75}
-        />
-      )}
+      <g transform={`translate(${xIcono}, 13.5)`}>
+        <FormaSituacion situacion={situacion} color={a.marca.color} />
+      </g>
 
       {lineasNombre.map((linea, i) => (
         <text
@@ -119,13 +161,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         </text>
       ))}
 
-      <circle
-        cx={NODO.padIzq + 3}
-        cy={alto - 15}
-        r={3}
-        fill={acento}
-        fillOpacity={lejana ? 0.45 : 1}
-      />
+      <circle cx={NODO.padIzq + 3} cy={alto - 15} r={3} fill={acento} />
       <text
         x={NODO.padIzq + 11}
         y={alto - 11.5}
@@ -135,39 +171,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
       >
         {uc} UC
       </text>
-
-      {a.etiqueta && (
-        <Etiqueta {...a.etiqueta} x={ancho - 12 - a.etiqueta.ancho} y={alto - 26} />
-      )}
     </>
-  )
-}
-
-/** La pastilla de situacion, abajo a la derecha */
-export function Etiqueta({ texto, ancho, fondo, tinta, contorno, x, y }) {
-  return (
-    <g transform={`translate(${x}, ${y})`}>
-      <rect
-        width={ancho}
-        height={17}
-        rx={8.5}
-        style={{
-          fill: fondo,
-          stroke: contorno ?? 'none',
-          strokeWidth: 1,
-        }}
-      />
-      <text
-        x={ancho / 2}
-        y={12}
-        textAnchor="middle"
-        fontSize={9.5}
-        className="font-semibold"
-        style={{ fill: tinta }}
-      >
-        {texto}
-      </text>
-    </g>
   )
 }
 

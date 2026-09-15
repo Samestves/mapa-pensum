@@ -50,13 +50,15 @@
   --sit-cursando-fondo: color-mix(in oklab, var(--estado-cursando) 9%, var(--nodo));
   --sit-cursando-borde: color-mix(in oklab, var(--estado-cursando) 72%, transparent);
   --sit-cursando-texto: var(--estado-cursando);
-  --sit-cursando-pastilla: color-mix(in oklab, var(--estado-cursando) 18%, var(--nodo));
   --sit-inscribible-fondo: color-mix(in oklab, var(--tinta) 6%, var(--nodo));
-  --sit-inscribible-pastilla: color-mix(in oklab, var(--tinta) 9%, var(--nodo));
+  /* La luz de lo inscribible: un blanco frio tirando al azul de la casa. Un
+     solo color, el mismo del filo quieto, de la luz que da la vuelta y del
+     icono de estado. */
+  --sit-inscribible-luz: color-mix(in oklab, #ffffff 70%, var(--area-sistemas));
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 28%, transparent);
   --sit-proxima-fondo: var(--nodo);
   --sit-proxima-borde: color-mix(in oklab, var(--tinta) 24%, transparent);
   --sit-proxima-nombre: var(--tinta-suave);
-  --sit-proxima-pastilla: color-mix(in oklab, var(--tinta) 26%, transparent);
   --sit-lejana-fondo: color-mix(in oklab, var(--lienzo) 40%, var(--nodo));
   --sit-lejana-borde: color-mix(in oklab, var(--tinta) 8%, transparent);
   --sit-lejana-nombre: var(--tinta-tenue);
@@ -125,13 +127,13 @@
   --sit-cursando-fondo: #fff5ea;
   --sit-cursando-borde: #e39a55;
   --sit-cursando-texto: #9a4a06;
-  --sit-cursando-pastilla: #fde3c7;
   --sit-inscribible-fondo: #ffffff;
-  --sit-inscribible-pastilla: #eef2f8;
+  /* En claro la luz no puede ser blanca: se usa el azul profundo de la casa */
+  --sit-inscribible-luz: #2f5bd8;
+  --sit-inscribible-borde: #a9bbe0;
   --sit-proxima-fondo: #ffffff;
   --sit-proxima-borde: #b6c2d2;
   --sit-proxima-nombre: #22324a;
-  --sit-proxima-pastilla: #aab7c9;
   --sit-lejana-fondo: #f4f6fa;
   --sit-lejana-borde: #d5dce6;
   --sit-lejana-nombre: #66748a;
@@ -388,6 +390,23 @@ body {
 .flujo-cabeza {
   stroke-dasharray: 5 95;
   animation-name: fluir-cabeza;
+}
+
+/* La luz que da la vuelta al borde de una materia inscribible. Lenta y
+   lineal: no es una alerta, es algo vivo esperando. Cada tarjeta arranca en
+   un punto distinto del recorrido. */
+@keyframes recorrer-borde {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.luz-borde {
+  stroke-dasharray: 9 91;
+  animation: recorrer-borde 7s linear infinite;
 }
 
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
@@ -1286,7 +1305,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   /* Sin animacion el guion de la luz se quedaria clavado al principio del
      cable como una mancha. Fuera. */
-  .flujo {
+  .flujo,
+  .luz-borde {
     display: none;
   }
 

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { ArrowRight, Check, CircleDot, Info, Lock, Repeat2, RotateCcw, X } from 'lucide-react'
+import { Info, Repeat2, RotateCcw, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { colorNodo, etiquetaArea } from '../theme/areas'
@@ -9,9 +9,17 @@ import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
 import PicoPopover from './PicoPopover'
 import { CARA } from './Popover'
 import { colocar } from '../layout/popover'
+import { SITUACION } from '../layout/situacion'
+import { IconoSituacion } from './IconoSituacion'
 
 const ANCHO = 300
 const MARGEN = 12
+
+/* Los botones de la ficha usan los mismos iconos de estado que el mapa. Si
+   la tarjeta dice "cursando" con un anillo a medio llenar, el boton que la
+   pone en curso tiene que ser ese anillo, no un punto de otra familia. */
+const IconoAprobada = ({ size }) => <IconoSituacion situacion={SITUACION.HECHA} size={size} />
+const IconoCursando = ({ size }) => <IconoSituacion situacion={SITUACION.CURSANDO} size={size} />
 
 function Accion({ icono: Icono, texto, activo, color, alPulsar }) {
   return (
@@ -68,7 +76,7 @@ function AvisoSituacion({ estado, prerrequisitos }) {
   if (estado === ESTADO.DISPONIBLE) {
     return (
       <p className={`${clase} bg-panel-suave text-tinta`}>
-        <ArrowRight size={12} className="mt-0.5 shrink-0" />
+        <IconoSituacion situacion={SITUACION.INSCRIBIBLE} size={12} className="mt-0.5 shrink-0" color="var(--sit-inscribible-luz)" />
         Puedes inscribirla: tienes aprobadas todas sus prelaciones.
       </p>
     )
@@ -81,7 +89,7 @@ function AvisoSituacion({ estado, prerrequisitos }) {
   if (pendientes.length > 0 && sinEmpezar.length === 0) {
     return (
       <p className={`${clase} bg-panel-suave text-tinta-suave`}>
-        <CircleDot size={12} className="mt-0.5 shrink-0 text-cursando" />
+        <IconoSituacion situacion={SITUACION.PROXIMA} size={12} className="mt-0.5 shrink-0" />
         <span>
           Se abre el próximo semestre si apruebas{' '}
           <strong className="font-semibold text-tinta">{nombrar(pendientes)}</strong>.
@@ -92,7 +100,7 @@ function AvisoSituacion({ estado, prerrequisitos }) {
 
   return (
     <p className={`${clase} bg-panel-suave text-tinta-suave`}>
-      <Lock size={12} className="mt-0.5 shrink-0" />
+      <IconoSituacion situacion={SITUACION.LEJANA} size={12} className="mt-0.5 shrink-0" />
       <span>
         {sinEmpezar.length > 0 ? (
           <>
@@ -191,14 +199,14 @@ function DetalleAsignatura({
 
       <div className="flex shrink-0 gap-2 px-3.5 py-3">
         <Accion
-          icono={Check}
+          icono={IconoAprobada}
           texto="Aprobada"
           activo={marca === ESTADO.APROBADA}
           color="var(--estado-aprobada)"
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.APROBADA)}
         />
         <Accion
-          icono={CircleDot}
+          icono={IconoCursando}
           texto="Cursando"
           activo={marca === ESTADO.CURSANDO}
           color="var(--estado-cursando)"

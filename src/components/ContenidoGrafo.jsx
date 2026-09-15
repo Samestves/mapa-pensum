@@ -246,7 +246,7 @@ function ContenidoGrafo({
  * se leia como avance y era todo lo contrario, trabajo pendiente.
  *
  * El punto de la derecha solo aparece si en ese semestre hay algo que puedes
- * inscribir, y brilla con el mismo degradado que esas tarjetas: es la forma
+ * inscribir, y es del mismo color que la luz de esas tarjetas: es la forma
  * de encontrar tu frontera sin acercarte a leer.
  */
 function CabeceraSemestre({ columna, datos }) {
@@ -283,7 +283,12 @@ function CabeceraSemestre({ columna, datos }) {
       </text>
 
       {hayInscribibles && (
-        <circle cx={x + NODO.ancho - 32} cy={top + 25.5} r={3.5} fill="url(#brillo-inscribible)" />
+        <circle
+          cx={x + NODO.ancho - 32}
+          cy={top + 25.5}
+          r={3.5}
+          style={{ fill: 'var(--sit-inscribible-luz)' }}
+        />
       )}
       <text
         x={x + NODO.ancho}
