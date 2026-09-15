@@ -33,8 +33,11 @@ export const ELECTIVAS = {
   separacionGrupo: 44,
 }
 
-// Franja reservada arriba de cada columna para el titulo del semestre
-export const ALTO_ENCABEZADO = 56
+// Franja reservada arriba de cada columna para la cabecera del semestre: titulo
+// grande con su anillo de avance, y debajo una linea de datos con iconos.
+// Subio de 56 a 88 al pasar de una linea a dos; todo lo de debajo -tarjetas,
+// cables, zona de electivas- se recoloca solo porque se deriva de aqui.
+export const ALTO_ENCABEZADO = 88
 
 export const TEXTO = {
   codigo: 10,

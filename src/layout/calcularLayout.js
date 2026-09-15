@@ -13,7 +13,13 @@ import { construirRelaciones } from './relaciones'
 // Ancho medio de un caracter como fraccion del font-size. Es una estimacion a
 // proposito: medir en el DOM haria que el layout dependiera de cuando se monta
 // el componente. Asi el resultado es identico en cada recarga.
-const FACTOR_CARACTER = 0.53
+//
+// Depende de la fuente, y hay que revisarlo cada vez que se cambia. Era 0,53,
+// calibrado para Manrope y Geist. Con Inter, medido en SVG sobre los 736
+// nombres de las nueve carreras en seminegrita: a 0,53 dos lineas se salian
+// de la tarjeta -"Recuperación de Áreas Degradadas" media 190 px donde caben
+// 188-; a 0,55 no se sale ninguna y la peor mide 181.
+const FACTOR_CARACTER = 0.55
 
 function anchoAproximado(texto, fontSize) {
   return texto.length * fontSize * FACTOR_CARACTER

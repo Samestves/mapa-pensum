@@ -19,7 +19,7 @@ const PIE = 32
 // La misma que la aplicacion. Si aqui se queda el nombre de una fuente que
 // ya no se carga, el horario exportado sale en la de sistema y no se parece
 // al que el estudiante tiene en pantalla.
-const FUENTE = `'Geist Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
+const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
 
 /**
  * Resuelve cualquier color CSS -incluido var(--lo-que-sea)- a canal RGB.

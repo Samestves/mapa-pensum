@@ -90,7 +90,7 @@ function SelectorCarrera({ alElegir }) {
               {/* Semibold y no extrabold. Un titulo en extrabold a 22 px
                   grita para que se le note un tamaño que no tiene; a 40 el
                   tamaño ya esta, y lo que hace falta entonces no es peso sino
-                  cerrar el tracking. Geist aguanta -0,04em sin que las letras
+                  cerrar el tracking. Inter aguanta -0,03em sin que las letras
                   se toquen, que es justo para lo que se cambio de fuente. */}
               <h1 className="font-display truncate text-[26px] leading-[1.06] font-semibold tracking-[-0.025em] text-tinta sm:text-[30px] xl:text-[28px]">
                 Mapa de Pensum

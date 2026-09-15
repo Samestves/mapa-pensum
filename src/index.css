@@ -1,6 +1,5 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/geist';
-/* Inter con el eje de tamaño optico: ver --font-display */
+/* Inter con el eje de tamaño optico: ver --font-sans */
 @import '@fontsource-variable/inter/opsz.css';
 @import '@fontsource-variable/jetbrains-mono';
 
@@ -175,29 +174,24 @@
   --color-aprobada: var(--estado-aprobada);
   --color-cursando: var(--estado-cursando);
 
-  /* Geist en vez de Manrope. Manrope es redonda y de humanista amable;
-     Geist es geometrica, de asta recta y con la caja alta mas cerrada, que
-     es lo que aguanta un titulo grande con el tracking muy apretado sin
-     que las letras se toquen. Tambien trae cifras tabulares, que es de lo
-     que dependen los numeros de semestre del mapa. */
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Inter en toda la aplicacion.
+
+     Es lo mas parecido a la letra de Apple que se puede poner en una web: SF
+     Pro no se puede, su licencia la limita a dispositivos Apple. Inter se
+     dibujo con sus mismas proporciones y, sobre todo, tiene lo que hace a SF
+     Pro verse como se ve: un eje de tamaño optico. SF Pro trae "Text" para
+     leer y "Display" para titulos, con espaciado y grosor de trazo propios de
+     cada tamaño; Inter hace lo mismo sola con font-optical-sizing, asi que el
+     codigo de una tarjeta a 9,5 px sale con dibujo de lectura, abierto, y un
+     titulo de 38 px con dibujo de titular, apretado.
+
+     Antes fue Geist, y antes Manrope. Geist quedo solo para titulares durante
+     una prueba, y con dos sans casi iguales en la misma pantalla no se veia
+     un contraste sino un descuido. Una sola familia. */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  /* Titulares: Inter, con Geist de respaldo.
-
-     Se busco lo mas parecido a la letra de Apple que se pueda poner en una
-     web. SF Pro no se puede: su licencia la limita a dispositivos Apple. Inter
-     es la que se dibujo con sus mismas proporciones -caja alta generosa,
-     aberturas amplias, cifras claras- y, sobre todo, tiene lo que hace a SF Pro
-     verse como se ve en un titular: un eje de tamaño optico. SF Pro tiene
-     "Text" para leer y "Display" para titulos, con el espaciado y el grosor
-     del trazo recalculados para cada tamaño. Inter hace lo mismo sola con
-     font-optical-sizing, asi que un titulo de 29 px sale con el dibujo de
-     titular y no con la letra de leer ampliada.
-
-     Solo para titulos. El cuerpo sigue en Geist: cambiar la letra de toda la
-     aplicacion por un titular seria mucho cambio para tan poco. */
-  --font-display: 'Inter Variable', 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans);
 }
 
 html,
@@ -341,12 +335,6 @@ body {
     stroke 200ms ease;
 }
 
-/* Titular con Inter. font-optical-sizing es lo que activa su dibujo de
-   Display a tamaño grande; va explicito porque algun navegador lo trae
-   apagado por defecto en fuentes variables cargadas desde CSS. */
-.font-display {
-  font-optical-sizing: auto;
-}
 
 /* ------------------------------------------------------------------
    Animaciones del grafo.

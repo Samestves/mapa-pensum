@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react'
+import { BookOpen } from 'lucide-react'
 import { NODO, MARGEN } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { SITUACION, tramoDe } from '../layout/situacion'
@@ -6,6 +7,8 @@ import NodoAsignatura from './NodoAsignatura'
 import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'
 import Arista from './Arista'
+import { FormaSituacion } from './IconoSituacion'
+import { ASPECTO } from '../theme/situacion'
 
 /**
  * Todo lo que va dentro del <g> que se desplaza y se acerca: cabeceras de
@@ -224,26 +227,33 @@ function ContenidoGrafo({
   )
 }
 
+/* Estimacion del ancho de un texto a 11,5 px en Inter, para colocar lo que
+   va detras de el. Es la misma idea que el reparto de nombres en tarjetas:
+   medir en el DOM ataria la posicion al momento de montar. */
+const anchoTexto = (texto, tamano) => texto.length * tamano * 0.55
+
 /**
  * Cabecera de un semestre.
  *
- *   Semestre 05                    • 17 UC · 3/7
- *   ━━━━━━━━━━━━━━━━━━━───────────────────────────
+ *   SEMESTRE 05                                ◔
+ *   📖 7 materias · 17 UC          ◐ 1   ◉ 2
+ *   ─────────────────────────────────────────────
  *
- * El titulo dice "Semestre 05", en palabras y del tamaño de un titulo. Estuvo
- * como un "05" grande con un "Semestre" diminuto al lado, y el numero solo no
- * dice que es: podia ser un codigo, un orden o un recuento, y la palabra que
- * lo explicaba era lo mas pequeño de la fila.
+ * Dos lineas con trabajos distintos. La de arriba es el titulo: la palabra y
+ * el numero grandes, que se lean de lejos, y a la derecha un anillo que se va
+ * cerrando en verde con lo aprobado y en ambar con lo que cursas, con la
+ * fraccion dentro. El anillo sustituye al riel plano: dice lo mismo en menos
+ * sitio, y un circulo que se cierra se entiende como "completar" sin leer
+ * ningun numero.
  *
- * A la derecha, lo que pesa y cuanto llevas, en pequeño y apagado: es dato de
- * consulta, no titulo. El punto delante aparece solo si en ese semestre hay
- * algo que puedes inscribir, del mismo color que la luz de esas tarjetas.
+ * La de abajo es de consulta, pequeña y apagada: cuantas materias y cuantas
+ * UC pesa el semestre, y con los mismos iconos de estado de las tarjetas,
+ * cuantas cursas y cuantas puedes inscribir. Solo aparecen los estados que
+ * tienen algo; un "◉ 0" seria ruido.
  *
- * Debajo, un riel fino que se llena en el orden en que se vive un semestre:
- * primero lo aprobado en verde, luego lo que cursas en ambar. Al aprobar, el
- * tramo crece con una transicion en vez de saltar. Lo inscribible no entra: un
- * semestre sin nada aprobado salia con la barra al setenta por ciento junto a
- * un "0/7", y se leia como avance siendo trabajo pendiente.
+ * El numero va con dos cifras y tabulares para que las diez cabeceras queden
+ * alineadas, y la palabra en versalitas espaciadas: con el mismo cuerpo que el
+ * numero competiria con el, y en caja baja parecia un rotulo suelto.
  */
 function CabeceraSemestre({ columna, datos }) {
   const { x, semestre } = columna
@@ -251,91 +261,138 @@ function CabeceraSemestre({ columna, datos }) {
   const total = datos?.segmentos.length ?? 0
   const cuenta = datos?.cuenta ?? {}
   const hechas = cuenta[SITUACION.HECHA] ?? 0
+  const cursando = cuenta[SITUACION.CURSANDO] ?? 0
+  const inscribibles = cuenta[SITUACION.INSCRIBIBLE] ?? 0
   const completo = total > 0 && hechas === total
-  const hayInscribibles = (cuenta[SITUACION.INSCRIBIBLE] ?? 0) > 0
 
-  const RIEL = top + 44
-  const tramos = [
-    { n: hechas, color: 'var(--estado-aprobada)', opacidad: 1 },
-    { n: cuenta[SITUACION.CURSANDO] ?? 0, color: 'var(--estado-cursando)', opacidad: 1 },
-  ]
-  let desde = 0
+  // Anillo de avance, en porcentaje de su propio perimetro (pathLength 100)
+  const R = 15
+  const cx = x + NODO.ancho - R - 1
+  const cy = top + 25
+  const pctHechas = total ? (hechas / total) * 100 : 0
+  const pctCursando = total ? (cursando / total) * 100 : 0
+  const arco = 'stroke-dasharray 600ms cubic-bezier(0.32, 0.72, 0, 1), stroke-dashoffset 600ms cubic-bezier(0.32, 0.72, 0, 1)'
 
-  const suave = 'x 520ms cubic-bezier(0.32, 0.72, 0, 1), width 520ms cubic-bezier(0.32, 0.72, 0, 1)'
+  const DATOS = top + 63
+  const datosTexto = `${total} ${total === 1 ? 'materia' : 'materias'} · ${datos?.uc ?? 0} UC`
+  let xEstado = x + 18 + anchoTexto(datosTexto, 11.5) + 14
+  const estados = [
+    { situacion: SITUACION.CURSANDO, n: cursando },
+    { situacion: SITUACION.INSCRIBIBLE, n: inscribibles },
+  ].filter((e) => e.n > 0)
 
   return (
     <g>
-      {/* "Semestre" en peso medio y apagado, el numero en seminegrita y tinta
-          plena: la palabra dice que es y el numero cual, y ese pequeño
-          contraste de peso es lo que hace que se lea de un golpe sin que
-          ninguna de las dos grite. El numero va con dos cifras y tabulares,
-          para que "Semestre 09" y "Semestre 10" midan lo mismo y las diez
-          cabeceras queden alineadas. */}
-      <text x={x} y={top + 30} fontSize="18" className="font-display tracking-[-0.02em]">
-        <tspan fill="var(--tinta-suave)" className="font-medium">
-          Semestre
+      <text x={x} y={top + 38} className="tabular-nums">
+        <tspan fontSize="17" fill="var(--tinta-suave)" className="font-semibold tracking-[0.12em]">
+          SEMESTRE
         </tspan>
-        <tspan dx="5" fill="var(--tinta)" className="font-semibold tabular-nums">
+        <tspan dx="8" fontSize="38" fill="var(--tinta)" className="font-bold tracking-[-0.03em]">
           {String(semestre).padStart(2, '0')}
         </tspan>
       </text>
 
-      <text
-        x={x + NODO.ancho}
-        y={top + 29}
-        textAnchor="end"
-        fontSize="11"
-        className="font-mono tabular-nums"
-      >
-        {hayInscribibles && (
-          <tspan style={{ fill: 'var(--sit-inscribible-luz)' }} fontSize="13">
-            •{' '}
-          </tspan>
-        )}
-        <tspan fill="var(--tinta-tenue)">{datos?.uc ?? 0} UC</tspan>
-        {/* Separador: sin el, "18 UC 5/7" se leia como un solo numero */}
-        <tspan fill="var(--tinta-tenue)" fillOpacity="0.5" dx="5">
-          ·
-        </tspan>
-        <tspan
-          dx="5"
+      {/* El anillo: riel, tramo aprobado y tramo en curso a continuacion.
+          Empieza arriba, como un reloj, y gira en el sentido de las agujas. */}
+      <g transform={`rotate(-90 ${cx} ${cy})`}>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--tinta)" strokeOpacity={0.1} strokeWidth={3} />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={R}
+          fill="none"
+          pathLength="100"
+          strokeLinecap="round"
+          strokeWidth={3}
           style={{
-            fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-suave)',
-            transition: 'fill 240ms ease',
+            stroke: 'var(--estado-aprobada)',
+            strokeDasharray: `${pctHechas} 100`,
+            opacity: pctHechas > 0 ? 1 : 0,
+            transition: arco,
           }}
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={R}
+          fill="none"
+          pathLength="100"
+          strokeLinecap="round"
+          strokeWidth={3}
+          style={{
+            stroke: 'var(--estado-cursando)',
+            strokeDasharray: `${pctCursando} 100`,
+            strokeDashoffset: -pctHechas,
+            opacity: pctCursando > 0 ? 1 : 0,
+            transition: arco,
+          }}
+        />
+      </g>
+      {completo ? (
+        <path
+          d={`M${cx - 5} ${cy} l3.4 3.4 L${cx + 5.5} ${cy - 4}`}
+          fill="none"
+          stroke="var(--estado-aprobada)"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <text
+          x={cx}
+          y={cy + 3.5}
+          textAnchor="middle"
+          fontSize="9.5"
+          fill="var(--tinta-suave)"
+          className="font-semibold tabular-nums"
         >
-          {completo ? '✓' : `${hechas}/${total}`}
-        </tspan>
-      </text>
+          {hechas}/{total}
+        </text>
+      )}
 
-      <rect
+      {/* Linea de datos */}
+      <BookOpen
         x={x}
-        y={RIEL}
-        width={NODO.ancho}
-        height={2}
-        rx={1}
-        fill="var(--tinta)"
-        fillOpacity={0.08}
+        y={DATOS - 10.5}
+        width={13}
+        height={13}
+        color="var(--tinta-tenue)"
+        strokeWidth={2}
+        aria-hidden="true"
       />
-      {tramos.map((tramo, i) => {
-        const inicio = desde
-        desde += tramo.n
+      <text x={x + 18} y={DATOS} fontSize="11.5" fill="var(--tinta-tenue)" className="font-medium tabular-nums">
+        {datosTexto}
+      </text>
+      {estados.map((e) => {
+        const a = ASPECTO[e.situacion]
+        const xi = xEstado
+        xEstado += 18 + anchoTexto(String(e.n), 11.5) + 12
         return (
-          <rect
-            key={i}
-            y={RIEL}
-            height={2}
-            rx={1}
-            style={{
-              x: x + (total ? (NODO.ancho * inicio) / total : 0),
-              width: total ? (NODO.ancho * tramo.n) / total : 0,
-              fill: tramo.color,
-              fillOpacity: tramo.opacidad,
-              transition: suave,
-            }}
-          />
+          <g key={e.situacion}>
+            <g transform={`translate(${xi}, ${DATOS - 10.5}) scale(0.93)`}>
+              <FormaSituacion situacion={e.situacion} color={a.marca.color} />
+            </g>
+            <text
+              x={xi + 17}
+              y={DATOS}
+              fontSize="11.5"
+              className="font-semibold tabular-nums"
+              style={{ fill: a.marca.color }}
+            >
+              {e.n}
+            </text>
+          </g>
         )
       })}
+
+      <line
+        x1={x}
+        x2={x + NODO.ancho}
+        y1={top + 76}
+        y2={top + 76}
+        stroke="var(--tinta)"
+        strokeOpacity={0.08}
+      />
     </g>
   )
 }
