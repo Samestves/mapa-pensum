@@ -61,11 +61,12 @@ function Enlace({ href, icono: Icono, children }) {
  * datos seria justo lo contrario.
  */
 function PieSelector() {
-  // mt-auto: el pie baja hasta el fondo cuando sobra alto. La separacion
-  // minima con las tarjetas la pone el margen inferior de la rejilla, que
-  // mt-auto no puede garantizar por si solo.
+  // mt-auto: en movil el pie baja hasta el fondo cuando sobra alto. En
+  // escritorio no: ahi la portada centra todo el bloque, y un margen
+  // automatico se quedaria el alto sobrante y dejaria el centrado sin efecto.
+  // La separacion con las tarjetas la pone el margen inferior de la rejilla.
   return (
-    <footer className="mt-auto border-t border-panel-borde pt-5 xl:pt-6">
+    <footer className="mt-auto border-t border-panel-borde pt-5 lg:mt-0 xl:pt-6">
       {/* Los enlaces van PRIMERO en el marcado y el aviso despues, que es el
           orden en que se leen en movil. En escritorio se invierte la fila:
           asi el aviso vuelve a la izquierda y los enlaces a la derecha sin
