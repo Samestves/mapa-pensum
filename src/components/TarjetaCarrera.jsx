@@ -112,7 +112,13 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-display text-[16px] leading-tight font-semibold tracking-[-0.015em] text-tinta xl:text-[18px]">
+          {/* Peso fino y un punto mas grande. En seminegrita a 16 px el nombre
+              pesaba lo mismo que las cifras de debajo y la tarjeta no tenia
+              un protagonista. Fino hace falta mas cuerpo -un trazo de 300 a
+              16 px se deshace sobre el fondo oscuro-, y a 19-22 px Inter ya
+              toma su dibujo de titular por el tamaño optico, que es el que
+              aguanta el peso fino con la letra apretada. */}
+          <h2 className="font-display text-[19px] leading-tight font-light tracking-[-0.02em] text-tinta xl:text-[22px]">
             {carrera.nombreCorto}
           </h2>
           {/* Antes esto era una frase corrida en 10px tinta-tenue. El
