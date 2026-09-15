@@ -9,8 +9,7 @@ import { IconoSituacion } from './IconoSituacion'
 
 /* Los filtros son las preguntas que se le hacen a una lista de materias: que
    puedo inscribir, que llevo, que me falta y que ya pase. Cada uno con el
-   mismo icono que llevan las filas, asi que no necesitan palabra: se aprenden
-   mirando la lista. */
+   mismo icono que llevan las filas, para que filtro y fila se reconozcan. */
 const FILTROS = [
   { id: 'todo', entra: () => true },
   { id: 'disponibles', situacion: SITUACION.INSCRIBIBLE, entra: (s) => s === SITUACION.INSCRIBIBLE },
@@ -92,10 +91,13 @@ function Selector({ estado, alElegir }) {
  * desbloquea, o un candado cerrado y las que le faltan. Cada una es un boton
  * que lleva hasta ella en la lista. Entran una tras otra al abrir la fila.
  */
-function Camino({ icono: Icono, color, materias, estados, alIr }) {
+function Camino({ icono: Icono, rotulo, color, materias, estados, alIr }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <Icono size={14} strokeWidth={1.75} className="mt-[7px] shrink-0" style={{ color }} />
+    <div className="flex flex-col gap-2">
+      <p className="flex items-center gap-1.5 text-[11px] text-tinta-tenue">
+        <Icono size={12} strokeWidth={1.75} style={{ color }} />
+        {rotulo}
+      </p>
       <ul className="flex min-w-0 flex-wrap gap-1.5">
         {materias.map((m, i) => {
           const s = situacionDe(m.codigo, m.prerrequisitos, estados)
@@ -213,9 +215,10 @@ const FilaMateria = memo(function FilaMateria({
           {!aprobada && desbloquea.length > 0 && (
             <span
               className="flex shrink-0 items-center gap-0.5 text-[12px] text-tinta-tenue tabular-nums"
-              aria-label={`abre ${desbloquea.length}`}
+              title={`Desbloquea ${desbloquea.length}`}
+              aria-label={`desbloquea ${desbloquea.length}`}
             >
-              <ArrowRight size={12} strokeWidth={1.75} />
+              <LockOpen size={11} strokeWidth={1.75} className="mr-0.5" />
               {desbloquea.length}
             </span>
           )}
@@ -233,6 +236,7 @@ const FilaMateria = memo(function FilaMateria({
               {cerrada && faltan.length > 0 ? (
                 <Camino
                   icono={Lock}
+                  rotulo="Le falta"
                   color="var(--estado-cursando)"
                   materias={faltan}
                   estados={estados}
@@ -241,6 +245,7 @@ const FilaMateria = memo(function FilaMateria({
               ) : desbloquea.length > 0 ? (
                 <Camino
                   icono={LockOpen}
+                  rotulo={aprobada ? 'Desbloqueó' : 'Desbloquea'}
                   color="var(--sit-inscribible-luz)"
                   materias={desbloquea}
                   estados={estados}
@@ -293,22 +298,26 @@ function Resumen({ progreso, semestres, actual, alIr }) {
               {Math.round(valor)}
             </span>
             <span className="ml-0.5 text-[20px] font-light text-tinta-tenue">%</span>
+            <span className="ml-2 text-[11px] font-medium tracking-[0.16em] text-tinta-tenue uppercase">
+              {conTitulo ? 'del título' : 'de avance'}
+            </span>
           </p>
           <p className="mt-2 text-[12px] text-tinta-tenue tabular-nums">
             {conTitulo
-              ? `${progreso.ucAprobadas + progreso.ucElectivas} / ${progreso.ucTitulo} UC`
-              : `${progreso.ucAprobadas} / ${progreso.ucTotales} UC`}
+              ? `${progreso.ucAprobadas + progreso.ucElectivas} de ${progreso.ucTitulo} UC aprobadas`
+              : `${progreso.ucAprobadas} de ${progreso.ucTotales} UC aprobadas`}
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-4 pb-1 text-[15px] font-light text-tinta tabular-nums">
+        <div className="flex shrink-0 flex-col items-end gap-1.5 pb-0.5 text-[12.5px] tabular-nums">
           {[
             { situacion: SITUACION.INSCRIBIBLE, n: progreso.disponibles, nombre: 'disponibles' },
             { situacion: SITUACION.CURSANDO, n: progreso.cursando, nombre: 'cursando' },
           ].map((d) => (
-            <span key={d.situacion} className="flex items-center gap-1.5" aria-label={`${d.n} ${d.nombre}`}>
-              <IconoSituacion situacion={d.situacion} color={colorSituacion(d.situacion)} size={14} />
-              {d.n}
+            <span key={d.situacion} className="flex items-center gap-1.5 text-tinta-tenue">
+              <IconoSituacion situacion={d.situacion} color={colorSituacion(d.situacion)} size={13} />
+              <span className="text-tinta">{d.n}</span>
+              {d.nombre}
             </span>
           ))}
         </div>
@@ -526,7 +535,13 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
         {/* Filtros: el icono de cada estado y cuantas hay. Pegados arriba al
             desplazarse, con un degradado debajo en vez de una linea. */}
         <div className="transicion-tema sticky top-0 z-20 -mx-4 mt-6 bg-lienzo px-4 pt-2 pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-linear-to-b after:from-lienzo after:to-transparent">
-          <div role="tablist" aria-label="Filtrar materias" className="flex gap-1.5">
+          {/* Con su nombre: el icono solo se aprende, y un filtro tiene que
+              entenderse antes de tocarlo. Se desplazan de lado si no caben. */}
+          <div
+            role="tablist"
+            aria-label="Filtrar materias"
+            className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]"
+          >
             {FILTROS.map((f) => {
               const activo = f.id === filtro
               return (
@@ -535,30 +550,26 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
                   type="button"
                   role="tab"
                   aria-selected={activo}
-                  aria-label={NOMBRE_FILTRO[f.id]}
                   onClick={() => {
                     setFiltro(f.id)
                     setFoco(null)
                   }}
-                  className={`flex h-9 items-center justify-center gap-1.5 rounded-full border px-3.5 text-[13px] tabular-nums transition-colors duration-200 ${
-                    f.situacion ? 'flex-1' : ''
-                  } ${
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[12.5px] transition-colors duration-200 ${
                     activo
                       ? 'border-transparent bg-[color-mix(in_oklab,var(--tinta)_10%,transparent)] text-tinta'
                       : 'border-panel-borde text-tinta-tenue'
                   }`}
                 >
-                  {f.situacion ? (
-                    <>
-                      <IconoSituacion
-                        situacion={f.situacion}
-                        color={activo ? colorSituacion(f.situacion) : 'currentColor'}
-                        size={13}
-                      />
-                      {cuentas[f.id]}
-                    </>
-                  ) : (
-                    'Todas'
+                  {f.situacion && (
+                    <IconoSituacion
+                      situacion={f.situacion}
+                      color={activo ? colorSituacion(f.situacion) : 'currentColor'}
+                      size={13}
+                    />
+                  )}
+                  {NOMBRE_FILTRO[f.id]}
+                  {f.situacion && (
+                    <span className="text-tinta-tenue tabular-nums">{cuentas[f.id]}</span>
                   )}
                 </button>
               )
@@ -615,19 +626,22 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
                   onClick={() => setPlegados((p) => ({ ...p, [id]: !plegado }))}
                   aria-expanded={!plegado}
                   aria-label={`Semestre ${s.numero}`}
-                  className="flex w-full items-center gap-4 pb-3 text-left"
+                  className="flex w-full flex-col gap-2.5 pb-3 text-left"
                 >
-                  <span className="text-[24px] leading-none font-extralight tracking-[-0.03em] text-tinta tabular-nums">
-                    {String(s.numero).padStart(2, '0')}
+                  <span className="flex w-full items-baseline gap-2.5">
+                    <span className="text-[24px] leading-none font-extralight tracking-[-0.03em] text-tinta tabular-nums">
+                      {String(s.numero).padStart(2, '0')}
+                    </span>
+                    <span className="text-[10.5px] font-medium tracking-[0.22em] text-tinta-tenue uppercase">
+                      Semestre
+                    </span>
+                    <span
+                      className={`ml-auto text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
+                    >
+                      {completo ? 'Completo' : `${s.hechas} de ${s.total} aprobadas`}
+                    </span>
                   </span>
-                  <span className="flex-1">
-                    <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
-                  </span>
-                  <span
-                    className={`text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
-                  >
-                    {s.hechas}/{s.total}
-                  </span>
+                  <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
                 </button>
 
                 <div className="plegable" data-abierto={!plegado}>
@@ -652,7 +666,10 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
                               <span className="min-w-0 flex-1 truncate py-3.5 text-[15px] tracking-[-0.01em] text-tinta-tenue">
                                 {hueco.nombre}
                               </span>
-                              <ArrowRight size={13} strokeWidth={1.75} className="shrink-0 rotate-90 text-tinta-tenue" />
+                              <span className="flex shrink-0 items-center gap-1 text-[12px] text-tinta-tenue">
+                                Elegir
+                                <ArrowRight size={12} strokeWidth={1.75} className="rotate-90" />
+                              </span>
                             </button>
                           </li>
                         ))}
@@ -705,7 +722,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
                         strokeWidth={1.75}
                         className={`transition-transform duration-300 ${abierto ? 'rotate-45' : ''}`}
                       />
-                      {g.cantidad}
+                      {abierto ? 'Ocultar' : `${g.cantidad} opciones`}
                     </button>
                   )}
                 </div>
