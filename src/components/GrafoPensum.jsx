@@ -136,13 +136,25 @@ function GrafoPensum({
       {/* Los *Capture avisan de actividad en fase de captura, antes de que
           corran los manejadores de arrastre de controlesArrastre: asi
           despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
+      {/* lienzo-en-gesto congela la luz de los cables mientras el mapa se
+          mueve. Ver .lienzo-en-gesto en index.css.
+
+          textRendering geometricPrecision es por el pellizco. Chrome dibuja
+          el texto de un SVG recalculando la letra al tamaño al que se ve en
+          pantalla, asi que cada cuadro de zoom rehace la maqueta de los
+          doscientos y pico textos del mapa. Con geometricPrecision usa el
+          tamaño declarado y escala los glifos, y esa maqueta deja de
+          rehacerse: medido a CPU x4, de 40-45 ms por cuadro a 16-17, y el
+          pellizco de 15 a 24-28 cuadros por segundo. En una pantalla de
+          telefono no se distingue; es lo que se recomienda justo para texto
+          que se escala. */}
       <svg
         width="100%"
         height="100%"
-        className={`select-none ${
+        className={`select-none ${enGesto ? 'lienzo-en-gesto' : ''} ${
           arrastrando ? 'cursor-grabbing' : 'cursor-grab'
         }`}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', textRendering: 'geometricPrecision' }}
         {...controlesArrastre}
         onPointerMoveCapture={despertar}
         onPointerDownCapture={despertar}

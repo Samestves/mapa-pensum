@@ -380,6 +380,26 @@ body {
   animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
 }
 
+/* En tactil, mientras se arrastra o se pellizca, la luz se congela.
+
+   Esto existia con las estelas de antes y se perdio en el rediseño, y se
+   noto: en un Redmi el arrastre empezo a ir a tirones. Medido con Chrome a
+   CPU x4 y pantalla de telefono, arrastrando Sistemas: 76 cuadros por segundo
+   sin la luz, 51-64 con ella corriendo. Y no por cuantas son -con cuatro o
+   cinco cables basta- sino porque cada cuadro de una animacion de guiones se
+   vuelve a pintar en el hilo principal, y ese hilo es el mismo que esta
+   moviendo el mapa. En reposo cuesta unos 9 ms por cuadro a esa CPU; durante
+   el gesto se suman a los del propio movimiento.
+
+   Pausar no reinicia nada: al soltar, cada luz sigue donde estaba. Solo en
+   tactil porque en escritorio el arrastre va sobrado y ahi la luz quieta a
+   mitad de cable se veria como un fallo. */
+@media (hover: none) and (pointer: coarse) {
+  .lienzo-en-gesto .flujo {
+    animation-play-state: paused;
+  }
+}
+
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
 @keyframes trazar {
   from {
