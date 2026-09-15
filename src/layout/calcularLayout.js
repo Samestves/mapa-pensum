@@ -1,12 +1,4 @@
-import {
-  NODO,
-  ANCHO_TEXTO,
-  ESPACIADO,
-  MARGEN,
-  ALTO_ENCABEZADO,
-  TEXTO,
-  ELECTIVAS,
-} from './constantes'
+import { NODO, ANCHO_TEXTO, ESPACIADO, MARGEN, ALTO_ENCABEZADO, TEXTO } from './constantes'
 import { generarAristas } from './aristas'
 import { construirRelaciones } from './relaciones'
 
@@ -63,58 +55,7 @@ function partirEnLineas(texto, anchoDisponible, fontSize, maxLineas) {
  *
  * Devuelve tambien el tamano del lienzo, que el <svg> necesita para su viewBox.
  */
-/**
- * Coloca los grupos que no pertenecen a ningun semestre (electivas y, en
- * Agronomica, las Areas de Grado) en una zona propia debajo de la malla,
- * reutilizando las mismas columnas.
- *
- * Son N grupos y no dos: el numero y el nombre los pone el pensum. Antes
- * estaban cableados a tecnica/humanistica y Agronomica trae un tercero.
- */
-function colocarGrupos(grupos, xColumnas, yInicio) {
-  const zonas = []
-  const nodos = []
-  let y = yInicio
-
-  for (const grupo of grupos) {
-    const items = grupo.asignaturas
-    if (!items.length) continue
-
-    const yTitulo = y
-    y += ELECTIVAS.encabezado
-
-    items.forEach((asignatura, i) => {
-      const fila = Math.floor(i / xColumnas.length)
-      const columna = i % xColumnas.length
-      nodos.push({
-        ...asignatura,
-        esElectiva: true,
-        grupo: grupo.clave,
-        x: xColumnas[columna],
-        y: y + fila * (ELECTIVAS.alto + ELECTIVAS.fila),
-        lineasNombre: partirEnLineas(asignatura.nombre, ANCHO_TEXTO, TEXTO.meta + 1.5, 2),
-      })
-    })
-
-    const filas = Math.ceil(items.length / xColumnas.length)
-    y += filas * (ELECTIVAS.alto + ELECTIVAS.fila) - ELECTIVAS.fila
-
-    zonas.push({
-      clave: grupo.clave,
-      titulo: grupo.titulo.toUpperCase(),
-      tipo: grupo.tipo,
-      cuota: grupo.cuota ?? null,
-      yTitulo,
-      yFin: y,
-      cantidad: items.length,
-    })
-    y += ELECTIVAS.separacionGrupo
-  }
-
-  return { nodos, zonas, alto: y - yInicio }
-}
-
-export function calcularLayout(asignaturas, grupos = [], electivasEnCasillas = false) {
+export function calcularLayout(asignaturas, grupos = []) {
   const semestres = [...new Set(asignaturas.map((a) => a.semestre))].sort((a, b) => a - b)
 
   const nodos = []
@@ -157,45 +98,46 @@ export function calcularLayout(asignaturas, grupos = [], electivasEnCasillas = f
   const finSemestres =
     MARGEN.top + ALTO_ENCABEZADO + filasN * NODO.alto + (filasN - 1) * ESPACIADO.fila
 
-  /* Cuando el pensum reserva casilla a cada electiva dentro de los semestres,
-     la zona de abajo sobra: seria enseñar dos veces lo mismo, una en su sitio
-     y otra en una lista. En Sistemas eso son 39 tarjetas y dos cabeceras que
-     dejan de dibujarse.
+  /* Las electivas ya no se dibujan como catalogo debajo del mapa. Donde el
+     pensum les reserva casilla dentro de los semestres van ahi; lo que no
+     cubra una ruta completa va a la franja de electivas, que se calcula
+     aparte porque depende de lo que eligio cada estudiante (ver
+     franjaElectivas.js).
 
-     Pero las electivas siguen existiendo como catalogo -hay que poder
-     elegirlas, y una vez puestas se dibujan a tamaño de tarjeta normal-, asi
-     que se les parte el nombre igual. Con la medida grande, no con la
-     compacta de la zona: van a ocupar una tarjeta entera. */
-  const zona = electivasEnCasillas
-    ? { nodos: [], zonas: [], alto: 0 }
-    : colocarGrupos(
-        grupos,
-        columnas.map((c) => c.x),
-        finSemestres + ELECTIVAS.corredor,
-      )
+     Pero siguen existiendo como catalogo: hay que poder elegirlas, y una vez
+     puestas se dibujan a tamaño de tarjeta normal, asi que se les parte el
+     nombre con la medida grande. */
+  const catalogo = grupos.flatMap((g) =>
+    g.asignaturas.map((a) => ({
+      ...a,
+      grupo: g.clave,
+      esElectiva: true,
+      lineasNombre: partirEnLineas(a.nombre, ANCHO_TEXTO, TEXTO.nombre, TEXTO.maxLineas),
+    })),
+  )
 
-  const catalogo = electivasEnCasillas
-    ? grupos.flatMap((g) =>
-        g.asignaturas.map((a) => ({
-          ...a,
-          grupo: g.clave,
-          lineasNombre: partirEnLineas(a.nombre, ANCHO_TEXTO, TEXTO.nombre, TEXTO.maxLineas),
-        })),
-      )
-    : []
+  /* Los grupos, para la lista. Son N y no dos: el numero y el nombre los
+     pone el pensum, y Agronomica trae ademas las Areas de Grado. */
+  const gruposElectivas = grupos
+    .filter((g) => g.asignaturas.length)
+    .map((g) => ({
+      clave: g.clave,
+      titulo: g.titulo.toUpperCase(),
+      tipo: g.tipo,
+      cuota: g.cuota ?? null,
+      cantidad: g.asignaturas.length,
+    }))
 
   /* El catalogo entra en `todos` aunque no se dibuje. porCodigo es de donde
      sale la materia al pulsar una casilla y al abrir su ficha, y relaciones
      necesita las electivas para que señalar una ilumine lo que pide. */
-  const todos = [...nodos, ...zona.nodos, ...catalogo]
+  const todos = [...nodos, ...catalogo]
 
   return {
     nodos,
     columnas,
-    electivas: zona.nodos,
-    gruposElectivas: zona.zonas,
-    // Las electivas elegibles, con el nombre ya partido para la casilla
-    catalogo,
+    electivas: catalogo,
+    gruposElectivas,
     finSemestres,
     // Las electivas son un mapa aparte: cero cables entre las dos zonas.
     // Un cable que baje desde la malla se leeria como "esta electiva es
@@ -208,6 +150,7 @@ export function calcularLayout(asignaturas, grupos = [], electivasEnCasillas = f
     maxFilas,
     ancho:
       MARGEN.left + columnasN * NODO.ancho + (columnasN - 1) * ESPACIADO.columna + MARGEN.right,
-    alto: finSemestres + (zona.nodos.length ? ELECTIVAS.corredor + zona.alto : 0) + MARGEN.bottom,
+    // Sin la franja de electivas, que añade su propio alto donde la hay
+    alto: finSemestres + MARGEN.bottom,
   }
 }

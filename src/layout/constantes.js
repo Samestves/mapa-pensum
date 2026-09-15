@@ -22,15 +22,16 @@ export const ESPACIADO = {
 
 export const MARGEN = { top: 24, right: 48, bottom: 72, left: 48 }
 
-// Zona de electivas, debajo de los 10 semestres. Comparte las columnas del
-// mapa principal para que se lea como una continuacion y no como otro dibujo.
-export const ELECTIVAS = {
-  // Aire entre el ultimo semestre y la zona: son dos mapas separados
-  corredor: 110,
-  encabezado: 52,
-  alto: 62,
-  fila: 14,
-  separacionGrupo: 44,
+// Franja de electivas, debajo de los semestres, en las carreras sin ruta
+// oficial (ver layout/franjaElectivas.js). Comparte las columnas del mapa
+// para leerse como su continuacion y no como otro dibujo.
+export const FRANJA = {
+  // Aire entre el ultimo semestre y la franja: las electivas no son un semestre mas
+  corredor: 96,
+  // Del rotulo del grupo a sus casillas
+  encabezado: 48,
+  // Entre filas de casillas, igual que entre materias
+  fila: 26,
 }
 
 // Franja reservada arriba de cada columna para la cabecera del semestre: sus

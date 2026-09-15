@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronDown, ChevronUp, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
 import { calcularLayout } from '../layout/calcularLayout'
+import { FRANJA } from '../layout/constantes'
+import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { VISTAS } from '../data/vistas'
 import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
@@ -36,10 +38,7 @@ function VistaCarrera({ carrera, alVolver }) {
   const { asignaturas, grupos } = carrera
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
-  const layout = useMemo(
-    () => calcularLayout(asignaturas, grupos, carrera.electivasEnCasillas),
-    [asignaturas, grupos, carrera.electivasEnCasillas],
-  )
+  const layoutBase = useMemo(() => calcularLayout(asignaturas, grupos), [asignaturas, grupos])
 
   const {
     marcas,
@@ -54,8 +53,41 @@ function VistaCarrera({ carrera, alVolver }) {
   } = usePensum(carrera)
   /* Que electiva has puesto en cada casilla del pensum. Es una decision de
      planificacion, no de avance: aprobarla la sigue llevando usePensum. */
-  const { elegidas, casillaDe, colocar } = useCasillas(carrera)
+  const { elegidas, casillaDe, colocar, adoptar } = useCasillas(carrera)
   const [casillaAbierta, setCasillaAbierta] = useState(null)
+
+  /* Las electivas que marcas -desde la lista, o de antes de la franja- entran
+     solas en ella. Depende tambien de `elegidas` a proposito: vaciar la
+     casilla de una electiva aprobada la devuelve, porque aprobada sigue
+     siendo parte de tu pensum. */
+  useEffect(() => {
+    adoptar(marcas)
+  }, [adoptar, marcas, elegidas])
+
+  /* La franja de electivas de las carreras sin ruta oficial completa. Es lo unico del
+     mapa que depende de lo que eligio el estudiante, asi que va aparte del
+     layout: elegir una electiva recoloca la franja y nada mas. Sus casillas
+     entran en porCodigo, que es de donde el selector y la ficha las leen. */
+  const rutaCompleta = Boolean(carrera.electivasEnCasillas)
+  const layout = useMemo(() => {
+    if (rutaCompleta) return layoutBase
+    const yInicio = layoutBase.finSemestres + FRANJA.corredor
+    const franja = calcularFranja(
+      grupos,
+      elegidas,
+      layoutBase.columnas.map((c) => c.x),
+      yInicio,
+    )
+    const porCodigo = new Map(layoutBase.porCodigo)
+    for (const casilla of franja.nodos) porCodigo.set(casilla.codigo, casilla)
+    return {
+      ...layoutBase,
+      casillasFranja: franja.nodos,
+      filasFranja: franja.filas,
+      porCodigo,
+      alto: yInicio + franja.alto,
+    }
+  }, [rutaCompleta, layoutBase, grupos, elegidas])
 
   /* La materia que hay en una casilla, o null si sigue vacia. Va con
      useCallback porque baja hasta el contenido memoizado del mapa: si

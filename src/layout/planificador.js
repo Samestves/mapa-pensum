@@ -77,7 +77,17 @@ export function planificar(
   // un numero seria peor que omitirlas.
   const sugeridas = []
   for (const g of grupos) {
-    if (g.cuota == null) continue
+    /* Sin cuota no se sugiere ninguna, pero las que el estudiante puso en su
+       mapa si entran: ya decidio cursarlas, y un plan que las ignorara le
+       diria que se gradua antes de lo que de verdad va a tardar. */
+    if (g.cuota == null) {
+      for (const e of g.asignaturas) {
+        if (escogidas.has(e.codigo) && !aprobadas.has(e.codigo)) {
+          sugeridas.push({ ...e, grupo: g.clave, esElectiva: true })
+        }
+      }
+      continue
+    }
 
     const yaCubierto = g.asignaturas
       .filter((e) => aprobadas.has(e.codigo))
@@ -115,7 +125,9 @@ export function planificar(
      Donde no sabemos la cuota no se sugirio nada, y entonces la casilla es lo
      unico que avisa de que ahi falta algo. Esa se queda. */
   const conCuota = new Set(grupos.filter((g) => g.cuota != null).map((g) => g.clave))
-  const casillaYaCubierta = (a) => a.esHueco && conCuota.has(a.grupo)
+  /* Y la que ya tiene una electiva puesta tampoco: esa electiva entro arriba
+     con nombre, aunque su grupo no tenga cuota, y la casilla contaria doble. */
+  const casillaYaCubierta = (a) => a.esHueco && (conCuota.has(a.grupo) || elegidas[a.codigo])
 
   const pendientes = [
     ...asignaturas.filter((a) => !casillaYaCubierta(a) && !aprobadas.has(a.codigo)),

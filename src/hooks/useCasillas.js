@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { guardarJSON, leerJSON } from '../data/almacen'
+import { adoptarMarcadas, casillasLibres } from '../layout/franjaElectivas'
 
 const CLAVE_BASE = 'mapa-pensum:casillas'
 const claveDe = (slug) => `${CLAVE_BASE}:${slug}`
@@ -44,14 +45,21 @@ function depurar(datos, casillasValidas, electivasValidas) {
 export function useCasillas(carrera) {
   const { slug, asignaturas, grupos } = carrera
 
+  /* Si las casillas de los semestres son TODA la exigencia de electivas -la
+     ruta completa de la UDO, hoy solo Sistemas-, no hace falta nada mas.
+     Si no, lo que no quepa en ellas va a la franja, con sus casillas libres
+     (ver layout/franjaElectivas.js). Ambiental tiene las dos cosas: cinco
+     casillas de su documento, que no se sabe si son todas. */
+  const rutaCompleta = Boolean(carrera.electivasEnCasillas)
+
   // Casilla -> a que grupo pertenece
   const casillasValidas = useMemo(() => {
-    const mapa = new Map()
+    const mapa = rutaCompleta ? new Map() : casillasLibres(grupos)
     for (const a of asignaturas) {
       if (a.esHueco && a.grupo) mapa.set(a.codigo, a.grupo)
     }
     return mapa
-  }, [asignaturas])
+  }, [asignaturas, grupos, rutaCompleta])
 
   // Electiva -> a que grupo pertenece
   const electivasValidas = useMemo(() => {
@@ -88,6 +96,22 @@ export function useCasillas(carrera) {
     [slug],
   )
 
+  /* Solo en la franja: las electivas con marca que no estan puestas entran
+     solas, para que una materia aprobada no desaparezca del mapa. Con
+     casillas de semestre no se hace: ahi la casilla es la ruta de la UDO, y
+     meter una electiva en un semestre porque si seria decidir por ti. */
+  const adoptar = useCallback(
+    (marcas) => {
+      if (rutaCompleta) return
+      setElegidas((previas) => {
+        const siguiente = adoptarMarcadas(previas, grupos, marcas)
+        if (siguiente !== previas) guardarJSON(claveDe(slug), siguiente)
+        return siguiente
+      })
+    },
+    [rutaCompleta, grupos, slug],
+  )
+
   /* El camino de vuelta: de una electiva a la casilla donde esta. Lo necesita
      el selector para marcar las que ya estan colocadas, y calcularlo una vez
      aqui evita recorrer el objeto entero por cada fila de la lista. */
@@ -97,5 +121,5 @@ export function useCasillas(carrera) {
     return mapa
   }, [elegidas])
 
-  return { elegidas, casillaDe, colocar }
+  return { elegidas, casillaDe, colocar, adoptar }
 }

@@ -158,6 +158,20 @@ describe('las electivas', () => {
     assert.equal(semestres.length, 0)
   })
 
+  test('sin cuota, las que el estudiante puso en su mapa si entran al plan', () => {
+    // La franja de electivas: no sabemos cuantas pide, pero esa ya la eligio
+    const { semestres } = planDe([], {
+      grupos: [grupo(null)],
+      elegidas: { 'libre-tecnicas-1': 'E2', 'libre-tecnicas-2': 'E3' },
+      marcas: { E3: ESTADO.APROBADA },
+    })
+    assert.deepEqual(
+      semestres.flatMap((s) => s.materias.map((m) => m.codigo)),
+      ['E2'],
+      'la aprobada ya no se planifica',
+    )
+  })
+
   test('las electivas ya aprobadas descuentan de la cuota', () => {
     const { semestres } = planDe([], {
       grupos: [grupo(6)],
@@ -229,6 +243,16 @@ describe('casillas de electiva', () => {
     const codigos = plan.semestres.flatMap((s) => s.materias.map((m) => m.codigo))
 
     assert.deepEqual(codigos.sort(), ['MAT', 'casilla-x-1'])
+  })
+
+  test('sin cuota, la casilla que ya tiene electiva deja paso a esa electiva', () => {
+    const plan = planDe([materia('MAT', 1, 4), casilla('casilla-x-1', 'sin')], {
+      grupos: [grupo('sin', null, [materia('ELE', null, 3)])],
+      elegidas: { 'casilla-x-1': 'ELE' },
+    })
+    const codigos = plan.semestres.flatMap((s) => s.materias.map((m) => m.codigo))
+
+    assert.deepEqual(codigos.sort(), ['ELE', 'MAT'])
   })
 
   test('la electiva que el estudiante coloco gana a la que elegiriamos sola', () => {

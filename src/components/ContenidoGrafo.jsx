@@ -1,9 +1,7 @@
 import { memo, useMemo } from 'react'
-import { NODO, MARGEN } from '../layout/constantes'
-import { ESTADO } from '../data/estados'
+import { NODO, MARGEN, FRANJA } from '../layout/constantes'
 import { SITUACION, tramoDe } from '../layout/situacion'
 import NodoAsignatura from './NodoAsignatura'
-import NodoElectiva from './NodoElectiva'
 import NodoHueco from './NodoHueco'
 import Arista from './Arista'
 import { FormaSituacion } from './IconoSituacion'
@@ -11,7 +9,7 @@ import { ASPECTO } from '../theme/situacion'
 
 /**
  * Todo lo que va dentro del <g> que se desplaza y se acerca: cabeceras de
- * semestre, cables, nodos y la zona de electivas.
+ * semestre, cables, nodos y la franja de electivas.
  *
  * Existe como componente aparte por una sola razon, y es de rendimiento.
  * El transform de pan y zoom vive en el <g> de fuera y cambia en cada
@@ -31,10 +29,9 @@ function ContenidoGrafo({
   columnas,
   aristas,
   nodos,
-  electivas,
-  gruposElectivas,
+  casillasFranja,
+  filasFranja,
   porCodigo,
-  estados,
   descarga,
   toque,
   seleccionado,
@@ -119,31 +116,34 @@ function ContenidoGrafo({
         ))}
       </g>
 
-      {/* Los huecos de electiva se dibujan aparte para no meter ese caso dentro
-          de la tarjeta normal. */}
-      {nodos
-        .filter((nodo) => nodo.esHueco)
-        .map((nodo) => {
-          const electiva = enCasilla(nodo.codigo)
-          /* El foco y la seleccion preguntan por la ELECTIVA cuando la hay, y
-             solo por la casilla cuando esta vacia. Una casilla llena dibuja
-             una materia, y la cadena de prelaciones se calcula con el codigo
-             real de esa materia: preguntando por el de la casilla, al pulsarla
-             no coincidia nada y el mapa entero se apagaba. */
-          const codigo = electiva?.codigo ?? nodo.codigo
-          return (
-            <NodoHueco
-              key={nodo.codigo}
-              nodo={nodo}
-              electiva={electiva}
-              situacion={electiva ? situaciones.get(electiva.codigo) : null}
-              atenuado={atenuado(codigo)}
-              seleccionado={seleccionado === codigo}
-              alAbrir={alAbrirCasilla}
-              alVerFicha={alVerFicha}
-            />
-          )
-        })}
+      {/* Las casillas de electiva se dibujan aparte para no meter ese caso
+          dentro de la tarjeta normal. Son las mismas en un semestre que en la
+          franja: solo cambia donde estan. */}
+      {[...nodos.filter((nodo) => nodo.esHueco), ...casillasFranja].map((nodo) => {
+        const electiva = enCasilla(nodo.codigo)
+        /* El foco y la seleccion preguntan por la ELECTIVA cuando la hay, y
+           solo por la casilla cuando esta vacia. Una casilla llena dibuja
+           una materia, y la cadena de prelaciones se calcula con el codigo
+           real de esa materia: preguntando por el de la casilla, al pulsarla
+           no coincidia nada y el mapa entero se apagaba. */
+        const codigo = electiva?.codigo ?? nodo.codigo
+        return (
+          <NodoHueco
+            key={nodo.codigo}
+            nodo={nodo}
+            electiva={electiva}
+            situacion={electiva ? situaciones.get(electiva.codigo) : null}
+            atenuado={atenuado(codigo)}
+            seleccionado={seleccionado === codigo}
+            alAbrir={alAbrirCasilla}
+            alVerFicha={alVerFicha}
+          />
+        )
+      })}
+
+      {filasFranja.map((fila) => (
+        <CabeceraFranja key={fila.clave} fila={fila} />
+      ))}
 
       {nodos
         .filter((nodo) => !nodo.esHueco)
@@ -170,59 +170,61 @@ function ContenidoGrafo({
           />
         ))}
 
-      {/* Zona de electivas, debajo de los 10 semestres */}
-      {gruposElectivas.map((grupo) => (
-        <g key={grupo.clave}>
-          <line
-            x1={MARGEN.left}
-            y1={grupo.yTitulo + 4}
-            x2={ancho - MARGEN.right}
-            y2={grupo.yTitulo + 4}
-            stroke="var(--tinta)"
-            strokeOpacity="0.08"
-            strokeWidth="1"
-          />
-          {/* Titulo y cuota son UN texto con dos tramos: el segundo arranca
-              donde acaba el primero, diga lo que diga el titulo. Con la cuota
-              a una x fija, "ELECTIVAS SOCIOHUMANISTICAS" se le montaba encima. */}
-          <text x={MARGEN.left} y={grupo.yTitulo + 34}>
-            <tspan fontSize="14" fill="var(--tinta)" className="font-semibold tracking-[0.14em]">
-              {grupo.titulo}
-            </tspan>
-            <tspan
-              dx="16"
-              fontSize="11.5"
-              fill="var(--tinta-tenue)"
-              className="font-mono tabular-nums"
-            >
-              {grupo.cuota != null
-                ? `elige ${grupo.cuota} UC de ${grupo.cantidad} opciones`
-                : `${grupo.cantidad} opciones`}
-            </tspan>
-          </text>
-        </g>
-      ))}
-
-      {electivas.map((nodo) => (
-        <NodoElectiva
-          key={nodo.codigo}
-          nodo={nodo}
-          situacion={situaciones.get(nodo.codigo)}
-          // Primer requisito pendiente, para decirlo en la tarjeta
-          requisito={
-            (nodo.prerrequisitos ?? [])
-              .filter((p) => estados[p] !== ESTADO.APROBADA)
-              .map((p) => porCodigo.get(p)?.nombre ?? p)[0]
-          }
-          seleccionado={seleccionado === nodo.codigo}
-          resaltado={cadena != null && cadena.has(nodo.codigo)}
-          atenuado={atenuado(nodo.codigo)}
-          alSenalar={alSenalar}
-          alDejarDeSenalar={alDejarDeSenalar}
-          alHacerClick={alVerFicha}
+      {filasFranja.length > 0 && (
+        /* Una sola regla separa los semestres de la franja: lo de abajo no es
+           un semestre mas, y la regla evita que sus casillas se lean como la
+           fila siguiente de cada columna. */
+        <line
+          x1={MARGEN.left}
+          x2={ancho - MARGEN.right}
+          y1={filasFranja[0].y - FRANJA.corredor / 2}
+          y2={filasFranja[0].y - FRANJA.corredor / 2}
+          stroke="var(--tinta)"
+          strokeOpacity="0.08"
+          strokeWidth="1"
         />
-      ))}
+      )}
     </>
+  )
+}
+
+/**
+ * Rotulo de un grupo de la franja, con el mismo tono de tablero que la
+ * cabecera de semestre: nombre en mayusculas espaciadas y, debajo, cuantas
+ * llevas puestas de cuantas hay. Sin riel de avance: sin cuota oficial no hay
+ * un 100 % contra el que medir, y una barra que nunca se llena mentiria.
+ */
+function CabeceraFranja({ fila }) {
+  const { x, y, titulo, opciones, elegidas, cuota } = fila
+  const datos = [
+    elegidas ? `${elegidas} EN TU MAPA` : 'ELIGE LAS TUYAS',
+    `${opciones} ${opciones === 1 ? 'OPCIÓN' : 'OPCIONES'}`,
+    cuota != null && `ELIGE ${cuota} UC`,
+  ].filter(Boolean)
+
+  return (
+    <g>
+      <text
+        x={x}
+        y={y + CABECERA.titulo}
+        fontSize="12"
+        fill="var(--tinta)"
+        className="font-semibold"
+        style={espaciado(0.24)}
+      >
+        {titulo.toUpperCase()}
+      </text>
+      <text
+        x={x}
+        y={y + CABECERA.datos}
+        fontSize="10"
+        fill="var(--tinta-tenue)"
+        className="font-medium tabular-nums"
+        style={espaciado(0.14)}
+      >
+        {datos.join(' · ')}
+      </text>
+    </g>
   )
 }
 

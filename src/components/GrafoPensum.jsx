@@ -8,6 +8,10 @@ import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
 import { situacionDe } from '../layout/situacion'
 
+/* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
+   render cambiaria de identidad y tiraria el memo del contenido del mapa. */
+const SIN_FRANJA = []
+
 function GrafoPensum({
   layout,
   porCodigo,
@@ -24,7 +28,10 @@ function GrafoPensum({
   alAbrirCasilla,
   casillaDe,
 }) {
-  const { nodos, columnas, electivas, gruposElectivas, aristas, relaciones, ancho, alto } = layout
+  const { nodos, columnas, aristas, relaciones, ancho, alto } = layout
+  // La franja de electivas solo existe en las carreras sin casillas oficiales
+  const casillasFranja = layout.casillasFranja ?? SIN_FRANJA
+  const filasFranja = layout.filasFranja ?? SIN_FRANJA
 
   const {
     contenedorRef,
@@ -53,9 +60,9 @@ function GrafoPensum({
       }
     }
     for (const nodo of nodos) poner(nodo.esHueco ? enCasilla(nodo.codigo) : nodo)
-    for (const nodo of electivas) poner(nodo)
+    for (const casilla of casillasFranja) poner(enCasilla(casilla.codigo))
     return mapa
-  }, [nodos, electivas, estados, enCasilla])
+  }, [nodos, casillasFranja, estados, enCasilla])
 
   // El dock se apaga si nadie toca el mapa en dos segundos
   const { quieto, despertar } = useInactividad(2000)
@@ -212,10 +219,9 @@ function GrafoPensum({
                 columnas={columnas}
                 aristas={aristas}
                 nodos={nodos}
-                electivas={electivas}
-                gruposElectivas={gruposElectivas}
+                casillasFranja={casillasFranja}
+                filasFranja={filasFranja}
                 porCodigo={porCodigo}
-                estados={estados}
                 descarga={descarga}
                 toque={toque}
                 seleccionado={seleccionado}

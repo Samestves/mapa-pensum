@@ -5,6 +5,7 @@ import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { tituloGrupo } from '../layout/franjaElectivas'
 
 const sinTildes = (t) =>
   t
@@ -35,6 +36,18 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
   const [busqueda, setBusqueda] = useState('')
 
   const puesta = Object.entries(casillaDe).find(([, c]) => c === casilla.codigo)?.[0] ?? null
+
+  /* Una casilla de la franja no tiene semestre: es de las carreras de las
+     que la UDO no publica ruta de electivas. Ahi no hay "semestre sugerido"
+     que explicar, y la lista es la de las electivas que llevas en tu mapa. */
+  const enFranja = casilla.semestre == null
+  /* Una electiva aprobada o en curso no sale de la franja: volveria a entrar
+     sola, porque sigue siendo parte de tu pensum. Ofrecer quitarla seria un
+     boton que no hace nada. */
+  const puestaFija =
+    enFranja &&
+    puesta != null &&
+    (estados[puesta] === ESTADO.APROBADA || estados[puesta] === ESTADO.CURSANDO)
 
   /* UC ya colocadas de este grupo, esten en la casilla que esten. Se suman
      sobre las opciones del grupo y no sobre todas las casillas porque lo que
@@ -83,7 +96,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
         <header className="flex items-start gap-3 border-b border-panel-borde px-5 py-4">
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] tracking-[0.11em] text-tinta-suave">
-              SEMESTRE {casilla.semestre}
+              {enFranja && grupo ? tituloGrupo(grupo).toUpperCase() : `SEMESTRE ${casilla.semestre}`}
             </p>
             <h3 className="text-[17px] leading-tight font-extrabold tracking-[-0.02em] text-tinta">
               {casilla.nombre}
@@ -161,11 +174,19 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
             moverla que no existe ni hace falta. */}
         <p className="flex items-start gap-2 border-b border-panel-borde bg-panel-suave px-5 py-2.5 text-[10px] leading-snug text-tinta-tenue">
           <Info size={12} className="mt-px shrink-0" />
-          <span>
-            El semestre es la ruta que sugiere la UDO. Si la cursaste en otro,
-            ponla igual: lo que cuenta para el título son las UC, no en qué
-            semestre la viste.
-          </span>
+          {enFranja ? (
+            <span>
+              La UDO no publica en qué semestre va cada electiva de esta carrera.
+              Añade las que vayas a cursar y quedan en tu mapa, debajo de los
+              semestres.
+            </span>
+          ) : (
+            <span>
+              El semestre es la ruta que sugiere la UDO. Si la cursaste en otro,
+              ponla igual: lo que cuenta para el título son las UC, no en qué
+              semestre la viste.
+            </span>
+          )}
         </p>
 
         <ul className="min-h-0 flex-1 divide-y divide-panel-borde overflow-y-auto overscroll-contain">
@@ -180,7 +201,12 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
               <li key={o.codigo}>
                 <button
                   type="button"
-                  onClick={() => alColocar(casilla.codigo, aqui ? null : o.codigo)}
+                  /* En la franja, una que ya esta en tu mapa no se mueve de
+                     casilla: solo cambiaria de orden, que ahi no significa
+                     nada. Se cierra y listo. */
+                  onClick={() =>
+                    enFranja && enOtra ? alCerrar() : alColocar(casilla.codigo, aqui ? null : o.codigo)
+                  }
                   /* cursor-pointer explicito, y no sobra: Tailwind v4 le pone
                      cursor:default a todos los <button> en su preflight, asi
                      que una fila que claramente se pulsa se quedaba con la
@@ -217,7 +243,9 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
                           te faltan prelaciones
                         </span>
                       )}
-                      {enOtra && <span>· ya está en otra casilla</span>}
+                      {enOtra && (
+                        <span>{enFranja ? '· ya está en tu mapa' : '· ya está en otra casilla'}</span>
+                      )}
                     </span>
                   </span>
                   {aqui && (
@@ -239,7 +267,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
 
         {/* Vaciar solo existe cuando hay algo que vaciar. Un boton apagado
             permanente ocupa sitio para decir que no hay nada que hacer. */}
-        {puesta && (
+        {puesta && !puestaFija && (
           <div className="border-t border-panel-borde px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
@@ -247,7 +275,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-panel-borde py-2.5 text-[12px] font-semibold text-tinta-suave transition-colors hover:border-[var(--estado-rojo)] hover:text-[var(--estado-rojo)]"
             >
               <Trash2 size={14} />
-              Vaciar la casilla
+              {enFranja ? 'Quitar de mi mapa' : 'Vaciar la casilla'}
             </button>
           </div>
         )}
