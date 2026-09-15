@@ -33,8 +33,9 @@ export const ELECTIVAS = {
   separacionGrupo: 44,
 }
 
-// Franja reservada arriba de cada columna para la cabecera del semestre: una
-// ficha de 68 px mas el aire que la separa de la primera tarjeta. Todo lo de
+// Franja reservada arriba de cada columna para la cabecera del semestre: sus
+// cuatro lineas ocupan unos 66 px, y el resto es el aire que la separa de la
+// primera tarjeta. Todo lo de
 // debajo -tarjetas, cables, electivas- se recoloca solo porque se deriva de
 // aqui.
 export const ALTO_ENCABEZADO = 84

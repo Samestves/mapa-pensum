@@ -231,139 +231,166 @@ function ContenidoGrafo({
    la posicion al momento de montar. */
 const anchoTexto = (texto, tamano) => texto.length * tamano * 0.58
 
-/* La rejilla de la ficha, en un solo sitio. Todo lo de dentro se coloca
-   contra estos cuatro numeros y nada contra el ancho de otro texto, que es
-   lo que antes hacia que cada columna quedara distinta. */
-const FICHA = {
-  alto: 68,
-  pad: 14,
-  linea1: 28, // base del titulo
-  linea2: 47, // base de los datos
-  barra: 56, // arriba de la barra de avance
+/* La rejilla de la cabecera, en un solo sitio: todo se coloca contra estas
+   lineas base y contra los dos bordes de la columna, nunca a continuacion de
+   otro texto, que es lo que hacia que cada columna quedara distinta. */
+const CABECERA = {
+  titulo: 14, // SEMESTRE 04
+  datos: 31, // 18 UC · 7 MATERIAS, y el porcentaje grande a la derecha
+  barra: 44, // riel de avance
+  pie: 64, // 5/7 APROBADAS y los estados
 }
 
+/* Mayusculas espaciadas: el recurso del tablero. Van en estilo y no en clase
+   porque el tracking cambia con el cuerpo de cada linea. */
+const espaciado = (em) => ({ letterSpacing: `${em}em` })
+
 /**
- * Cabecera de un semestre: una ficha del ancho de las tarjetas.
+ * Cabecera de un semestre, estilo tablero.
  *
- *   ╭────────────────────────────────────╮
- *   │ SEMESTRE 04                   5/7  │   titulo        avance
- *   │ 18 UC · 7 materias        ◐ 1  ◉ 2 │   datos         estados
- *   │ ━━━━━━━━━━━━━━━━━━━━━━────────────  │   barra
- *   ╰────────────────────────────────────╯
+ *   SEMESTRE 04                        71%
+ *   18 UC · 7 MATERIAS
+ *   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────
+ *   5/7 APROBADAS                   ◐ 1  ◉ 1
  *
- * Tres reglas, y las tres corrigen algo que estaba mal:
+ * El dato principal no es el numero del semestre sino cuanto llevas de el: por
+ * eso el porcentaje es lo mas grande, y va en peso fino. Un numero grande en
+ * negrita grita; grande y fino se lee como la cifra de un instrumento, que es
+ * justo el tono de un tablero de coche.
  *
- * DOS TAMAÑOS, NO CUATRO. Titulo a 20 y todo lo demas a 11,5. Estuvo con la
- * palabra a 17 y el numero a 38: el numero doblaba a la palabra y parecian dos
- * titulares distintos pegados. Ahora "SEMESTRE" y "04" miden lo mismo y se
- * distinguen por peso y tinta, que es como se lee un nombre propio: una sola
- * cosa.
+ * Las etiquetas van en mayusculas muy espaciadas y pequeñas. A 10-12 px una
+ * palabra en caja baja se lee como texto corrido; espaciada y en versalitas se
+ * lee como rotulo, y separa lo que es NOMBRE de lo que es CIFRA sin necesitar
+ * colores ni cajas.
  *
- * CADA DATO EN SU ESQUINA. Izquierda, lo que el semestre ES -numero, UC,
- * materias-. Derecha, como VAS en el -avance y estados-. Los estados se
- * alinean contra el borde derecho y no a continuacion del texto: antes
- * empezaban donde acabara "7 materias · 18 UC", y como ese texto mide
- * distinto en cada columna, los iconos bailaban de una a otra.
- *
- * CONTENIDA. Una ficha con el mismo radio que las tarjetas, apenas marcada.
- * Sin ella las piezas flotaban sueltas sobre el lienzo; con ella la cabecera
- * es la tapa de la columna.
+ * Sin contenedor. La estructura la hacen la rejilla fija y el riel de avance,
+ * que cruza la columna entera y parte la cabecera en lo que el semestre es
+ * -arriba- y como vas en el -abajo-. Los estados se anclan al borde derecho,
+ * asi que caen en el mismo sitio en las diez columnas.
  */
 function CabeceraSemestre({ columna, datos }) {
   const { x, semestre } = columna
   const y = MARGEN.top
   const ancho = NODO.ancho
-  const izq = x + FICHA.pad
-  const der = x + ancho - FICHA.pad
+  const der = x + ancho
 
   const total = datos?.segmentos.length ?? 0
   const cuenta = datos?.cuenta ?? {}
   const hechas = cuenta[SITUACION.HECHA] ?? 0
   const cursando = cuenta[SITUACION.CURSANDO] ?? 0
   const completo = total > 0 && hechas === total
+  const porcentaje = total ? Math.round((hechas / total) * 100) : 0
 
-  const util = der - izq
-  const anchoHechas = total ? (util * hechas) / total : 0
-  const anchoCursando = total ? (util * cursando) / total : 0
+  const anchoHechas = total ? (ancho * hechas) / total : 0
+  const anchoCursando = total ? (ancho * cursando) / total : 0
   const crecer = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier(0.32, 0.72, 0, 1)'
 
-  /* Estados, colocados de derecha a izquierda contra el borde. Solo los que
-     tienen alguna materia: un "◉ 0" seria ruido. */
+  /* Estados de derecha a izquierda contra el borde. Solo los que tienen
+     alguna materia: un "◉ 0" seria ruido. */
   const estados = []
   let hasta = der
   for (const situacion of [SITUACION.INSCRIBIBLE, SITUACION.CURSANDO]) {
     const n = cuenta[situacion] ?? 0
     if (!n) continue
-    const anchoNumero = anchoTexto(String(n), 11.5)
-    const inicio = hasta - anchoNumero - 16
+    const inicio = hasta - anchoTexto(String(n), 11) - 16
     estados.push({ situacion, n, x: inicio })
-    hasta = inicio - 10
+    hasta = inicio - 12
   }
 
   return (
     <g>
-      <rect
+      <text
         x={x}
-        y={y}
-        width={ancho}
-        height={FICHA.alto}
-        rx={NODO.radio}
-        style={{ fill: 'var(--cabecera-fondo)', stroke: 'var(--cabecera-borde)' }}
-      />
+        y={y + CABECERA.titulo}
+        fontSize="12"
+        fill="var(--tinta)"
+        className="font-semibold tabular-nums"
+        style={espaciado(0.24)}
+      >
+        SEMESTRE {String(semestre).padStart(2, '0')}
+      </text>
 
-      <text x={izq} y={y + FICHA.linea1} fontSize="20" className="tabular-nums">
-        <tspan fill="var(--tinta-suave)" className="font-semibold tracking-[0.06em]">
-          SEMESTRE
-        </tspan>
-        <tspan dx="6" fill="var(--tinta)" className="font-bold">
-          {String(semestre).padStart(2, '0')}
+      <text
+        x={x}
+        y={y + CABECERA.datos}
+        fontSize="10"
+        fill="var(--tinta-tenue)"
+        className="font-medium tabular-nums"
+        style={espaciado(0.14)}
+      >
+        {datos?.uc ?? 0} UC · {total} {total === 1 ? 'MATERIA' : 'MATERIAS'}
+      </text>
+
+      {/* La cifra del instrumento. El % va mas pequeño y apagado: es la
+          unidad, no el dato. */}
+      <text
+        x={der}
+        y={y + CABECERA.datos}
+        textAnchor="end"
+        fontSize="30"
+        className="font-light tabular-nums"
+        style={{
+          fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta)',
+          letterSpacing: '-0.03em',
+          transition: 'fill 240ms ease',
+        }}
+      >
+        {porcentaje}
+        <tspan dx="1" fontSize="15" fill="var(--tinta-tenue)">
+          %
         </tspan>
       </text>
 
-      {completo ? (
-        <g transform={`translate(${der - 14}, ${y + FICHA.linea1 - 12})`}>
-          <FormaSituacion situacion={SITUACION.HECHA} color="var(--estado-aprobada)" />
-        </g>
-      ) : (
-        <text
-          x={der}
-          y={y + FICHA.linea1 - 1}
-          textAnchor="end"
-          fontSize="13"
-          className="font-semibold tabular-nums"
-        >
-          <tspan fill="var(--tinta)">{hechas}</tspan>
-          <tspan fill="var(--tinta-tenue)">/{total}</tspan>
-        </text>
-      )}
+      {/* Riel de avance a lo ancho de la columna: aprobado y, a continuacion,
+          lo que cursas. Crece con transicion al aprobar en vez de saltar. */}
+      <rect
+        x={x}
+        y={y + CABECERA.barra}
+        width={ancho}
+        height={2}
+        fill="var(--tinta)"
+        fillOpacity={0.1}
+      />
+      <rect
+        y={y + CABECERA.barra}
+        height={2}
+        style={{ x, width: anchoHechas, fill: 'var(--estado-aprobada)', transition: crecer }}
+      />
+      <rect
+        y={y + CABECERA.barra}
+        height={2}
+        style={{
+          x: x + anchoHechas,
+          width: anchoCursando,
+          fill: 'var(--estado-cursando)',
+          transition: crecer,
+        }}
+      />
 
       <text
-        x={izq}
-        y={y + FICHA.linea2}
-        fontSize="11.5"
-        fill="var(--tinta-tenue)"
-        className="font-medium tabular-nums"
+        x={x}
+        y={y + CABECERA.pie}
+        fontSize="10"
+        className="font-semibold tabular-nums"
+        style={{
+          ...espaciado(0.12),
+          fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-tenue)',
+        }}
       >
-        {datos?.uc ?? 0} UC
-        <tspan dx="4" fillOpacity={0.55}>
-          ·
-        </tspan>
-        <tspan dx="4">
-          {total} {total === 1 ? 'materia' : 'materias'}
-        </tspan>
+        {completo ? 'COMPLETO' : `${hechas}/${total} APROBADAS`}
       </text>
 
       {estados.map((e) => {
         const a = ASPECTO[e.situacion]
         return (
           <g key={e.situacion}>
-            <g transform={`translate(${e.x}, ${y + FICHA.linea2 - 10}) scale(0.86)`}>
+            <g transform={`translate(${e.x}, ${y + CABECERA.pie - 10}) scale(0.86)`}>
               <FormaSituacion situacion={e.situacion} color={a.marca.color} />
             </g>
             <text
               x={e.x + 16}
-              y={y + FICHA.linea2}
-              fontSize="11.5"
+              y={y + CABECERA.pie}
+              fontSize="11"
               className="font-semibold tabular-nums"
               style={{ fill: a.marca.color }}
             >
@@ -372,35 +399,6 @@ function CabeceraSemestre({ columna, datos }) {
           </g>
         )
       })}
-
-      {/* Barra de avance: riel, tramo aprobado y a continuacion lo que cursas.
-          Crece con transicion al aprobar en vez de saltar. */}
-      <rect
-        x={izq}
-        y={y + FICHA.barra}
-        width={util}
-        height={3}
-        rx={1.5}
-        fill="var(--tinta)"
-        fillOpacity={0.1}
-      />
-      <rect
-        y={y + FICHA.barra}
-        height={3}
-        rx={1.5}
-        style={{ x: izq, width: anchoHechas, fill: 'var(--estado-aprobada)', transition: crecer }}
-      />
-      <rect
-        y={y + FICHA.barra}
-        height={3}
-        rx={1.5}
-        style={{
-          x: izq + anchoHechas,
-          width: anchoCursando,
-          fill: 'var(--estado-cursando)',
-          transition: crecer,
-        }}
-      />
     </g>
   )
 }
