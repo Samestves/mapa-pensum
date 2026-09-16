@@ -31,6 +31,15 @@ const ZONA = 'America/Caracas'
 
 export const PREFIJO = 'mp'
 
+/** La hora de Monagas, 0 a 23 */
+export function horaDe(instante = new Date()) {
+  return Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone: ZONA, hour: '2-digit', hour12: false }).format(
+      instante,
+    ),
+  )
+}
+
 /** La fecha de Monagas en ISO corto, YYYY-MM-DD */
 export function fechaDe(instante = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -76,14 +85,28 @@ export function validarLatido(cuerpo) {
   if (typeof id !== 'string' || !ID.test(id)) return null
 
   if (tipo === 'inicio') {
-    return { tipo, id, nuevo: cuerpo.nuevo === true, pwa: cuerpo.pwa === true }
+    return {
+      tipo,
+      id,
+      nuevo: cuerpo.nuevo === true,
+      pwa: cuerpo.pwa === true,
+      movil: cuerpo.movil === true,
+    }
   }
   if (tipo === 'cierre') {
     const carreras = lista(cuerpo.carreras, SLUG, 4)
     const vistas = lista(cuerpo.vistas, VISTA, 3)
     const materias = lista(cuerpo.materias, MATERIA, 12)
-    if (!carreras.length && !vistas.length && !materias.length) return null
-    return { tipo, id, carreras, vistas, materias }
+    /* Las marcas se cuentan, no se guardan: lo que interesa es si la gente
+       usa la aplicacion para llevar su avance o solo para mirar. Con tope,
+       porque un numero enorme aqui solo puede venir de un error o de alguien
+       jugando con la consola. */
+    const marcas = Math.min(Math.max(Number(cuerpo.marcas) || 0, 0), 200)
+    /* Cuanto duro la visita, en minutos enteros y topada a dos horas: es una
+       señal de si la aplicacion se usa de paso o sentado a planificar. */
+    const minutos = Math.min(Math.max(Number(cuerpo.minutos) || 0, 0), 120)
+    if (!carreras.length && !vistas.length && !materias.length && !marcas) return null
+    return { tipo, id, carreras, vistas, materias, marcas, minutos }
   }
   return null
 }
@@ -103,7 +126,7 @@ export function validarLatido(cuerpo) {
  *   calor:<carrera>                   cuantas veces se ha mirado cada
  *                                     materia: el mapa de calor.
  */
-export function comandosDe(latido, fecha) {
+export function comandosDe(latido, fecha, hora = horaDe()) {
   const k = (...partes) => [PREFIJO, ...partes].join(':')
   if (latido.tipo === 'inicio') {
     const comandos = [
@@ -113,6 +136,10 @@ export function comandosDe(latido, fecha) {
       ['INCR', k('visitas', fecha)],
       ['ZADD', k('dias'), '0', fecha],
     ]
+    /* A que hora se usa. Por dia, para poder leerlo como "los martes por la
+       noche" sin guardar nada de nadie. */
+    comandos.push(['HINCRBY', k('horas', fecha), String(hora), '1'])
+    comandos.push(['HINCRBY', k('aparato', mesDe(fecha)), latido.movil ? 'movil' : 'escritorio', '1'])
     if (latido.nuevo) comandos.push(['INCR', k('nuevos', fecha)])
     if (latido.pwa) comandos.push(['INCR', k('pwa', fecha)])
     return comandos
@@ -124,6 +151,17 @@ export function comandosDe(latido, fecha) {
   for (const materia of latido.materias) {
     const corte = materia.indexOf('/')
     comandos.push(['ZINCRBY', k('calor', materia.slice(0, corte)), '1', materia.slice(corte + 1)])
+  }
+  if (latido.marcas) {
+    comandos.push(['HINCRBY', k('acciones', mesDe(fecha)), 'marcas', String(latido.marcas)])
+    comandos.push(['HINCRBY', k('acciones', mesDe(fecha)), 'visitas-con-marcas', '1'])
+  }
+  /* Las visitas se reparten en tramos de duracion en vez de guardar cada
+     numero: un histograma de cinco cajones dice lo mismo y ocupa cinco
+     campos para siempre. */
+  if (latido.minutos >= 0) {
+    const tramo = latido.minutos < 1 ? '0-1' : latido.minutos < 3 ? '1-3' : latido.minutos < 10 ? '3-10' : '10+'
+    comandos.push(['HINCRBY', k('duracion', mesDe(fecha)), tramo, '1'])
   }
   return comandos
 }

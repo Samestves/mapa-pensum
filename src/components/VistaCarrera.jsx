@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronDown, ChevronUp, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
-import { anotarMateria, anotarVista } from '../data/latido'
+import { anotarMarca, anotarMateria, anotarVista } from '../data/latido'
 import { calcularLayout } from '../layout/calcularLayout'
 import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
@@ -260,6 +260,16 @@ function VistaCarrera({ carrera, alVolver }) {
      todo el mundo. Ver data/latido.js. */
   const mirar = useCallback((codigo) => anotarMateria(carrera.slug, codigo), [carrera.slug])
 
+  /* Marcar es la accion que convierte esto en algo que se usa y no solo se
+     mira, asi que se cuenta. Cuantas, no cuales: ver data/latido.js. */
+  const marcarYContar = useCallback(
+    (codigo, estado) => {
+      anotarMarca()
+      marcar(codigo, estado)
+    },
+    [marcar],
+  )
+
   const alternarSeleccion = useCallback(
     (codigo) => {
       setSeleccionado((previo) => {
@@ -425,7 +435,7 @@ function VistaCarrera({ carrera, alVolver }) {
             senalado={senalado}
             alSenalar={setSenalado}
             alSeleccionar={alternarSeleccion}
-            alMarcar={marcar}
+            alMarcar={marcarYContar}
             enCasilla={enCasilla}
             alAbrirCasilla={abrirCasilla}
             casillaDe={casillaDe}
@@ -439,7 +449,7 @@ function VistaCarrera({ carrera, alVolver }) {
             toque={toque}
             descarga={descarga}
             alMirar={mirar}
-            alMarcar={marcar}
+            alMarcar={marcarYContar}
           />
         )}
 

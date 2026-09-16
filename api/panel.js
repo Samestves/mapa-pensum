@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto'
-import { PREFIJO, fechaDe, semanaDe } from './latido.js'
+import { PREFIJO, fechaDe } from './latido.js'
 
 /**
  * El panel: lee lo que latido.js fue sumando y lo devuelve junto.
@@ -77,18 +77,29 @@ export default async function handler(req, res) {
   const cuantos = Math.min(Math.max(Number(req.query?.dias) || 30, 7), 120)
   const dias = ultimosDias(cuantos, hoy)
   const meses = ultimosMeses(6, hoy)
-  const semanas = [...new Set(ultimosDias(56, hoy).map(semanaDe))].slice(-8)
   const calor = typeof req.query?.calor === 'string' ? req.query.calor : null
+
+  /* Los activos de una ventana movil salen de UN comando: PFCOUNT acepta
+     varias claves y cuenta la union sin repetir a nadie. Es mucho mas util
+     que la semana del calendario -el lunes no empieza de cero- y mas exacto
+     que sumar dias, que contaria tres veces a quien entra tres dias. */
+  const ultimos = (n) => ultimosDias(n, hoy).map((f) => k('u', f))
 
   const comandos = [
     ...dias.map((f) => ['PFCOUNT', k('u', f)]),
     ['MGET', ...dias.map((f) => k('visitas', f))],
     ['MGET', ...dias.map((f) => k('nuevos', f))],
     ['MGET', ...dias.map((f) => k('pwa', f))],
-    ...semanas.map((s) => ['PFCOUNT', k('u', 's', s)]),
+    ...dias.map((f) => ['HGETALL', k('horas', f)]),
+    ['PFCOUNT', ...ultimos(7)],
+    ['PFCOUNT', ...ultimos(30)],
     ...meses.map((m) => ['PFCOUNT', k('u', 'm', m)]),
     ['HGETALL', k('carreras', meses.at(-1))],
+    ['HGETALL', k('carreras', meses.at(-2))],
     ['HGETALL', k('vistas', meses.at(-1))],
+    ['HGETALL', k('aparato', meses.at(-1))],
+    ['HGETALL', k('acciones', meses.at(-1))],
+    ['HGETALL', k('duracion', meses.at(-1))],
     ['ZRANGE', k('dias'), '0', '0'],
   ]
   if (calor) comandos.push(['ZRANGE', k('calor', calor), '0', '-1', 'REV', 'WITHSCORES'])
@@ -100,17 +111,56 @@ export default async function handler(req, res) {
     const visitas = r[i++] ?? []
     const nuevos = r[i++] ?? []
     const pwa = r[i++] ?? []
-    const porSemana = semanas.map((s) => ({ semana: s, activos: numero(r[i++]) }))
+    const horasPorDia = dias.map(() => aObjeto(r[i++]))
+    const activos7 = numero(r[i++])
+    const activos30 = numero(r[i++])
     const porMes = meses.map((m) => ({ mes: m, activos: numero(r[i++]) }))
     const carreras = aObjeto(r[i++])
+    const carrerasAntes = aObjeto(r[i++])
     const vistas = aObjeto(r[i++])
+    const aparato = aObjeto(r[i++])
+    const acciones = aObjeto(r[i++])
+    const duracion = aObjeto(r[i++])
     const desde = r[i++]?.[0] ?? null
-    const calorMaterias = calor ? aObjeto(r[i++]) : null
+    let calorDe = calor
+    let calorMaterias = calor ? aObjeto(r[i++]) : null
+
+    /* Sin carrera pedida, se enseña la mas usada del mes: abrir el mapa de
+       calor en la primera de la lista alfabetica no le dice nada a nadie.
+       Cual es solo se sabe despues de leer, asi que va en una segunda
+       peticion, y solo la primera vez que se abre el panel. */
+    if (!calorDe) {
+      calorDe = Object.entries(carreras).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+      if (calorDe) {
+        const [lista] = await pedir([['ZRANGE', k('calor', calorDe), '0', '-1', 'REV', 'WITHSCORES']])
+        calorMaterias = aObjeto(lista)
+      }
+    }
+
+    /* El reloj: siete filas -una por dia de la semana- y veinticuatro
+       columnas. Se arma aqui y no en el navegador porque es la misma cuenta
+       para todos y asi el panel solo pinta. */
+    const reloj = Array.from({ length: 7 }, () => new Array(24).fill(0))
+    dias.forEach((fecha, n) => {
+      const diaSemana = (new Date(`${fecha}T12:00:00Z`).getUTCDay() + 6) % 7
+      for (const [hora, veces] of Object.entries(horasPorDia[n])) {
+        const h = Number(hora)
+        if (h >= 0 && h < 24) reloj[diaSemana][h] += veces
+      }
+    })
 
     return res.status(200).json({
       hoy,
       desde,
       mes: meses.at(-1),
+      mesAnterior: meses.at(-2),
+      activos: {
+        hoy: activos.at(-1) ?? 0,
+        siete: activos7,
+        treinta: activos30,
+        mes: porMes.at(-1)?.activos ?? 0,
+        mesAnterior: porMes.at(-2)?.activos ?? 0,
+      },
       dias: dias.map((fecha, n) => ({
         fecha,
         activos: activos[n],
@@ -118,10 +168,15 @@ export default async function handler(req, res) {
         nuevos: numero(nuevos[n]),
         pwa: numero(pwa[n]),
       })),
-      semanas: porSemana,
       meses: porMes,
+      reloj,
       carreras,
+      carrerasAntes,
       vistas,
+      aparato,
+      acciones,
+      duracion,
+      calorDe,
       calor: calorMaterias,
     })
   } catch (e) {

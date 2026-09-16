@@ -35,6 +35,7 @@ describe('lo que se acepta', () => {
       id: 'abcdefgh1234',
       nuevo: false,
       pwa: false,
+      movil: false,
     })
   })
 
@@ -51,13 +52,25 @@ describe('lo que se acepta', () => {
     assert.equal(latido.materias.length, 12, 'doce materias como mucho por visita')
   })
 
+  test('las marcas y los minutos se acotan a algo creible', () => {
+    const latido = validarLatido({
+      tipo: 'cierre',
+      id: 'abcdefgh1234',
+      vistas: ['mapa'],
+      marcas: 9999,
+      minutos: -3,
+    })
+    assert.equal(latido.marcas, 200, 'el tope de marcas por visita')
+    assert.equal(latido.minutos, 0, 'una duracion negativa no existe')
+  })
+
   test('un cierre sin nada que contar no se guarda', () => {
     assert.equal(validarLatido({ tipo: 'cierre', id: 'abcdefgh1234', carreras: [], materias: [] }), null)
   })
 })
 
 describe('los comandos', () => {
-  const inicio = { tipo: 'inicio', id: 'abcdefgh1234', nuevo: true, pwa: true }
+  const inicio = { tipo: 'inicio', id: 'abcdefgh1234', nuevo: true, pwa: true, movil: true }
 
   test('el inicio cuenta al visitante en el dia, la semana y el mes', () => {
     const comandos = comandosDe(inicio, '2026-09-15')
@@ -76,6 +89,38 @@ describe('los comandos', () => {
     assert.ok(!claves(repetido).some((k) => k.startsWith('mp:nuevos') || k.startsWith('mp:pwa')))
   })
 
+  test('el inicio guarda la hora y el aparato', () => {
+    const comandos = comandosDe(inicio, '2026-09-15', 21)
+    assert.ok(
+      comandos.some((c) => c[0] === 'HINCRBY' && c[1] === 'mp:horas:2026-09-15' && c[2] === '21'),
+    )
+    assert.ok(
+      comandos.some((c) => c[1] === 'mp:aparato:2026-09' && c[2] === 'movil'),
+      'desde un telefono cuenta como movil',
+    )
+    assert.ok(
+      comandosDe({ ...inicio, movil: false }, '2026-09-15', 9).some((c) => c[2] === 'escritorio'),
+    )
+  })
+
+  test('los minutos caen en su tramo y las marcas se suman', () => {
+    const tramos = (minutos) =>
+      comandosDe(
+        { tipo: 'cierre', id: 'abcdefgh1234', carreras: [], vistas: ['mapa'], materias: [], marcas: 3, minutos },
+        '2026-09-15',
+      ).filter((c) => c[1] === 'mp:duracion:2026-09')
+    assert.equal(tramos(0)[0][2], '0-1')
+    assert.equal(tramos(2)[0][2], '1-3')
+    assert.equal(tramos(7)[0][2], '3-10')
+    assert.equal(tramos(45)[0][2], '10+')
+
+    const conMarcas = comandosDe(
+      { tipo: 'cierre', id: 'abcdefgh1234', carreras: [], vistas: [], materias: [], marcas: 3, minutos: 1 },
+      '2026-09-15',
+    )
+    assert.ok(conMarcas.some((c) => c[1] === 'mp:acciones:2026-09' && c[2] === 'marcas' && c[3] === '3'))
+  })
+
   test('el cierre suma por mes, y el calor por carrera con el codigo suelto', () => {
     const comandos = comandosDe(
       {
@@ -84,6 +129,8 @@ describe('los comandos', () => {
         carreras: ['ingenieria-de-sistemas'],
         vistas: ['lista'],
         materias: ['ingenieria-de-sistemas/0081814'],
+        marcas: 0,
+        minutos: 4,
       },
       '2026-09-15',
     )
@@ -91,6 +138,7 @@ describe('los comandos', () => {
       ['HINCRBY', 'mp:carreras:2026-09', 'ingenieria-de-sistemas', '1'],
       ['HINCRBY', 'mp:vistas:2026-09', 'lista', '1'],
       ['ZINCRBY', 'mp:calor:ingenieria-de-sistemas', '1', '0081814'],
+      ['HINCRBY', 'mp:duracion:2026-09', '3-10', '1'],
     ])
   })
 })

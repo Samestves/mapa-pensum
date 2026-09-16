@@ -13,7 +13,9 @@
  *     datos del navegador;
  *   - si la app esta instalada;
  *   - que carreras y que vistas se abrieron en esta visita;
- *   - que materias se miraron, para el mapa de calor.
+ *   - que materias se miraron, para el mapa de calor;
+ *   - cuantas veces se marco una materia, sin decir cual;
+ *   - cuanto duro la visita, si fue desde un telefono y a que hora.
  *
  * No se envia nada escrito por el estudiante, ni sus marcas, ni su horario,
  * ni nada que permita identificarlo. Todo se guarda sumado: contadores por
@@ -56,6 +58,9 @@ function identificador() {
   }
 }
 
+const enTelefono = () =>
+  window.matchMedia?.('(hover: none) and (pointer: coarse)').matches === true
+
 const instalada = () =>
   window.matchMedia?.('(display-mode: standalone)').matches ||
   window.navigator.standalone === true
@@ -79,16 +84,25 @@ function enviar(cuerpo) {
 const carreras = new Set()
 const vistas = new Set()
 const materias = new Set()
+let marcas = 0
 let arrancado = false
 let cerrado = false
+let desde = 0
 let yo = null
 
 /** Se llama una vez al abrir la aplicacion */
 export function empezarLatido() {
   if (arrancado || !enProduccion()) return
   arrancado = true
+  desde = Date.now()
   yo = identificador()
-  enviar({ tipo: 'inicio', id: yo.id, nuevo: yo.nuevo, pwa: instalada() })
+  enviar({
+    tipo: 'inicio',
+    id: yo.id,
+    nuevo: yo.nuevo,
+    pwa: instalada(),
+    movil: enTelefono(),
+  })
 
   /* El cierre se manda cuando la pestaña se oculta, no en beforeunload: en
      un telefono, cambiar de aplicacion o bloquear la pantalla no dispara
@@ -102,7 +116,7 @@ export function empezarLatido() {
 /** Manda lo acumulado. Una sola vez por visita: lo que venga despues, se queda. */
 function cerrarLatido() {
   if (cerrado || !arrancado || !yo) return
-  if (!carreras.size && !vistas.size && !materias.size) return
+  if (!carreras.size && !vistas.size && !materias.size && !marcas) return
   cerrado = true
   enviar({
     tipo: 'cierre',
@@ -110,10 +124,18 @@ function cerrarLatido() {
     carreras: [...carreras].slice(0, TOPE_CARRERAS),
     vistas: [...vistas],
     materias: [...materias].slice(0, TOPE_MATERIAS),
+    marcas,
+    minutos: Math.round((Date.now() - desde) / 60000),
   })
 }
 
 export const anotarCarrera = (slug) => slug && carreras.add(slug)
+/* Cuantas veces se marco una materia. El numero y nada mas: ni cual, ni con
+   que estado. Sirve para saber si la aplicacion se usa para llevar el avance
+   o solo para mirar el mapa. */
+export const anotarMarca = () => {
+  marcas += 1
+}
 export const anotarVista = (vista) => vista && vistas.add(vista)
 /* El mapa de calor: que materias mira la gente. Se guarda con la carrera
    delante porque el mismo codigo no existe en dos pensums, pero el mapa se
