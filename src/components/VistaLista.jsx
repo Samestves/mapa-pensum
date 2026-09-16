@@ -382,7 +382,7 @@ function Resumen({ progreso, semestres, actual, alIr }) {
  *
  * Asi "si paso esta, se me abre aquella" se ve, no se lee.
  */
-function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, alMarcar }) {
+function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, alMirar, alMarcar }) {
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
   const [filtro, setFiltro] = useState('todo')
   /* La materia abierta. Una sola a la vez: es la que ordena la lista a su
@@ -459,7 +459,15 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
     )
   }, [descarga, relaciones, estados])
 
-  const alAlternar = useCallback((codigo) => setFoco((f) => (f === codigo ? null : codigo)), [])
+  const alAlternar = useCallback(
+    (codigo) =>
+      setFoco((f) => {
+        if (f === codigo) return null
+        alMirar?.(codigo)
+        return codigo
+      }),
+    [alMirar],
+  )
 
   /* Llevar a una seccion o a una materia: quita el filtro si la esconde,
      despliega su semestre o su grupo, y se desliza hasta ella.

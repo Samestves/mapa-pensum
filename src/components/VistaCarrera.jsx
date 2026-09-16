@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronDown, ChevronUp, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
+import { anotarMateria, anotarVista } from '../data/latido'
 import { calcularLayout } from '../layout/calcularLayout'
 import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
@@ -133,6 +134,7 @@ function VistaCarrera({ carrera, alVolver }) {
   )
   useEffect(() => {
     guardar(CLAVE_VISTA, vista)
+    anotarVista(vista)
   }, [vista])
 
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
@@ -253,10 +255,22 @@ function VistaCarrera({ carrera, alVolver }) {
     [vista, tema, alternarTema, alVolver],
   )
 
-  const alternarSeleccion = useCallback((codigo) => {
-    setSeleccionado((previo) => (previo === codigo ? null : codigo))
-    setAreaFiltrada(null)
-  }, [])
+  /* Mirar una materia es lo unico que se anota del uso del mapa, y solo
+     para el mapa de calor: cuantas veces se abrio cada una, sumado entre
+     todo el mundo. Ver data/latido.js. */
+  const mirar = useCallback((codigo) => anotarMateria(carrera.slug, codigo), [carrera.slug])
+
+  const alternarSeleccion = useCallback(
+    (codigo) => {
+      setSeleccionado((previo) => {
+        if (previo === codigo) return null
+        mirar(codigo)
+        return codigo
+      })
+      setAreaFiltrada(null)
+    },
+    [mirar],
+  )
 
   return (
     <div className="vista-carrera relative flex h-full flex-col overflow-hidden" style={tonos}>
@@ -424,6 +438,7 @@ function VistaCarrera({ carrera, alVolver }) {
             avanceGrupos={avanceGrupos}
             toque={toque}
             descarga={descarga}
+            alMirar={mirar}
             alMarcar={marcar}
           />
         )}

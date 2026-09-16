@@ -86,10 +86,17 @@ const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png'])
    letra del sistema. */
 const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz)-normal/
 
+/* El panel de uso es para una sola persona y se entra a mano por /panel.
+   Precacharlo seria hacer que los nueve mil estudiantes se bajen -y guarden
+   sin conexion- una pantalla que no van a abrir nunca. Sigue en el build: si
+   alguien entra a /panel, se descarga ahi mismo. */
+const SOLO_PARA_MI = /PanelUso-[^/]+\.js$/
+
 const recursos = todos
   .map(aUrl)
   .filter((u) => !FUERA.has(u))
   .filter((u) => !u.endsWith('.woff2') || SUBCONJUNTO_QUE_USAMOS.test(u))
+  .filter((u) => !SOLO_PARA_MI.test(u))
   .sort()
 
 /* La version sale del contenido: si no cambia nada, el service worker es el

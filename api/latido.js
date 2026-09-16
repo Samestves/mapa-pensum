@@ -1,0 +1,168 @@
+/**
+ * Recoge los latidos y los suma. Es la mitad servidor de src/data/latido.js:
+ * ahi se explica QUE se manda y por que; aqui, donde se guarda.
+ *
+ * Todo se guarda AGREGADO. No existe una fila por persona ni un historial de
+ * nadie: lo unico que entra al almacen son contadores por dia y conjuntos de
+ * cardinalidad (HyperLogLog) que saben cuantos identificadores distintos han
+ * pasado, pero no cuales. Ni siquiera nosotros podriamos reconstruir quien
+ * hizo que, y esa es justo la idea.
+ *
+ * El almacen es Redis en Upstash, por su API REST y no por un cliente: una
+ * dependencia menos y una sola peticion por latido gracias al pipeline. El
+ * plan gratuito da 500.000 comandos al mes; un latido gasta cinco o seis y
+ * un cierre uno por cosa vista, con topes puestos desde el navegador.
+ *
+ * Sin las variables de entorno del almacen esto no falla: responde 204 y no
+ * hace nada. Asi el despliegue sigue funcionando igual antes de crear la
+ * base de datos, y si algun dia se cae Upstash no se lleva por delante la
+ * aplicacion, que no depende de esto para nada.
+ */
+
+/* Las dos parejas de nombres que puede haber: la que pone la integracion de
+   Vercel con Upstash y la que da Upstash directamente. */
+const URL_REDIS = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+const TOKEN_REDIS = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+
+/* Monagas. Las fechas se cortan a la medianoche de aqui y no a la del
+   servidor, que esta en cualquier sitio: si no, las visitas de la noche
+   contarian en el dia siguiente. */
+const ZONA = 'America/Caracas'
+
+export const PREFIJO = 'mp'
+
+/** La fecha de Monagas en ISO corto, YYYY-MM-DD */
+export function fechaDe(instante = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(instante)
+}
+
+/**
+ * Semana ISO de una fecha: 2026-W38. Es la forma estandar de nombrar una
+ * semana sin ambiguedad -empieza en lunes y la primera del año es la del
+ * primer jueves-, y asi el panel puede pedirla sin recalcular nada.
+ */
+export function semanaDe(fecha) {
+  const [a, m, d] = fecha.split('-').map(Number)
+  const dia = new Date(Date.UTC(a, m - 1, d))
+  // Al jueves de esa semana: el año de ese jueves es el año ISO
+  dia.setUTCDate(dia.getUTCDate() + 4 - (dia.getUTCDay() || 7))
+  const primero = new Date(Date.UTC(dia.getUTCFullYear(), 0, 1))
+  const semana = Math.ceil(((dia - primero) / 86400000 + 1) / 7)
+  return `${dia.getUTCFullYear()}-W${String(semana).padStart(2, '0')}`
+}
+
+const mesDe = (fecha) => fecha.slice(0, 7)
+
+/* Lo que se acepta. Cualquier cosa que no encaje se descarta en silencio en
+   vez de responder un error: esto lo llama un navegador que ya se esta
+   yendo, y a nadie le sirve un 400 que nadie va a leer. */
+const ID = /^[a-zA-Z0-9]{8,32}$/
+const SLUG = /^[a-z0-9-]{3,48}$/
+const VISTA = /^(mapa|lista|horario)$/
+const MATERIA = /^[a-z0-9-]{3,48}\/[A-Za-z0-9-]{3,24}$/
+
+const lista = (valor, patron, tope) =>
+  Array.isArray(valor) ? valor.filter((v) => typeof v === 'string' && patron.test(v)).slice(0, tope) : []
+
+/** Deja el cuerpo en lo que se puede guardar, o null si no hay nada que guardar */
+export function validarLatido(cuerpo) {
+  if (!cuerpo || typeof cuerpo !== 'object') return null
+  const { tipo, id } = cuerpo
+  if (typeof id !== 'string' || !ID.test(id)) return null
+
+  if (tipo === 'inicio') {
+    return { tipo, id, nuevo: cuerpo.nuevo === true, pwa: cuerpo.pwa === true }
+  }
+  if (tipo === 'cierre') {
+    const carreras = lista(cuerpo.carreras, SLUG, 4)
+    const vistas = lista(cuerpo.vistas, VISTA, 3)
+    const materias = lista(cuerpo.materias, MATERIA, 12)
+    if (!carreras.length && !vistas.length && !materias.length) return null
+    return { tipo, id, carreras, vistas, materias }
+  }
+  return null
+}
+
+/**
+ * Los comandos de Redis de un latido. Funcion pura -mismo latido y misma
+ * fecha, mismos comandos-, que es lo que permite probar esto sin almacen.
+ *
+ * Las claves, y por que cada una:
+ *   u:<dia>, u:s:<semana>, u:m:<mes>   HyperLogLog de identificadores. Da
+ *     activos por dia, semana y mes sin guardar quien es quien, y ocupa unos
+ *     kilobytes por mucha gente que pase.
+ *   visitas:<dia>, nuevos:<dia>, pwa:<dia>   contadores sueltos.
+ *   dias                              indice de dias con datos, para que el
+ *                                     panel sepa desde cuando hay historia.
+ *   carreras:<mes>, vistas:<mes>      que se usa, por mes.
+ *   calor:<carrera>                   cuantas veces se ha mirado cada
+ *                                     materia: el mapa de calor.
+ */
+export function comandosDe(latido, fecha) {
+  const k = (...partes) => [PREFIJO, ...partes].join(':')
+  if (latido.tipo === 'inicio') {
+    const comandos = [
+      ['PFADD', k('u', fecha), latido.id],
+      ['PFADD', k('u', 's', semanaDe(fecha)), latido.id],
+      ['PFADD', k('u', 'm', mesDe(fecha)), latido.id],
+      ['INCR', k('visitas', fecha)],
+      ['ZADD', k('dias'), '0', fecha],
+    ]
+    if (latido.nuevo) comandos.push(['INCR', k('nuevos', fecha)])
+    if (latido.pwa) comandos.push(['INCR', k('pwa', fecha)])
+    return comandos
+  }
+
+  const comandos = []
+  for (const carrera of latido.carreras) comandos.push(['HINCRBY', k('carreras', mesDe(fecha)), carrera, '1'])
+  for (const vista of latido.vistas) comandos.push(['HINCRBY', k('vistas', mesDe(fecha)), vista, '1'])
+  for (const materia of latido.materias) {
+    const corte = materia.indexOf('/')
+    comandos.push(['ZINCRBY', k('calor', materia.slice(0, corte)), '1', materia.slice(corte + 1)])
+  }
+  return comandos
+}
+
+/** Manda los comandos a Upstash en una sola peticion */
+export async function ejecutar(comandos) {
+  if (!URL_REDIS || !TOKEN_REDIS || !comandos.length) return false
+  const respuesta = await fetch(`${URL_REDIS}/pipeline`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${TOKEN_REDIS}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(comandos),
+  })
+  return respuesta.ok
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end()
+
+  /* El cuerpo puede llegar ya leido -Vercel lo parsea cuando el tipo es
+     json- o como texto crudo, que es lo que manda sendBeacon con un Blob. */
+  let cuerpo = req.body
+  if (typeof cuerpo === 'string') {
+    try {
+      cuerpo = JSON.parse(cuerpo)
+    } catch {
+      cuerpo = null
+    }
+  }
+
+  const latido = validarLatido(cuerpo)
+  // Siempre 204: quien envia esto no espera respuesta ni puede hacer nada
+  // con un error, y contestarle con detalle solo serviria para que alguien
+  // averigue por prueba y error que forma tiene lo que aceptamos.
+  if (!latido) return res.status(204).end()
+
+  try {
+    await ejecutar(comandosDe(latido, fechaDe()))
+  } catch {
+    // Que el almacen falle no es asunto de quien esta usando la aplicacion
+  }
+  return res.status(204).end()
+}

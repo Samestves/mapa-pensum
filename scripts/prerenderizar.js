@@ -332,9 +332,12 @@ writeFileSync(
     '\n</urlset>\n',
 )
 
+/* /panel es el panel de uso: privado. Pedir que no se indexe no lo protege
+   -eso lo hace la clave del servidor- pero evita que salga en los resultados
+   de un buscador. */
 writeFileSync(
   join(DIST, 'robots.txt'),
-  `User-agent: *\nAllow: /\n\nSitemap: ${SITIO}/sitemap.xml\n`,
+  `User-agent: *\nAllow: /\nDisallow: /panel\n\nSitemap: ${SITIO}/sitemap.xml\n`,
 )
 
 console.log(`  sitemap.xml y robots.txt con ${urls.length} URLs`)

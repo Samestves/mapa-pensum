@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import { empezarLatido } from './data/latido'
 import './index.css'
 import App from './App.jsx'
 import LimiteDeError from './components/LimiteDeError'
@@ -42,3 +43,7 @@ createRoot(document.getElementById('root')).render(
     <SpeedInsights />
   </StrictMode>,
 )
+
+/* El contador propio. Va despues de pintar y no antes: lo primero es que la
+   aplicacion aparezca, y esto no tiene ninguna prisa. Ver data/latido.js. */
+empezarLatido()

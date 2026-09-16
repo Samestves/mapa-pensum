@@ -1,6 +1,7 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
+import { anotarCarrera } from './data/latido'
 import { ponerMeta } from './data/seo'
 import { useRuta } from './hooks/useRuta'
 import EsqueletoMapa from './components/EsqueletoMapa'
@@ -8,6 +9,11 @@ import LimiteDeError from './components/LimiteDeError'
 import SelectorCarrera from './components/SelectorCarrera'
 
 import { VistaCarreraDiferida } from './components/vistaDiferida'
+
+/* El panel de uso, en su propio trozo de codigo: es una pantalla para una
+   sola persona -la que mantiene esto- y nadie mas tiene por que descargarla.
+   Aqui y no en vistaDiferida porque no lo precarga nadie: se entra a mano. */
+const PanelDiferido = lazy(() => import('./components/PanelUso'))
 
 /**
  * Raiz: decide entre el selector y el mapa de una carrera.
@@ -18,9 +24,13 @@ import { VistaCarreraDiferida } from './components/vistaDiferida'
  * El pensum de cada carrera es un chunk aparte y se baja al entrar: nadie
  * paga los 107 nodos de Agronomica por mirar Sistemas.
  */
+/* La ruta del panel de uso. No es una carrera, asi que se comprueba antes
+   de mandar cualquier ruta desconocida al selector. */
+const PANEL = 'panel'
+
 function App() {
   const { ruta, saliendo, navegar } = useRuta()
-  const slug = existe(ruta) ? ruta : null
+  const slug = ruta !== PANEL && existe(ruta) ? ruta : null
 
   const [carrera, setCarrera] = useState(() => (slug ? carreraEnCache(slug) : null))
   const [error, setError] = useState(null)
@@ -44,6 +54,7 @@ function App() {
     // El resumen del indice basta para el <title> mientras baja el pensum
     ponerMeta(resumenDe(slug))
     recordarCarrera(slug)
+    anotarCarrera(slug)
 
     const listo = carreraEnCache(slug)
     if (listo) {
@@ -64,7 +75,7 @@ function App() {
 
   // Una ruta que no existe cae al selector en vez de dar pantalla en blanco
   useEffect(() => {
-    if (ruta && !existe(ruta)) window.history.replaceState(null, '', '/')
+    if (ruta && ruta !== PANEL && !existe(ruta)) window.history.replaceState(null, '', '/')
   }, [ruta])
 
   // Se ve poco: la tarjeta empieza a bajar el pensum al pasar el puntero por
@@ -72,7 +83,13 @@ function App() {
   // la red lenta puede durar. Lo que se enseña entonces no es un girador sino
   // la silueta de esta carrera, que viene del indice y por tanto ya esta en
   // memoria: se ve al instante que se entro donde se queria.
-  const contenido = !slug ? (
+  const contenido = ruta === PANEL ? (
+    /* El panel privado. Sin clave no enseña nada: la comprueba el servidor,
+       aqui solo se pide. */
+    <Suspense fallback={<div className="h-full bg-lienzo" />}>
+      <PanelDiferido alVolver={() => navegar('')} />
+    </Suspense>
+  ) : !slug ? (
     <SelectorCarrera alElegir={navegar} />
   ) : error ? (
     <div className="grid h-full place-items-center p-6 text-center">
@@ -118,7 +135,7 @@ function App() {
   // reinicia sola si el elemento sobrevive al cambio, y entrar con la red
   // lenta pasa por el esqueleto antes que por el mapa sin cambiar de ruta.
   // Sin la fase, ese segundo relevo apareceria de golpe.
-  const fase = !slug ? 'selector' : error ? 'error' : !lista ? 'esqueleto' : 'mapa'
+  const fase = ruta === PANEL ? 'panel' : !slug ? 'selector' : error ? 'error' : !lista ? 'esqueleto' : 'mapa'
 
   /* La entrada se anima SOLO al cambiar de ruta, y esto es un arreglo, no un
      ajuste fino.
