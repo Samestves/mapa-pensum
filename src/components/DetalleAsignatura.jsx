@@ -142,7 +142,7 @@ const CIERRE_VELOCIDAD = 0.6
  * Al abrirse avisa de cuanto tapa por abajo (alTapar), y el mapa se corre
  * para que la materia pulsada quede a la vista encima de ella.
  */
-function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, children }) {
+function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, filo, saliendo, children }) {
   const ref = useRef(null)
   const inicio = useRef(null)
   const [bajada, setBajada] = useState(0)
@@ -186,7 +186,9 @@ function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, children 
       ref={ref}
       role="dialog"
       aria-label={nombre}
-      className="hoja-ficha transicion-tema absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[14px] border border-panel-borde bg-panel shadow-2xl"
+      className={`hoja-ficha transicion-tema absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[16px] border border-panel-borde bg-panel shadow-2xl ${
+        saliendo ? 'tarjeta-saliendo pointer-events-none' : ''
+      }`}
       style={{
         bottom: 'var(--reserva-barra, 0px)',
         maxHeight: 'min(66%, calc(100% - var(--reserva-barra, 0px) - 64px))',
@@ -204,11 +206,12 @@ function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, children 
         onPointerUp={soltar}
         onPointerCancel={soltar}
       >
+        <span aria-hidden="true" className="ficha-filo" style={{ '--filo': filo }} />
         {/* El asa dice "esto se arrastra" con la unica señal que ya conoce
             cualquiera que use un telefono. */}
         <span
           aria-hidden="true"
-          className="mx-auto mt-2 block h-1 w-9 rounded-full bg-panel-borde"
+          className="mx-auto mt-2.5 block h-[5px] w-10 rounded-full bg-[color-mix(in_oklab,var(--tinta)_16%,transparent)]"
         />
         {cabecera}
       </div>
@@ -255,6 +258,7 @@ function DetalleAsignatura({
   alIrA,
   puedeIr,
   alTapar,
+  saliendo = false,
 }) {
   const esTelefono = useEsTelefono()
   const refFicha = useRef(null)
@@ -287,14 +291,16 @@ function DetalleAsignatura({
         type="button"
         onClick={alCerrar}
         aria-label="Cerrar"
-        className={`absolute grid place-items-center rounded-full text-tinta-tenue transition-colors hover:bg-panel-suave hover:text-tinta ${
-          esTelefono ? 'top-3 right-3 size-9' : 'top-2.5 right-2.5 size-8'
+        className={`boton-cerrar absolute grid place-items-center rounded-full ${
+          esTelefono ? 'top-3 right-4 size-10' : 'top-3 right-3 size-8'
         }`}
       >
-        <X size={16} strokeWidth={1.5} />
+        <X size={esTelefono ? 18 : 15} strokeWidth={1.75} />
       </button>
 
-      <p className="flex items-baseline gap-2 pr-10 text-tinta-tenue">
+      <p
+        className={`flex items-baseline gap-2 text-tinta-tenue ${esTelefono ? 'pt-1 pr-14' : 'pr-10'}`}
+      >
         <span className="font-ui text-[9.5px] font-medium tracking-[0.26em] uppercase">
           {nodo.semestre ? `Semestre ${String(nodo.semestre).padStart(2, '0')}` : 'Electiva'}
         </span>
@@ -304,7 +310,7 @@ function DetalleAsignatura({
         </span>
       </p>
       <h3
-        className={`mt-2 pr-8 font-ui leading-[1.12] tracking-[-0.01em] text-balance text-tinta ${
+        className={`mt-2 font-ui leading-[1.12] tracking-[-0.01em] text-balance text-tinta ${esTelefono ? 'pr-12' : 'pr-8'} ${
           esTelefono ? 'text-[24px]' : 'text-[21px]'
         }`}
         style={{ fontWeight: 400 }}
@@ -338,7 +344,7 @@ function DetalleAsignatura({
         className={`${margenX} mb-4 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde`}
       >
         <Opcion
-          icono={<IconoSituacion situacion={SITUACION.HECHA} size={15} />}
+          icono={<IconoSituacion situacion={SITUACION.HECHA} size={esTelefono ? 17 : 15} />}
           texto="Aprobada"
           activa={marca === ESTADO.APROBADA}
           color="var(--estado-aprobada)"
@@ -346,7 +352,7 @@ function DetalleAsignatura({
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.APROBADA)}
         />
         <Opcion
-          icono={<IconoSituacion situacion={SITUACION.CURSANDO} size={15} />}
+          icono={<IconoSituacion situacion={SITUACION.CURSANDO} size={esTelefono ? 17 : 15} />}
           texto="Cursando"
           activa={marca === ESTADO.CURSANDO}
           color="var(--estado-cursando)"
@@ -354,7 +360,7 @@ function DetalleAsignatura({
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.CURSANDO)}
         />
         <Opcion
-          icono={<AroVacio />}
+          icono={<AroVacio size={esTelefono ? 17 : 15} />}
           texto="Sin cursar"
           activa={marca === null}
           color="var(--tinta-suave)"
@@ -393,6 +399,7 @@ function DetalleAsignatura({
           codigoDe={codigoVisible}
           alIrA={alIrA}
           puedeIr={puedeIr}
+          holgada={esTelefono}
         />
 
         {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
@@ -416,6 +423,7 @@ function DetalleAsignatura({
           codigoDe={codigoVisible}
           alIrA={alIrA}
           puedeIr={puedeIr}
+          holgada={esTelefono}
         />
       </div>
     </>
@@ -429,6 +437,8 @@ function DetalleAsignatura({
         alCerrar={alCerrar}
         alTapar={alTapar}
         cabecera={cabecera}
+        filo={colorPalabra}
+        saliendo={saliendo}
       >
         {cuerpo}
       </TarjetaTelefono>
@@ -461,7 +471,7 @@ function DetalleAsignatura({
        El envoltorio lleva el sitio y la ficha lleva el recorte: el piquito
        asoma por fuera, y dentro de ella habria desaparecido recortado. */
     <div
-      className="menu-clase absolute top-0 left-0 z-30"
+      className={`menu-clase absolute top-0 left-0 z-30 ${saliendo ? 'ficha-saliendo pointer-events-none' : ''}`}
       style={{
         width: ancho,
         transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
@@ -475,6 +485,7 @@ function DetalleAsignatura({
         style={{ maxHeight: Math.max(200, medida.alto - MARGEN * 2) }}
         className={`${CARA_FICHA} flex flex-col overflow-hidden`}
       >
+        <span aria-hidden="true" className="ficha-filo" style={{ '--filo': colorPalabra }} />
         {cabecera}
         {cuerpo}
       </div>

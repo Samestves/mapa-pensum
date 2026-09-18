@@ -549,12 +549,37 @@ body {
   animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 1000ms both;
 }
 
-/* El aviso de lo que se desbloqueo: entra de lado cuando la luz ya llego,
-   como una linea que se recoge en la esquina de la pantalla. */
+/* ---- El aviso de lo que se desbloqueo (AvisoRecogida) -------------------
+
+   Todo va encadenado a la luz del cable, que sale a los 380 ms y llega hacia
+   los 1100: el aviso entra cuando la luz ya llego (1150), el check se dibuja
+   sobre la marcha (1300), las filas entran una detras de otra (1350 + 110
+   cada una) y cada candado se abre un cuarto de segundo despues de su fila.
+   La linea de tiempo empieza a vaciarse cuando todo eso ya se vio. */
+.aviso-recogida {
+  left: 1rem;
+  bottom: 1rem;
+  width: 21.5rem;
+  max-width: calc(100% - 2rem);
+  animation: recoger 480ms cubic-bezier(0.22, 0.61, 0.2, 1) 1150ms both;
+}
+
+/* En el telefono ocupa el mismo sitio que la ficha que se acaba de apartar:
+   justo encima de la barra, de borde a borde con el mismo margen. */
+@media (max-width: 47.99rem) {
+  .aviso-recogida {
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    max-width: none;
+    bottom: var(--reserva-barra, 1rem);
+  }
+}
+
 @keyframes recoger {
   from {
     opacity: 0;
-    transform: translateX(-14px);
+    transform: translateY(12px) scale(0.985);
   }
   to {
     opacity: 1;
@@ -562,8 +587,193 @@ body {
   }
 }
 
-.aviso-recogida {
-  animation: recoger 520ms cubic-bezier(0.22, 0.61, 0.2, 1) 1150ms both;
+.recogida-saliendo {
+  animation: soltar-recogida 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes soltar-recogida {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* El filo de luz del borde de arriba: el mismo gesto que la ficha, en el
+   verde de aprobada */
+.recogida-filo {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--estado-aprobada) 75%, transparent),
+    transparent
+  );
+}
+
+.recogida-aro,
+.recogida-tilde {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.recogida-aro {
+  animation: trazar-recogida 560ms cubic-bezier(0.65, 0, 0.35, 1) 1300ms forwards;
+}
+
+.recogida-tilde {
+  stroke-width: 1.7;
+  animation: trazar-recogida 320ms cubic-bezier(0.65, 0, 0.35, 1) 1760ms forwards;
+}
+
+@keyframes trazar-recogida {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.recogida-fila {
+  animation: entrar-fila 420ms cubic-bezier(0.22, 0.61, 0.2, 1) var(--retraso, 0ms) both;
+}
+
+@keyframes entrar-fila {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El candado: el arco gira sobre su pata derecha y sale del cuerpo. La
+   curva se pasa un poco y vuelve, como un cierre que salta al soltarse.
+   overflow visible porque el arco abierto asoma por encima de su caja. */
+.recogida-candado {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+
+.recogida-arco {
+  transform-box: view-box;
+  transform-origin: 10.7px 7.2px;
+  animation: abrir-candado 480ms cubic-bezier(0.34, 1.4, 0.64, 1) var(--retraso, 0ms) both;
+}
+
+@keyframes abrir-candado {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateY(-1.8px) rotate(28deg);
+  }
+}
+
+/* El tiempo que le queda al aviso. Cuando se vacia, AvisoRecogida lo quita;
+   con el cursor encima se detiene. */
+.recogida-tiempo {
+  background: color-mix(in oklab, var(--estado-aprobada) 60%, transparent);
+  transform-origin: left;
+  animation: vaciar-tiempo var(--duracion, 5600ms) linear 1900ms both;
+}
+
+.aviso-recogida:hover .recogida-tiempo {
+  animation-play-state: paused;
+}
+
+@keyframes vaciar-tiempo {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ---- La ficha de la materia: salida y filo de luz ---------------------- */
+
+/* Al cerrarse, la nubecita del escritorio se encoge un poco hacia su pico y
+   se apaga, el camino inverso de como brota. Con las dos clases: .menu-clase
+   esta mas abajo en este archivo y su animacion de entrada ganaria. */
+.menu-clase.ficha-saliendo {
+  animation: ficha-fuera 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes ficha-fuera {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+/* La tarjeta del telefono baja y se apaga. Con `translate` y no con
+   `transform`: si se cerro arrastrandola, su transform es donde la dejo el
+   dedo, y la salida sigue desde ahi en vez de saltar arriba. Con las dos
+   clases por lo mismo que la de escritorio. */
+.hoja-ficha.tarjeta-saliendo {
+  animation: tarjeta-fuera 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes tarjeta-fuera {
+  to {
+    opacity: 0;
+    translate: 0 56px;
+  }
+}
+
+/* El filo de luz del borde de arriba de la ficha, en el color de su estado:
+   verde aprobada, ambar cursando, la luz de disponible o un gris. Es la luz
+   de la marca, la misma que ya tenia el logo, puesta donde dice algo. */
+.ficha-filo {
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--filo) 80%, transparent),
+    transparent
+  );
+  transition: background 280ms ease;
+}
+
+/* La X de la ficha: un boton redondo de verdad, con aro, que se hunde al
+   pulsarlo. Era una X suelta de trazo fino y en el telefono ni parecia un
+   boton. */
+.boton-cerrar {
+  border: 1px solid color-mix(in oklab, var(--tinta) 16%, transparent);
+  background-color: color-mix(in oklab, var(--tinta) 5%, transparent);
+  color: var(--tinta-suave);
+  transition:
+    transform 160ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.boton-cerrar:hover {
+  color: var(--tinta);
+  border-color: color-mix(in oklab, var(--tinta) 28%, transparent);
+  background-color: color-mix(in oklab, var(--tinta) 9%, transparent);
+}
+
+.boton-cerrar:active {
+  transform: scale(0.9);
 }
 
 /* Las filas de Requiere y Desbloquea que llevan a otra materia: al pasar por
@@ -1900,6 +2110,14 @@ body {
   .destello,
   .anillo-cambio,
   .aviso-recogida,
+  .recogida-saliendo,
+  .recogida-aro,
+  .recogida-tilde,
+  .recogida-fila,
+  .recogida-arco,
+  .recogida-tiempo,
+  .menu-clase.ficha-saliendo,
+  .hoja-ficha.tarjeta-saliendo,
   .logo-entrada,
   .surgir,
   .entrada-vista,
@@ -1953,6 +2171,11 @@ body {
   .hoja-avance,
   .hoja-ficha {
     animation: none;
+  }
+
+  .recogida-aro,
+  .recogida-tilde {
+    stroke-dashoffset: 0;
   }
 }
 

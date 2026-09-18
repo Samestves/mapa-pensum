@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
@@ -180,6 +180,48 @@ function GrafoPensum({
     [seleccionado, alSeleccionar, cajaDe, medida.ancho, mostrar],
   )
 
+  /* La ficha que se ve, y la que se esta yendo.
+
+     Al cerrarse, la seleccion pasa a null en el acto y la ficha se
+     desmontaria sin mas, cortada en seco. Asi que se guarda lo ultimo que
+     enseño y se sigue pintando un cuarto de segundo mas, con `saliendo`, el
+     tiempo de su animacion de salida. Va en el mismo sitio del arbol que la
+     abierta para que React la trate como la MISMA ficha: si se cerro
+     arrastrandola, conserva hasta donde la bajo el dedo y la salida sigue
+     desde ahi. */
+  const fichaAbierta = detalle
+    ? {
+        nodo: nodoSeleccionado,
+        estado: estados[seleccionado],
+        situacion: situacionDeCodigo(seleccionado),
+        prerrequisitos: detalle.prerrequisitos,
+        desbloquea: detalle.desbloquea,
+        posicion: detalle.posicion,
+        enCasilla: casillaDe?.[seleccionado],
+      }
+    : null
+  const ultimaFicha = useRef(null)
+  const [fichaSaliente, setFichaSaliente] = useState(null)
+  const [seleccionPrevia, setSeleccionPrevia] = useState(seleccionado)
+  useLayoutEffect(() => {
+    if (fichaAbierta) ultimaFicha.current = fichaAbierta
+  })
+  /* Se ajusta DURANTE el render y no en un efecto. Con un efecto habia un
+     render entero sin ficha entre la que se cerraba y su copia saliente: la
+     ficha se desmontaba, se volvia a montar y repetia su animacion de entrada
+     encima de la de salida. Ajustado aqui, React rehace el render antes de
+     pintarlo y la ficha nunca llega a desaparecer. */
+  if (seleccionPrevia !== seleccionado) {
+    setSeleccionPrevia(seleccionado)
+    setFichaSaliente(seleccionado == null ? ultimaFicha.current : null)
+  }
+  useEffect(() => {
+    if (!fichaSaliente) return
+    const reloj = setTimeout(() => setFichaSaliente(null), 260)
+    return () => clearTimeout(reloj)
+  }, [fichaSaliente])
+  const ficha = fichaAbierta ?? fichaSaliente
+
   /* Lo que acabas de conseguir al aprobar, para el aviso de la esquina */
   const [recogida, setRecogida] = useState(null)
   const cerrarRecogida = useCallback(() => setRecogida(null), [])
@@ -249,10 +291,11 @@ function GrafoPensum({
     [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
   )
 
+  /* Deshacer solo devuelve la marca: el aviso se va solo, con su salida, y al
+     acabar llama a cerrarRecogida. */
   const deshacerRecogida = useCallback(() => {
     if (!recogida) return
     alMarcar(recogida.codigo, recogida.marcaAntes)
-    setRecogida(null)
   }, [recogida, alMarcar])
 
   const verFicha = useCallback(
@@ -369,18 +412,13 @@ function GrafoPensum({
         </div>
       </div>
 
-      {detalle && (
+      {ficha && (
         <DetalleAsignatura
-          nodo={nodoSeleccionado}
-          estado={estados[seleccionado]}
-          situacion={situacionDeCodigo(seleccionado)}
+          {...ficha}
+          saliendo={!fichaAbierta}
           situacionDe={situacionDeCodigo}
-          prerrequisitos={detalle.prerrequisitos}
-          desbloquea={detalle.desbloquea}
-          posicion={detalle.posicion}
           medida={medida}
           alMarcar={marcarDesdeFicha}
-          enCasilla={casillaDe?.[seleccionado]}
           alCambiarElectiva={alAbrirCasilla}
           alCerrar={() => alSeleccionar(null)}
           alIrA={irAMateria}

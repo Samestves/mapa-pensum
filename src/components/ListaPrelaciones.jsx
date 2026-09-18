@@ -21,18 +21,18 @@ const colorDe = (situacion) =>
  * ella. Al pasar por encima entra desde la izquierda una raya fina, el mismo
  * resalte de los menus de la maqueta: dice "esto se elige" sin caja ni flecha.
  */
-function Fila({ asignatura, situacion, codigo, alIr }) {
+function Fila({ asignatura, situacion, codigo, alIr, holgada }) {
   const hecha = situacion === SITUACION.HECHA
   const contenido = (
     <>
       <IconoSituacion
         situacion={situacion}
         color={colorDe(situacion)}
-        size={13}
+        size={holgada ? 15 : 13}
         className="shrink-0"
       />
       <span
-        className={`min-w-0 flex-1 truncate text-[13.5px] ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
+        className={`min-w-0 flex-1 truncate ${holgada ? 'text-[14.5px]' : 'text-[13.5px]'} ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
         style={{ fontWeight: 'var(--peso-nombre)' }}
       >
         {asignatura.nombre}
@@ -44,7 +44,11 @@ function Fila({ asignatura, situacion, codigo, alIr }) {
   )
 
   if (!alIr) {
-    return <li className="flex items-center gap-2.5 py-[7px]">{contenido}</li>
+    return (
+      <li className={`flex items-center gap-3 ${holgada ? 'py-[10px]' : 'py-[7px]'}`}>
+        {contenido}
+      </li>
+    )
   }
   return (
     <li>
@@ -52,7 +56,9 @@ function Fila({ asignatura, situacion, codigo, alIr }) {
         type="button"
         onClick={alIr}
         aria-label={`Ir a ${asignatura.nombre}`}
-        className="fila-prelacion group relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-2.5 rounded-[6px] px-2 py-[7px] text-left transition-colors hover:bg-panel-suave"
+        className={`fila-prelacion group relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-[8px] px-2 text-left transition-colors hover:bg-panel-suave active:bg-panel-suave ${
+          holgada ? 'py-[10px]' : 'py-[7px]'
+        }`}
       >
         {contenido}
       </button>
@@ -71,7 +77,16 @@ function Fila({ asignatura, situacion, codigo, alIr }) {
  * -en particular si una bloqueada se abre el semestre que viene o todavia no-
  * depende de sus propias prelaciones, y eso ya lo tiene calculado el mapa.
  */
-function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe, alIrA, puedeIr }) {
+function ListaPrelaciones({
+  titulo,
+  materias,
+  vacio,
+  situacionDe,
+  codigoDe,
+  alIrA,
+  puedeIr,
+  holgada,
+}) {
   return (
     <div>
       <p className="flex items-baseline gap-2 font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
@@ -92,6 +107,7 @@ function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe, alIr
               asignatura={asignatura}
               situacion={situacionDe(asignatura.codigo)}
               codigo={codigoDe(asignatura)}
+              holgada={holgada}
               alIr={alIrA && puedeIr?.(asignatura.codigo) ? () => alIrA(asignatura.codigo) : null}
             />
           ))}
