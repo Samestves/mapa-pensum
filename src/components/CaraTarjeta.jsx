@@ -1,4 +1,4 @@
-import { NODO, TEXTO } from '../layout/constantes'
+import { ICONO, NODO, TEXTO } from '../layout/constantes'
 import { ASPECTO } from '../theme/situacion'
 
 const SUAVE =
@@ -23,7 +23,16 @@ const SUAVE =
  * puesta encima; ahora la disponible es simplemente la de borde mas claro, y
  * lo unico que brilla en el mapa es lo que acaba de cambiar.
  */
-function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado, resaltado }) {
+function CaraTarjeta({
+  situacion,
+  codigo,
+  lineasNombre,
+  uc,
+  acento,
+  icono,
+  seleccionado,
+  resaltado,
+}) {
   const a = ASPECTO[situacion]
   const { ancho, alto, radio, padIzq, padDer } = NODO
 
@@ -72,6 +81,21 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         rx={radio}
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
+
+      {/* El icono de la materia, en el color de su area y muy tenue, debajo
+          de todo el texto. Lo corta su propia caja, que acaba en el borde de
+          la tarjeta (ver IconosMaterias). */}
+      {icono && (
+        <use
+          href={`#icono-${icono}`}
+          x={ancho - ICONO.ancho}
+          y={alto - ICONO.alto}
+          width={ICONO.ancho}
+          height={ICONO.alto}
+          className="icono-materia"
+          style={{ color: acento, opacity: a.icono }}
+        />
+      )}
 
       <text
         x={padIzq}

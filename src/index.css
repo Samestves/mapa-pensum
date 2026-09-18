@@ -81,6 +81,10 @@
   --sit-lejana-nombre: var(--tinta-tenue);
   --sit-codigo: var(--tinta-tenue);
   --sit-resalte: color-mix(in oklab, var(--tinta) 62%, transparent);
+  /* El icono de la esquina de cada tarjeta, en el color de su area: un sello
+     de fondo, no una ilustracion. En las lejanas, la mitad. */
+  --sit-icono: 0.2;
+  --sit-icono-lejana: 0.1;
 
   /* La luz que viaja por un cable es su propio color aclarado hacia el
      blanco: sobre negro, un nucleo casi blanco con el tinte del area. */
@@ -167,6 +171,8 @@
   --sit-lejana-borde: #d0d8e3;
   --sit-lejana-nombre: #56647a;
   --sit-codigo: #66758b;
+  --sit-icono: 0.24;
+  --sit-icono-lejana: 0.13;
   /* La sombra de papel: un rectangulo corrido dos pixeles bajo cada tarjeta.
      Sin filtro -un blur por tarjeta costaria un repintado en cada cuadro del
      arrastre- y en oscuro transparente, donde el filo ya separa. */
@@ -463,10 +469,44 @@ body {
   pointer-events: auto;
 }
 
+/* Con el mapa lejos los iconos no se pintan (ver ESCALA_ICONOS) */
+.mapa-lejos .icono-materia {
+  display: none;
+}
+
 @media (hover: none) and (pointer: coarse) {
   .capa-grafo {
     will-change: transform;
   }
+}
+
+/* Durante un viaje de camara la capa se estira en la GPU en todos los
+   aparatos, tambien con raton: sin capa propia, cambiarle el transform
+   obligaria a repintarla en cada cuadro, que es lo que se quiere evitar. */
+.capa-grafo.capa-viajando {
+  will-change: transform;
+}
+
+/* Y nada de lo que hay dentro se mueve mientras tanto: cualquier cosa que
+   cambie en un cuadro obliga a repintar la capa entera, y el viaje vuelve
+   a costar lo mismo que pintando cada cuadro. Medido al aprobar a CPU x4:
+   al cerrarse la ficha se soltaban noventa y tantas transiciones a la vez
+   -las tarjetas que dejan de estar atenuadas, los cables que dejan de estar
+   resaltados, los colores de lo que se aprueba y se abre- y cada cuadro
+   seguia en 30-50 ms con la capa ya estirada.
+
+   Asi que esos cambios se dan de golpe en el primer cuadro, que ya se
+   pinta de todas formas y no se ve porque el mapa arranca a moverse, y el
+   anillo de la tarjeta tocada espera quieto a que llegue la camara. La luz
+   del cable no se para: ya espera sola lo que dura el viaje (ver
+   .descarga). */
+.capa-viajando * {
+  transition: none !important;
+}
+
+.capa-viajando .anillo-cambio,
+.capa-viajando .flujo {
+  animation-play-state: paused;
 }
 
 /* Al mirar una materia, su cadena se dibuja de origen a destino */

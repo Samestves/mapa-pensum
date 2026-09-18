@@ -60,6 +60,7 @@ function NodoAsignatura({
         lineasNombre={lineasNombre}
         uc={uc}
         acento={colorNodo(nodo)}
+        icono={nodo.icono}
         seleccionado={seleccionado}
         resaltado={resaltado}
       />

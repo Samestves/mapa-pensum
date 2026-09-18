@@ -21,6 +21,7 @@ export const ASPECTO = {
     fuerte: 'var(--estado-aprobada)',
     grosor: 1,
     nombre: 'var(--sit-hecha-nombre)',
+    icono: 'var(--sit-icono)',
     marca: { color: 'var(--estado-aprobada)', texto: 'Aprobada' },
   },
   [SITUACION.CURSANDO]: {
@@ -29,6 +30,7 @@ export const ASPECTO = {
     fuerte: 'var(--estado-cursando)',
     grosor: 1.25,
     nombre: 'var(--tinta)',
+    icono: 'var(--sit-icono)',
     marca: { color: 'var(--sit-cursando-texto)', texto: 'Cursando' },
   },
   /* La inscribible se distingue por el borde mas claro del mapa y la
@@ -40,6 +42,7 @@ export const ASPECTO = {
     fuerte: 'var(--sit-inscribible-luz)',
     grosor: 1.25,
     nombre: 'var(--tinta)',
+    icono: 'var(--sit-icono)',
     marca: { color: 'var(--sit-inscribible-luz)', texto: 'Disponible' },
   },
   [SITUACION.PROXIMA]: {
@@ -48,6 +51,7 @@ export const ASPECTO = {
     fuerte: 'var(--sit-resalte)',
     grosor: 1,
     nombre: 'var(--sit-proxima-nombre)',
+    icono: 'var(--sit-icono)',
     marca: { color: 'var(--sit-proxima-nombre)', texto: 'Próxima' },
   },
   [SITUACION.LEJANA]: {
@@ -56,6 +60,7 @@ export const ASPECTO = {
     fuerte: 'var(--sit-resalte)',
     grosor: 1,
     nombre: 'var(--sit-lejana-nombre)',
+    icono: 'var(--sit-icono-lejana)',
     marca: { color: 'var(--sit-codigo)', texto: null },
   },
 }

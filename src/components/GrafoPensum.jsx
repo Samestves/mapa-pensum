@@ -2,13 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
 import AvisoRecogida from './AvisoRecogida'
+import IconosMaterias from './IconosMaterias'
 import { situacionDe } from '../layout/situacion'
-import { NODO } from '../layout/constantes'
+import { ESCALA_ICONOS, NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
@@ -17,6 +19,7 @@ const SIN_FRANJA = []
 
 function GrafoPensum({
   layout,
+  iconos,
   porCodigo,
   estados,
   descarga,
@@ -36,6 +39,13 @@ function GrafoPensum({
   const casillasFranja = layout.casillasFranja ?? SIN_FRANJA
   const filasFranja = layout.filasFranja ?? SIN_FRANJA
 
+  /* Si hay una ficha colocada al lado de su tarjeta, que solo pasa en
+     escritorio: con ella abierta la camara pinta cada cuadro del viaje para
+     que la ficha la siga (ver animarHacia). Se rellena mas abajo, cuando ya
+     se sabe si hay ficha. */
+  const fichaAnclada = useRef(false)
+  const esTelefono = useEsTelefono()
+
   const {
     contenedorRef,
     capaRef,
@@ -51,7 +61,7 @@ function GrafoPensum({
     alejar,
     mostrar,
     controlesArrastre,
-  } = useVistaGrafo(ancho, alto)
+  } = useVistaGrafo(ancho, alto, fichaAnclada)
 
   /* Situacion de cada materia -hecha, cursando, inscribible, proxima o
      lejana-. Cambia de identidad solo cuando cambian los estados, que es
@@ -79,6 +89,10 @@ function GrafoPensum({
     relaciones,
     porCodigo,
     vista,
+  })
+
+  useLayoutEffect(() => {
+    fichaAnclada.current = detalle != null && !esTelefono
   })
 
   // Los nodos estan memoizados, asi que lo que reciben tiene que mantener su
@@ -266,6 +280,9 @@ function GrafoPensum({
         .filter((a) => a && Number.isFinite(a.x) && Number.isFinite(a.y))
       if (cajas.length) {
         const telefono = medida.ancho < 768
+        // La ficha se esta cerrando: ya no hay nada que tenga que seguir al
+        // mapa, y el viaje puede hacerse estirando la capa
+        fichaAnclada.current = false
         mostrar(
           {
             x0: Math.min(...cajas.map((a) => a.x)),
@@ -367,9 +384,13 @@ function GrafoPensum({
           <svg
             width="100%"
             height="100%"
-            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
+            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''} ${
+              vista.escala < ESCALA_ICONOS ? 'mapa-lejos' : ''
+            }`}
             style={{ textRendering: 'geometricPrecision' }}
           >
+            <IconosMaterias iconos={iconos} />
+
             {/* Oculto hasta que la vista se encaja. El primer fotograma tras
                 montar dibuja el mapa a tamaño natural desde la esquina, y
                 enseñarlo era el tiron que se veia al volver del horario. Se

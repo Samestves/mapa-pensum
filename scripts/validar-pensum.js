@@ -180,6 +180,17 @@ for (const archivo of archivos) {
     }
   }
 
+  // --- 7. Iconos -------------------------------------------------------------
+  // Aviso y no error: sin icono la tarjeta se sigue viendo bien, y un pensum
+  // nuevo de la DACE no deberia tumbar el build por una regla que falta. Pero
+  // tiene que verse, porque una tarjeta sin icono entre las demas parece un
+  // descuido: se arregla con una regla en scripts/iconosMaterias.js.
+  for (const a of todas) {
+    if (a.esHueco) continue
+    if (!a.icono) avisar(`[${a.codigo}] "${a.nombre}" no tiene icono: falta una regla`)
+    else if (!c.iconos?.[a.icono]) err(`[${a.codigo}] el icono "${a.icono}" no viene en la carrera`)
+  }
+
   // --- Reporte por carrera ------------------------------------------------
   const estado = errores.length ? 'FALLA' : avisos.length ? 'avisos' : 'ok'
   console.log(

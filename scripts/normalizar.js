@@ -13,6 +13,7 @@
  */
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import { iconoDe } from './iconosMaterias.js'
 
 const CRUDO = 'datos/crudo'
 const SALIDA = 'src/data/carreras'
@@ -288,6 +289,19 @@ function normalizar(crudo, overlayTodo) {
 
   const ucObligatorias = semestres.reduce((s, x) => s + x.uc, 0)
 
+  /* El icono de la esquina de cada tarjeta: su nombre en la materia y sus
+     trazos, solo los de los que usa esta carrera, en `iconos`. Asi la app no
+     carga las reglas ni la coleccion entera, y una carrera no paga los
+     iconos de las demas. Ver scripts/iconosMaterias.js. */
+  const iconos = {}
+  for (const a of todas) {
+    if (a.esHueco) continue
+    const icono = iconoDe(a.nombre)
+    if (!icono || !TRAZOS[icono]) continue
+    a.icono = icono
+    iconos[icono] = TRAZOS[icono]
+  }
+
   return {
     slug,
     nombre: base.nombre,
@@ -329,6 +343,7 @@ function normalizar(crudo, overlayTodo) {
        plan de estudios -la ruta que publica la UDO-, no una preferencia de
        dibujo, y por eso viaja con los datos y no con el componente. */
     ...(ov.rutaElectivas?.completa ? { electivasEnCasillas: true } : {}),
+    iconos,
   }
 }
 
@@ -337,6 +352,7 @@ function normalizar(crudo, overlayTodo) {
  * ------------------------------------------------------------------ */
 
 const overlayTodo = JSON.parse(readFileSync('datos/overlay.json', 'utf8'))
+const TRAZOS = JSON.parse(readFileSync('datos/iconos.json', 'utf8')).iconos
 rmSync(SALIDA, { recursive: true, force: true })
 mkdirSync(SALIDA, { recursive: true })
 

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ZOOM } from '../layout/constantes'
-import { capaCubre, mismaVista, transformRelativo } from '../layout/vistaViva'
+import {
+  AUMENTO_VIAJE,
+  capaCubre,
+  mismaVista,
+  transformRelativo,
+  vistaParaViaje,
+} from '../layout/vistaViva'
 
 const MARGEN_ENCAJE = 28
 /* Lo que tarda el zoom de los botones en llegar a su destino */
@@ -69,8 +75,12 @@ export function acotarVista(v, medida, anchoContenido, altoContenido) {
  * Pan y zoom del grafo. La vista es {x, y, escala} y se aplica como un
  * transform sobre un <g>, no tocando el viewBox: asi el fondo se queda
  * quieto y solo se mueve el contenido.
+ *
+ * `fichaAnclada` es una ref que dice si hay una ficha colocada al lado de su
+ * tarjeta, que es lo que decide como se hacen los viajes de camara (ver
+ * animarHacia).
  */
-export function useVistaGrafo(anchoContenido, altoContenido) {
+export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
   const contenedorRef = useRef(null)
   const [vista, setVista] = useState({ x: 0, y: 0, escala: 1 })
 
@@ -244,6 +254,26 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   // Cuadro y red de la animacion de los botones
   const animacion = useRef(0)
   const redZoom = useRef(null)
+  /* Si el viaje en curso va estirando la capa en vez de pintar cada cuadro.
+     Al acabar -o al cortarlo un dedo- se pinta donde se quedo. */
+  const enViaje = useRef(false)
+
+  const asentarViaje = useCallback(() => {
+    if (!enViaje.current) return
+    enViaje.current = false
+    capaRef.current?.classList.remove('capa-viajando')
+    if (mismaVista(vistaRef.current, pintadaRef.current)) estirarCapa()
+    else setVista(vistaRef.current)
+  }, [estirarCapa])
+
+  /* Para lo que se este moviendo solo. La mano manda: un dedo o la rueda
+     a mitad de viaje se quedan con el mapa donde iba, en vez de pelearse
+     con la animacion cuadro a cuadro. */
+  const detenerViaje = useCallback(() => {
+    cancelAnimationFrame(animacion.current)
+    clearTimeout(redZoom.current)
+    asentarViaje()
+  }, [asentarViaje])
 
   /** Donde queda la vista al aplicar un factor de zoom dejando fijo un punto */
   const conZoom = (v, factor, puntoX, puntoY) => {
@@ -256,47 +286,123 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
   // pellizco ya son continuos, el suavizado lo pone la mano del usuario.
   const zoomEn = useCallback(
     (factor, puntoX, puntoY, enVivo = false) => {
+      detenerViaje()
       marcarGesto()
       aplicarVista(conZoom(vistaRef.current, factor, puntoX, puntoY), enVivo)
     },
-    [marcarGesto, aplicarVista],
+    [detenerViaje, marcarGesto, aplicarVista],
   )
 
-  /* Lleva la vista hasta `hasta` en `duracion` ms, saliendo rapido y
-     frenando al llegar. Durante el viaje cuenta como gesto: el mapa se esta
-     moviendo, asi que el hover se ignora y la luz de los cables se congela
-     en tactil, igual que si lo moviera un dedo. */
+  /**
+   * Lleva la vista hasta `hasta` en `duracion` ms, saliendo rapido y
+   * frenando al llegar. Durante el viaje cuenta como gesto: el mapa se esta
+   * moviendo, asi que el hover se ignora y la luz de los cables se congela
+   * en tactil, igual que si lo moviera un dedo.
+   *
+   * Pintando cada cuadro, como el pellizco antes de vistaViva, en un
+   * telefono el viaje iba a trompicones: a CPU x4, treinta y cuarenta ms por
+   * cuadro, y al alejarse para enseñar lo que desbloquea aprobar eso es
+   * justo lo que se siente como lag. Asi que el mapa se pinta UNA vez, a una
+   * vista que tenga dentro la salida y la llegada (ver vistaParaViaje), y el
+   * viaje entero es estirar esa capa en la GPU.
+   *
+   * Con una ficha anclada al lado de su tarjeta -escritorio- se sigue
+   * pintando cada cuadro: la ficha se coloca con la vista de React, y si
+   * esta no cambiara durante el viaje se quedaria atras y saltaria al final.
+   * En escritorio pintar cada cuadro sale barato.
+   */
   const animarHacia = useCallback(
     (hasta, duracion) => {
       cancelAnimationFrame(animacion.current)
+      clearTimeout(redZoom.current)
       const desde = vistaRef.current
-      const inicio = performance.now()
+      const destino = acotarVista(hasta, medida, anchoContenido, altoContenido)
+      const base = fichaAnclada?.current
+        ? null
+        : vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido)
+
+      if (base) {
+        enViaje.current = true
+        capaRef.current?.classList.add('capa-viajando')
+        // Se pinta una sola vez; el efecto de arriba estira la capa en el
+        // mismo cuadro para que se siga viendo `desde` hasta que arranque
+        if (!mismaVista(base, pintadaRef.current)) setVista(base)
+        else estirarCapa()
+      } else {
+        asentarViaje()
+      }
+
+      /* El reloj arranca en el primer cuadro y no al pedir el viaje. Aprobar
+         pinta la materia, cierra la ficha y saca el aviso en ese mismo
+         instante, y ese primer cuadro tarda: contando desde antes, el mapa
+         se comia media animacion de golpe y el resto se arrastraba. */
+      let inicio = null
       const paso = (ahora) => {
+        if (inicio == null) {
+          inicio = ahora
+          programarRed(duracion + 200)
+        }
         const t = Math.min((ahora - inicio) / duracion, 1)
         // easeOutCubic: sale rapido y frena al llegar
         const k = 1 - Math.pow(1 - t, 3)
-        aplicarVista({
-          escala: desde.escala + (hasta.escala - desde.escala) * k,
-          x: desde.x + (hasta.x - desde.x) * k,
-          y: desde.y + (hasta.y - desde.y) * k,
-        })
+        const v = {
+          escala: desde.escala + (destino.escala - desde.escala) * k,
+          x: desde.x + (destino.x - desde.x) * k,
+          y: desde.y + (destino.y - desde.y) * k,
+        }
+        if (!enViaje.current) aplicarVista(v)
+        else {
+          vistaRef.current = v
+          const cubre = capaCubre(
+            v,
+            pintadaRef.current,
+            medida,
+            anchoContenido,
+            altoContenido,
+            AUMENTO_VIAJE,
+          )
+          if (cubre) estirarCapa()
+          else setVista(v)
+        }
         if (t < 1) {
           marcarGesto()
           animacion.current = requestAnimationFrame(paso)
+        } else {
+          clearTimeout(redZoom.current)
+          asentarViaje()
         }
+      }
+
+      /* Red por si requestAnimationFrame no corre: la vista tiene que acabar
+         en su destino aunque la animacion no llegue a pintarse. Se vuelve a
+         armar en el primer cuadro, que es cuando arranca el reloj: armada
+         solo aqui, un primer cuadro lento -un telefono modesto aprobando-
+         la hacia saltar a mitad de viaje y el mapa llegaba de golpe. */
+      const programarRed = (ms) => {
+        clearTimeout(redZoom.current)
+        redZoom.current = setTimeout(() => {
+          cancelAnimationFrame(animacion.current)
+          if (enViaje.current) {
+            vistaRef.current = destino
+            asentarViaje()
+          } else aplicarVista(destino)
+        }, ms)
       }
 
       marcarGesto()
       animacion.current = requestAnimationFrame(paso)
-      // Red por si requestAnimationFrame no corre: la vista tiene que
-      // acabar en su destino aunque la animacion no llegue a pintarse.
-      clearTimeout(redZoom.current)
-      redZoom.current = setTimeout(() => {
-        cancelAnimationFrame(animacion.current)
-        aplicarVista(hasta)
-      }, duracion + 200)
+      programarRed(duracion + 1000)
     },
-    [aplicarVista, marcarGesto],
+    [
+      medida,
+      anchoContenido,
+      altoContenido,
+      fichaAnclada,
+      estirarCapa,
+      asentarViaje,
+      aplicarVista,
+      marcarGesto,
+    ],
   )
 
   /**
@@ -434,6 +540,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
 
   const alPresionar = (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    detenerViaje()
     // Una sola medida por gesto, no una por movimiento
     refrescarCaja()
     punteros.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
