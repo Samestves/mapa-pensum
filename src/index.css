@@ -546,6 +546,25 @@ body {
   animation: recoger 520ms cubic-bezier(0.22, 0.61, 0.2, 1) 1150ms both;
 }
 
+/* Las filas de Requiere y Desbloquea que llevan a otra materia: al pasar por
+   encima entra desde la izquierda una raya fina, el resalte de los menus de
+   la maqueta. Dice "esto se elige" sin caja ni flecha. */
+.fila-prelacion::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: var(--tinta);
+  transition: width 320ms cubic-bezier(0.22, 0.61, 0.2, 1);
+}
+
+.fila-prelacion:hover::before,
+.fila-prelacion:focus-visible::before {
+  width: 8px;
+}
+
 /* Anillo que se expande en la tarjeta que se acaba de tocar */
 @keyframes anillo {
   from {
@@ -1653,10 +1672,13 @@ body {
    movil, desde la derecha en escritorio. Que entre desde su propio borde es
    lo que lo hace leerse como una hoja que se levanta y no como algo que
    aparece flotando en medio. */
+/* La ficha del telefono ya no es una hoja pegada al borde sino una tarjeta
+   que flota: sube poco y se asienta, en vez de recorrer su propio alto
+   entero desde fuera de la pantalla. */
 @keyframes subir-hoja {
   from {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(28px) scale(0.985);
   }
   to {
     opacity: 1;

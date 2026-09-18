@@ -42,17 +42,26 @@ const MARGEN_PAN = 96
  * Por eso se ordenan en vez de asumir cual es cual; asumirlo daba un rango
  * vacio y clavaba el mapa en un punto.
  */
+/* En el telefono la ficha tapa la parte de abajo del mapa. Para que una
+   materia de la ultima fila pueda subir a la vista por encima de ella, el
+   mapa se deja subir mas alla de su borde inferior: hasta que ese borde
+   quede cerca de la mitad de la pantalla. En escritorio la ficha va al lado
+   y no hace falta. */
+const HOLGURA_TELEFONO = 0.62
+const ANCHO_TELEFONO = 768
+
 export function acotarVista(v, medida, anchoContenido, altoContenido) {
   if (!medida.ancho || !medida.alto) return v
 
-  const rango = (ventana, contenido) => {
+  const rango = (ventana, contenido, extra = 0) => {
     const tope = MARGEN_PAN
-    const suelo = ventana - contenido - MARGEN_PAN
+    const suelo = ventana - contenido - MARGEN_PAN - extra
     return suelo <= tope ? [suelo, tope] : [tope, suelo]
   }
 
+  const extraAbajo = medida.ancho < ANCHO_TELEFONO ? medida.alto * HOLGURA_TELEFONO : 0
   const [minX, maxX] = rango(medida.ancho, anchoContenido * v.escala)
-  const [minY, maxY] = rango(medida.alto, altoContenido * v.escala)
+  const [minY, maxY] = rango(medida.alto, altoContenido * v.escala, extraAbajo)
   return { ...v, x: acotar(v.x, minX, maxX), y: acotar(v.y, minY, maxY) }
 }
 

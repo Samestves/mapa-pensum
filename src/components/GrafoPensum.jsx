@@ -143,6 +143,43 @@ function GrafoPensum({
     [situaciones, porCodigo, estados],
   )
 
+  /* El rectangulo de una materia en coordenadas del mapa, o null si no esta
+     dibujada -una electiva que no has colocado-. */
+  const cajaDe = useCallback(
+    (codigo) => {
+      const a = porCodigo.get(codigo)
+      if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return null
+      return { x0: a.x, y0: a.y, x1: a.x + NODO.ancho, y1: a.y + NODO.alto }
+    },
+    [porCodigo],
+  )
+  const puedeIr = useCallback((codigo) => cajaDe(codigo) != null, [cajaDe])
+
+  /* En el telefono la ficha tapa la parte de abajo del mapa. Cuando se abre
+     dice cuanto tapa, y el mapa se corre para que la materia pulsada quede a
+     la vista encima de ella: tocar una tarjeta de la mitad de abajo la
+     escondia justo debajo de su propia ficha. */
+  const taparAbajo = useCallback(
+    (abajo) => {
+      const caja = cajaDe(seleccionado)
+      if (caja) mostrar(caja, { arriba: 24, abajo: abajo + 16, izq: 20, der: 20 })
+    },
+    [cajaDe, seleccionado, mostrar],
+  )
+
+  /* Desde la ficha se puede saltar a una prelacion o a lo que desbloquea.
+     En escritorio el mapa la trae a la vista aqui; en el telefono ya lo hace
+     taparAbajo al abrirse la ficha de la nueva. */
+  const irAMateria = useCallback(
+    (codigo) => {
+      if (codigo === seleccionado) return
+      alSeleccionar(codigo)
+      const caja = cajaDe(codigo)
+      if (caja && medida.ancho >= 768) mostrar(caja, { arriba: 48, abajo: 48, izq: 48, der: 48 })
+    },
+    [seleccionado, alSeleccionar, cajaDe, medida.ancho, mostrar],
+  )
+
   /* Lo que acabas de conseguir al aprobar, para el aviso de la esquina */
   const [recogida, setRecogida] = useState(null)
   const cerrarRecogida = useCallback(() => setRecogida(null), [])
@@ -346,6 +383,9 @@ function GrafoPensum({
           enCasilla={casillaDe?.[seleccionado]}
           alCambiarElectiva={alAbrirCasilla}
           alCerrar={() => alSeleccionar(null)}
+          alIrA={irAMateria}
+          puedeIr={puedeIr}
+          alTapar={taparAbajo}
         />
       )}
 

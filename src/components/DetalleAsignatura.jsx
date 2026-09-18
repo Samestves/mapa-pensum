@@ -35,13 +35,13 @@ function AroVacio({ size = 15 }) {
  * selector partido por lineas finas, y la elegida se tiñe con el color de su
  * estado: el mismo verde o ambar que el borde de la tarjeta en el mapa.
  */
-function Opcion({ icono, texto, activa, color, alPulsar }) {
+function Opcion({ icono, texto, activa, color, alto, alPulsar }) {
   return (
     <button
       type="button"
       aria-pressed={activa}
       onClick={alPulsar}
-      className="flex flex-1 flex-col items-center gap-1.5 py-2.5 transition-colors"
+      className={`flex flex-1 flex-col items-center gap-1.5 transition-colors ${alto ? 'py-3.5' : 'py-2.5'}`}
       style={{
         backgroundColor: activa ? `color-mix(in oklab, ${color} 13%, transparent)` : 'transparent',
         color: activa ? color : 'var(--tinta-tenue)',
@@ -121,13 +121,114 @@ function AvisoSituacion({ estado, situacion, prerrequisitos }) {
   )
 }
 
+/* Cuanto hay que arrastrar la tarjeta hacia abajo para cerrarla, o con que
+   velocidad -en px por ms- basta un tiron corto. */
+const CIERRE_DISTANCIA = 90
+const CIERRE_VELOCIDAD = 0.6
+
+/**
+ * La ficha en el telefono: una tarjeta que flota encima de la barra de abajo,
+ * separada de los bordes.
+ *
+ * Fue una hoja pegada al fondo de la pantalla, y la barra de cristal de
+ * Mapa-Lista-Horario quedaba montada encima de ella: dos capas peleando por
+ * el mismo sitio. Flotando se lee como lo que es -algo que se abrio sobre el
+ * mapa y se puede apartar- y la barra sigue a mano debajo.
+ *
+ * Se aparta como cualquier tarjeta de telefono: arrastrandola hacia abajo
+ * desde la cabecera. Solo la cabecera arrastra; la lista de prelaciones tiene
+ * su propio scroll y no puede pelearse con el gesto.
+ *
+ * Al abrirse avisa de cuanto tapa por abajo (alTapar), y el mapa se corre
+ * para que la materia pulsada quede a la vista encima de ella.
+ */
+function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, children }) {
+  const ref = useRef(null)
+  const inicio = useRef(null)
+  const [bajada, setBajada] = useState(0)
+  const [arrastrando, setArrastrando] = useState(false)
+
+  useLayoutEffect(() => {
+    const tarjeta = ref.current
+    const lienzo = tarjeta?.offsetParent
+    if (!tarjeta || !lienzo) return
+    /* Con offsetTop y no con getBoundingClientRect: al montarse la tarjeta
+       esta entrando desde abajo con un transform, y el rectangulo medido
+       ahora saldria mas bajo de donde se va a quedar. offsetTop no ve el
+       transform: es el sitio final. */
+    alTapar?.(lienzo.clientHeight - tarjeta.offsetTop)
+    // Una vez por materia: lo que importa es donde queda al abrirse
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clave])
+
+  const empezar = (e) => {
+    if (e.target.closest('button')) return
+    inicio.current = { y: e.clientY, t: performance.now() }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    setArrastrando(true)
+  }
+  const mover = (e) => {
+    if (!inicio.current) return
+    setBajada(Math.max(0, e.clientY - inicio.current.y))
+  }
+  const soltar = (e) => {
+    if (!inicio.current) return
+    const distancia = Math.max(0, e.clientY - inicio.current.y)
+    const velocidad = distancia / Math.max(1, performance.now() - inicio.current.t)
+    inicio.current = null
+    setArrastrando(false)
+    if (distancia > CIERRE_DISTANCIA || velocidad > CIERRE_VELOCIDAD) alCerrar()
+    else setBajada(0)
+  }
+
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-label={nombre}
+      className="hoja-ficha transicion-tema absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[14px] border border-panel-borde bg-panel shadow-2xl"
+      style={{
+        bottom: 'var(--reserva-barra, 0px)',
+        maxHeight: 'min(66%, calc(100% - var(--reserva-barra, 0px) - 64px))',
+        transform: bajada ? `translateY(${bajada}px)` : undefined,
+        opacity: bajada ? Math.max(0.4, 1 - bajada / 320) : undefined,
+        transition: arrastrando
+          ? 'none'
+          : 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1), opacity 240ms ease',
+      }}
+    >
+      <div
+        className="shrink-0 touch-none"
+        onPointerDown={empezar}
+        onPointerMove={mover}
+        onPointerUp={soltar}
+        onPointerCancel={soltar}
+      >
+        {/* El asa dice "esto se arrastra" con la unica señal que ya conoce
+            cualquiera que use un telefono. */}
+        <span
+          aria-hidden="true"
+          className="mx-auto mt-2 block h-1 w-9 rounded-full bg-panel-borde"
+        />
+        {cabecera}
+      </div>
+      {children}
+    </div>
+  )
+}
+
 /**
  * La ficha de la materia que se pulso en el mapa.
  *
  * Tiene dos formas, y no son la misma caja mas estrecha. En escritorio es una
  * nubecita anclada al nodo, con un piquito que sale hacia el; en telefono,
- * una hoja inferior, donde llega el pulgar. Ninguna de las dos oscurece el
- * mapa: un velo apagaria justo lo que la ficha esta explicando.
+ * una tarjeta que flota abajo, donde llega el pulgar (ver TarjetaTelefono).
+ * Ninguna de las dos oscurece el mapa: un velo apagaria justo lo que la ficha
+ * esta explicando.
+ *
+ * Las materias de Requiere y Desbloquea se pueden pulsar: la ficha pasa a
+ * esa materia y el mapa la trae a la vista, asi que la cadena se recorre sin
+ * salir de aqui.
  *
  * Habla el mismo idioma que las tarjetas: codigo y UC en letra de maquina,
  * nombre en Jost, estado en una palabra espaciada y los iconos de aro. Tuvo
@@ -151,6 +252,9 @@ function DetalleAsignatura({
   enCasilla,
   alCambiarElectiva,
   alCerrar,
+  alIrA,
+  puedeIr,
+  alTapar,
 }) {
   const esTelefono = useEsTelefono()
   const refFicha = useRef(null)
@@ -172,57 +276,73 @@ function DetalleAsignatura({
   const palabra = aspecto.marca.texto ?? 'Bloqueada'
   const colorPalabra = situacion === SITUACION.LEJANA ? 'var(--tinta-tenue)' : aspecto.marca.color
 
-  const contenido = (
-    <>
-      <div className="flex shrink-0 items-start gap-3 px-4 pt-4 pb-3.5">
-        <div className="min-w-0 flex-1">
-          <p className="flex items-baseline gap-2 text-tinta-tenue">
-            <span className="font-dato text-[10.5px] font-light tracking-[0.04em]">
-              {codigoVisible(nodo)}
-            </span>
-            <span className="font-ui text-[9.5px] font-medium tracking-[0.24em] uppercase">
-              {nodo.semestre ? `Semestre ${String(nodo.semestre).padStart(2, '0')}` : 'Electiva'}
-            </span>
-          </p>
-          <h3
-            className="mt-1.5 font-ui text-[21px] leading-[1.15] tracking-[-0.005em] text-tinta"
-            style={{ fontWeight: 400 }}
-          >
-            {nodo.nombre}
-          </h3>
-          <div className="mt-2.5 flex items-center gap-2 text-[12px] text-tinta-suave">
-            <span
-              className="size-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: colorNodo(nodo) }}
-            />
-            {nodo.area && <span className="truncate">{etiquetaArea(nodo.area)}</span>}
-            <span className="shrink-0 font-dato text-[10.5px] font-light text-tinta-tenue">
-              {nodo.uc} UC
-            </span>
-            <span
-              className="ml-auto shrink-0 font-ui text-[9.5px] font-medium tracking-[0.22em] uppercase"
-              style={{ color: colorPalabra }}
-            >
-              {palabra}
-            </span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={alCerrar}
-          aria-label="Cerrar"
-          className="-mt-1 -mr-1.5 grid size-8 shrink-0 place-items-center rounded-full text-tinta-tenue transition-colors hover:text-tinta"
-        >
-          <X size={16} strokeWidth={1.5} />
-        </button>
-      </div>
+  /* La cabecera va aparte porque en el telefono es tambien el asa: desde
+     ella se arrastra la tarjeta hacia abajo para cerrarla. */
+  const cabecera = (
+    <div className={`relative shrink-0 ${esTelefono ? 'px-5 pt-2.5 pb-4' : 'px-4 pt-4 pb-3.5'}`}>
+      {/* La X en su esquina, fuera del flujo: asi la fila de abajo llega hasta
+          el borde y la palabra de estado cae justo encima del borde derecho
+          del selector, en vez de quedarse a media fila. */}
+      <button
+        type="button"
+        onClick={alCerrar}
+        aria-label="Cerrar"
+        className={`absolute grid place-items-center rounded-full text-tinta-tenue transition-colors hover:bg-panel-suave hover:text-tinta ${
+          esTelefono ? 'top-3 right-3 size-9' : 'top-2.5 right-2.5 size-8'
+        }`}
+      >
+        <X size={16} strokeWidth={1.5} />
+      </button>
 
-      <div className="mx-4 mb-3.5 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde">
+      <p className="flex items-baseline gap-2 pr-10 text-tinta-tenue">
+        <span className="font-ui text-[9.5px] font-medium tracking-[0.26em] uppercase">
+          {nodo.semestre ? `Semestre ${String(nodo.semestre).padStart(2, '0')}` : 'Electiva'}
+        </span>
+        <span aria-hidden="true" className="h-px w-4 self-center bg-panel-borde" />
+        <span className="font-dato text-[10.5px] font-light tracking-[0.04em]">
+          {codigoVisible(nodo)}
+        </span>
+      </p>
+      <h3
+        className={`mt-2 pr-8 font-ui leading-[1.12] tracking-[-0.01em] text-balance text-tinta ${
+          esTelefono ? 'text-[24px]' : 'text-[21px]'
+        }`}
+        style={{ fontWeight: 400 }}
+      >
+        {nodo.nombre}
+      </h3>
+      <div className="mt-3 flex items-center gap-2 text-[12px] text-tinta-suave">
+        <span
+          className="size-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: colorNodo(nodo) }}
+        />
+        {nodo.area && <span className="truncate">{etiquetaArea(nodo.area)}</span>}
+        <span className="shrink-0 font-dato text-[10.5px] font-light text-tinta-tenue">
+          {nodo.uc} UC
+        </span>
+        <span
+          className="ml-auto shrink-0 font-ui text-[9.5px] font-medium tracking-[0.22em] uppercase"
+          style={{ color: colorPalabra }}
+        >
+          {palabra}
+        </span>
+      </div>
+    </div>
+  )
+
+  const margenX = esTelefono ? 'mx-5' : 'mx-4'
+
+  const cuerpo = (
+    <>
+      <div
+        className={`${margenX} mb-4 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde`}
+      >
         <Opcion
           icono={<IconoSituacion situacion={SITUACION.HECHA} size={15} />}
           texto="Aprobada"
           activa={marca === ESTADO.APROBADA}
           color="var(--estado-aprobada)"
+          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.APROBADA)}
         />
         <Opcion
@@ -230,6 +350,7 @@ function DetalleAsignatura({
           texto="Cursando"
           activa={marca === ESTADO.CURSANDO}
           color="var(--estado-cursando)"
+          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.CURSANDO)}
         />
         <Opcion
@@ -237,6 +358,7 @@ function DetalleAsignatura({
           texto="Sin cursar"
           activa={marca === null}
           color="var(--tinta-suave)"
+          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, null)}
         />
       </div>
@@ -248,14 +370,18 @@ function DetalleAsignatura({
         <button
           type="button"
           onClick={() => alCambiarElectiva(enCasilla)}
-          className="mx-4 mb-3.5 flex shrink-0 items-center justify-center gap-2 rounded-[8px] border border-panel-borde py-2 font-ui text-[9.5px] font-medium tracking-[0.2em] text-tinta-suave uppercase transition-colors hover:text-tinta"
+          className={`${margenX} mb-4 flex shrink-0 items-center justify-center gap-2 rounded-[8px] border border-panel-borde py-2.5 font-ui text-[9.5px] font-medium tracking-[0.2em] text-tinta-suave uppercase transition-colors hover:text-tinta`}
         >
           <Repeat2 size={13} strokeWidth={1.6} />
           Cambiar esta electiva
         </button>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto border-t border-panel-borde px-4 pt-3.5 pb-4 md:max-h-72">
+      <div
+        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain border-t border-panel-borde ${
+          esTelefono ? 'px-5 pt-4 pb-5' : 'max-h-72 px-4 pt-3.5 pb-4'
+        }`}
+      >
         <AvisoSituacion estado={estado} situacion={situacion} prerrequisitos={prerrequisitos} />
 
         <ListaPrelaciones
@@ -265,13 +391,15 @@ function DetalleAsignatura({
           vacio={nodo.requisitoEspecial ? '' : SIN_PRELACIONES}
           situacionDe={situacionDe}
           codigoDe={codigoVisible}
+          alIrA={alIrA}
+          puedeIr={puedeIr}
         />
 
         {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
             del mapa ni una fila con su icono. Es una condicion, y se dice con
             palabras para que no se confunda con una prelacion. */}
         {nodo.requisitoEspecial && (
-          <p className="-mt-2 flex items-start gap-2.5 text-[12.5px] leading-snug text-tinta-suave">
+          <p className="-mt-3 flex items-start gap-2.5 text-[12.5px] leading-snug text-tinta-suave">
             <Info size={13} strokeWidth={1.6} className="mt-[2px] shrink-0 text-tinta-tenue" />
             <span>
               Además: <span className="text-tinta">{nodo.requisitoEspecial}</span>. Es una condición
@@ -286,29 +414,24 @@ function DetalleAsignatura({
           vacio="Nada: es final de rama."
           situacionDe={situacionDe}
           codigoDe={codigoVisible}
+          alIrA={alIrA}
+          puedeIr={puedeIr}
         />
       </div>
     </>
   )
 
-  /* Telefono: hoja pegada al borde de abajo, donde llega el pulgar sin
-     recolocar el agarre. No tapa el mapa entero, solo su parte de abajo, asi
-     que la cadena encendida se sigue viendo por encima. */
   if (esTelefono) {
     return (
-      <div
-        role="dialog"
-        aria-label={nodo.nombre}
-        className="hoja-ficha transicion-tema absolute inset-x-0 bottom-0 z-30 flex max-h-[72%] flex-col overflow-hidden rounded-t-[14px] border border-b-0 border-panel-borde bg-panel pb-[var(--reserva-barra)] shadow-2xl"
+      <TarjetaTelefono
+        nombre={nodo.nombre}
+        clave={nodo.codigo}
+        alCerrar={alCerrar}
+        alTapar={alTapar}
+        cabecera={cabecera}
       >
-        {/* El asidero no arrastra nada: dice "esto es una hoja" con la unica
-            señal que ya conoce cualquiera que use un telefono. */}
-        <span
-          aria-hidden="true"
-          className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-panel-borde"
-        />
-        {contenido}
-      </div>
+        {cuerpo}
+      </TarjetaTelefono>
     )
   }
 
@@ -352,7 +475,8 @@ function DetalleAsignatura({
         style={{ maxHeight: Math.max(200, medida.alto - MARGEN * 2) }}
         className={`${CARA_FICHA} flex flex-col overflow-hidden`}
       >
-        {contenido}
+        {cabecera}
+        {cuerpo}
       </div>
       {/* Detras del panel su base quedaba partida por el borde de la ficha.
           Delante, el relleno del pico tapa ese trozo de linea. */}

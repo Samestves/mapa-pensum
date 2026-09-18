@@ -14,13 +14,17 @@ const colorDe = (situacion) =>
  * Una materia dentro de la lista: el icono de su estado, su nombre y su
  * codigo en letra de maquina. El mismo icono que la tarjeta del mapa tendria
  * si la palabra no cupiera: aro lleno con check, a medias, con punto o
- * punteado. Se lee de un vistazo cual de las prelaciones ya esta y cual
+ * candado. Se lee de un vistazo cual de las prelaciones ya esta y cual
  * falta, sin tener que leer ninguna etiqueta.
+ *
+ * Si la materia esta dibujada en el mapa, la fila es un boton que lleva a
+ * ella. Al pasar por encima entra desde la izquierda una raya fina, el mismo
+ * resalte de los menus de la maqueta: dice "esto se elige" sin caja ni flecha.
  */
-function Fila({ asignatura, situacion, codigo }) {
+function Fila({ asignatura, situacion, codigo, alIr }) {
   const hecha = situacion === SITUACION.HECHA
-  return (
-    <li className="flex items-center gap-2.5 py-[5px]">
+  const contenido = (
+    <>
       <IconoSituacion
         situacion={situacion}
         color={colorDe(situacion)}
@@ -28,7 +32,7 @@ function Fila({ asignatura, situacion, codigo }) {
         className="shrink-0"
       />
       <span
-        className={`min-w-0 flex-1 truncate text-[13px] ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
+        className={`min-w-0 flex-1 truncate text-[13.5px] ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
         style={{ fontWeight: 380 }}
       >
         {asignatura.nombre}
@@ -36,6 +40,22 @@ function Fila({ asignatura, situacion, codigo }) {
       <span className="shrink-0 font-dato text-[10px] font-light tracking-[0.04em] text-tinta-tenue">
         {codigo}
       </span>
+    </>
+  )
+
+  if (!alIr) {
+    return <li className="flex items-center gap-2.5 py-[7px]">{contenido}</li>
+  }
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={alIr}
+        aria-label={`Ir a ${asignatura.nombre}`}
+        className="fila-prelacion group relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-2.5 rounded-[6px] px-2 py-[7px] text-left transition-colors hover:bg-panel-suave"
+      >
+        {contenido}
+      </button>
     </li>
   )
 }
@@ -51,7 +71,7 @@ function Fila({ asignatura, situacion, codigo }) {
  * -en particular si una bloqueada se abre el semestre que viene o todavia no-
  * depende de sus propias prelaciones, y eso ya lo tiene calculado el mapa.
  */
-function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe }) {
+function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe, alIrA, puedeIr }) {
   return (
     <div>
       <p className="flex items-baseline gap-2 font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
@@ -65,13 +85,14 @@ function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe }) {
           <p className="mt-1.5 text-[12.5px] text-tinta-tenue">{vacio}</p>
         ) : null
       ) : (
-        <ul className="mt-1 flex flex-col">
+        <ul className="mt-1.5 flex flex-col">
           {materias.map(({ asignatura }) => (
             <Fila
               key={asignatura.codigo}
               asignatura={asignatura}
               situacion={situacionDe(asignatura.codigo)}
               codigo={codigoDe(asignatura)}
+              alIr={alIrA && puedeIr?.(asignatura.codigo) ? () => alIrA(asignatura.codigo) : null}
             />
           ))}
         </ul>
