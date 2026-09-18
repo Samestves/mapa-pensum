@@ -31,10 +31,11 @@ function Enlace({ href, icono: Icono, children }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="group/enlace flex min-h-11 w-full items-center gap-2 rounded-xl border border-panel-borde bg-panel px-3.5 py-2.5 text-xs font-bold whitespace-nowrap text-tinta-suave transition-[transform,border-color,background-color,color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-tinta-tenue hover:bg-panel-suave hover:text-tinta hover:shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)] focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none sm:inline-flex sm:min-h-0 sm:w-auto"
+      className="group/enlace flex min-h-11 w-full items-center gap-2.5 rounded-full border border-panel-borde bg-panel px-4 py-2.5 font-ui text-[9.5px] font-medium tracking-[0.2em] whitespace-nowrap text-tinta-suave uppercase transition-[transform,border-color,background-color,color,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:border-tinta-tenue hover:bg-panel-suave hover:text-tinta hover:shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)] focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none sm:inline-flex sm:min-h-0 sm:w-auto"
     >
       <Icono
-        size={14}
+        size={13}
+        strokeWidth={1.6}
         className="shrink-0 text-tinta-tenue transition-[transform,color] duration-300 ease-out group-hover/enlace:scale-110 group-hover/enlace:text-tinta"
       />
       {children}
@@ -42,6 +43,7 @@ function Enlace({ href, icono: Icono, children }) {
           una fila a lo ancho. En escritorio vuelve a pegarse al texto. */}
       <ArrowUpRight
         size={13}
+        strokeWidth={1.6}
         className="ml-auto shrink-0 text-tinta-tenue transition-transform duration-300 ease-out group-hover/enlace:-translate-y-0.5 group-hover/enlace:translate-x-0.5 sm:ml-0"
       />
     </a>
@@ -95,19 +97,27 @@ function PieSelector() {
             palabras en una columna estrecha abre rios de espacio entre
             palabras; el navegador solo sabe donde partir en español porque
             el <html> declara lang="es". */}
-        <p className="max-w-2xl hyphens-auto text-justify text-[11px] leading-relaxed text-tinta-suave xl:text-xs">
-          Datos tomados de los pensums publicados por la{' '}
+        {/* En la letra del mapa y sin negritas: lo importante va en tinta
+            plena y lo demas en tinta suave, que es como se subraya aqui. */}
+        <p
+          className="max-w-2xl hyphens-auto text-justify font-ui text-[12px] leading-relaxed text-tinta-suave xl:text-[12.5px]"
+          style={{ fontWeight: 'var(--peso-nombre)' }}
+        >
+          <span className="mr-2 font-ui text-[9px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
+            Datos
+          </span>
+          Tomados de los pensums publicados por la{' '}
           <a
             href="http://dacemonagas.udo.edu.ve"
             target="_blank"
             rel="noreferrer"
-            className="font-semibold text-tinta underline decoration-panel-borde underline-offset-2 transition-colors duration-200 hover:decoration-current"
+            className="text-tinta underline decoration-panel-borde underline-offset-2 transition-colors duration-200 hover:decoration-current"
           >
             DACE del Núcleo de Monagas
           </a>
           . Pueden contener errores o estar desactualizados:{' '}
-          <strong className="font-bold text-tinta">confirma con control de estudios</strong>{' '}
-          antes de tomar cualquier decisión.
+          <span className="text-tinta">confirma con control de estudios</span> antes de tomar
+          cualquier decisión.
         </p>
       </div>
     </footer>

@@ -752,10 +752,12 @@ body {
   transition: background 280ms ease;
 }
 
-/* La X de la ficha: un boton redondo de verdad, con aro, que se hunde al
-   pulsarlo. Era una X suelta de trazo fino y en el telefono ni parecia un
-   boton. */
-.boton-cerrar {
+/* El boton redondo con aro: la X de la ficha, el tema de la portada, la
+   flecha de Continuar. Uno solo para todos los botones sueltos, que se hunde
+   al pulsarlo. La X era una X suelta de trazo fino y en el telefono ni
+   parecia un boton. */
+.boton-cerrar,
+.boton-aro {
   border: 1px solid color-mix(in oklab, var(--tinta) 16%, transparent);
   background-color: color-mix(in oklab, var(--tinta) 5%, transparent);
   color: var(--tinta-suave);
@@ -766,13 +768,16 @@ body {
     border-color 200ms ease;
 }
 
-.boton-cerrar:hover {
+.boton-cerrar:hover,
+.boton-aro:hover,
+.group:hover > .boton-aro {
   color: var(--tinta);
   border-color: color-mix(in oklab, var(--tinta) 28%, transparent);
   background-color: color-mix(in oklab, var(--tinta) 9%, transparent);
 }
 
-.boton-cerrar:active {
+.boton-cerrar:active,
+.boton-aro:active {
   transform: scale(0.9);
 }
 
@@ -1141,6 +1146,79 @@ body {
 
 .tarjeta-carrera > * {
   transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* El filo de luz del borde de arriba de cada carrera, en su color. En la
+   tarjeta se enciende al señalarla; en Continuar esta siempre encendido.
+   Va un pixel por encima para montarse sobre el borde en vez de quedar
+   debajo de el. */
+.filo-carrera {
+  position: absolute;
+  top: -1px;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--acento), transparent);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.tarjeta-carrera:hover .filo-carrera,
+.tarjeta-carrera:focus-visible .filo-carrera,
+.filo-fijo {
+  opacity: 0.9;
+}
+
+.continuar {
+  transition:
+    border-color 250ms ease,
+    background-color 250ms ease;
+}
+
+.continuar:hover {
+  border-color: color-mix(in oklab, var(--acento) 45%, var(--panel-borde));
+}
+
+.avance-continuar {
+  transition: width 900ms cubic-bezier(0.22, 0.61, 0.2, 1);
+}
+
+/* Las tarjetas entran una detras de otra, como los renglones de un menu
+   que se carga. Con `translate` y no con `transform`, que es donde vive el
+   giro que sigue al cursor. Y con `backwards`: `both` dejaria la opacidad
+   clavada en 1 al terminar y el atenuado de abajo no podria bajarla. */
+.tarjeta-entrar {
+  animation: entrar-tarjeta 520ms cubic-bezier(0.22, 0.61, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 60ms);
+}
+
+@keyframes entrar-tarjeta {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Al señalar una carrera las demas se apagan un poco, como el renglon
+   elegido de un menu de juego frente al resto. Solo con raton: en un
+   telefono no hay señalar sin tocar, y un toque ya entra. */
+@media (hover: hover) and (pointer: fine) {
+  .tarjeta-carrera {
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      border-color 200ms ease,
+      background-color 200ms ease,
+      opacity 300ms ease;
+  }
+
+  .rejilla-carreras:has(.tarjeta-carrera:hover) .tarjeta-carrera:not(:hover) {
+    opacity: 0.55;
+  }
 }
 
 /* ---- Cambio de ruta -----------------------------------------------------
@@ -2149,6 +2227,7 @@ body {
   .aviso-recogida,
   .recogida-saliendo,
   .icono-asentado,
+  .tarjeta-entrar,
   .recogida-aro,
   .recogida-tilde,
   .recogida-fila,

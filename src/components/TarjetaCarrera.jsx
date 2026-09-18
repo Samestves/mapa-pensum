@@ -23,7 +23,7 @@ const GIRO = 7
  * lee como "se colgo". Se navega ya, y si el pensum aun no llego es el mapa
  * quien lo dice, con la silueta de la carrera puesta en su sitio.
  */
-function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
+function TarjetaCarrera({ carrera, tema, indice = 0, hechas, alElegir }) {
   const caja = useRef(null)
   const [giro, setGiro] = useState(null)
 
@@ -57,6 +57,11 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
   }
 
   return (
+    /* En el telefono es una fila y no una tarjeta: la silueta pequeña a la
+       izquierda, el nombre y la flecha. Como tarjeta medía 410 px y cabian
+       tres por pantalla; como fila caben las nueve en pantalla y media. Es el
+       mismo boton con otra disposicion -flex en el telefono, bloque desde
+       sm-, asi que no hay dos componentes que mantener. */
     <button
       ref={caja}
       type="button"
@@ -65,9 +70,10 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       onFocus={precargar}
       onPointerLeave={() => setGiro(null)}
       onClick={entrar}
-      className="tarjeta-carrera group transicion-tema relative block w-full rounded-2xl border border-panel-borde bg-panel p-5 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none xl:p-6"
+      className="tarjeta-carrera tarjeta-entrar group transicion-tema relative flex w-full items-center gap-4 rounded-[14px] border border-panel-borde bg-panel py-3 pr-4 pl-3 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none sm:block sm:rounded-2xl sm:p-5 xl:p-6"
       style={{
         '--acento': color,
+        '--i': indice,
         transform: giro
           ? `perspective(900px) rotateX(${giro.x}deg) rotateY(${giro.y}deg) scale(1.015)`
           : undefined,
@@ -76,7 +82,7 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
       {/* Brillo que se desplaza con el angulo. aria-hidden: es decoracion */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
           background: giro
             ? `radial-gradient(60% 60% at ${giro.luzX}% ${giro.luzY}%, color-mix(in oklab, ${color} 16%, transparent) 0%, transparent 70%)`
@@ -84,64 +90,52 @@ function TarjetaCarrera({ carrera, tema, esUltima, alElegir }) {
         }}
       />
 
-      {/* Solo el nombre. Debajo llevo las cifras de obligatorias y electivas,
-          y la silueta ya dice lo mismo -un punto por materia- sin tener que
-          leer: eran dos lecturas del mismo dato. */}
-      <div className="relative flex items-center justify-between gap-3">
-        {/* Peso fino y cuerpo de titular: a 19-22 px Inter toma su dibujo
-            optico de titular, que es el que aguanta el peso 300 sin
-            deshacerse sobre el fondo oscuro. */}
-        <h2 className="min-w-0 font-display text-[19px] leading-tight font-light tracking-[-0.02em] text-tinta xl:text-[22px]">
-          {carrera.nombreCorto}
-        </h2>
+      {/* El filo de luz del borde de arriba, en el color de la carrera: se
+          enciende al señalarla, como la ficha de una materia. */}
+      <span aria-hidden="true" className="filo-carrera" />
 
-        {/* La carrera donde lo dejaste no lleva una insignia AL LADO de la
-            flecha: la flecha se mete dentro y el conjunto es un solo boton,
-            "Continuar ↗". Eran dos piezas -una pastilla de versalitas en
-            negrita y la flecha suelta- con dos pesos y dos alineaciones
-            distintas junto a un titulo fino, y por eso no cuadraba.
-            Cabe en la altura del titulo, asi que ninguna tarjeta crece ni
-            estira a las demas de su fila. */}
-        {esUltima ? (
-          <span
-            className="flex shrink-0 items-center gap-1 rounded-full border py-[5px] pr-2 pl-2.5 text-[11px] leading-none font-medium transition-colors duration-300"
-            style={{
-              color,
-              borderColor: `color-mix(in oklab, ${color} ${giro ? 55 : 32}%, transparent)`,
-              backgroundColor: `color-mix(in oklab, ${color} ${giro ? 14 : 8}%, transparent)`,
-            }}
+      <div className="relative flex min-w-0 flex-1 items-center justify-between gap-3">
+        <div className="min-w-0">
+          {/* Jost fina, como los nombres del mapa */}
+          <h2
+            className="truncate font-ui text-[17px] leading-tight tracking-[-0.01em] text-tinta sm:text-[20px] xl:text-[23px]"
+            style={{ fontWeight: 300 }}
           >
-            Continuar
-            <ArrowUpRight
-              size={13}
-              strokeWidth={2}
-              className="shrink-0 transition-transform duration-300 group-hover:translate-x-px group-hover:-translate-y-px"
-            />
-          </span>
-        ) : (
-          <ArrowUpRight
-            size={16}
-            className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-            style={{ color: giro ? color : undefined }}
-          />
-        )}
+            {carrera.nombreCorto}
+          </h2>
+          {/* En la fila del telefono el nombre largo va aqui debajo, en
+              mayusculas espaciadas; en la tarjeta va al pie. */}
+          <p className="mt-1 truncate font-ui text-[8.5px] font-medium tracking-[0.2em] text-tinta-tenue uppercase sm:hidden">
+            {carrera.nombre}
+          </p>
+        </div>
+        <ArrowUpRight
+          size={16}
+          strokeWidth={1.5}
+          className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          style={{ color: giro ? color : undefined }}
+        />
       </div>
 
       {/* La miniatura flota sobre el fondo de la tarjeta: es lo que le da
-          volumen sin recurrir a sombras falsas. Es tambien lo que distingue a
-          una carrera de otra de un vistazo, asi que se lleva el sitio bueno y
-          crece con la pantalla en vez de quedarse en su franja fija. */}
+          volumen sin recurrir a sombras falsas, y lo que distingue a una
+          carrera de otra de un vistazo. En el telefono va primero, pequeña,
+          a la izquierda de la fila. */}
       <div
-        className="silueta-carrera relative mt-4 h-20 xl:mt-5 xl:h-24"
+        className="silueta-carrera relative order-first h-11 w-[68px] shrink-0 sm:order-none sm:mt-4 sm:h-20 sm:w-auto xl:mt-5 xl:h-24"
         style={{ transform: giro ? 'translateZ(28px)' : undefined }}
       >
-        <MiniMapa silueta={carrera.silueta} color={color} className="h-full w-full" />
+        <MiniMapa
+          silueta={carrera.silueta}
+          color={color}
+          hechas={hechas}
+          className="h-full w-full"
+        />
       </div>
 
-      {/* El nombre completo cierra la tarjeta detras de una regla fina. Antes
-          iba suelto a tres pixeles de la miniatura y parecia un sobrante; con
-          la regla se lee como pie, que es lo que es. */}
-      <p className="relative mt-4 truncate border-t border-panel-borde pt-3 text-[11px] leading-snug font-medium text-tinta-tenue transition-colors duration-300 group-hover:text-tinta-suave xl:mt-5 xl:text-xs">
+      {/* El nombre completo cierra la tarjeta detras de una regla fina, en
+          mayusculas espaciadas: se lee como rotulo, que es lo que es. */}
+      <p className="relative mt-4 hidden truncate border-t border-panel-borde pt-3 font-ui text-[9.5px] font-medium tracking-[0.2em] text-tinta-tenue uppercase transition-colors duration-300 group-hover:text-tinta-suave sm:block xl:mt-5">
         {carrera.nombre}
       </p>
     </button>

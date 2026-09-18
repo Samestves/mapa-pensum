@@ -21,7 +21,8 @@ const GUION = {
   escritorio: {
     icono: AppWindow,
     titulo: 'Instálala en tu escritorio',
-    texto: 'Se abre en su propia ventana, sin barra de navegador, y sigue funcionando sin conexión.',
+    texto:
+      'Se abre en su propia ventana, sin barra de navegador, y sigue funcionando sin conexión.',
     boton: 'Instalar',
   },
   ios: {
@@ -86,16 +87,19 @@ function AvisoInstalar() {
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[13.5px] leading-snug font-semibold tracking-[-0.01em] text-tinta">
+          <p className="font-ui text-[15px] leading-snug text-tinta" style={{ fontWeight: 400 }}>
             {guion.titulo}
           </p>
 
-          <p className="mt-1 text-[11.5px] leading-relaxed text-tinta-suave">
+          <p
+            className="mt-1 font-ui text-[12.5px] leading-relaxed text-tinta-suave"
+            style={{ fontWeight: 'var(--peso-nombre)' }}
+          >
             {modo === 'ios' ? (
               <>
                 Toca <Share size={11} className="inline align-[-1px]" aria-label="Compartir" /> y
-                luego <strong className="font-semibold text-tinta">Añadir a inicio</strong>. Después
-                abre sin internet.
+                luego <span className="text-tinta">Añadir a inicio</span>. Después abre sin
+                internet.
               </>
             ) : (
               guion.texto
@@ -107,9 +111,14 @@ function AvisoInstalar() {
               type="button"
               onClick={instalar}
               disabled={!hayEvento}
-              className="mt-3 flex items-center gap-2 rounded-lg bg-aprobada px-3 py-2 text-[11.5px] font-bold text-[var(--lienzo)] transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
+              className="mt-3.5 flex items-center gap-2 rounded-full border px-4 py-2 font-ui text-[9.5px] font-medium tracking-[0.22em] uppercase transition-[background-color,transform] duration-300 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--estado-aprobada)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
+              style={{
+                color: 'var(--estado-aprobada)',
+                borderColor: 'color-mix(in oklab, var(--estado-aprobada) 50%, transparent)',
+                backgroundColor: 'color-mix(in oklab, var(--estado-aprobada) 8%, transparent)',
+              }}
             >
-              <Download size={14} />
+              <Download size={13} strokeWidth={1.6} />
               {guion.boton}
             </button>
           )}
@@ -144,9 +153,9 @@ function AvisoInstalar() {
           onClick={cerrar}
           aria-label="No, gracias"
           title="No, gracias"
-          className="relative -mt-1 -mr-1 grid size-7 shrink-0 place-items-center rounded-lg text-tinta-tenue transition-colors duration-200 hover:text-tinta"
+          className="boton-aro relative -mt-0.5 -mr-0.5 grid size-8 shrink-0 place-items-center rounded-full"
         >
-          <X size={15} />
+          <X size={15} strokeWidth={1.75} />
         </button>
       </div>
     </div>

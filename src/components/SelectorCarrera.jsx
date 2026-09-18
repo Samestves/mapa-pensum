@@ -1,8 +1,10 @@
-import { GraduationCap, Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { CARRERAS } from '../data/carreras'
 import { ultimaCarrera } from '../data/ultimaCarrera'
 import { useTema } from '../hooks/useTema'
+import { useAvancePortada } from '../hooks/useAvancePortada'
 import AvisoInstalar from './AvisoInstalar'
+import FilaContinuar from './FilaContinuar'
 import Logo from './Logo'
 import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
@@ -21,14 +23,21 @@ import TarjetaCarrera from './TarjetaCarrera'
  * vistazo, y entonces la pagina cumpliria la promesa habiendo perdido la
  * razon por la que importaba.
  *
- * La carrera vista por ultima vez se marca con "Continuar" en vez de saltar
+ * La carrera vista por ultima vez se ofrece con "Continuar" en vez de saltar
  * directo a ella: redirigir automaticamente dejaria el selector inalcanzable
  * para quien ya entro una vez, y esta pantalla es tambien la que tiene que
  * posicionar en buscadores.
+ *
+ * Habla el idioma del mapa: nombres en Jost fina, rotulos en mayusculas
+ * espaciadas, y la silueta de cada carrera encendida en lo que llevas
+ * aprobado. Las tarjetas se quedan limpias, sin cifras: el avance lo cuentan
+ * los puntos, no un numero.
  */
 function SelectorCarrera({ alElegir }) {
   const { tema, alternarTema } = useTema()
-  const ultima = ultimaCarrera()
+  const ultimaSlug = ultimaCarrera()
+  const ultima = CARRERAS.find((c) => c.slug === ultimaSlug) ?? null
+  const avances = useAvancePortada(CARRERAS)
 
   return (
     <div className="relative h-full overflow-y-auto">
@@ -93,12 +102,14 @@ function SelectorCarrera({ alElegir }) {
               />
             </span>
             <div className="min-w-0">
-              {/* Semibold y no extrabold. Un titulo en extrabold a 22 px
-                  grita para que se le note un tamaño que no tiene; a 40 el
-                  tamaño ya esta, y lo que hace falta entonces no es peso sino
-                  cerrar el tracking. Inter aguanta -0,03em sin que las letras
-                  se toquen, que es justo para lo que se cambio de fuente. */}
-              <h1 className="font-display truncate text-[26px] leading-[1.06] font-semibold tracking-[-0.025em] text-tinta sm:text-[30px] xl:text-[28px]">
+              {/* Jost fina, como los nombres del mapa. Fue Inter en
+                  seminegrita, y era lo unico de la aplicacion que todavia
+                  hablaba el idioma de antes: una portada que grita para
+                  entrar a un mapa que susurra. */}
+              <h1
+                className="truncate font-ui text-[27px] leading-[1.06] tracking-[-0.01em] text-tinta sm:text-[31px] xl:text-[30px]"
+                style={{ fontWeight: 300 }}
+              >
                 Mapa de Pensum
               </h1>
               {/* En caja baja y peso normal. Estuvo en versalitas anchas y
@@ -113,44 +124,62 @@ function SelectorCarrera({ alElegir }) {
                   segunda linea con una palabra suelta es justo lo que hacia
                   que la cabecera se viera a medio terminar. UDO es ademas
                   como la llama todo el mundo en Monagas. */}
-              <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[12.5px] leading-none font-medium text-tinta-tenue sm:text-[13px] xl:mt-1.5 xl:text-[12.5px]">
-                {/* Un birrete diminuto delante. La linea estaba sola y se
-                    leia como un pie de foto; con una marca delante se lee
-                    como una credencial, que es lo que es.
-
-                    Va del tamaño de la altura-x de la letra que acompaña y no
-                    del cuerpo entero: un icono a la altura de las mayusculas
-                    se ve siempre mas grande que el texto y acaba pareciendo
-                    un boton. Y lleva el punto del separador como divisoria
-                    -el que ya estaba entre universidad y nucleo-, en vez de
-                    inventar una linea nueva. */}
-                <GraduationCap
-                  size={13}
-                  strokeWidth={2.1}
-                  className="shrink-0 opacity-80"
-                  aria-hidden="true"
-                />
-                <span className="truncate">
-                  <span className="sm:hidden">UDO</span>
-                  <span className="hidden sm:inline">Universidad de Oriente</span>
-                  {' · Núcleo de Monagas'}
-                </span>
+              {/* El rotulo de la universidad en mayusculas espaciadas, como
+                  SEMESTRE 04 en el mapa: se lee como credencial y no compite
+                  con el titulo, que es el unico en caja baja y grande.
+                  Abreviado en el telefono: UDO es como la llama todo el
+                  mundo en Monagas, y entero partia en dos lineas. */}
+              <p className="mt-2 truncate font-ui text-[9.5px] leading-none font-medium tracking-[0.24em] text-tinta-tenue uppercase sm:text-[10px]">
+                <span className="sm:hidden">UDO</span>
+                <span className="hidden sm:inline">Universidad de Oriente</span>
+                {' · Núcleo de Monagas'}
               </p>
             </div>
           </div>
 
-          {/* Sin borde, como toda la barra de una carrera desde el rework:
-              el chrome se retira y lo que manda es la marca. */}
-          <button
-            type="button"
-            onClick={alternarTema}
-            title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-            className="transicion-tema grid size-10 shrink-0 place-items-center rounded-xl text-tinta-suave transition-[background-color,color,transform] duration-150 hover:bg-panel hover:text-tinta active:scale-[0.92]"
-          >
-            {tema === 'oscuro' ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            {/* En el escritorio, Continuar va aqui arriba: no suma alto y la
+                portada sigue cabiendo entera en un portatil. */}
+            {ultima && (
+              <FilaContinuar
+                forma="pastilla"
+                carrera={ultima}
+                tema={tema}
+                avance={avances[ultima.slug]?.porcentaje}
+                alElegir={alElegir}
+                className="hidden sm:flex"
+              />
+            )}
+            {/* Redondo y con aro, como la X de la ficha y el boton de
+                planificar: los botones sueltos de la aplicacion son uno. */}
+            <button
+              type="button"
+              onClick={alternarTema}
+              title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+              aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+              className="boton-aro transicion-tema grid size-10 shrink-0 place-items-center rounded-full"
+            >
+              {tema === 'oscuro' ? (
+                <Sun size={16} strokeWidth={1.6} />
+              ) : (
+                <Moon size={16} strokeWidth={1.6} />
+              )}
+            </button>
+          </div>
         </header>
+
+        {/* En el telefono, Continuar es la primera fila, a lo ancho: es lo
+            que mas se toca y ahi llega el pulgar sin buscar. */}
+        {ultima && (
+          <FilaContinuar
+            forma="fila"
+            carrera={ultima}
+            tema={tema}
+            avance={avances[ultima.slug]?.porcentaje}
+            alElegir={alElegir}
+            className="mt-6 sm:hidden"
+          />
+        )}
 
         {/* Esta frase estaba a la vista y ocupaba una banda entera que las
             tarjetas aprovechan mejor. No se borra, se esconde: sigue siendo
@@ -159,8 +188,8 @@ function SelectorCarrera({ alElegir }) {
             que ven los que no lo ejecutan es la meta description, que dice lo
             mismo y no depende de esto. */}
         <p className="sr-only">
-          Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y
-          cuánto te falta. Elige la tuya.
+          Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto
+          te falta. Elige la tuya.
         </p>
 
         {/* Sin flex-1. Lo tenia para empujar el pie hasta abajo, pero de paso
@@ -171,13 +200,14 @@ function SelectorCarrera({ alElegir }) {
         {/* Tres columnas y no cuatro: son nueve carreras, asi que 3x3 cierra
             exacto. Con cuatro la ultima fila se quedaba con una tarjeta sola
             y la cuadricula parecia rota por abajo. */}
-        <div className="rejilla-carreras mt-6 mb-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
-          {CARRERAS.map((carrera) => (
+        <div className="rejilla-carreras mt-4 mb-10 grid grid-cols-1 gap-2 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
+          {CARRERAS.map((carrera, indice) => (
             <TarjetaCarrera
               key={carrera.slug}
               carrera={carrera}
               tema={tema}
-              esUltima={carrera.slug === ultima}
+              indice={indice}
+              hechas={avances[carrera.slug]?.porSemestre}
               alElegir={alElegir}
             />
           ))}

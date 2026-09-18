@@ -30,19 +30,26 @@ function depurar(datos, codigosValidos) {
 }
 
 /**
+ * Las marcas guardadas de una carrera tal cual, sin depurar: la portada solo
+ * quiere saber si hay avance y cuanto, y no tiene el pensum a mano para
+ * validarlas. Un codigo que ya no existe no coincide con ninguna materia y
+ * no cuenta.
+ */
+export function marcasGuardadasDe(slug) {
+  const propia = leerJSON(claveDe(slug), null)
+  if (propia) return propia
+  // Migracion de la clave vieja, solo para la carrera que existia entonces
+  if (slug === SLUG_HEREDADO) return leerJSON(CLAVE_HEREDADA, null)
+  return null
+}
+
+/**
  * Lee las marcas guardadas de una carrera. Si el JSON esta corrupto se
  * arranca en limpio en vez de reventar.
  */
 function leerGuardadas(slug, codigosValidos) {
-  const propia = leerJSON(claveDe(slug), null)
-  if (propia) return depurar(propia, codigosValidos)
-
-  // Migracion de la clave vieja, solo para la carrera que existia entonces
-  if (slug === SLUG_HEREDADO) {
-    const vieja = leerJSON(CLAVE_HEREDADA, null)
-    if (vieja) return depurar(vieja, codigosValidos)
-  }
-  return {}
+  const guardadas = marcasGuardadasDe(slug)
+  return guardadas ? depurar(guardadas, codigosValidos) : {}
 }
 
 /**
