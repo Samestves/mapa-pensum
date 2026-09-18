@@ -93,23 +93,22 @@ function PieSelector() {
           </Enlace>
         </div>
 
-        {/* Justificado, con guionado automatico. Justificar sin partir
-            palabras en una columna estrecha abre rios de espacio entre
-            palabras; el navegador solo sabe donde partir en español porque
-            el <html> declara lang="es". */}
-        {/* El rotulo en la letra del mapa y el texto en Inter, que es la
-            letra de LEER de la aplicacion. En Jost, justificado y a 12 px, el
-            parrafo quedaba con huecos entre palabras y costaba leerlo: Jost
-            es para nombrar y rotular, no para tres lineas seguidas.
-            A la izquierda y sin justificar por lo mismo, y sin negritas: lo
-            importante va en tinta plena y lo demas en tinta suave. El rotulo
-            va en la misma linea: aparte sumaba una linea mas, y la portada
-            esta medida para caber entera en un portatil de 768. */}
-        <p className="max-w-2xl font-sans text-[12px] leading-[1.65] text-tinta-suave xl:text-[12.5px]">
-          <span className="mr-2 font-ui text-[9px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
-            Datos
-          </span>
-          Tomados de los pensums publicados por la{' '}
+        {/* Una sola voz, en la letra de toda la portada: el titulo, las
+            carreras y los enlaces de al lado van en Jost, y un parrafo en
+            otra letra se leia como pegado de otra pagina. Tampoco lleva
+            rotulo propio: un "DATOS" en versalitas de 9 px al lado de texto
+            corrido parecia otra letra, no un titulo.
+            A 13 px y a peso normal, a la izquierda y sin justificar, que es
+            como Jost aguanta dos lineas seguidas; justificado y a 12 px
+            abria huecos entre palabras. Sin negritas: lo importante va en
+            tinta plena y lo demas en tinta suave. En claro sube un punto de
+            peso, como los nombres del mapa, para no quedarse gris y flojo
+            sobre el blanco. */}
+        <p
+          className="max-w-2xl font-ui text-[13px] leading-[1.62] tracking-[0.012em] text-tinta-suave xl:text-[13.5px]"
+          style={{ fontWeight: 'calc(var(--peso-nombre) + 20)' }}
+        >
+          Datos tomados de los pensums publicados por la{' '}
           <a
             href="http://dacemonagas.udo.edu.ve"
             target="_blank"
