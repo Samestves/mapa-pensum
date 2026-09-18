@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { cargarCarrera } from '../data/carreras'
-import { avanceGuardado } from '../data/avance'
+import { aprobadasPorSemestre } from '../data/avance'
 import { marcasGuardadasDe } from './usePensum'
 
 /**
- * Cuanto llevas en cada carrera, para la portada.
+ * Cuantas aprobaste de cada semestre en cada carrera, para encender su
+ * silueta en la portada.
  *
  * El indice que ya esta en la portada no trae las materias -son lo pesado de
  * cada carrera-, asi que para saber cuantas aprobaste de cada semestre hay
@@ -24,7 +25,10 @@ export function useAvancePortada(carreras) {
       cargarCarrera(carrera.slug)
         .then((datos) => {
           if (!vigente) return
-          setAvances((previos) => ({ ...previos, [carrera.slug]: avanceGuardado(datos, marcas) }))
+          setAvances((previos) => ({
+            ...previos,
+            [carrera.slug]: aprobadasPorSemestre(datos, marcas),
+          }))
         })
         .catch(() => {
           // Sin el pensum no hay avance que enseñar; la portada sigue igual

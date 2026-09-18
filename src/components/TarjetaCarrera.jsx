@@ -23,7 +23,7 @@ const GIRO = 7
  * lee como "se colgo". Se navega ya, y si el pensum aun no llego es el mapa
  * quien lo dice, con la silueta de la carrera puesta en su sitio.
  */
-function TarjetaCarrera({ carrera, tema, indice = 0, hechas, alElegir }) {
+function TarjetaCarrera({ carrera, tema, indice = 0, hechas, esUltima, alElegir }) {
   const caja = useRef(null)
   const [giro, setGiro] = useState(null)
 
@@ -109,12 +109,38 @@ function TarjetaCarrera({ carrera, tema, indice = 0, hechas, alElegir }) {
             {carrera.nombre}
           </p>
         </div>
-        <ArrowUpRight
-          size={16}
-          strokeWidth={1.5}
-          className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-          style={{ color: giro ? color : undefined }}
-        />
+        {/* La carrera donde lo dejaste no lleva una insignia AL LADO de la
+            flecha: la flecha se mete dentro y el conjunto es un solo boton,
+            "Continuar ↗". Cabe en la altura del titulo, asi que ninguna
+            tarjeta crece ni estira a las demas de su fila.
+
+            Estuvo un tiempo fuera, como primer renglon de la portada, y se
+            veia mejor aqui: dentro de su tarjeta dice donde lo dejaste sin
+            añadir otra pieza a la pagina. */}
+        {esUltima ? (
+          <span
+            className="flex shrink-0 items-center gap-1 rounded-full border py-[5px] pr-2 pl-2.5 text-[11px] leading-none font-medium transition-colors duration-300"
+            style={{
+              color,
+              borderColor: `color-mix(in oklab, ${color} ${giro ? 55 : 32}%, transparent)`,
+              backgroundColor: `color-mix(in oklab, ${color} ${giro ? 14 : 8}%, transparent)`,
+            }}
+          >
+            Continuar
+            <ArrowUpRight
+              size={13}
+              strokeWidth={2}
+              className="shrink-0 transition-transform duration-300 group-hover:translate-x-px group-hover:-translate-y-px"
+            />
+          </span>
+        ) : (
+          <ArrowUpRight
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-tinta-tenue transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            style={{ color: giro ? color : undefined }}
+          />
+        )}
       </div>
 
       {/* La miniatura flota sobre el fondo de la tarjeta: es lo que le da

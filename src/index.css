@@ -752,8 +752,8 @@ body {
   transition: background 280ms ease;
 }
 
-/* El boton redondo con aro: la X de la ficha, el tema de la portada, la
-   flecha de Continuar. Uno solo para todos los botones sueltos, que se hunde
+/* El boton redondo con aro: la X de la ficha, el tema de la portada. Uno
+   solo para todos los botones sueltos, que se hunde
    al pulsarlo. La X era una X suelta de trazo fino y en el telefono ni
    parecia un boton. */
 .boton-cerrar,
@@ -1148,10 +1148,9 @@ body {
   transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* El filo de luz del borde de arriba de cada carrera, en su color. En la
-   tarjeta se enciende al señalarla; en Continuar esta siempre encendido.
-   Va un pixel por encima para montarse sobre el borde en vez de quedar
-   debajo de el. */
+/* El filo de luz del borde de arriba de cada carrera, en su color: se
+   enciende al señalarla. Va un pixel por encima para montarse sobre el
+   borde en vez de quedar debajo de el. */
 .filo-carrera {
   position: absolute;
   top: -1px;
@@ -1165,23 +1164,8 @@ body {
 }
 
 .tarjeta-carrera:hover .filo-carrera,
-.tarjeta-carrera:focus-visible .filo-carrera,
-.filo-fijo {
+.tarjeta-carrera:focus-visible .filo-carrera {
   opacity: 0.9;
-}
-
-.continuar {
-  transition:
-    border-color 250ms ease,
-    background-color 250ms ease;
-}
-
-.continuar:hover {
-  border-color: color-mix(in oklab, var(--acento) 45%, var(--panel-borde));
-}
-
-.avance-continuar {
-  transition: width 900ms cubic-bezier(0.22, 0.61, 0.2, 1);
 }
 
 /* Las tarjetas entran una detras de otra, como los renglones de un menu

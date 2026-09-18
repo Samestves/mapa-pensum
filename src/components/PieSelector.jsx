@@ -97,12 +97,15 @@ function PieSelector() {
             palabras en una columna estrecha abre rios de espacio entre
             palabras; el navegador solo sabe donde partir en español porque
             el <html> declara lang="es". */}
-        {/* En la letra del mapa y sin negritas: lo importante va en tinta
-            plena y lo demas en tinta suave, que es como se subraya aqui. */}
-        <p
-          className="max-w-2xl hyphens-auto text-justify font-ui text-[12px] leading-relaxed text-tinta-suave xl:text-[12.5px]"
-          style={{ fontWeight: 'var(--peso-nombre)' }}
-        >
+        {/* El rotulo en la letra del mapa y el texto en Inter, que es la
+            letra de LEER de la aplicacion. En Jost, justificado y a 12 px, el
+            parrafo quedaba con huecos entre palabras y costaba leerlo: Jost
+            es para nombrar y rotular, no para tres lineas seguidas.
+            A la izquierda y sin justificar por lo mismo, y sin negritas: lo
+            importante va en tinta plena y lo demas en tinta suave. El rotulo
+            va en la misma linea: aparte sumaba una linea mas, y la portada
+            esta medida para caber entera en un portatil de 768. */}
+        <p className="max-w-2xl font-sans text-[12px] leading-[1.65] text-tinta-suave xl:text-[12.5px]">
           <span className="mr-2 font-ui text-[9px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
             Datos
           </span>

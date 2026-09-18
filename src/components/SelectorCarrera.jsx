@@ -4,7 +4,6 @@ import { ultimaCarrera } from '../data/ultimaCarrera'
 import { useTema } from '../hooks/useTema'
 import { useAvancePortada } from '../hooks/useAvancePortada'
 import AvisoInstalar from './AvisoInstalar'
-import FilaContinuar from './FilaContinuar'
 import Logo from './Logo'
 import PieSelector from './PieSelector'
 import TarjetaCarrera from './TarjetaCarrera'
@@ -23,7 +22,7 @@ import TarjetaCarrera from './TarjetaCarrera'
  * vistazo, y entonces la pagina cumpliria la promesa habiendo perdido la
  * razon por la que importaba.
  *
- * La carrera vista por ultima vez se ofrece con "Continuar" en vez de saltar
+ * La carrera vista por ultima vez se marca con "Continuar" en vez de saltar
  * directo a ella: redirigir automaticamente dejaria el selector inalcanzable
  * para quien ya entro una vez, y esta pantalla es tambien la que tiene que
  * posicionar en buscadores.
@@ -35,8 +34,7 @@ import TarjetaCarrera from './TarjetaCarrera'
  */
 function SelectorCarrera({ alElegir }) {
   const { tema, alternarTema } = useTema()
-  const ultimaSlug = ultimaCarrera()
-  const ultima = CARRERAS.find((c) => c.slug === ultimaSlug) ?? null
+  const ultima = ultimaCarrera()
   const avances = useAvancePortada(CARRERAS)
 
   return (
@@ -138,18 +136,6 @@ function SelectorCarrera({ alElegir }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
-            {/* En el escritorio, Continuar va aqui arriba: no suma alto y la
-                portada sigue cabiendo entera en un portatil. */}
-            {ultima && (
-              <FilaContinuar
-                forma="pastilla"
-                carrera={ultima}
-                tema={tema}
-                avance={avances[ultima.slug]?.porcentaje}
-                alElegir={alElegir}
-                className="hidden sm:flex"
-              />
-            )}
             {/* Redondo y con aro, como la X de la ficha y el boton de
                 planificar: los botones sueltos de la aplicacion son uno. */}
             <button
@@ -167,19 +153,6 @@ function SelectorCarrera({ alElegir }) {
             </button>
           </div>
         </header>
-
-        {/* En el telefono, Continuar es la primera fila, a lo ancho: es lo
-            que mas se toca y ahi llega el pulgar sin buscar. */}
-        {ultima && (
-          <FilaContinuar
-            forma="fila"
-            carrera={ultima}
-            tema={tema}
-            avance={avances[ultima.slug]?.porcentaje}
-            alElegir={alElegir}
-            className="mt-6 sm:hidden"
-          />
-        )}
 
         {/* Esta frase estaba a la vista y ocupaba una banda entera que las
             tarjetas aprovechan mejor. No se borra, se esconde: sigue siendo
@@ -200,14 +173,15 @@ function SelectorCarrera({ alElegir }) {
         {/* Tres columnas y no cuatro: son nueve carreras, asi que 3x3 cierra
             exacto. Con cuatro la ultima fila se quedaba con una tarjeta sola
             y la cuadricula parecia rota por abajo. */}
-        <div className="rejilla-carreras mt-4 mb-10 grid grid-cols-1 gap-2 sm:mt-6 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
+        <div className="rejilla-carreras mt-6 mb-10 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
           {CARRERAS.map((carrera, indice) => (
             <TarjetaCarrera
               key={carrera.slug}
               carrera={carrera}
               tema={tema}
               indice={indice}
-              hechas={avances[carrera.slug]?.porSemestre}
+              hechas={avances[carrera.slug]}
+              esUltima={carrera.slug === ultima}
               alElegir={alElegir}
             />
           ))}
