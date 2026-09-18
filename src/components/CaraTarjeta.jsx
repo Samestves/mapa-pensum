@@ -1,6 +1,5 @@
 import { NODO, TEXTO } from '../layout/constantes'
 import { ASPECTO } from '../theme/situacion'
-import { FormaSituacion } from './IconoSituacion'
 
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
@@ -10,48 +9,49 @@ const SUAVE =
  * La usan la materia obligatoria y la casilla de electiva ya llena, que por
  * eso se ven exactamente iguales.
  *
- *   0713632            Inscribible ◉      codigo | estado, palabra e icono
+ *   0713632                DISPONIBLE     codigo | estado
  *   Teoria de Sistemas                    nombre, protagonista
  *   ● 2 UC                                area en un punto y UC
  *
- * El estado vive en UN sitio, arriba a la derecha. Estuvo repartido: el check
- * y el candado arriba y las pastillas "Cursando", "Inscribible" y "Proximo"
- * abajo, con lo que habia que mirar dos esquinas para saber lo mismo y la
- * fila de abajo competia con las UC. Ahora la esquina dice que es y la fila
- * de abajo solo cuanto pesa.
+ * Dos voces que no se mezclan: la que nombra, en Jost fina, y la que mide o
+ * se copia -codigo y UC-, en letra de maquina. El estado es una sola palabra
+ * en mayusculas muy espaciadas, sin icono ni pastilla: a ese tamaño y con ese
+ * aire se lee como un rotulo, y el color del borde ya dice lo mismo desde
+ * lejos, cuando la palabra ya no se alcanza a leer.
+ *
+ * El filo con degradado de la disponible y su halo quieto se fueron. Eran luz
+ * puesta encima; ahora la disponible es simplemente la de borde mas claro, y
+ * lo unico que brilla en el mapa es lo que acaba de cambiar.
  */
 function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado, resaltado }) {
   const a = ASPECTO[situacion]
-  const { ancho, alto, radio } = NODO
+  const { ancho, alto, radio, padIzq, padDer } = NODO
 
   const borde = seleccionado || resaltado ? a.fuerte : a.borde
-  const grosor = seleccionado ? a.grosor + 1 : a.grosor
+  const grosor = seleccionado ? a.grosor + 0.75 : a.grosor
 
   // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
   const primeraLinea = TEXTO.centroNombre - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
 
-  const ICONO = 14
-  const xIcono = ancho - 14 - ICONO
+  /* El espaciado de las mayusculas se añade tambien detras de la ultima
+     letra: sin esta correccion la palabra quedaba despegada del borde
+     derecho, mas adentro que el codigo del izquierdo. */
+  const espaciadoRotulo = 0.22
+  const xRotulo = ancho - padDer + TEXTO.rotulo * espaciadoRotulo
 
   return (
     <>
-      {/* Halo quieto y muy tenue: casi no se nota de cerca, pero con el mapa
-          entero en un telefono, donde el filo ya no se distingue, sigue
-          separando la tarjeta del lienzo. */}
-      {(a.brilla || seleccionado) && (
+      {/* Solo la seleccionada lleva aura: es la unica que necesita
+          separarse del resto. */}
+      {seleccionado && (
         <rect
-          x={-3}
-          y={-3}
-          width={ancho + 6}
-          height={alto + 6}
-          rx={radio + 3}
+          x={-4}
+          y={-4}
+          width={ancho + 8}
+          height={alto + 8}
+          rx={radio + 4}
           fill="none"
-          style={{
-            stroke: a.fuerte,
-            strokeOpacity: seleccionado ? 0.38 : 0.09,
-            strokeWidth: 3,
-            transition: SUAVE,
-          }}
+          style={{ stroke: a.fuerte, strokeOpacity: 0.3, strokeWidth: 2, transition: SUAVE }}
         />
       )}
 
@@ -62,70 +62,54 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
 
-      {/* El filo de la marca: la misma luz que se enciende arriba a la
-          izquierda y se apaga por el resto en la cajita del logo y en el aviso
-          de instalar. Quieto. Tuvo encima una luz que daba la vuelta al
-          contorno, y con varias inscribibles en pantalla eran varias lineas
-          moviendose en la periferia de la vista: el ojo se va a lo que se
-          mueve, y se iba ahi en vez de al nombre. */}
-      {a.brilla && (
-        <rect
-          width={ancho}
-          height={alto}
-          rx={radio}
-          fill="none"
-          stroke="url(#filo-inscribible)"
-          strokeWidth={1.25}
-        />
-      )}
-
       <text
-        x={NODO.padIzq}
-        y={24}
-        fontSize={9.5}
+        x={padIzq}
+        y={TEXTO.lineaSuperior}
+        fontSize={TEXTO.codigo}
         fill="var(--sit-codigo)"
-        className="font-mono tracking-wide"
+        className="font-dato"
+        style={{ fontWeight: 300, letterSpacing: '0.04em' }}
       >
         {codigo}
       </text>
 
-      {/* Estado: palabra y, pegado a ella, su icono */}
       {a.marca.texto && (
         <text
-          x={xIcono - 6}
-          y={24}
+          x={xRotulo}
+          y={TEXTO.lineaSuperior}
           textAnchor="end"
-          fontSize={9.5}
-          className="font-semibold"
-          style={{ fill: a.marca.color, transition: 'fill 280ms ease' }}
+          fontSize={TEXTO.rotulo}
+          style={{
+            fill: a.marca.color,
+            fontWeight: 460,
+            letterSpacing: `${espaciadoRotulo}em`,
+            transition: 'fill 280ms ease',
+          }}
         >
-          {a.marca.texto}
+          {a.marca.texto.toUpperCase()}
         </text>
       )}
-      <g transform={`translate(${xIcono}, 13.5)`}>
-        <FormaSituacion situacion={situacion} color={a.marca.color} />
-      </g>
 
       {lineasNombre.map((linea, i) => (
         <text
           key={i}
-          x={NODO.padIzq}
+          x={padIzq}
           y={primeraLinea + i * TEXTO.altoLinea}
           fontSize={TEXTO.nombre}
-          className="font-semibold"
-          style={{ fill: a.nombre, transition: 'fill 280ms ease' }}
+          style={{ fill: a.nombre, fontWeight: 380, transition: 'fill 280ms ease' }}
         >
           {linea}
         </text>
       ))}
 
-      <circle cx={NODO.padIzq + 3} cy={alto - 15} r={3} fill={acento} />
+      <circle cx={padIzq + 3} cy={alto - 16} r={3} fill={acento} />
       <text
-        x={NODO.padIzq + 11}
-        y={alto - 11.5}
-        fontSize={9.5}
+        x={padIzq + 12}
+        y={alto - 12.5}
+        fontSize={TEXTO.meta}
         fill="var(--sit-codigo)"
-        className="font-mono tabular-nums"
+        className="font-dato tabular-nums"
+        style={{ fontWeight: 300 }}
       >
         {uc} UC
       </text>

@@ -6,12 +6,13 @@ import { construirRelaciones } from './relaciones'
 // proposito: medir en el DOM haria que el layout dependiera de cuando se monta
 // el componente. Asi el resultado es identico en cada recarga.
 //
-// Depende de la fuente, y hay que revisarlo cada vez que se cambia. Era 0,53,
-// calibrado para Manrope y Geist. Con Inter, medido en SVG sobre los 736
-// nombres de las nueve carreras en seminegrita: a 0,53 dos lineas se salian
-// de la tarjeta -"Recuperación de Áreas Degradadas" media 190 px donde caben
-// 188-; a 0,55 no se sale ninguna y la peor mide 181.
-const FACTOR_CARACTER = 0.55
+// Depende de la fuente, y hay que revisarlo cada vez que se cambia. Fue 0,53
+// con Manrope y Geist, y 0,55 con Inter en seminegrita. Con Jost a peso 380 y
+// 14 px, medido con canvas sobre los 498 nombres distintos de las nueve
+// carreras, electivas incluidas: la media real es 0,44, pero a 0,46 dos
+// lineas se salian de los 190 px utiles. A 0,50 no se sale ninguna, la peor
+// mide 181 y solo un nombre necesita tres lineas.
+const FACTOR_CARACTER = 0.5
 
 function anchoAproximado(texto, fontSize) {
   return texto.length * fontSize * FACTOR_CARACTER

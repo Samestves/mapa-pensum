@@ -95,7 +95,7 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
             y={21}
             width={30}
             height={30}
-            rx={9}
+            rx={6}
             fill={acento}
             fillOpacity={0.08}
             stroke={acento}
@@ -108,7 +108,7 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
             width={16}
             height={16}
             color="var(--tinta-suave)"
-            strokeWidth={2.2}
+            strokeWidth={1.6}
             aria-hidden="true"
           />
 
@@ -123,7 +123,7 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
             textAnchor="middle"
             fontSize={TEXTO.nombre}
             fill="var(--tinta-suave)"
-            className="font-semibold"
+            style={{ fontWeight: 380 }}
           >
             {nombre}
           </text>

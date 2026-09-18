@@ -7,8 +7,8 @@ import CaraTarjeta from './CaraTarjeta'
 
 /**
  * Una materia del mapa. Lo que se ve lo pone CaraTarjeta; aqui solo vive la
- * interaccion y los dos avisos de un instante: el destello de la materia que
- * se acaba de abrir y el anillo de la que se acaba de tocar.
+ * interaccion y los dos avisos de un instante: el pulso de la materia que se
+ * acaba de abrir y el anillo de la que se acaba de tocar.
  *
  * Los dos se montan solo mientras duran y se desmontan solos. Lo que ya no
  * hay es nada que se mueva mientras nadie toca el mapa: el borde que
@@ -64,6 +64,8 @@ function NodoAsignatura({
         resaltado={resaltado}
       />
 
+      {/* La que se acaba de abrir se despierta: su contorno se ensancha y se
+          apaga, una vez, cuando la luz del cable llega a ella. */}
       {destellando && (
         <rect
           key={claveDestello}
@@ -71,7 +73,9 @@ function NodoAsignatura({
           height={NODO.alto}
           rx={NODO.radio}
           className="destello"
-          fill="var(--tinta)"
+          fill="none"
+          stroke="var(--sit-inscribible-luz)"
+          strokeWidth={1.5}
         />
       )}
 

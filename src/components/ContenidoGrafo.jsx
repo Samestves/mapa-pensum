@@ -207,10 +207,9 @@ function CabeceraFranja({ fila }) {
       <text
         x={x}
         y={y + CABECERA.titulo}
-        fontSize="12"
+        fontSize="11.5"
         fill="var(--tinta)"
-        className="font-semibold"
-        style={espaciado(0.24)}
+        style={{ ...espaciado(0.3), fontWeight: 500 }}
       >
         {titulo.toUpperCase()}
       </text>
@@ -219,8 +218,8 @@ function CabeceraFranja({ fila }) {
         y={y + CABECERA.datos}
         fontSize="10"
         fill="var(--tinta-tenue)"
-        className="font-medium tabular-nums"
-        style={espaciado(0.14)}
+        className="font-dato tabular-nums"
+        style={{ ...espaciado(0.04), fontWeight: 300 }}
       >
         {datos.join(' · ')}
       </text>
@@ -228,10 +227,11 @@ function CabeceraFranja({ fila }) {
   )
 }
 
-/* Ancho estimado de un texto en Inter, para colocar lo que va a su lado. Es
-   la misma idea que el reparto de nombres en tarjetas: medir en el DOM ataria
+/* Ancho estimado de una cifra en Plex Mono, para colocar lo que va a su
+   lado: en una letra de maquina cada caracter mide 0,6 de su cuerpo. Es la
+   misma idea que el reparto de nombres en tarjetas: medir en el DOM ataria
    la posicion al momento de montar. */
-const anchoTexto = (texto, tamano) => texto.length * tamano * 0.58
+const anchoTexto = (texto, tamano) => texto.length * tamano * 0.6
 
 /* La rejilla de la cabecera, en un solo sitio: todo se coloca contra estas
    lineas base y contra los dos bordes de la columna, nunca a continuacion de
@@ -304,10 +304,10 @@ function CabeceraSemestre({ columna, datos }) {
       <text
         x={x}
         y={y + CABECERA.titulo}
-        fontSize="12"
+        fontSize="11.5"
         fill="var(--tinta)"
-        className="font-semibold tabular-nums"
-        style={espaciado(0.24)}
+        className="tabular-nums"
+        style={{ ...espaciado(0.3), fontWeight: 500 }}
       >
         SEMESTRE {String(semestre).padStart(2, '0')}
       </text>
@@ -317,8 +317,8 @@ function CabeceraSemestre({ columna, datos }) {
         y={y + CABECERA.datos}
         fontSize="10"
         fill="var(--tinta-tenue)"
-        className="font-medium tabular-nums"
-        style={espaciado(0.14)}
+        className="font-dato tabular-nums"
+        style={{ ...espaciado(0.04), fontWeight: 300 }}
       >
         {datos?.uc ?? 0} UC · {total} {total === 1 ? 'MATERIA' : 'MATERIAS'}
       </text>
@@ -329,16 +329,17 @@ function CabeceraSemestre({ columna, datos }) {
         x={der}
         y={y + CABECERA.datos}
         textAnchor="end"
-        fontSize="30"
-        className="font-light tabular-nums"
+        fontSize="32"
+        className="tabular-nums"
         style={{
           fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta)',
-          letterSpacing: '-0.03em',
+          fontWeight: 200,
+          letterSpacing: '-0.02em',
           transition: 'fill 240ms ease',
         }}
       >
         {porcentaje}
-        <tspan dx="1" fontSize="15" fill="var(--tinta-tenue)">
+        <tspan dx="2" fontSize="14" fill="var(--tinta-tenue)" style={{ fontWeight: 300 }}>
           %
         </tspan>
       </text>
@@ -372,10 +373,11 @@ function CabeceraSemestre({ columna, datos }) {
       <text
         x={x}
         y={y + CABECERA.pie}
-        fontSize="10"
-        className="font-semibold tabular-nums"
+        fontSize="9.5"
+        className="tabular-nums"
         style={{
-          ...espaciado(0.12),
+          ...espaciado(0.22),
+          fontWeight: 500,
           fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta-tenue)',
         }}
       >
@@ -393,8 +395,8 @@ function CabeceraSemestre({ columna, datos }) {
               x={e.x + 16}
               y={y + CABECERA.pie}
               fontSize="11"
-              className="font-semibold tabular-nums"
-              style={{ fill: a.marca.color }}
+              className="font-dato tabular-nums"
+              style={{ fill: a.marca.color, fontWeight: 400 }}
             >
               {e.n}
             </text>

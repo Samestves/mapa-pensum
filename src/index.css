@@ -2,6 +2,11 @@
 /* Inter con el eje de tamaño optico: ver --font-sans */
 @import '@fontsource-variable/inter/opsz.css';
 @import '@fontsource-variable/jetbrains-mono';
+/* Las dos del mapa: Jost, geometrica y fina, para nombres y rotulos, e IBM
+   Plex Mono, de maquina, para codigos y cifras. Ver --font-ui. */
+@import '@fontsource-variable/jost';
+@import '@fontsource/ibm-plex-mono/300.css';
+@import '@fontsource/ibm-plex-mono/400.css';
 
 /* ------------------------------------------------------------------
    Tema oscuro (por defecto). Todo el color vive en estas variables:
@@ -56,7 +61,7 @@
      solo color, el mismo del filo quieto, de la luz que da la vuelta y del
      icono de estado. */
   --sit-inscribible-luz: color-mix(in oklab, #ffffff 70%, var(--area-sistemas));
-  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 22%, transparent);
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 55%, transparent);
   --sit-proxima-fondo: var(--nodo);
   --sit-proxima-borde: color-mix(in oklab, var(--tinta) 24%, transparent);
   --sit-proxima-nombre: var(--tinta-suave);
@@ -131,7 +136,7 @@
   --sit-inscribible-fondo: #ffffff;
   /* En claro la luz no puede ser blanca: se usa el azul profundo de la casa */
   --sit-inscribible-luz: #2f5bd8;
-  --sit-inscribible-borde: #b7c6e4;
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 50%, transparent);
   --sit-proxima-fondo: #ffffff;
   --sit-proxima-borde: #b6c2d2;
   --sit-proxima-nombre: #22324a;
@@ -192,6 +197,14 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
   --font-display: var(--font-sans);
+
+  /* El lenguaje del mapa: poca tinta, mucho aire. Jost en peso fino para lo
+     que se lee -el nombre de cada materia- y en mayusculas espaciadas para lo
+     que se señala -SEMESTRE 04, DISPONIBLE-; Plex Mono para lo que se cuenta
+     o se copia -codigos, UC-. Dos voces que no se confunden: la que nombra y
+     la que mide. */
+  --font-ui: 'Jost Variable', 'Futura', 'Century Gothic', ui-sans-serif, system-ui, sans-serif;
+  --font-dato: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 html,
@@ -464,23 +477,32 @@ body {
   animation: descarga 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
 }
 
-/* Destello de la materia que se acaba de abrir. Espera a que la luz llegue
-   por el cable: encenderse antes que el cable se ve mal. Va en tinta y flojo,
-   porque la tarjeta ya pasa a ser la mas brillante del mapa por si sola. */
+/* La materia que se acaba de abrir se despierta: su contorno sale hacia
+   fuera y se apaga, una sola vez. Espera a que la luz llegue por el cable:
+   encenderse antes que el cable se ve mal. `both` la deja invisible durante
+   esa espera; con `forwards` el contorno se veia quieto hasta que arrancaba.
+
+   Crece mas en alto que en ancho a proposito: la tarjeta es apaisada, y
+   escalando igual en los dos ejes el pulso casi no asomaba por arriba y por
+   abajo. */
 @keyframes destello {
   0% {
     opacity: 0;
+    transform: scale(1, 1);
   }
-  30% {
-    opacity: 0.22;
+  18% {
+    opacity: 0.8;
   }
   100% {
     opacity: 0;
+    transform: scale(1.06, 1.28);
   }
 }
 
 .destello {
-  animation: destello 800ms ease-out 600ms forwards;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 600ms both;
 }
 
 /* Anillo que se expande en la tarjeta que se acaba de tocar */

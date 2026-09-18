@@ -4,11 +4,11 @@
 export const NODO = {
   ancho: 224,
   alto: 96,
-  radio: 14,
-  padIzq: 20, // deja sitio a la barra de acento del area
+  /* Esquina casi recta. Con 14 la tarjeta se leia como un boton de telefono;
+     con 7 se lee como una ficha, que es lo que es. */
+  radio: 7,
+  padIzq: 18,
   padDer: 16,
-  // Barra vertical de color que identifica el area
-  barra: { x: 8, ancho: 3, y: 14, alto: 68 },
 }
 
 // Ancho util para el texto dentro del nodo
@@ -43,12 +43,16 @@ export const ALTO_ENCABEZADO = 84
 
 export const TEXTO = {
   codigo: 10,
-  nombre: 12.5,
-  meta: 9.5,
-  altoLinea: 14,
+  // DISPONIBLE, CURSANDO: pequeño y muy espaciado, se lee como rotulo
+  rotulo: 8.5,
+  nombre: 14,
+  meta: 10,
+  altoLinea: 16.5,
   maxLineas: 3,
+  // Linea base de la fila de arriba: codigo y estado
+  lineaSuperior: 24,
   // Centro vertical del bloque de nombre dentro del nodo
-  centroNombre: 56,
+  centroNombre: 55,
 }
 
 // El minimo es muy bajo a proposito: en un movil el mapa completo solo cabe

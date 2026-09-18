@@ -10,9 +10,9 @@ import { SITUACION } from '../layout/situacion'
  * 9 % de verde sobre blanco es blanco.
  *
  * `borde` es el de reposo y `fuerte` el que toma al señalarla o seleccionarla.
- * `marca` es el icono de estado de la esquina y la palabra que lo acompaña:
- * la aprobada y la lejana no llevan palabra, porque un check y un candado se
- * explican solos y son las dos que menos atencion necesitan.
+ * `marca` es el color del estado y la palabra de la esquina de la tarjeta.
+ * La lejana no lleva palabra: es la mayoria del mapa y la que menos atencion
+ * necesita, y rotularla llenaba el mapa de ruido.
  */
 export const ASPECTO = {
   [SITUACION.HECHA]: {
@@ -21,7 +21,7 @@ export const ASPECTO = {
     fuerte: 'var(--estado-aprobada)',
     grosor: 1,
     nombre: 'var(--sit-hecha-nombre)',
-    marca: { color: 'var(--estado-aprobada)', texto: null },
+    marca: { color: 'var(--estado-aprobada)', texto: 'Aprobada' },
   },
   [SITUACION.CURSANDO]: {
     fondo: 'var(--sit-cursando-fondo)',
@@ -31,17 +31,16 @@ export const ASPECTO = {
     nombre: 'var(--tinta)',
     marca: { color: 'var(--sit-cursando-texto)', texto: 'Cursando' },
   },
-  /* La inscribible lleva el filo de luz de la marca -el mismo borde que
-     tienen la cajita del logo y el aviso de instalar- y una luz fria que
-     recorre su contorno. Ver CaraTarjeta. */
+  /* La inscribible se distingue por el borde mas claro del mapa y la
+     palabra DISPONIBLE, la misma que usa la lista. Antes decia «Inscribible»
+     en el mapa y «Disponible» en la lista: dos nombres para lo mismo. */
   [SITUACION.INSCRIBIBLE]: {
     fondo: 'var(--sit-inscribible-fondo)',
     borde: 'var(--sit-inscribible-borde)',
     fuerte: 'var(--sit-inscribible-luz)',
     grosor: 1.25,
     nombre: 'var(--tinta)',
-    brilla: true,
-    marca: { color: 'var(--sit-inscribible-luz)', texto: 'Inscribible' },
+    marca: { color: 'var(--sit-inscribible-luz)', texto: 'Disponible' },
   },
   [SITUACION.PROXIMA]: {
     fondo: 'var(--sit-proxima-fondo)',
@@ -49,7 +48,7 @@ export const ASPECTO = {
     fuerte: 'var(--sit-resalte)',
     grosor: 1,
     nombre: 'var(--sit-proxima-nombre)',
-    marca: { color: 'var(--sit-proxima-nombre)', texto: 'Próximo' },
+    marca: { color: 'var(--sit-proxima-nombre)', texto: 'Próxima' },
   },
   [SITUACION.LEJANA]: {
     fondo: 'var(--sit-lejana-fondo)',

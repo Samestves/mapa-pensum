@@ -80,11 +80,12 @@ const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png'])
  * De 172 kB de fuentes a 64. En un telefono con datos caros, 108 kB de
  * alfabetos que no se van a dibujar es descarga pagada por nada.
  */
-/* wght es JetBrains Mono. opsz es Inter, que se carga con el eje de tamaño
-   optico y por eso su archivo se llama distinto: filtrando solo por wght,
-   quedaba fuera de la precarga y sin conexion la app entera salia en la
-   letra del sistema. */
-const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz)-normal/
+/* wght es JetBrains Mono y Jost. opsz es Inter, que se carga con el eje de
+   tamaño optico y por eso su archivo se llama distinto: filtrando solo por
+   wght, quedaba fuera de la precarga y sin conexion la app entera salia en la
+   letra del sistema. 300 y 400 son IBM Plex Mono, que no es variable y viene
+   en un archivo por peso. */
+const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz|300|400)-normal/
 
 /* El panel de uso es para una sola persona y se entra a mano por /panel.
    Precacharlo seria hacer que los nueve mil estudiantes se bajen -y guarden

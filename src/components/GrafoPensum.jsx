@@ -195,7 +195,7 @@ function GrafoPensum({
           <svg
             width="100%"
             height="100%"
-            className={enGesto ? 'lienzo-en-gesto' : undefined}
+            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
             style={{ textRendering: 'geometricPrecision' }}
           >
             {/* Oculto hasta que la vista se encaja. El primer fotograma tras
