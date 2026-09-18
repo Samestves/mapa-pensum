@@ -15,7 +15,6 @@ import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import PanelAvisos from './AvisosCarrera'
 import BarraInferior from './BarraInferior'
-import { avanceDe } from '../data/avance'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
@@ -489,7 +488,6 @@ function VistaCarrera({ carrera, alVolver }) {
         vista={vista}
         alCambiar={setVista}
         alPlanificar={() => setPlanAbierto(true)}
-        avance={avanceDe(progreso)}
       />
     </div>
   )

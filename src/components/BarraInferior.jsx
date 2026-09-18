@@ -1,10 +1,6 @@
 import { GraduationCap } from 'lucide-react'
 import { VISTAS, indiceDeVista } from '../data/vistas'
 
-/* El aro del boton de planificar: radio y largo de su circunferencia */
-const RADIO_ARO = 23
-const LARGO_ARO = 2 * Math.PI * RADIO_ARO
-
 /**
  * Las tres vistas, abajo, en el telefono.
  *
@@ -16,24 +12,25 @@ const LARGO_ARO = 2 * Math.PI * RADIO_ARO
  *
  * Es una capsula de cristal que flota sobre el contenido. Por dentro habla el
  * mismo idioma que el mapa: los nombres en mayusculas espaciadas y la vista
- * elegida encendida, con una raya de luz debajo, como se marca lo elegido en
- * un menu de juego; las otras quedan apagadas, sin caja ni fondo propio. La
- * gota de cristal sigue ahi, y la raya viaja con ella.
+ * elegida encendida sobre su gota de cristal, como se marca lo elegido en un
+ * menu de juego; las otras quedan apagadas, sin caja ni fondo propio.
  *
  * Dos piezas y no una. Las tres vistas son SITIOS -cambian lo que llena la
  * pantalla- y van juntas en la capsula. Planificar es una ACCION -abre un
- * panel encima y te deja donde estabas- y va aparte, en su propio circulo,
- * con un aro que dice cuanto llevas del titulo: es el boton de planear el
- * grado, y lo primero que quieres saber al pulsarlo es cuanto te falta.
+ * panel encima y te deja donde estabas- y va aparte, en su propio circulo.
+ *
+ * Probe dos adornos mas y se fueron: una raya de luz verde bajo la vista
+ * elegida y un aro de avance alrededor del boton de planificar. La gota ya
+ * dice donde estas, y el avance ya lo dice el anillo de la cabecera.
  *
  * Sobre el coste: el desenfoque de fondo es lo caro del cristal, asi que solo
  * lo llevan estas dos superficies, que suman poco area. Nada se anima en
- * bucle; la lente y la raya solo se mueven al cambiar de vista.
+ * bucle; la lente solo se mueve al cambiar de vista.
  *
  * El area de toque de cada pestaña es su tercio entero de la capsula, unos
  * 80 x 46 px: por encima de los 44 que se consideran el minimo.
  */
-function BarraInferior({ vista, alCambiar, alPlanificar, avance = 0 }) {
+function BarraInferior({ vista, alCambiar, alPlanificar }) {
   const indice = indiceDeVista(vista)
 
   const cambiar = (id) => {
@@ -66,9 +63,9 @@ function BarraInferior({ vista, alCambiar, alPlanificar, avance = 0 }) {
       className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
     >
       <div className="barra-cristal pointer-events-auto relative grid h-[56px] w-[252px] grid-cols-3 rounded-full p-1">
-        {/* La lente: una gota de cristal detras de la vista elegida, con su
-            raya de luz debajo. Se desliza hasta la nueva con un rebote corto
-            al llegar, y es lo unico de la barra que se mueve. */}
+        {/* La lente: una gota de cristal detras de la vista elegida. Se
+            desliza hasta la nueva con un rebote corto al llegar, y es lo
+            unico de la barra que se mueve. */}
         <span
           aria-hidden="true"
           className="lente-cristal pointer-events-none absolute inset-y-1 left-1 rounded-full"
@@ -113,29 +110,10 @@ function BarraInferior({ vista, alCambiar, alPlanificar, avance = 0 }) {
       <button
         type="button"
         onClick={alPlanificar}
-        title={`Planificar mi ruta hasta el grado · llevas el ${Math.round(avance)}%`}
-        aria-label={`Planificar mi ruta hasta el grado. Llevas el ${Math.round(avance)} por ciento del título`}
+        title="Planificar mi ruta hasta el grado y exportarla"
+        aria-label="Planificar mi ruta hasta el grado y exportarla"
         className="barra-cristal group pointer-events-auto relative grid size-[56px] shrink-0 place-items-center rounded-full text-tinta-suave"
       >
-        {/* Cuanto llevas del titulo, en un aro fino por dentro del borde:
-            el mismo verde de lo aprobado en el mapa. */}
-        <svg
-          viewBox="0 0 52 52"
-          aria-hidden="true"
-          className="aro-plan pointer-events-none absolute top-[2px] left-[2px] size-[52px] -rotate-90"
-        >
-          <circle cx="26" cy="26" r={RADIO_ARO} className="aro-plan-pista" />
-          <circle
-            cx="26"
-            cy="26"
-            r={RADIO_ARO}
-            className="aro-plan-arco"
-            style={{
-              strokeDasharray: LARGO_ARO,
-              strokeDashoffset: LARGO_ARO * (1 - Math.min(Math.max(avance, 0), 100) / 100),
-            }}
-          />
-        </svg>
         <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
           <GraduationCap size={19} strokeWidth={1.5} />
         </span>

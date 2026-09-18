@@ -1856,22 +1856,6 @@ body {
     0 3px 10px -4px rgb(12 23 37 / 0.22);
 }
 
-/* La raya de luz de la vista elegida: fina, verde y con su resplandor, bajo
-   el nombre, como se marca lo elegido en un menu de juego. Va dentro de la
-   lente, asi que viaja con ella al cambiar de vista. */
-.lente-cristal::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 3px;
-  width: 16px;
-  height: 1.5px;
-  margin-left: -8px;
-  border-radius: 1px;
-  background: var(--estado-aprobada);
-  box-shadow: 0 0 8px 1px color-mix(in oklab, var(--estado-aprobada) 55%, transparent);
-}
-
 /* Los nombres de las vistas: mayusculas espaciadas, apagadas. La elegida se
    enciende y se abre un poco, el mismo gesto del cartel de capitulo. El
    margen negativo compensa el espacio que el tracking deja detras de la
@@ -1907,22 +1891,6 @@ body {
     opacity: 1;
     transform: none;
   }
-}
-
-/* El aro de avance del boton de planificar. Fino, por dentro del borde del
-   cristal, en el verde de lo aprobado; la pista, casi invisible. Extremos
-   rectos: con 0 % un extremo redondo dejaria un punto suelto. */
-.aro-plan-pista {
-  fill: none;
-  stroke: color-mix(in oklab, var(--tinta) 10%, transparent);
-  stroke-width: 1.5;
-}
-
-.aro-plan-arco {
-  fill: none;
-  stroke: var(--estado-aprobada);
-  stroke-width: 1.5;
-  transition: stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.2, 1);
 }
 
 /* Sin desenfoque disponible, o si el sistema pide menos transparencia, el
