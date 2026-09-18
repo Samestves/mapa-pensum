@@ -65,7 +65,10 @@ describe('lo que se acepta', () => {
   })
 
   test('un cierre sin nada que contar no se guarda', () => {
-    assert.equal(validarLatido({ tipo: 'cierre', id: 'abcdefgh1234', carreras: [], materias: [] }), null)
+    assert.equal(
+      validarLatido({ tipo: 'cierre', id: 'abcdefgh1234', carreras: [], materias: [] }),
+      null,
+    )
   })
 })
 
@@ -106,7 +109,15 @@ describe('los comandos', () => {
   test('los minutos caen en su tramo y las marcas se suman', () => {
     const tramos = (minutos) =>
       comandosDe(
-        { tipo: 'cierre', id: 'abcdefgh1234', carreras: [], vistas: ['mapa'], materias: [], marcas: 3, minutos },
+        {
+          tipo: 'cierre',
+          id: 'abcdefgh1234',
+          carreras: [],
+          vistas: ['mapa'],
+          materias: [],
+          marcas: 3,
+          minutos,
+        },
         '2026-09-15',
       ).filter((c) => c[1] === 'mp:duracion:2026-09')
     assert.equal(tramos(0)[0][2], '0-1')
@@ -115,13 +126,23 @@ describe('los comandos', () => {
     assert.equal(tramos(45)[0][2], '10+')
 
     const conMarcas = comandosDe(
-      { tipo: 'cierre', id: 'abcdefgh1234', carreras: [], vistas: [], materias: [], marcas: 3, minutos: 1 },
+      {
+        tipo: 'cierre',
+        id: 'abcdefgh1234',
+        carreras: [],
+        vistas: [],
+        materias: [],
+        marcas: 3,
+        minutos: 1,
+      },
       '2026-09-15',
     )
-    assert.ok(conMarcas.some((c) => c[1] === 'mp:acciones:2026-09' && c[2] === 'marcas' && c[3] === '3'))
+    assert.ok(
+      conMarcas.some((c) => c[1] === 'mp:acciones:2026-09' && c[2] === 'marcas' && c[3] === '3'),
+    )
   })
 
-  test('el cierre suma por mes, y el calor por carrera con el codigo suelto', () => {
+  test('el cierre suma por mes y por dia, el calor por carrera y la ficha del aparato', () => {
     const comandos = comandosDe(
       {
         tipo: 'cierre',
@@ -136,9 +157,109 @@ describe('los comandos', () => {
     )
     assert.deepEqual(comandos, [
       ['HINCRBY', 'mp:carreras:2026-09', 'ingenieria-de-sistemas', '1'],
+      ['INCR', 'mp:ca:ingenieria-de-sistemas:2026-09-15'],
+      ['PFADD', 'mp:cu:ingenieria-de-sistemas:2026-09-15', 'abcdefgh1234'],
       ['HINCRBY', 'mp:vistas:2026-09', 'lista', '1'],
       ['ZINCRBY', 'mp:calor:ingenieria-de-sistemas', '1', '0081814'],
       ['HINCRBY', 'mp:duracion:2026-09', '3-10', '1'],
+      ['HINCRBY', 'mp:ap:carreras', 'abcdefgh1234|ingenieria-de-sistemas', '1'],
+      ['HINCRBY', 'mp:ap:minutos', 'abcdefgh1234', '4'],
     ])
+  })
+
+  test('las marcas por carrera se suman a su carrera y al total', () => {
+    const latido = validarLatido({
+      tipo: 'cierre',
+      id: 'abcdefgh1234',
+      carreras: ['ingenieria-de-sistemas'],
+      marcas: { 'ingenieria-de-sistemas': 5, 'NO VALE': 3 },
+    })
+    assert.equal(latido.marcas, 5)
+    assert.deepEqual(latido.marcasPor, { 'ingenieria-de-sistemas': 5 })
+    const comandos = comandosDe({ ...latido, minutos: 0 }, '2026-09-15')
+    assert.ok(
+      comandos.some(
+        (c) => c[1] === 'mp:cm:2026-09' && c[2] === 'ingenieria-de-sistemas' && c[3] === '5',
+      ),
+    )
+    assert.ok(comandos.some((c) => c[1] === 'mp:ap:marcas' && c[3] === '5'))
+  })
+})
+
+describe('la ficha de cada aparato', () => {
+  const aparato = { tipo: 'telefono', so: 'Android', modelo: 'Galaxy A54', pais: 'VE' }
+  const inicio = {
+    tipo: 'inicio',
+    id: 'abcdefgh1234',
+    nuevo: false,
+    pwa: true,
+    movil: true,
+    aparato,
+  }
+  const ahora = Date.parse('2026-09-15T22:00:00Z')
+
+  test('el inicio guarda la ficha, la primera vez, las visitas y el orden por ultima visita', () => {
+    const comandos = comandosDe(inicio, '2026-09-15', 18, ahora)
+    const ficha = comandos.find((c) => c[0] === 'HSET' && c[1] === 'mp:ap')
+    assert.equal(ficha[2], 'abcdefgh1234')
+    assert.deepEqual(JSON.parse(ficha[3]), {
+      ...aparato,
+      pwa: true,
+      ultima: '2026-09-15T22:00:00.000Z',
+    })
+    assert.deepEqual(
+      comandos.find((c) => c[0] === 'HSETNX'),
+      ['HSETNX', 'mp:ap:primera', 'abcdefgh1234', '~2026-09-15T22:00:00.000Z'],
+      'ya tenia identificador: viene de antes, no es nuevo',
+    )
+    const deVerdad = comandosDe({ ...inicio, nuevo: true }, '2026-09-15', 18, ahora)
+    assert.equal(deVerdad.find((c) => c[0] === 'HSETNX')[3], '2026-09-15T22:00:00.000Z')
+    assert.deepEqual(
+      comandos.find((c) => c[1] === 'mp:ap:vistos'),
+      ['ZADD', 'mp:ap:vistos', String(ahora), 'abcdefgh1234'],
+    )
+  })
+
+  test('un aparato del dueño actualiza su ficha y no entra en ningun total', () => {
+    const suyo = validarLatido({ tipo: 'inicio', id: 'abcdefgh1234', yo: true })
+    assert.equal(suyo.yo, true)
+    const comandos = comandosDe({ ...suyo, aparato }, '2026-09-15', 18, ahora)
+    assert.ok(
+      comandos.every((c) => c[1].startsWith('mp:ap')),
+      'solo claves de la ficha',
+    )
+    assert.equal(JSON.parse(comandos.find((c) => c[0] === 'HSET')[3]).yo, true)
+
+    const cierre = comandosDe(
+      {
+        tipo: 'cierre',
+        id: 'abcdefgh1234',
+        yo: true,
+        carreras: ['ingenieria-de-sistemas'],
+        vistas: ['mapa'],
+        materias: ['ingenieria-de-sistemas/0081814'],
+        marcas: 2,
+        minutos: 3,
+      },
+      '2026-09-15',
+    )
+    assert.ok(
+      cierre.every((c) => c[1].startsWith('mp:ap')),
+      'ni calor, ni carreras, ni duracion',
+    )
+  })
+
+  test('la ficha que manda el navegador pasa solo si es un objeto', () => {
+    assert.equal(
+      validarLatido({ tipo: 'inicio', id: 'abcdefgh1234', ficha: 'texto' }).ficha,
+      undefined,
+    )
+    assert.deepEqual(
+      validarLatido({ tipo: 'inicio', id: 'abcdefgh1234', ficha: { zona: 'America/Caracas' } })
+        .ficha,
+      {
+        zona: 'America/Caracas',
+      },
+    )
   })
 })

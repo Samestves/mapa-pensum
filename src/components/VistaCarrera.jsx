@@ -261,13 +261,14 @@ function VistaCarrera({ carrera, alVolver }) {
   const mirar = useCallback((codigo) => anotarMateria(carrera.slug, codigo), [carrera.slug])
 
   /* Marcar es la accion que convierte esto en algo que se usa y no solo se
-     mira, asi que se cuenta. Cuantas, no cuales: ver data/latido.js. */
+     mira, asi que se cuenta. Cuantas y en que carrera, no cuales: ver
+     data/latido.js. */
   const marcarYContar = useCallback(
     (codigo, estado) => {
-      anotarMarca()
+      anotarMarca(carrera.slug)
       marcar(codigo, estado)
     },
-    [marcar],
+    [marcar, carrera.slug],
   )
 
   const alternarSeleccion = useCallback(
