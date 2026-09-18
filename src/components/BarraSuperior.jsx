@@ -2,6 +2,7 @@ import { ArrowLeft, ChevronRight, Moon, Search, Sun } from 'lucide-react'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
+import { avanceDe } from '../data/avance'
 
 /* La forma comun de TODO lo que se pulsa en la cabecera. Vive en una
    constante y no repetida en cada boton porque antes cada uno traia su
@@ -138,11 +139,7 @@ function BarraSuperior({
      cual de los dos es, para que el numero no signifique dos cosas distintas
      sin avisar. */
   const conCreditos = resumen.porcentaje != null
-  const avance = conCreditos
-    ? resumen.porcentaje
-    : resumen.total
-      ? (resumen.aprobadas / resumen.total) * 100
-      : 0
+  const avance = avanceDe(resumen)
   const detalleAvance = conCreditos
     ? `Tu avance: ${Math.round(avance)}% · ${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC. Pulsa para ver el detalle.`
     : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`

@@ -1741,7 +1741,7 @@ body {
 
 @media (max-width: 767.98px) {
   .vista-carrera {
-    --reserva-barra: calc(env(safe-area-inset-bottom) + 80px);
+    --reserva-barra: calc(env(safe-area-inset-bottom) + 82px);
   }
 }
 
@@ -1854,6 +1854,75 @@ body {
     inset 0 1px 0 rgb(255 255 255 / 1),
     inset 0 -1px 1px rgb(12 23 37 / 0.06),
     0 3px 10px -4px rgb(12 23 37 / 0.22);
+}
+
+/* La raya de luz de la vista elegida: fina, verde y con su resplandor, bajo
+   el nombre, como se marca lo elegido en un menu de juego. Va dentro de la
+   lente, asi que viaja con ella al cambiar de vista. */
+.lente-cristal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 16px;
+  height: 1.5px;
+  margin-left: -8px;
+  border-radius: 1px;
+  background: var(--estado-aprobada);
+  box-shadow: 0 0 8px 1px color-mix(in oklab, var(--estado-aprobada) 55%, transparent);
+}
+
+/* Los nombres de las vistas: mayusculas espaciadas, apagadas. La elegida se
+   enciende y se abre un poco, el mismo gesto del cartel de capitulo. El
+   margen negativo compensa el espacio que el tracking deja detras de la
+   ultima letra, para que la palabra siga centrada bajo su icono. */
+.etiqueta-pestana {
+  letter-spacing: 0.14em;
+  margin-right: -0.14em;
+  color: var(--tinta-tenue);
+  transition:
+    letter-spacing 420ms cubic-bezier(0.22, 0.61, 0.2, 1),
+    margin 420ms cubic-bezier(0.22, 0.61, 0.2, 1),
+    color 200ms ease;
+}
+
+.pestana-barra[data-activa='true'] .etiqueta-pestana {
+  letter-spacing: 0.24em;
+  margin-right: -0.24em;
+  color: var(--tinta);
+}
+
+/* El icono de la vista que se acaba de elegir se asienta: sube un poco,
+   crece y se pasa apenas antes de quedarse. */
+.icono-asentado {
+  animation: asentar-icono 460ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+
+@keyframes asentar-icono {
+  from {
+    opacity: 0.5;
+    transform: translateY(3px) scale(0.84);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El aro de avance del boton de planificar. Fino, por dentro del borde del
+   cristal, en el verde de lo aprobado; la pista, casi invisible. Extremos
+   rectos: con 0 % un extremo redondo dejaria un punto suelto. */
+.aro-plan-pista {
+  fill: none;
+  stroke: color-mix(in oklab, var(--tinta) 10%, transparent);
+  stroke-width: 1.5;
+}
+
+.aro-plan-arco {
+  fill: none;
+  stroke: var(--estado-aprobada);
+  stroke-width: 1.5;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.2, 1);
 }
 
 /* Sin desenfoque disponible, o si el sistema pide menos transparencia, el
@@ -2111,6 +2180,7 @@ body {
   .anillo-cambio,
   .aviso-recogida,
   .recogida-saliendo,
+  .icono-asentado,
   .recogida-aro,
   .recogida-tilde,
   .recogida-fila,
