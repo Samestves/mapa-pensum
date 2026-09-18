@@ -97,6 +97,11 @@ const recursos = todos
   .map(aUrl)
   .filter((u) => !FUERA.has(u))
   .filter((u) => !u.endsWith('.woff2') || SUBCONJUNTO_QUE_USAMOS.test(u))
+  /* IBM Plex Mono trae, ademas de cada woff2, su copia en woff: el formato
+     viejo, para navegadores sin woff2. Todo navegador con service worker lee
+     woff2, asi que esas copias no se piden nunca; precachearlas eran diez
+     archivos y unos 130 kB por usuario para nada. */
+  .filter((u) => !u.endsWith('.woff'))
   .filter((u) => !SOLO_PARA_MI.test(u))
   .sort()
 
