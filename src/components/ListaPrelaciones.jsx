@@ -33,7 +33,7 @@ function Fila({ asignatura, situacion, codigo, alIr }) {
       />
       <span
         className={`min-w-0 flex-1 truncate text-[13.5px] ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
-        style={{ fontWeight: 380 }}
+        style={{ fontWeight: 'var(--peso-nombre)' }}
       >
         {asignatura.nombre}
       </span>

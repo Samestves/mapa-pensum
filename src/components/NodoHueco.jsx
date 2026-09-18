@@ -123,7 +123,7 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
             textAnchor="middle"
             fontSize={TEXTO.nombre}
             fill="var(--tinta-suave)"
-            style={{ fontWeight: 380 }}
+            style={{ fontWeight: 'var(--peso-nombre)' }}
           >
             {nombre}
           </text>

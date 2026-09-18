@@ -17,9 +17,17 @@
 
   --lienzo: #05080e;
   --rejilla: #101a28;
-  /* El fondo del mapa. En oscuro es el lienzo de siempre; en claro va un
-     punto mas hondo que el resto de la aplicacion. Ver el tema claro. */
+  /* El fondo del mapa. Hoy es el mismo lienzo en los dos temas; queda como
+     variable aparte para poder separarlos sin tocar el mapa. */
   --lienzo-mapa: var(--lienzo);
+  --sombra-tarjeta: transparent;
+  /* Pesos de la letra del mapa. Van en variables porque cambian con el
+     tema: el mismo trazo se ve mas grueso claro sobre oscuro que oscuro sobre
+     claro -la luz se derrama sobre el negro-, asi que en claro hace falta un
+     punto mas de peso para que se lea igual de firme. */
+  --peso-nombre: 380;
+  --peso-rotulo: 460;
+  --peso-dato: 300;
   --panel: #0a1018;
   --panel-borde: #1b2637;
   --panel-suave: #111b28;
@@ -107,14 +115,7 @@
   color-scheme: light;
 
   --lienzo: #eef1f7;
-  --rejilla: #d0d8e3;
-  /* En claro el mapa era casi blanco sobre casi blanco: las tarjetas son
-     blancas y el lienzo #eef1f7, y las lejanas, en #f4f6fa, se perdian en el
-     fondo. Un gris azulado un escalon mas hondo, solo detras del mapa, hace
-     que cada tarjeta se despegue sin necesitar sombra, igual que una hoja
-     sobre una mesa. La barra de arriba y las demas vistas siguen en el
-     lienzo claro. */
-  --lienzo-mapa: #dde3ec;
+  --rejilla: #dde4ee;
   --panel: #ffffff;
   --panel-borde: #d7dfea;
   --panel-suave: #f4f7fb;
@@ -137,23 +138,42 @@
   --estado-aprobada: #0a9781;
   --estado-cursando: #c8650d;
   --estado-rojo: #d92d45;
-  --sit-hecha-fondo: #e9f6f2;
-  --sit-hecha-borde: #91d2c2;
-  --sit-hecha-nombre: #1d3d38;
-  --sit-cursando-fondo: #fff5ea;
-  --sit-cursando-borde: #e39a55;
+  /* Las tarjetas del claro.
+
+     Probe a despegarlas oscureciendo el lienzo del mapa, y el mapa entero
+     se veia apagado y sucio: el problema no era el fondo sino las tarjetas.
+     Eran blanco sobre casi blanco, con filos de un gris que en pantalla casi
+     no se distingue, y las lejanas, en un gris #f4f6fa, se fundian con el
+     lienzo en vez de apartarse de el.
+
+     Ahora es tinta sobre papel, como el mapa de la maqueta en oscuro pero al
+     reves: todas las tarjetas blancas -el color sale solo en el filo y en la
+     palabra de estado, nunca en el relleno-, filos un escalon mas oscuros y
+     una sombra de papel de dos pixeles (ver --sombra-tarjeta). */
+  --sit-hecha-fondo: #f4fbf9;
+  --sit-hecha-borde: #7fc6b5;
+  --sit-hecha-nombre: #2f4b46;
+  --sit-cursando-fondo: #fff8f1;
+  --sit-cursando-borde: #dc8a3b;
   --sit-cursando-texto: #9a4a06;
   --sit-inscribible-fondo: #ffffff;
   /* En claro la luz no puede ser blanca: se usa el azul profundo de la casa */
   --sit-inscribible-luz: #2f5bd8;
   --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 50%, transparent);
   --sit-proxima-fondo: #ffffff;
-  --sit-proxima-borde: #b6c2d2;
+  --sit-proxima-borde: #a7b4c6;
   --sit-proxima-nombre: #22324a;
-  --sit-lejana-fondo: #f4f6fa;
-  --sit-lejana-borde: #d5dce6;
-  --sit-lejana-nombre: #66748a;
-  --sit-codigo: #64738a;
+  --sit-lejana-fondo: #ffffff;
+  --sit-lejana-borde: #d0d8e3;
+  --sit-lejana-nombre: #56647a;
+  --sit-codigo: #66758b;
+  /* La sombra de papel: un rectangulo corrido dos pixeles bajo cada tarjeta.
+     Sin filtro -un blur por tarjeta costaria un repintado en cada cuadro del
+     arrastre- y en oscuro transparente, donde el filo ya separa. */
+  --sombra-tarjeta: rgba(22, 38, 66, 0.075);
+  --peso-nombre: 440;
+  --peso-rotulo: 560;
+  --peso-dato: 400;
   --sit-resalte: color-mix(in oklab, var(--tinta) 55%, transparent);
 
   /* En claro la luz no puede ir hacia el blanco: se perderia en el lienzo.

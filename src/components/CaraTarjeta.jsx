@@ -55,6 +55,17 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         />
       )}
 
+      {/* Sombra de papel, solo en claro: en oscuro la variable es
+          transparente. Un rectangulo corrido y no un filtro, que costaria un
+          repintado por cuadro al mover el mapa. */}
+      <rect
+        y={2}
+        width={ancho}
+        height={alto}
+        rx={radio}
+        style={{ fill: 'var(--sombra-tarjeta)' }}
+      />
+
       <rect
         width={ancho}
         height={alto}
@@ -68,7 +79,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         fontSize={TEXTO.codigo}
         fill="var(--sit-codigo)"
         className="font-dato"
-        style={{ fontWeight: 300, letterSpacing: '0.04em' }}
+        style={{ fontWeight: 'var(--peso-dato)', letterSpacing: '0.04em' }}
       >
         {codigo}
       </text>
@@ -81,7 +92,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           fontSize={TEXTO.rotulo}
           style={{
             fill: a.marca.color,
-            fontWeight: 460,
+            fontWeight: 'var(--peso-rotulo)',
             letterSpacing: `${espaciadoRotulo}em`,
             transition: 'fill 280ms ease',
           }}
@@ -96,7 +107,11 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           x={padIzq}
           y={primeraLinea + i * TEXTO.altoLinea}
           fontSize={TEXTO.nombre}
-          style={{ fill: a.nombre, fontWeight: 380, transition: 'fill 280ms ease' }}
+          style={{
+            fill: a.nombre,
+            fontWeight: 'var(--peso-nombre)',
+            transition: 'fill 280ms ease',
+          }}
         >
           {linea}
         </text>
@@ -109,7 +124,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         fontSize={TEXTO.meta}
         fill="var(--sit-codigo)"
         className="font-dato tabular-nums"
-        style={{ fontWeight: 300 }}
+        style={{ fontWeight: 'var(--peso-dato)' }}
       >
         {uc} UC
       </text>

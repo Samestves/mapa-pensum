@@ -219,7 +219,7 @@ function CabeceraFranja({ fila }) {
         fontSize="10"
         fill="var(--tinta-tenue)"
         className="font-dato tabular-nums"
-        style={{ ...espaciado(0.04), fontWeight: 300 }}
+        style={{ ...espaciado(0.04), fontWeight: 'var(--peso-dato)' }}
       >
         {datos.join(' · ')}
       </text>
@@ -318,7 +318,7 @@ function CabeceraSemestre({ columna, datos }) {
         fontSize="10"
         fill="var(--tinta-tenue)"
         className="font-dato tabular-nums"
-        style={{ ...espaciado(0.04), fontWeight: 300 }}
+        style={{ ...espaciado(0.04), fontWeight: 'var(--peso-dato)' }}
       >
         {datos?.uc ?? 0} UC · {total} {total === 1 ? 'MATERIA' : 'MATERIAS'}
       </text>

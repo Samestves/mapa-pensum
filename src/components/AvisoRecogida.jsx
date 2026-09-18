@@ -48,7 +48,10 @@ function AvisoRecogida({ aviso, alDeshacer, alCerrar }) {
         <p className="font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta uppercase">
           {cuantas === 0 ? 'Aprobada' : cuantas === 1 ? 'Desbloqueada' : 'Desbloqueadas'}
         </p>
-        <p className="truncate text-[12.5px] text-tinta-suave" style={{ fontWeight: 380 }}>
+        <p
+          className="truncate text-[12.5px] text-tinta-suave"
+          style={{ fontWeight: 'var(--peso-nombre)' }}
+        >
           {cuantas ? aviso.desbloqueadas.join(' · ') : aviso.nombre}
         </p>
       </div>
