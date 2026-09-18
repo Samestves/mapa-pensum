@@ -1,69 +1,82 @@
-import { Check } from 'lucide-react'
-import { ESTADO } from '../data/estados'
-import { colorNodo } from '../theme/areas'
-import { ETIQUETA_ESTADO } from '../theme/estados'
+import { SITUACION } from '../layout/situacion'
+import { ASPECTO } from '../theme/situacion'
+import { IconoSituacion } from './IconoSituacion'
 
-/** La misma frase la usan la ficha y la lista: vive aqui para que no deriven */
+/** La frase para cuando no hay nada que pedir */
 export const SIN_PRELACIONES = 'Nada: puedes verla desde el inicio.'
 
+/* El color del icono de cada fila. La lejana no tiene color de estado -es la
+   mayoria y la que menos importa-, asi que va en tinta apagada. */
+const colorDe = (situacion) =>
+  situacion === SITUACION.LEJANA ? 'var(--tinta-tenue)' : ASPECTO[situacion].marca.color
+
 /**
- * Una materia dentro de una lista de prelaciones: su punto de color, su
- * nombre y en que estado la tienes.
+ * Una materia dentro de la lista: el icono de su estado, su nombre y su
+ * codigo en letra de maquina. El mismo icono que la tarjeta del mapa tendria
+ * si la palabra no cupiera: aro lleno con check, a medias, con punto o
+ * punteado. Se lee de un vistazo cual de las prelaciones ya esta y cual
+ * falta, sin tener que leer ninguna etiqueta.
  */
-function Fila({ asignatura, estado }) {
+function Fila({ asignatura, situacion, codigo }) {
+  const hecha = situacion === SITUACION.HECHA
   return (
-    <li className="flex items-center gap-2">
-      <span
-        className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: colorNodo(asignatura) }}
+    <li className="flex items-center gap-2.5 py-[5px]">
+      <IconoSituacion
+        situacion={situacion}
+        color={colorDe(situacion)}
+        size={13}
+        className="shrink-0"
       />
-      <span className="min-w-0 flex-1 truncate text-[11px] text-tinta-suave">
+      <span
+        className={`min-w-0 flex-1 truncate text-[13px] ${hecha ? 'text-tinta-suave' : 'text-tinta'}`}
+        style={{ fontWeight: 380 }}
+      >
         {asignatura.nombre}
       </span>
-      {estado === ESTADO.APROBADA ? (
-        <Check size={12} className="shrink-0 text-aprobada" aria-label="Aprobada" />
-      ) : (
-        <span className="shrink-0 text-[9px] text-tinta-tenue">{ETIQUETA_ESTADO[estado]}</span>
-      )}
+      <span className="shrink-0 font-dato text-[10px] font-light tracking-[0.04em] text-tinta-tenue">
+        {codigo}
+      </span>
     </li>
   )
 }
 
 /**
- * "Requiere (3)" o "Desbloquea (5)", con su lista debajo.
+ * «REQUIERE · 2» o «DESBLOQUEA · 3», con su lista debajo.
  *
- * Estaba escrito dos veces, en la ficha flotante del mapa y en la fila
- * desplegable de la lista, con el mismo punto de color, el mismo truncado y
- * hasta la misma frase para cuando no hay nada. Dos copias que habia que
- * acordarse de cambiar a la vez.
+ * El titulo va en mayusculas espaciadas y la cuenta en letra de maquina: la
+ * misma rejilla de voces que la tarjeta del mapa. No lleva margenes propios:
+ * los pone quien la coloca.
  *
- * Las dos diferian en el indicador de la derecha: la ficha recortaba el
- * estado a cuatro letras ("Curs", "Disp") y la lista ponia siempre
- * "pendiente", que no distingue entre estarla cursando y tenerla bloqueada.
- * Al unificar se queda la etiqueta completa, que cabe de sobra a 9px y dice
- * mas que las otras dos.
- *
- * No lleva margenes propios: los pone quien la coloca, porque la ficha y la
- * lista tienen ritmos distintos.
+ * `situacionDe` viene de fuera porque el estado de cada materia relacionada
+ * -en particular si una bloqueada se abre el semestre que viene o todavia no-
+ * depende de sus propias prelaciones, y eso ya lo tiene calculado el mapa.
  */
-function ListaPrelaciones({ titulo, materias, vacio }) {
+function ListaPrelaciones({ titulo, materias, vacio, situacionDe, codigoDe }) {
   return (
-    <>
-      <p className="text-[10px] font-bold tracking-wider text-tinta-tenue uppercase">
-        {titulo} ({materias.length})
+    <div>
+      <p className="flex items-baseline gap-2 font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
+        {titulo}
+        <span className="font-dato text-[10px] font-light tracking-normal">{materias.length}</span>
       </p>
       {materias.length === 0 ? (
         // Sin mensaje no se pinta nada: hay sitios donde lo que sigue ya
         // explica el hueco, como el requisito especial del Trabajo de Grado
-        vacio ? <p className="text-[11px] text-tinta-tenue">{vacio}</p> : null
+        vacio ? (
+          <p className="mt-1.5 text-[12.5px] text-tinta-tenue">{vacio}</p>
+        ) : null
       ) : (
-        <ul className="mt-1 flex flex-col gap-1">
-          {materias.map(({ asignatura, estado }) => (
-            <Fila key={asignatura.codigo} asignatura={asignatura} estado={estado} />
+        <ul className="mt-1 flex flex-col">
+          {materias.map(({ asignatura }) => (
+            <Fila
+              key={asignatura.codigo}
+              asignatura={asignatura}
+              situacion={situacionDe(asignatura.codigo)}
+              codigo={codigoDe(asignatura)}
+            />
           ))}
         </ul>
       )}
-    </>
+    </div>
   )
 }
 

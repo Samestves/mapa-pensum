@@ -17,6 +17,9 @@
 
   --lienzo: #05080e;
   --rejilla: #101a28;
+  /* El fondo del mapa. En oscuro es el lienzo de siempre; en claro va un
+     punto mas hondo que el resto de la aplicacion. Ver el tema claro. */
+  --lienzo-mapa: var(--lienzo);
   --panel: #0a1018;
   --panel-borde: #1b2637;
   --panel-suave: #111b28;
@@ -104,7 +107,14 @@
   color-scheme: light;
 
   --lienzo: #eef1f7;
-  --rejilla: #dde4ee;
+  --rejilla: #d0d8e3;
+  /* En claro el mapa era casi blanco sobre casi blanco: las tarjetas son
+     blancas y el lienzo #eef1f7, y las lejanas, en #f4f6fa, se perdian en el
+     fondo. Un gris azulado un escalon mas hondo, solo detras del mapa, hace
+     que cada tarjeta se despegue sin necesitar sombra, igual que una hoja
+     sobre una mesa. La barra de arriba y las demas vistas siguen en el
+     lienzo claro. */
+  --lienzo-mapa: #dde3ec;
   --panel: #ffffff;
   --panel-borde: #d7dfea;
   --panel-suave: #f4f7fb;
@@ -454,16 +464,21 @@ body {
   animation: trazar 560ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-/* La pasada de luz verde al aprobar */
+/* La luz al aprobar: el cable entero se enciende de origen a destino, se
+   queda encendido un instante y se apaga. Antes era un guion corto que
+   pasaba corriendo -una chispa-; ahora es el camino que se abre, que es lo
+   que acaba de pasar.
+
+   Espera 380 ms antes de salir: es lo que tarda el mapa en correrse para
+   enseñar lo que se desbloquea (ver marcarDesdeFicha en GrafoPensum). `both`
+   la deja apagada durante esa espera en vez de enseñar el cable ya lleno. */
 @keyframes descarga {
   0% {
     stroke-dashoffset: 100;
-    opacity: 0;
-  }
-  10% {
     opacity: 1;
   }
-  78% {
+  58% {
+    stroke-dashoffset: 0;
     opacity: 1;
   }
   100% {
@@ -473,12 +488,21 @@ body {
 }
 
 .descarga {
-  stroke-dasharray: 14 86;
-  animation: descarga 920ms cubic-bezier(0.32, 0.72, 0.24, 1) forwards;
+  stroke-dasharray: 100;
+  animation: descarga 1300ms cubic-bezier(0.55, 0, 0.25, 1) 380ms both;
+}
+
+/* Su halo: el mismo trazo, ancho y muy flojo, debajo. Hace de resplandor sin
+   filtro: un blur en un cable recto recorta la linea entera (su caja no
+   tiene alto) y cuesta un repintado por cuadro. */
+.descarga-halo {
+  stroke-dasharray: 100;
+  animation: descarga 1300ms cubic-bezier(0.55, 0, 0.25, 1) 380ms both;
 }
 
 /* La materia que se acaba de abrir se despierta: su contorno sale hacia
-   fuera y se apaga, una sola vez. Espera a que la luz llegue por el cable:
+   fuera y se apaga, una sola vez. Espera a que la luz llegue por el cable -380 ms de
+   espera y unos 750 de viaje-:
    encenderse antes que el cable se ve mal. `both` la deja invisible durante
    esa espera; con `forwards` el contorno se veia quieto hasta que arrancaba.
 
@@ -502,7 +526,24 @@ body {
 .destello {
   transform-box: fill-box;
   transform-origin: center;
-  animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 600ms both;
+  animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 1000ms both;
+}
+
+/* El aviso de lo que se desbloqueo: entra de lado cuando la luz ya llego,
+   como una linea que se recoge en la esquina de la pantalla. */
+@keyframes recoger {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.aviso-recogida {
+  animation: recoger 520ms cubic-bezier(0.22, 0.61, 0.2, 1) 1150ms both;
 }
 
 /* Anillo que se expande en la tarjeta que se acaba de tocar */
@@ -1812,9 +1853,11 @@ body {
   }
 
   .descarga,
+  .descarga-halo,
   .trazar,
   .destello,
   .anillo-cambio,
+  .aviso-recogida,
   .logo-entrada,
   .surgir,
   .entrada-vista,

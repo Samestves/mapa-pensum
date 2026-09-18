@@ -186,16 +186,27 @@ function Arista({
         />
       )}
 
+      {/* La luz al aprobar: el cable entero se enciende en verde, con un
+          halo ancho y flojo debajo que hace de resplandor sin usar filtro. */}
       {descargando && (
-        <path
-          key={claveDescarga}
-          d={d}
-          fill="none"
-          pathLength="100"
-          strokeLinecap="round"
-          className="descarga"
-          style={{ stroke: 'var(--estado-aprobada)', strokeWidth: 3 }}
-        />
+        <g key={claveDescarga}>
+          <path
+            d={d}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="descarga-halo"
+            style={{ stroke: 'var(--estado-aprobada)', strokeWidth: 9, strokeOpacity: 0.18 }}
+          />
+          <path
+            d={d}
+            fill="none"
+            pathLength="100"
+            strokeLinecap="round"
+            className="descarga"
+            style={{ stroke: 'var(--estado-aprobada)', strokeWidth: 2.5 }}
+          />
+        </g>
       )}
     </g>
   )

@@ -94,10 +94,12 @@ export function usePensum(carrera) {
     guardarJSON(claveDe(slug), marcas)
   }, [slug, marcas])
 
-  // La animacion dura menos de un segundo; despues se limpia el DOM
+  /* La animacion entera -la luz del cable y el pulso de lo que se abre-
+     acaba a los 2,1 s; despues se limpia el DOM. Con 900 ms, como antes, el
+     pulso se desmontaba a medio camino. Ver .descarga y .destello. */
   useEffect(() => {
     if (!descarga) return
-    const t = setTimeout(() => setDescarga(null), 900)
+    const t = setTimeout(() => setDescarga(null), 2400)
     return () => clearTimeout(t)
   }, [descarga])
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
@@ -6,7 +6,10 @@ import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
+import AvisoRecogida from './AvisoRecogida'
 import { situacionDe } from '../layout/situacion'
+import { NODO } from '../layout/constantes'
+import { ESTADO } from '../data/estados'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
@@ -46,6 +49,7 @@ function GrafoPensum({
     encajar,
     acercar,
     alejar,
+    mostrar,
     controlesArrastre,
   } = useVistaGrafo(ancho, alto)
 
@@ -130,6 +134,90 @@ function GrafoPensum({
     clearTimeout(relojSoltar.current)
     alSenalar(null)
   }, [enGesto, alSenalar])
+  /* La situacion de cualquier materia, tambien de las que no estan
+     dibujadas -una electiva sin colocar que aparece en la ficha-. */
+  const situacionDeCodigo = useCallback(
+    (codigo) =>
+      situaciones.get(codigo) ??
+      situacionDe(codigo, porCodigo.get(codigo)?.prerrequisitos, estados),
+    [situaciones, porCodigo, estados],
+  )
+
+  /* Lo que acabas de conseguir al aprobar, para el aviso de la esquina */
+  const [recogida, setRecogida] = useState(null)
+  const cerrarRecogida = useCallback(() => setRecogida(null), [])
+
+  /**
+   * Marcar desde la ficha. Cursando y sin cursar se quedan con la ficha
+   * abierta: son cambios de estado y ya. Aprobar es otra cosa, es el momento
+   * en que algo se abre, y la luz corre por los cables hacia lo que se
+   * desbloquea. Con la ficha abierta esa luz pasaba por debajo de ella -la
+   * ficha se pone al lado de la tarjeta, justo por donde salen sus cables- y
+   * no se veia.
+   *
+   * Asi que al aprobar la ficha se aparta, el mapa se corre lo justo para
+   * que quepan la materia y todo lo que desbloquea, la luz sale cuando el
+   * mapa ya llego (ver .descarga en index.css) y en la esquina queda el
+   * aviso de lo que se abrio, con Deshacer.
+   */
+  const marcarDesdeFicha = useCallback(
+    (codigo, marca) => {
+      const antes = estados[codigo]
+      const marcaAntes = antes === ESTADO.APROBADA || antes === ESTADO.CURSANDO ? antes : null
+      if (marca !== ESTADO.APROBADA || marcaAntes === ESTADO.APROBADA) {
+        alMarcar(codigo, marca)
+        return
+      }
+
+      const siguientes = relaciones.adelante.get(codigo) ?? []
+      const despues = { ...estados, [codigo]: ESTADO.APROBADA }
+      const abiertas = siguientes
+        .map((c) => porCodigo.get(c))
+        .filter(
+          (a) =>
+            a &&
+            despues[a.codigo] !== ESTADO.APROBADA &&
+            despues[a.codigo] !== ESTADO.CURSANDO &&
+            (a.prerrequisitos ?? []).every((p) => despues[p] === ESTADO.APROBADA),
+        )
+
+      // La caja que tiene que verse: la materia y todo lo que sale de ella
+      const cajas = [codigo, ...siguientes]
+        .map((c) => porCodigo.get(c))
+        .filter((a) => a && Number.isFinite(a.x) && Number.isFinite(a.y))
+      if (cajas.length) {
+        const telefono = medida.ancho < 768
+        mostrar(
+          {
+            x0: Math.min(...cajas.map((a) => a.x)),
+            y0: Math.min(...cajas.map((a) => a.y)),
+            x1: Math.max(...cajas.map((a) => a.x + NODO.ancho)),
+            y1: Math.max(...cajas.map((a) => a.y + NODO.alto)),
+          },
+          // Abajo quedan la barra del telefono y el propio aviso
+          { arriba: 48, abajo: telefono ? 180 : 104, izq: 48, der: 48 },
+        )
+      }
+
+      alSeleccionar(null)
+      alMarcar(codigo, marca)
+      setRecogida({
+        codigo,
+        marcaAntes,
+        nombre: porCodigo.get(codigo)?.nombre ?? '',
+        desbloqueadas: abiertas.map((a) => a.nombre),
+        n: Date.now(),
+      })
+    },
+    [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
+  )
+
+  const deshacerRecogida = useCallback(() => {
+    if (!recogida) return
+    alMarcar(recogida.codigo, recogida.marcaAntes)
+    setRecogida(null)
+  }, [recogida, alMarcar])
+
   const verFicha = useCallback(
     (codigo) => {
       // Si el puntero se movio, fue un arrastre del lienzo, no un click
@@ -140,7 +228,11 @@ function GrafoPensum({
   )
 
   return (
-    <div ref={contenedorRef} className="relative min-w-0 flex-1 overflow-hidden">
+    <div
+      ref={contenedorRef}
+      className="relative min-w-0 flex-1 overflow-hidden"
+      style={{ backgroundColor: 'var(--lienzo-mapa)' }}
+    >
       {/* El lienzo: aqui van los gestos, y no en el contenedor, para que la
           ficha y los botones de zoom -hermanos de este div- no arranquen un
           arrastre al pulsarlos.
@@ -244,14 +336,25 @@ function GrafoPensum({
         <DetalleAsignatura
           nodo={nodoSeleccionado}
           estado={estados[seleccionado]}
+          situacion={situacionDeCodigo(seleccionado)}
+          situacionDe={situacionDeCodigo}
           prerrequisitos={detalle.prerrequisitos}
           desbloquea={detalle.desbloquea}
           posicion={detalle.posicion}
           medida={medida}
-          alMarcar={alMarcar}
+          alMarcar={marcarDesdeFicha}
           enCasilla={casillaDe?.[seleccionado]}
           alCambiarElectiva={alAbrirCasilla}
           alCerrar={() => alSeleccionar(null)}
+        />
+      )}
+
+      {recogida && (
+        <AvisoRecogida
+          key={recogida.n}
+          aviso={recogida}
+          alDeshacer={deshacerRecogida}
+          alCerrar={cerrarRecogida}
         />
       )}
 

@@ -5,6 +5,10 @@ import { capaCubre, mismaVista, transformRelativo } from '../layout/vistaViva'
 const MARGEN_ENCAJE = 28
 /* Lo que tarda el zoom de los botones en llegar a su destino */
 const DURACION_ZOOM = 220
+/* Y lo que tarda el mapa en apartarse para enseñar algo, como lo que se
+   desbloquea al aprobar: mas despacio que un boton, porque es un viaje y no
+   un paso, y el ojo tiene que poder seguirlo. */
+const DURACION_MOSTRAR = 420
 
 const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
 
@@ -249,6 +253,43 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     [marcarGesto, aplicarVista],
   )
 
+  /* Lleva la vista hasta `hasta` en `duracion` ms, saliendo rapido y
+     frenando al llegar. Durante el viaje cuenta como gesto: el mapa se esta
+     moviendo, asi que el hover se ignora y la luz de los cables se congela
+     en tactil, igual que si lo moviera un dedo. */
+  const animarHacia = useCallback(
+    (hasta, duracion) => {
+      cancelAnimationFrame(animacion.current)
+      const desde = vistaRef.current
+      const inicio = performance.now()
+      const paso = (ahora) => {
+        const t = Math.min((ahora - inicio) / duracion, 1)
+        // easeOutCubic: sale rapido y frena al llegar
+        const k = 1 - Math.pow(1 - t, 3)
+        aplicarVista({
+          escala: desde.escala + (hasta.escala - desde.escala) * k,
+          x: desde.x + (hasta.x - desde.x) * k,
+          y: desde.y + (hasta.y - desde.y) * k,
+        })
+        if (t < 1) {
+          marcarGesto()
+          animacion.current = requestAnimationFrame(paso)
+        }
+      }
+
+      marcarGesto()
+      animacion.current = requestAnimationFrame(paso)
+      // Red por si requestAnimationFrame no corre: la vista tiene que
+      // acabar en su destino aunque la animacion no llegue a pintarse.
+      clearTimeout(redZoom.current)
+      redZoom.current = setTimeout(() => {
+        cancelAnimationFrame(animacion.current)
+        aplicarVista(hasta)
+      }, duracion + 200)
+    },
+    [aplicarVista, marcarGesto],
+  )
+
   /**
    * Zoom de los botones, deslizando en vez de saltando.
    *
@@ -260,36 +301,64 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
    */
   const zoomAlCentro = useCallback(
     (factor) => {
-      cancelAnimationFrame(animacion.current)
       const desde = vistaRef.current
       const hasta = conZoom(desde, factor, medida.ancho / 2, medida.alto / 2)
       // Si el zoom ya esta topado no hay nada que animar
       if (hasta.escala === desde.escala) return
-
-      const inicio = performance.now()
-      const paso = (ahora) => {
-        const t = Math.min((ahora - inicio) / DURACION_ZOOM, 1)
-        // easeOutCubic: sale rapido y frena al llegar
-        const k = 1 - Math.pow(1 - t, 3)
-        aplicarVista({
-          escala: desde.escala + (hasta.escala - desde.escala) * k,
-          x: desde.x + (hasta.x - desde.x) * k,
-          y: desde.y + (hasta.y - desde.y) * k,
-        })
-        if (t < 1) animacion.current = requestAnimationFrame(paso)
-      }
-
-      marcarGesto()
-      animacion.current = requestAnimationFrame(paso)
-      // Red por si requestAnimationFrame no corre: la vista tiene que
-      // acabar en su destino aunque la animacion no llegue a pintarse.
-      clearTimeout(redZoom.current)
-      redZoom.current = setTimeout(() => {
-        cancelAnimationFrame(animacion.current)
-        aplicarVista(hasta)
-      }, DURACION_ZOOM + 200)
+      animarHacia(hasta, DURACION_ZOOM)
     },
-    [medida, aplicarVista, marcarGesto],
+    [medida, animarHacia],
+  )
+
+  /**
+   * Mueve la vista lo justo para que se vea `caja` -un rectangulo en
+   * coordenadas del mapa- dentro de los margenes que se le den.
+   *
+   * Lo justo es lo justo: si ya se ve, no se mueve nada, y si asoma por un
+   * lado solo se corre ese lado. Centrarla siempre haria saltar el mapa
+   * aunque ya estuviera a la vista, y el ojo perderia lo que estaba mirando.
+   * Si no cabe a la escala de ahora se aleja lo necesario; acercarse, nunca:
+   * quien estaba mirando el mapa de lejos no pidio que se lo acercaran.
+   */
+  const mostrar = useCallback(
+    (caja, margenes = {}) => {
+      if (!medida.ancho || !medida.alto) return
+      const m = { arriba: 40, abajo: 40, izq: 40, der: 40, ...margenes }
+      const v = vistaRef.current
+      const libreX = medida.ancho - m.izq - m.der
+      const libreY = medida.alto - m.arriba - m.abajo
+      const escala = acotar(
+        Math.min(v.escala, libreX / (caja.x1 - caja.x0), libreY / (caja.y1 - caja.y0)),
+        ZOOM.min,
+        ZOOM.max,
+      )
+
+      // Al alejarse, el centro de la caja se queda donde estaba en pantalla
+      const cx = (caja.x0 + caja.x1) / 2
+      const cy = (caja.y0 + caja.y1) / 2
+      const x = v.x + cx * (v.escala - escala)
+      const y = v.y + cy * (v.escala - escala)
+
+      const correr = (pos, a, b, min, max) => {
+        const inicio = pos + a * escala
+        const fin = pos + b * escala
+        if (fin - inicio > max - min) return pos + (min + max) / 2 - (inicio + fin) / 2
+        if (inicio < min) return pos + min - inicio
+        if (fin > max) return pos - (fin - max)
+        return pos
+      }
+      const hasta = {
+        escala,
+        x: correr(x, caja.x0, caja.x1, m.izq, medida.ancho - m.der),
+        y: correr(y, caja.y0, caja.y1, m.arriba, medida.alto - m.abajo),
+      }
+      const quieta =
+        Math.abs(hasta.x - v.x) < 1 &&
+        Math.abs(hasta.y - v.y) < 1 &&
+        Math.abs(hasta.escala - v.escala) < 0.001
+      if (!quieta) animarHacia(hasta, DURACION_MOSTRAR)
+    },
+    [medida, animarHacia],
   )
   useEffect(
     () => () => {
@@ -434,6 +503,7 @@ export function useVistaGrafo(anchoContenido, altoContenido) {
     encajar,
     acercar: () => zoomAlCentro(ZOOM.paso),
     alejar: () => zoomAlCentro(1 / ZOOM.paso),
+    mostrar,
     controlesArrastre: {
       onPointerDown: alPresionar,
       onPointerMove: alMover,
