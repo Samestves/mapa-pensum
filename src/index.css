@@ -731,6 +731,121 @@ body {
   }
 }
 
+/* La lente del selector de marcas del telefono (ver SelectorTelefono): la
+   misma gota de cristal que marca la vista en la barra de abajo, teñida con
+   el color de la marca elegida, y el mismo rebote corto al deslizarse. */
+.selector-lente {
+  background: color-mix(in oklab, var(--lente) 14%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--lente) 36%, transparent),
+    inset 0 1px 0.5px rgb(255 255 255 / 0.08);
+  transition:
+    transform 480ms cubic-bezier(0.34, 1.36, 0.64, 1),
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+/* ---- El aviso en el telefono (AvisoTelefono) ---------------------------
+
+   Una capsula de cristal -la misma pieza que la barra de abajo- justo
+   encima de ella. Entra con la misma espera que el de escritorio, cuando la
+   luz del cable ya llego, subiendo desde la barra con un rebote corto. */
+.aviso-telefono {
+  bottom: var(--reserva-barra, 1rem);
+  max-width: 26rem;
+  margin-inline: auto;
+  animation: recoger-telefono 560ms cubic-bezier(0.22, 1.2, 0.36, 1) 1150ms both;
+}
+
+@keyframes recoger-telefono {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El destello: una franja de luz que cruza el cristal una sola vez, cuando
+   el emblema ya se esta dibujando. Es la luz que pega en el canto al
+   sacarlo, no un adorno que se repite. */
+.aviso-telefono-brillo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.14) 50%,
+    transparent 65%
+  );
+  transform: translateX(-110%);
+  animation: barrer-cristal 1100ms cubic-bezier(0.4, 0, 0.2, 1) 1400ms both;
+}
+
+[data-tema='claro'] .aviso-telefono-brillo {
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.75) 50%, transparent 65%);
+}
+
+@keyframes barrer-cristal {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
+}
+
+/* El emblema: la pista apagada, el aro que se dibuja y luego se deshace
+   -es el tiempo que le queda al aviso- y el check. El aro empieza a las
+   doce, como cualquier reloj. */
+.emblema-pista {
+  fill: none;
+  stroke: color-mix(in oklab, currentColor 18%, transparent);
+  stroke-width: 1.5;
+}
+
+.emblema-aro,
+.emblema-tilde {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.emblema-aro {
+  stroke-width: 1.75;
+  transform-box: view-box;
+  transform-origin: 20px 20px;
+  transform: rotate(-90deg);
+  animation:
+    trazar-recogida 620ms cubic-bezier(0.65, 0, 0.35, 1) 1300ms forwards,
+    vaciar-emblema var(--duracion, 5600ms) linear 2000ms forwards;
+}
+
+.emblema-tilde {
+  stroke-width: 2;
+  animation: trazar-recogida 340ms cubic-bezier(0.65, 0, 0.35, 1) 1780ms forwards;
+}
+
+@keyframes vaciar-emblema {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+/* Con el dedo encima el tiempo se para, para poder leer o llegar a Deshacer */
+.aviso-telefono.tocando .emblema-aro {
+  animation-play-state: paused;
+}
+
 /* ---- La ficha de la materia: salida y filo de luz ---------------------- */
 
 /* Al cerrarse, la nubecita del escritorio se encoge un poco hacia su pico y
@@ -2246,6 +2361,9 @@ body {
   .recogida-fila,
   .recogida-arco,
   .recogida-tiempo,
+  .aviso-telefono,
+  .emblema-aro,
+  .emblema-tilde,
   .menu-clase.ficha-saliendo,
   .hoja-ficha.tarjeta-saliendo,
   .logo-entrada,
@@ -2283,6 +2401,7 @@ body {
   .pestana-barra,
   .pulgar-vista,
   .lente-cristal,
+  .selector-lente,
   .tarjeta-carrera,
   .tarjeta-carrera > *,
   .plegable,
@@ -2304,8 +2423,14 @@ body {
   }
 
   .recogida-aro,
-  .recogida-tilde {
+  .recogida-tilde,
+  .emblema-aro,
+  .emblema-tilde {
     stroke-dashoffset: 0;
+  }
+
+  .aviso-telefono-brillo {
+    display: none;
   }
 }
 

@@ -35,13 +35,13 @@ function AroVacio({ size = 15 }) {
  * selector partido por lineas finas, y la elegida se tiñe con el color de su
  * estado: el mismo verde o ambar que el borde de la tarjeta en el mapa.
  */
-function Opcion({ icono, texto, activa, color, alto, alPulsar }) {
+function Opcion({ icono, texto, activa, color, alPulsar }) {
   return (
     <button
       type="button"
       aria-pressed={activa}
       onClick={alPulsar}
-      className={`flex flex-1 flex-col items-center gap-1.5 transition-colors ${alto ? 'py-3.5' : 'py-2.5'}`}
+      className="flex flex-1 flex-col items-center gap-1.5 py-2.5 transition-colors"
       style={{
         backgroundColor: activa ? `color-mix(in oklab, ${color} 13%, transparent)` : 'transparent',
         color: activa ? color : 'var(--tinta-tenue)',
@@ -50,6 +50,74 @@ function Opcion({ icono, texto, activa, color, alto, alPulsar }) {
       {icono}
       <span className="font-ui text-[9.5px] font-medium tracking-[0.2em] uppercase">{texto}</span>
     </button>
+  )
+}
+
+/* Las tres marcas, en el orden en que se leen */
+const MARCAS = [
+  { marca: ESTADO.APROBADA, texto: 'Aprobada', color: 'var(--estado-aprobada)' },
+  { marca: ESTADO.CURSANDO, texto: 'Cursando', color: 'var(--estado-cursando)' },
+  { marca: null, texto: 'Sin cursar', color: 'var(--tinta-suave)' },
+]
+
+const iconoDeMarca = (marca, size) =>
+  marca === ESTADO.APROBADA ? (
+    <IconoSituacion situacion={SITUACION.HECHA} size={size} />
+  ) : marca === ESTADO.CURSANDO ? (
+    <IconoSituacion situacion={SITUACION.CURSANDO} size={size} />
+  ) : (
+    <AroVacio size={size} />
+  )
+
+/**
+ * Las tres marcas en el telefono: una sola fila al pie de la tarjeta, donde
+ * llega el pulgar, en vez de tres cajas altas con el icono encima de la
+ * palabra en medio de la ficha.
+ *
+ * La elegida la señala una lente que se desliza de una a otra, la misma
+ * pieza que marca la vista en la barra de abajo, teñida con el color de su
+ * estado. Al pulsar vibra un instante, el acuse de un mando.
+ */
+function SelectorTelefono({ marca, alMarcar }) {
+  const indice = Math.max(
+    0,
+    MARCAS.findIndex((m) => m.marca === marca),
+  )
+  const elegida = MARCAS[indice]
+
+  return (
+    <div className="relative grid h-12 grid-cols-3 rounded-[12px] border border-panel-borde p-1">
+      <span
+        aria-hidden="true"
+        className="selector-lente pointer-events-none absolute inset-y-1 left-1 rounded-[9px]"
+        style={{
+          width: 'calc((100% - 0.5rem) / 3)',
+          transform: `translateX(${indice * 100}%)`,
+          '--lente': elegida.color,
+        }}
+      />
+      {MARCAS.map((m) => {
+        const activa = m === elegida
+        return (
+          <button
+            key={m.texto}
+            type="button"
+            aria-pressed={activa}
+            onClick={() => {
+              navigator.vibrate?.(8)
+              alMarcar(m.marca)
+            }}
+            className="relative flex items-center justify-center gap-1.5 rounded-[9px] transition-colors duration-300 active:scale-[0.97]"
+            style={{ color: activa ? m.color : 'var(--tinta-tenue)' }}
+          >
+            {iconoDeMarca(m.marca, 15)}
+            <span className="font-ui text-[9px] font-medium tracking-[0.16em] whitespace-nowrap uppercase">
+              {m.texto}
+            </span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -336,95 +404,94 @@ function DetalleAsignatura({
     </div>
   )
 
-  const margenX = esTelefono ? 'mx-5' : 'mx-4'
+  /* Lo que responde "¿puedo verla?, ¿que pide?, ¿que abre?". Es lo mismo en
+     las dos formas; lo que cambia es donde queda respecto a las marcas. */
+  const informacion = (
+    <>
+      <AvisoSituacion estado={estado} situacion={situacion} prerrequisitos={prerrequisitos} />
+
+      <ListaPrelaciones
+        titulo="Requiere"
+        materias={prerrequisitos}
+        // Con requisito especial no se dice "nada": abajo viene la condicion
+        vacio={nodo.requisitoEspecial ? '' : SIN_PRELACIONES}
+        situacionDe={situacionDe}
+        codigoDe={codigoVisible}
+        alIrA={alIrA}
+        puedeIr={puedeIr}
+        holgada={esTelefono}
+      />
+
+      {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
+          del mapa ni una fila con su icono. Es una condicion, y se dice con
+          palabras para que no se confunda con una prelacion. */}
+      {nodo.requisitoEspecial && (
+        <p className="-mt-3 flex items-start gap-2.5 text-[12.5px] leading-snug text-tinta-suave">
+          <Info size={13} strokeWidth={1.6} className="mt-[2px] shrink-0 text-tinta-tenue" />
+          <span>
+            Además: <span className="text-tinta">{nodo.requisitoEspecial}</span>. Es una condición
+            del pensum, no una materia.
+          </span>
+        </p>
+      )}
+
+      <ListaPrelaciones
+        titulo="Desbloquea"
+        materias={desbloquea}
+        vacio="Nada: es final de rama."
+        situacionDe={situacionDe}
+        codigoDe={codigoVisible}
+        alIrA={alIrA}
+        puedeIr={puedeIr}
+        holgada={esTelefono}
+      />
+    </>
+  )
+
+  /* Solo si esta materia ocupa una casilla del pensum. Cambiarla se ofrece
+     AQUI y no pulsando la casilla del mapa: una vez elegida ahi hay una
+     materia, y pulsar una materia lleva a su ficha. */
+  const cambiarElectiva = enCasilla && (
+    <button
+      type="button"
+      onClick={() => alCambiarElectiva(enCasilla)}
+      className="flex shrink-0 items-center justify-center gap-2 rounded-[8px] border border-panel-borde py-2.5 font-ui text-[9.5px] font-medium tracking-[0.2em] text-tinta-suave uppercase transition-colors hover:text-tinta"
+    >
+      <Repeat2 size={13} strokeWidth={1.6} />
+      Cambiar esta electiva
+    </button>
+  )
 
   const cuerpo = (
     <>
-      <div
-        className={`${margenX} mb-4 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde`}
-      >
+      <div className="mx-4 mb-4 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde">
         <Opcion
-          icono={<IconoSituacion situacion={SITUACION.HECHA} size={esTelefono ? 17 : 15} />}
+          icono={iconoDeMarca(ESTADO.APROBADA, 15)}
           texto="Aprobada"
           activa={marca === ESTADO.APROBADA}
           color="var(--estado-aprobada)"
-          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.APROBADA)}
         />
         <Opcion
-          icono={<IconoSituacion situacion={SITUACION.CURSANDO} size={esTelefono ? 17 : 15} />}
+          icono={iconoDeMarca(ESTADO.CURSANDO, 15)}
           texto="Cursando"
           activa={marca === ESTADO.CURSANDO}
           color="var(--estado-cursando)"
-          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.CURSANDO)}
         />
         <Opcion
-          icono={<AroVacio size={esTelefono ? 17 : 15} />}
+          icono={iconoDeMarca(null, 15)}
           texto="Sin cursar"
           activa={marca === null}
           color="var(--tinta-suave)"
-          alto={esTelefono}
           alPulsar={() => alMarcar(nodo.codigo, null)}
         />
       </div>
 
-      {/* Solo si esta materia ocupa una casilla del pensum. Cambiarla se
-          ofrece AQUI y no pulsando la casilla del mapa: una vez elegida ahi
-          hay una materia, y pulsar una materia lleva a su ficha. */}
-      {enCasilla && (
-        <button
-          type="button"
-          onClick={() => alCambiarElectiva(enCasilla)}
-          className={`${margenX} mb-4 flex shrink-0 items-center justify-center gap-2 rounded-[8px] border border-panel-borde py-2.5 font-ui text-[9.5px] font-medium tracking-[0.2em] text-tinta-suave uppercase transition-colors hover:text-tinta`}
-        >
-          <Repeat2 size={13} strokeWidth={1.6} />
-          Cambiar esta electiva
-        </button>
-      )}
+      {cambiarElectiva && <div className="mx-4 mb-4 flex flex-col">{cambiarElectiva}</div>}
 
-      <div
-        className={`flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain border-t border-panel-borde ${
-          esTelefono ? 'px-5 pt-4 pb-5' : 'max-h-72 px-4 pt-3.5 pb-4'
-        }`}
-      >
-        <AvisoSituacion estado={estado} situacion={situacion} prerrequisitos={prerrequisitos} />
-
-        <ListaPrelaciones
-          titulo="Requiere"
-          materias={prerrequisitos}
-          // Con requisito especial no se dice "nada": abajo viene la condicion
-          vacio={nodo.requisitoEspecial ? '' : SIN_PRELACIONES}
-          situacionDe={situacionDe}
-          codigoDe={codigoVisible}
-          alIrA={alIrA}
-          puedeIr={puedeIr}
-          holgada={esTelefono}
-        />
-
-        {/* "120 UC aprobadas" no es una materia, asi que no puede ser un cable
-            del mapa ni una fila con su icono. Es una condicion, y se dice con
-            palabras para que no se confunda con una prelacion. */}
-        {nodo.requisitoEspecial && (
-          <p className="-mt-3 flex items-start gap-2.5 text-[12.5px] leading-snug text-tinta-suave">
-            <Info size={13} strokeWidth={1.6} className="mt-[2px] shrink-0 text-tinta-tenue" />
-            <span>
-              Además: <span className="text-tinta">{nodo.requisitoEspecial}</span>. Es una condición
-              del pensum, no una materia.
-            </span>
-          </p>
-        )}
-
-        <ListaPrelaciones
-          titulo="Desbloquea"
-          materias={desbloquea}
-          vacio="Nada: es final de rama."
-          situacionDe={situacionDe}
-          codigoDe={codigoVisible}
-          alIrA={alIrA}
-          puedeIr={puedeIr}
-          holgada={esTelefono}
-        />
+      <div className="flex max-h-72 min-h-0 flex-1 flex-col gap-5 overflow-y-auto overscroll-contain border-t border-panel-borde px-4 pt-3.5 pb-4">
+        {informacion}
       </div>
     </>
   )
@@ -440,7 +507,15 @@ function DetalleAsignatura({
         filo={colorPalabra}
         saliendo={saliendo}
       >
-        {cuerpo}
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain border-t border-panel-borde px-5 pt-3.5 pb-3">
+          {informacion}
+          {cambiarElectiva}
+        </div>
+        {/* Las marcas, al pie: es lo que se viene a hacer, y abajo es donde
+            llega el pulgar sin cambiar de mano. */}
+        <div className="shrink-0 border-t border-panel-borde px-4 pt-3 pb-3.5">
+          <SelectorTelefono marca={marca} alMarcar={(m) => alMarcar(nodo.codigo, m)} />
+        </div>
       </TarjetaTelefono>
     )
   }

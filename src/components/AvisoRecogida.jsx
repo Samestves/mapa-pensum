@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Undo2 } from 'lucide-react'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 
 /* Lo que se queda en pantalla despues de entrar. Lo mide la linea de tiempo
    de abajo, que se vacia en ese rato: al acabarse, el aviso se va. */
@@ -30,12 +31,12 @@ function CheckQueSeDibuja() {
  * lo que estaba bloqueado se acaba de abrir, dicho con un gesto y no con una
  * palabra.
  */
-function CandadoQueSeAbre({ retraso }) {
+function CandadoQueSeAbre({ retraso, tam = 15 }) {
   return (
     <svg
       viewBox="0 0 16 16"
-      width={15}
-      height={15}
+      width={tam}
+      height={tam}
       aria-hidden="true"
       focusable="false"
       className="recogida-candado"
@@ -44,6 +45,154 @@ function CandadoQueSeAbre({ retraso }) {
       <rect x="3" y="7.2" width="10" height="6.8" rx="1.6" />
       <path className="recogida-arco" d="M5.3 7.2V5.3a2.7 2.7 0 0 1 5.4 0v1.9" />
     </svg>
+  )
+}
+
+/**
+ * El emblema del aviso en el telefono: un aro con el check dentro.
+ *
+ * Hace dos cosas con un solo trazo. Al entrar el aro se dibuja y despues el
+ * check, igual que en escritorio: aprobada. Y luego el aro se va
+ * deshaciendo, despacio, y es el tiempo que le queda al aviso: cuando se
+ * acaba, el aviso se va. En escritorio eso lo dice una linea al pie; aqui no
+ * hay sitio para una linea mas, y un reloj redondo cabe dentro del propio
+ * emblema.
+ */
+function EmblemaQueSeVacia({ duracion, alVaciarse }) {
+  return (
+    <svg viewBox="0 0 40 40" width={40} height={40} aria-hidden="true" focusable="false">
+      <circle cx="20" cy="20" r="17" className="emblema-pista" />
+      <circle
+        cx="20"
+        cy="20"
+        r="17"
+        pathLength="1"
+        className="emblema-aro"
+        style={{ '--duracion': `${duracion}ms` }}
+        onAnimationEnd={(e) => e.animationName === 'vaciar-emblema' && alVaciarse()}
+      />
+      <path d="M13.8 20.6 18 24.6 26.2 15.8" pathLength="1" className="emblema-tilde" />
+    </svg>
+  )
+}
+
+/* Cuanto hay que deslizar el aviso hacia un lado para quitarlo */
+const QUITAR_DISTANCIA = 72
+
+/**
+ * El aviso en el telefono. No es el de escritorio mas estrecho: alli es una
+ * tarjeta de tres pisos en una esquina que sobra; aqui ocupaba el hueco de
+ * la ficha entera encima de la barra y tapaba justo el mapa donde se veia
+ * la luz llegar.
+ *
+ * Ahora es una capsula de cristal, del mismo material y la misma forma que
+ * la barra de abajo, como una pieza mas del mismo HUD: el emblema a la
+ * izquierda, lo aprobado y lo que abre en dos lineas, y Deshacer a la
+ * derecha. El emblema y el boton son circulos concentricos con los extremos
+ * de la capsula.
+ *
+ * Se quita como una notificacion: deslizandola hacia un lado. Mientras el
+ * dedo esta encima el tiempo se detiene.
+ */
+function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse, alQuitar }) {
+  const inicio = useRef(null)
+  const [dx, setDx] = useState(0)
+  const [tocando, setTocando] = useState(false)
+  const [huida, setHuida] = useState(0)
+
+  const abiertas = aviso.desbloqueadas
+  const cuantas = abiertas.length
+
+  const empezar = (e) => {
+    if (e.target.closest('button')) return
+    inicio.current = { x: e.clientX, t: performance.now() }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    setTocando(true)
+  }
+  const mover = (e) => {
+    if (!inicio.current) return
+    setDx(e.clientX - inicio.current.x)
+  }
+  const soltar = (e) => {
+    if (!inicio.current) return
+    const d = e.clientX - inicio.current.x
+    const velocidad = Math.abs(d) / Math.max(1, performance.now() - inicio.current.t)
+    inicio.current = null
+    setTocando(false)
+    if (Math.abs(d) > QUITAR_DISTANCIA || velocidad > 0.6) {
+      setHuida(Math.sign(d) || 1)
+      alQuitar()
+    } else setDx(0)
+  }
+
+  return (
+    <div
+      role="status"
+      className={`aviso-telefono barra-cristal absolute inset-x-3 z-30 overflow-hidden rounded-full ${
+        saliendo && !huida ? 'recogida-saliendo pointer-events-none' : ''
+      } ${tocando ? 'tocando' : ''}`}
+      style={{
+        touchAction: 'none',
+        translate: huida ? `${huida * 115}% 0` : dx ? `${dx}px 0` : undefined,
+        opacity: huida ? 0 : dx ? Math.max(0.35, 1 - Math.abs(dx) / 260) : undefined,
+        transition: tocando
+          ? 'none'
+          : 'translate 240ms cubic-bezier(0.32, 0.72, 0, 1), opacity 240ms ease',
+      }}
+      onPointerDown={empezar}
+      onPointerMove={mover}
+      onPointerUp={soltar}
+      onPointerCancel={soltar}
+    >
+      {/* Un destello que cruza el cristal una vez al llegar */}
+      <span aria-hidden="true" className="aviso-telefono-brillo" />
+
+      <div className="relative flex items-center gap-3 p-2.5">
+        <span className="shrink-0 text-[var(--estado-aprobada)]">
+          <EmblemaQueSeVacia duracion={DURACION} alVaciarse={alIrse} />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <p
+            className="truncate text-[14.5px] leading-tight text-tinta"
+            style={{ fontWeight: 'var(--peso-nombre)' }}
+          >
+            <span className="sr-only">Aprobada: </span>
+            {aviso.nombre}
+          </p>
+          <p
+            className="recogida-fila mt-[5px] flex min-w-0 items-center gap-1.5 text-[12px] leading-none"
+            style={{ '--retraso': '1350ms' }}
+          >
+            {cuantas > 0 ? (
+              <>
+                <span className="shrink-0 text-[var(--sit-inscribible-luz)]">
+                  <CandadoQueSeAbre retraso={1600} tam={12} />
+                </span>
+                <span
+                  className="shrink-0 font-dato text-[11.5px] text-tinta"
+                  style={{ fontWeight: 'var(--peso-dato)' }}
+                >
+                  +{cuantas}
+                </span>
+                <span className="min-w-0 truncate text-tinta-suave">{abiertas.join(' · ')}</span>
+              </>
+            ) : (
+              <span className="truncate text-tinta-tenue">No abre nada nuevo todavía</span>
+            )}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={alDeshacer}
+          aria-label="Deshacer"
+          className="boton-aro relative grid size-10 shrink-0 place-items-center rounded-full"
+        >
+          <Undo2 size={16} strokeWidth={1.6} />
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -63,6 +212,7 @@ function CandadoQueSeAbre({ retraso }) {
  * destino: primero se ve lo que paso y despues se lee.
  */
 function AvisoRecogida({ aviso, alDeshacer, alCerrar }) {
+  const esTelefono = useEsTelefono()
   const [saliendo, setSaliendo] = useState(false)
   const salida = useRef(null)
 
@@ -85,6 +235,18 @@ function AvisoRecogida({ aviso, alDeshacer, alCerrar }) {
   const deshacer = () => {
     alDeshacer()
     irse()
+  }
+
+  if (esTelefono) {
+    return (
+      <AvisoTelefono
+        aviso={aviso}
+        saliendo={saliendo}
+        alDeshacer={deshacer}
+        alIrse={irse}
+        alQuitar={irse}
+      />
+    )
   }
 
   const abiertas = aviso.desbloqueadas

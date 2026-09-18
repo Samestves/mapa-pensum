@@ -89,8 +89,15 @@ function ListaPrelaciones({
 }) {
   return (
     <div>
-      <p className="flex items-baseline gap-2 font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase">
+      {/* En el telefono el titulo tira una raya fina hasta la cuenta, como los
+          encabezados de un menu de juego: separa las dos listas sin caja. */}
+      <p
+        className={`flex font-ui text-[9.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase ${
+          holgada ? 'items-center gap-3' : 'items-baseline gap-2'
+        }`}
+      >
         {titulo}
+        {holgada && <span aria-hidden="true" className="h-px flex-1 bg-panel-borde" />}
         <span className="font-dato text-[10px] font-light tracking-normal">{materias.length}</span>
       </p>
       {materias.length === 0 ? (
