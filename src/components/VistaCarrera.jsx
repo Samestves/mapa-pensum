@@ -427,7 +427,6 @@ function VistaCarrera({ carrera, alVolver }) {
         ) : vista === 'mapa' ? (
           <GrafoPensum
             layout={layout}
-            iconos={carrera.iconos}
             porCodigo={porCodigo}
             estados={estados}
             descarga={descarga}

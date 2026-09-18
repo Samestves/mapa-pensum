@@ -8,9 +8,8 @@ import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ControlesZoom from './ControlesZoom'
 import AvisoRecogida from './AvisoRecogida'
-import IconosMaterias from './IconosMaterias'
 import { situacionDe } from '../layout/situacion'
-import { ESCALA_ICONOS, NODO } from '../layout/constantes'
+import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
@@ -19,7 +18,6 @@ const SIN_FRANJA = []
 
 function GrafoPensum({
   layout,
-  iconos,
   porCodigo,
   estados,
   descarga,
@@ -384,12 +382,9 @@ function GrafoPensum({
           <svg
             width="100%"
             height="100%"
-            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''} ${
-              vista.escala < ESCALA_ICONOS ? 'mapa-lejos' : ''
-            }`}
+            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
             style={{ textRendering: 'geometricPrecision' }}
           >
-            <IconosMaterias iconos={iconos} />
 
             {/* Oculto hasta que la vista se encaja. El primer fotograma tras
                 montar dibuja el mapa a tamaño natural desde la esquina, y

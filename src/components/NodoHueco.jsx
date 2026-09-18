@@ -135,7 +135,6 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
           lineasNombre={electiva.lineasNombre}
           uc={electiva.uc}
           acento={colorNodo(electiva)}
-          icono={electiva.icono}
           seleccionado={seleccionado}
         />
       )}

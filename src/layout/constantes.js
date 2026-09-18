@@ -11,18 +11,6 @@ export const NODO = {
   padDer: 16,
 }
 
-/* El icono de la materia: grande, en la esquina de abajo a la derecha y
-   cortado por el borde de la tarjeta, como el emblema de una carta. `tam` es
-   lo que mediria entero, y `ancho` y `alto` lo que asoma: algo mas de la
-   mitad. Entero seria una ilustracion peleando con el nombre; cortado se lee
-   como un sello de fondo. */
-export const ICONO = { tam: 72, ancho: 50, alto: 46 }
-
-/* Por debajo de esta escala los iconos no se dibujan: miden menos de veinte
-   pixeles, la linea queda por debajo de medio pixel y solo ensucian, y el
-   mapa entero a la vista es justo cuando mas tarjetas hay que pintar. */
-export const ESCALA_ICONOS = 0.3
-
 // Ancho util para el texto dentro del nodo
 export const ANCHO_TEXTO = NODO.ancho - NODO.padIzq - NODO.padDer
 
