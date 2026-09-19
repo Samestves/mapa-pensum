@@ -303,10 +303,11 @@ function GrafoPensum({
             x1: Math.max(...cajas.map((a) => a.x + NODO.ancho)),
             y1: Math.max(...cajas.map((a) => a.y + NODO.alto)),
           },
-          // En el telefono el aviso sale arriba y abajo queda la barra; en
-          // escritorio el aviso va abajo, en la esquina
+          // Abajo quedan la barra y el aviso. En el telefono el aviso sube
+          // unos 280 px desde el borde (ver .recogida-movil); en escritorio es
+          // la tarjeta de la esquina
           telefono
-            ? { arriba: 120, abajo: 100, izq: 32, der: 32 }
+            ? { arriba: 32, abajo: 290, izq: 24, der: 24 }
             : { arriba: 48, abajo: 104, izq: 48, der: 48 },
         )
       }

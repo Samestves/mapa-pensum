@@ -747,82 +747,127 @@ body {
 
 /* ---- El aviso en el telefono (AvisoTelefono) ---------------------------
 
-   Arriba del mapa, bajo la cabecera, y no encima de la barra: abajo vive
-   todo lo que se pulsa en un telefono. Baja desde la cabecera con la misma
-   espera que el de escritorio, cuando la luz del cable ya llego.
+   El de recoger algo en The Last of Us Parte II: abajo a la izquierda, sin
+   caja, texto sobre un velo. Todo cuenta desde los 1150 ms, cuando la luz
+   del cable llega a lo que se abre, igual que el de escritorio. Entra sin
+   rebote -un fundido y un paso corto desde la izquierda- y sale igual, pieza
+   a pieza. */
 
-   El fondo es el panel casi opaco con el cristal detras, y desde la
-   izquierda un velo verde muy tenue que sale de la linea de luz: el color de
-   lo que acaba de pasar, sin teñir el aviso entero. */
-.aviso-arriba {
-  top: 1.25rem;
-  max-width: 28rem;
-  margin-inline: auto;
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--estado-aprobada) 11%, transparent),
-      transparent 55%
-    ),
-    color-mix(in oklab, var(--panel) 90%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  backdrop-filter: blur(18px) saturate(1.4);
-  animation: bajar-cartel 520ms cubic-bezier(0.22, 1.15, 0.36, 1) 1150ms both;
-}
-
-@keyframes bajar-cartel {
-  from {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.aviso-arriba-saliendo {
-  animation: subir-cartel 240ms cubic-bezier(0.4, 0, 1, 1) both;
-}
-
-@keyframes subir-cartel {
-  from {
-    opacity: 1;
-    transform: none;
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-}
-
-/* La linea de luz del borde izquierdo: se traza de arriba abajo cuando el
-   aviso ya esta entrando, con su resplandor. */
-.aviso-arriba-filo {
+/* El velo: la esquina de abajo a la izquierda del mapa se apaga hacia el
+   color del lienzo, y se difumina antes de llegar a la barra y a los
+   botones de zoom. Con el lienzo como color vale para los dos temas: en
+   claro es una bruma clara y el texto va en tinta oscura. */
+.recogida-velo {
   position: absolute;
   left: 0;
-  top: 0.75rem;
-  bottom: 0.75rem;
-  width: 2px;
-  border-radius: 0 2px 2px 0;
-  background: var(--estado-aprobada);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--estado-aprobada) 70%, transparent);
-  transform-origin: top;
-  animation: trazar-filo 560ms cubic-bezier(0.22, 0.61, 0.2, 1) 1250ms both;
+  right: 0;
+  bottom: var(--reserva-barra, 0px);
+  height: 30rem;
+  z-index: 10;
+  pointer-events: none;
+  background: radial-gradient(
+    115% 80% at 0% 100%,
+    color-mix(in oklab, var(--lienzo) 94%, transparent) 0%,
+    color-mix(in oklab, var(--lienzo) 74%, transparent) 40%,
+    transparent 74%
+  );
+  -webkit-mask: linear-gradient(0deg, transparent 0, #000 1.5rem);
+  mask: linear-gradient(0deg, transparent 0, #000 1.5rem);
+  animation: velo-entra 1000ms ease 1000ms both;
 }
 
-@keyframes trazar-filo {
+.recogida-velo-saliendo {
+  animation: velo-sale 900ms ease both;
+}
+
+@keyframes velo-entra {
   from {
-    transform: scaleY(0);
+    opacity: 0;
   }
   to {
-    transform: scaleY(1);
+    opacity: 1;
   }
 }
 
-/* Con el dedo encima el tiempo se para, para leer o llegar a Deshacer */
-.aviso-arriba.tocando .recogida-tiempo {
+@keyframes velo-sale {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* El texto, a la izquierda y lejos de los botones de zoom de la derecha */
+.recogida-movil {
+  position: absolute;
+  left: 1.375rem;
+  bottom: calc(var(--reserva-barra, 0px) + 1rem);
+  width: min(19rem, calc(100% - 6.5rem));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.movil-pieza {
+  animation: pieza-entra 700ms cubic-bezier(0.22, 0.61, 0.2, 1) calc(1150ms + var(--e, 0ms)) both;
+}
+
+.recogida-movil-saliendo .movil-pieza {
+  animation: pieza-sale 560ms cubic-bezier(0.4, 0, 0.6, 1) var(--s, 0ms) both;
+}
+
+@keyframes pieza-entra {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pieza-sale {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+/* La raya del tiempo, bajo el nombre: asoma con el resto y luego se va
+   acortando hacia la izquierda. Con el dedo encima se para. */
+.movil-tiempo {
+  width: 100%;
+  background: color-mix(in oklab, var(--tinta) 35%, transparent);
+  transform-origin: left;
+  animation:
+    velo-entra 700ms ease 1450ms both,
+    vaciar-raya var(--duracion, 5600ms) linear 2150ms both;
+}
+
+.recogida-movil.tocando .movil-tiempo {
   animation-play-state: paused;
+}
+
+/* Al salir la raya ya no tiene nada que contar: se quita. Animarla aqui
+   reemplazaria la animacion que la vacio y volveria a verse entera. */
+.recogida-movil-saliendo .movil-tiempo {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes vaciar-raya {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 /* ---- La ficha de la materia: salida y filo de luz ---------------------- */
@@ -2340,9 +2385,10 @@ body {
   .recogida-fila,
   .recogida-arco,
   .recogida-tiempo,
-  .aviso-arriba,
-  .aviso-arriba-saliendo,
-  .aviso-arriba-filo,
+  .recogida-velo,
+  .recogida-velo-saliendo,
+  .movil-pieza,
+  .movil-tiempo,
   .menu-clase.ficha-saliendo,
   .hoja-ficha.tarjeta-saliendo,
   .logo-entrada,

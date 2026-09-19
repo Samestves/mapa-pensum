@@ -5,13 +5,17 @@ import { useEsTelefono } from '../hooks/useEsTelefono'
 /* Lo que se queda en pantalla despues de entrar. Lo mide la linea de tiempo
    de abajo, que se vacia en ese rato: al acabarse, el aviso se va. */
 const DURACION = 5600
-/* Lo que tarda en irse: mas corto que la entrada, como todo lo que sale */
+/* Lo que tarda en irse: mas corto que la entrada, como todo lo que sale. En
+   el telefono sale pieza a pieza, y la cascada entera dura mas. */
 const SALIDA = 260
+const SALIDA_TELEFONO = 820
 /* Cuantas materias se nombran; el resto se cuenta */
 const TOPE_FILAS = 3
-/* Cuando termina de entrar: la espera hasta que llega la luz del cable
-   (ver .aviso-recogida) mas lo que dura la entrada */
+/* Cuando ya se ve: la espera hasta que llega la luz del cable (ver
+   .aviso-recogida) mas lo que tarda en asomar. Retirado antes de eso se
+   quita sin animar nada. */
 const ENTRADA = 1150 + 520
+const ENTRADA_TELEFONO = 1150 + 400
 
 const reducido = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
 
@@ -51,148 +55,159 @@ function CandadoQueSeAbre({ retraso, tam = 15 }) {
   )
 }
 
-/* Cuanto hay que deslizar el aviso hacia arriba o hacia un lado para quitarlo */
-const QUITAR_ARRIBA = 32
-const QUITAR_LADO = 72
+/* Cuanto hay que deslizar el aviso hacia la izquierda para quitarlo */
+const QUITAR = 64
 
 /**
- * El aviso en el telefono, arriba del mapa, justo debajo de la cabecera.
+ * El aviso en el telefono: el de recoger algo en The Last of Us Parte II.
  *
- * Estuvo abajo, encima de la barra, y abajo en el telefono vive todo lo
- * demas: la ficha que se abre, sus marcas al pie, los botones de zoom y la
- * propia barra. El aviso se montaba encima de cualquiera de ellos, y con
- * una ficha abierta tapaba justo Aprobada-Cursando-Sin cursar. Arriba no
- * hay nada que pulsar, y es donde un telefono pone sus notificaciones.
+ * Abajo a la izquierda, sobre la barra, y sin caja: el texto va sobre un
+ * velo que oscurece esa esquina del mapa y se difumina hacia arriba y hacia
+ * la derecha, antes de llegar a los botones de zoom. Primero "APROBADA" con
+ * su check dibujandose, el nombre en grande y, debajo, cada materia que se
+ * abre entrando detras de la anterior con su candado. El tiempo que le
+ * queda es la raya fina bajo el nombre, que se va acortando; al acabarse,
+ * todo sale en cascada, pieza a pieza.
  *
- * Tampoco es una capsula: la barra ya lo es, y dos pildoras juntas parecian
- * la misma pieza. Es el cartel de un juego al recoger algo: una linea de luz
- * verde a la izquierda, "APROBADA" en pequeño con su check dibujandose, el
- * nombre en grande, lo que se abre con su candado y Deshacer con su
- * palabra. El tiempo que le queda es la linea del pie.
+ * Probamos antes una capsula de cristal -la barra ya es una pildora, y dos
+ * juntas parecian la misma pieza- y un cartel arriba con borde: los dos
+ * eran cajas, y en el juego nada de esto lleva caja.
  *
- * Se quita como una notificacion, deslizandola hacia arriba o a un lado, y
- * con el dedo encima el tiempo se para.
+ * Se quita deslizandolo hacia la izquierda, y con el dedo encima el tiempo
+ * se para. Va por debajo de la ficha y de los botones de zoom: si alguna vez
+ * coinciden, gana lo que se pulsa.
  */
 function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
   const inicio = useRef(null)
-  const [arrastre, setArrastre] = useState({ x: 0, y: 0 })
+  const [dx, setDx] = useState(0)
   const [tocando, setTocando] = useState(false)
-  const [huida, setHuida] = useState(null)
+  const [huido, setHuido] = useState(false)
 
   const abiertas = aviso.desbloqueadas
   const cuantas = abiertas.length
+  const nombradas = abiertas.slice(0, TOPE_FILAS)
+  const resto = cuantas - nombradas.length
 
   const empezar = (e) => {
     if (e.target.closest('button')) return
-    inicio.current = { x: e.clientX, y: e.clientY, t: performance.now() }
+    inicio.current = { x: e.clientX, t: performance.now() }
     e.currentTarget.setPointerCapture?.(e.pointerId)
     setTocando(true)
   }
   const mover = (e) => {
     if (!inicio.current) return
-    const x = e.clientX - inicio.current.x
-    // Hacia abajo no se arrastra: ahi no hay adonde irse
-    const y = Math.min(0, e.clientY - inicio.current.y)
-    setArrastre(Math.abs(x) > Math.abs(y) ? { x, y: 0 } : { x: 0, y })
+    // Solo hacia la izquierda, que es de donde vino
+    setDx(Math.min(0, e.clientX - inicio.current.x))
   }
   const soltar = () => {
     if (!inicio.current) return
-    const t = Math.max(1, performance.now() - inicio.current.t)
-    const { x, y } = arrastre
+    const rapido = -dx / Math.max(1, performance.now() - inicio.current.t) > 0.5
     inicio.current = null
     setTocando(false)
-    const rapido = Math.hypot(x, y) / t > 0.6
-    if (-y > QUITAR_ARRIBA || (y < 0 && rapido)) {
-      setHuida('0 -140%')
+    if (-dx > QUITAR || (dx < 0 && rapido)) {
+      setHuido(true)
       alIrse()
-    } else if (Math.abs(x) > QUITAR_LADO || (x !== 0 && rapido)) {
-      setHuida(`${Math.sign(x) * 115}% 0`)
-      alIrse()
-    } else setArrastre({ x: 0, y: 0 })
+    } else setDx(0)
   }
 
-  const movido = arrastre.x || arrastre.y
-  return (
-    <div
-      role="status"
-      className={`aviso-arriba transicion-tema absolute inset-x-3 z-20 overflow-hidden rounded-[14px] border border-panel-borde shadow-2xl ${
-        saliendo && !huida ? 'aviso-arriba-saliendo pointer-events-none' : ''
-      } ${tocando ? 'tocando' : ''}`}
-      style={{
-        touchAction: 'none',
-        translate: huida ?? (movido ? `${arrastre.x}px ${arrastre.y}px` : undefined),
-        opacity: huida
-          ? 0
-          : movido
-            ? Math.max(0.35, 1 - Math.hypot(arrastre.x, arrastre.y) / 220)
-            : undefined,
-        transition: tocando
-          ? 'none'
-          : 'translate 260ms cubic-bezier(0.32, 0.72, 0, 1), opacity 260ms ease',
-      }}
-      onPointerDown={empezar}
-      onPointerMove={mover}
-      onPointerUp={soltar}
-      onPointerCancel={soltar}
-    >
-      {/* La linea de luz del borde izquierdo, que se traza de arriba abajo */}
-      <span aria-hidden="true" className="aviso-arriba-filo" />
+  /* Cada pieza entra con su retraso (--e) y sale con el suyo (--s): las de
+     abajo salen primero, como si el aviso se recogiera hacia arriba. */
+  const pieza = (e, s) => ({ '--e': `${e}ms`, '--s': `${s}ms` })
+  const filas = nombradas.length + (resto > 0 ? 1 : 0)
 
-      <div className="flex items-center gap-2 py-3 pr-1.5 pl-5">
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-[var(--estado-aprobada)]">
-            <CheckQueSeDibuja tam={15} />
-            <span className="font-ui text-[9px] font-medium tracking-[0.28em] uppercase">
-              Aprobada
-            </span>
-          </p>
-          <p
-            className="mt-1 truncate font-ui text-[18px] leading-tight text-tinta"
-            style={{ fontWeight: 400 }}
-          >
-            {aviso.nombre}
-          </p>
-          <p
-            className="recogida-fila mt-2 flex min-w-0 items-center gap-1.5 text-[12px] leading-none"
-            style={{ '--retraso': '1450ms' }}
-          >
-            {cuantas > 0 ? (
-              <>
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className={`recogida-velo ${saliendo ? 'recogida-velo-saliendo' : ''}`}
+      />
+      <div
+        role="status"
+        className={`recogida-movil ${saliendo && !huido ? 'recogida-movil-saliendo' : ''} ${
+          tocando ? 'tocando' : ''
+        }`}
+        style={{
+          touchAction: 'none',
+          translate: huido ? '-120% 0' : dx ? `${dx}px 0` : undefined,
+          opacity: huido ? 0 : dx ? Math.max(0.3, 1 + dx / 200) : undefined,
+          transition: tocando
+            ? 'none'
+            : 'translate 300ms cubic-bezier(0.32, 0.72, 0, 1), opacity 300ms ease',
+        }}
+        onPointerDown={empezar}
+        onPointerMove={mover}
+        onPointerUp={soltar}
+        onPointerCancel={soltar}
+      >
+        <p
+          className="movil-pieza flex items-center gap-2.5 text-[var(--estado-aprobada)]"
+          style={pieza(0, (filas + 2) * 70)}
+        >
+          <CheckQueSeDibuja tam={15} />
+          <span className="font-ui text-[9.5px] font-medium tracking-[0.32em] uppercase">
+            Aprobada
+          </span>
+        </p>
+        <p
+          className="movil-pieza mt-1.5 line-clamp-2 font-ui text-[22px] leading-[1.15] tracking-[-0.005em] text-balance text-tinta"
+          style={{ ...pieza(120, (filas + 1) * 70), fontWeight: 300 }}
+        >
+          {aviso.nombre}
+        </p>
+
+        {/* El tiempo que le queda. Al acabarse, el aviso se va solo. */}
+        <span
+          aria-hidden="true"
+          className="movil-tiempo mt-3 block h-px"
+          style={{ '--duracion': `${DURACION}ms` }}
+          onAnimationEnd={(e) => e.animationName === 'vaciar-raya' && alIrse()}
+        />
+
+        {cuantas > 0 ? (
+          <ul className="mt-3 flex flex-col gap-[9px]">
+            {nombradas.map((nombre, i) => (
+              <li
+                key={nombre}
+                className="movil-pieza flex min-w-0 items-center gap-2.5 text-[14px] text-tinta"
+                style={pieza(500 + i * 140, (filas - i) * 70)}
+              >
+                <span className="w-2.5 shrink-0 font-dato text-[13px] text-tinta-suave">+</span>
                 <span className="shrink-0 text-[var(--sit-inscribible-luz)]">
-                  <CandadoQueSeAbre retraso={1700} tam={12} />
+                  <CandadoQueSeAbre retraso={1150 + 750 + i * 140} tam={12} />
                 </span>
-                <span
-                  className="shrink-0 font-dato text-[11.5px] text-tinta"
-                  style={{ fontWeight: 'var(--peso-dato)' }}
-                >
-                  +{cuantas}
+                <span className="min-w-0 truncate" style={{ fontWeight: 'var(--peso-nombre)' }}>
+                  {nombre}
                 </span>
-                <span className="min-w-0 truncate text-tinta-suave">{abiertas.join(' · ')}</span>
-              </>
-            ) : (
-              <span className="truncate text-tinta-tenue">No abre nada nuevo todavía</span>
+              </li>
+            ))}
+            {resto > 0 && (
+              <li
+                className="movil-pieza pl-5 text-[13px] text-tinta-tenue"
+                style={pieza(500 + nombradas.length * 140, 70)}
+              >
+                y {resto} más
+              </li>
             )}
+          </ul>
+        ) : (
+          <p className="movil-pieza mt-3 text-[13px] text-tinta-tenue" style={pieza(500, 70)}>
+            No abre nada nuevo todavía
           </p>
-        </div>
+        )}
 
         <button
           type="button"
           onClick={alDeshacer}
-          className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 font-ui text-[9px] font-medium tracking-[0.2em] text-tinta-suave uppercase transition-colors active:bg-panel-suave"
+          className="movil-pieza mt-3 -ml-1.5 flex min-h-11 items-center gap-2.5 rounded-full pr-3 pl-1.5 font-ui text-[9.5px] font-medium tracking-[0.26em] text-tinta uppercase"
+          style={pieza(900, 0)}
         >
-          <Undo2 size={13} strokeWidth={1.6} />
+          <span className="boton-aro grid size-6 place-items-center rounded-full">
+            <Undo2 size={12} strokeWidth={1.7} />
+          </span>
           Deshacer
         </button>
       </div>
-
-      {/* El tiempo que le queda. Al vaciarse, el aviso se va solo. */}
-      <span
-        aria-hidden="true"
-        className="recogida-tiempo absolute inset-x-0 bottom-0 h-[2px]"
-        style={{ '--duracion': `${DURACION}ms` }}
-        onAnimationEnd={alIrse}
-      />
-    </div>
+    </>
   )
 }
 
@@ -220,7 +235,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
   const irse = () => {
     if (salida.current) return
     setSaliendo(true)
-    salida.current = setTimeout(alCerrar, SALIDA)
+    salida.current = setTimeout(alCerrar, esTelefono ? SALIDA_TELEFONO : SALIDA)
   }
   useEffect(() => () => clearTimeout(salida.current), [])
 
@@ -230,7 +245,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
      salida animada lo enseñaria un instante solo para irse. */
   useEffect(() => {
     if (!retirar) return
-    if (performance.now() - montado.current < ENTRADA) alCerrar()
+    if (performance.now() - montado.current < (esTelefono ? ENTRADA_TELEFONO : ENTRADA)) alCerrar()
     else irse()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retirar])
