@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ZOOM } from '../layout/constantes'
+import { escalaDeLectura } from '../layout/camara'
 import {
   AUMENTO_VIAJE,
   capaCubre,
@@ -17,6 +18,17 @@ const DURACION_ZOOM = 220
 const DURACION_MOSTRAR = 420
 
 const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
+
+/* El doble toque: cuanto pueden separarse los dos toques en tiempo y en
+   espacio, y cuanto acerca */
+const DOBLE_TOQUE_MS = 300
+const DOBLE_TOQUE_PX = 30
+const ACERCA_DOBLE_TOQUE = 2
+/* La inercia al soltar un arrastre: la velocidad que hace falta para que
+   siga solo, y cuanto tarda en perder dos tercios de ella. 325 ms es la
+   friccion de los desplazamientos de iOS: largo y suave al final. */
+const LANZAMIENTO_MIN = 0.25
+const FRICCION_MS = 325
 
 /* Cuanto se deja pasar del borde del contenido. Un poco de aire evita que
    llegar al final se sienta como chocar contra una pared. */
@@ -79,8 +91,11 @@ export function acotarVista(v, medida, anchoContenido, altoContenido) {
  * `fichaAnclada` es una ref que dice si hay una ficha colocada al lado de su
  * tarjeta, que es lo que decide como se hacen los viajes de camara (ver
  * animarHacia).
+ *
+ * `vistaInicial(medida)` da la vista con la que abre el mapa, o null para
+ * abrirlo encajado entero (ver layout/camara.js).
  */
-export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
+export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vistaInicial) {
   const contenedorRef = useRef(null)
   const [vista, setVista] = useState({ x: 0, y: 0, escala: 1 })
 
@@ -219,9 +234,9 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
     }
   }, [])
 
-  // Encaja el grafo completo y lo centra
-  const encajar = useCallback(() => {
-    if (!medida.ancho || !medida.alto) return
+  // La vista con el grafo completo encajado y centrado
+  const vistaEncajada = useCallback(() => {
+    if (!medida.ancho || !medida.alto) return null
     const escala = acotar(
       Math.min(
         (medida.ancho - MARGEN_ENCAJE * 2) / anchoContenido,
@@ -230,12 +245,24 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
       ZOOM.min,
       1,
     )
-    aplicarVista({
+    return {
       escala,
       x: (medida.ancho - anchoContenido * escala) / 2,
       y: (medida.alto - altoContenido * escala) / 2,
-    })
-  }, [medida, anchoContenido, altoContenido, aplicarVista])
+    }
+  }, [medida, anchoContenido, altoContenido])
+
+  /* Al llegar de golpe a una vista nueva -al abrir el mapa, o al saltar
+     entre verlo todo y tu semestre- el mapa se asienta: sube unos pixeles y
+     aparece, en vez de cambiar en seco. Es una animacion de la capa, que la
+     resuelve la GPU sin repintar el mapa. */
+  const llegar = useCallback(() => {
+    const capa = capaRef.current
+    if (!capa) return
+    capa.classList.remove('capa-llegando')
+    void capa.offsetWidth
+    capa.classList.add('capa-llegando')
+  }, [])
 
   /* Encaje automatico la primera vez que se conoce el tamaño del contenedor.
      Hasta que ocurre, la vista vale {0, 0, escala 1}: el mapa entero dibujado
@@ -247,13 +274,17 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
   useEffect(() => {
     if (yaEncajado.current || !medida.ancho) return
     yaEncajado.current = true
-    encajar()
+    const inicial = vistaInicial?.(medida) ?? vistaEncajada()
+    if (inicial) aplicarVista(inicial)
     setEncajado(true)
-  }, [medida, encajar])
+    llegar()
+  }, [medida, vistaInicial, vistaEncajada, aplicarVista, llegar])
 
   // Cuadro y red de la animacion de los botones
   const animacion = useRef(0)
   const redZoom = useRef(null)
+  // Cuadro de la inercia de un arrastre soltado
+  const inercia = useRef(0)
   /* Si el viaje en curso va estirando la capa en vez de pintar cada cuadro.
      Al acabar -o al cortarlo un dedo- se pinta donde se quedo. */
   const enViaje = useRef(false)
@@ -271,9 +302,23 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
      con la animacion cuadro a cuadro. */
   const detenerViaje = useCallback(() => {
     cancelAnimationFrame(animacion.current)
+    cancelAnimationFrame(inercia.current)
     clearTimeout(redZoom.current)
     asentarViaje()
   }, [asentarViaje])
+
+  /* Salta a una vista sin viaje, asentandose al llegar. Para saltos grandes
+     -de ver la carrera entera a leer un semestre-, donde un viaje animado
+     tendria que repintar el mapa entero en cada cuadro. */
+  const irDeGolpe = useCallback(
+    (v) => {
+      if (!v) return
+      detenerViaje()
+      aplicarVista(v)
+      llegar()
+    },
+    [detenerViaje, aplicarVista, llegar],
+  )
 
   /** Donde queda la vista al aplicar un factor de zoom dejando fijo un punto */
   const conZoom = (v, factor, puntoX, puntoY) => {
@@ -527,6 +572,63 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
   const pellizco = useRef(null)
   // Distingue un click de un arrastre: si el puntero se movio, no es click
   const huboMovimiento = useRef(false)
+  // Los ultimos puntos del arrastre, para saber a que velocidad se solto
+  const muestras = useRef([])
+  // El toque anterior, para reconocer el doble toque
+  const ultimoToque = useRef(null)
+  // Si el gesto en curso ha sido de un solo dedo de principio a fin
+  const deUnDedo = useRef(false)
+
+  /* Soltar un arrastre con velocidad lo deja seguir solo y frenar poco a
+     poco, como cualquier lista o mapa de un telefono. Parado en seco, cada
+     arrastre largo pedia tres o cuatro arrastres cortos. Si choca con el
+     borde, ese eje se para. */
+  const lanzar = () => {
+    const m = muestras.current
+    muestras.current = []
+    if (m.length < 2) return
+    const ultimo = m[m.length - 1]
+    // Si el dedo se quedo quieto antes de soltar, no lo estaba lanzando
+    if (performance.now() - ultimo.t > 60) return
+    const primero = m.find((p) => ultimo.t - p.t <= 80) ?? m[0]
+    const dt = ultimo.t - primero.t
+    if (dt <= 0) return
+    let vx = (ultimo.x - primero.x) / dt
+    let vy = (ultimo.y - primero.y) / dt
+    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return
+
+    let previo = null
+    const paso = (ahora) => {
+      if (previo != null) {
+        const d = Math.min(32, ahora - previo)
+        const v = vistaRef.current
+        const quiere = { ...v, x: v.x + vx * d, y: v.y + vy * d }
+        aplicarVista(quiere)
+        const llego = vistaRef.current
+        if (Math.abs(llego.x - quiere.x) > 0.5) vx = 0
+        if (Math.abs(llego.y - quiere.y) > 0.5) vy = 0
+        const f = Math.exp(-d / FRICCION_MS)
+        vx *= f
+        vy *= f
+        if (Math.hypot(vx, vy) < 0.02) return
+      }
+      previo = ahora
+      marcarGesto()
+      inercia.current = requestAnimationFrame(paso)
+    }
+    inercia.current = requestAnimationFrame(paso)
+  }
+
+  /* Doble toque en el lienzo: acerca al doble alrededor del dedo, que es
+     lo que hace cualquier mapa. Si ya estas muy cerca, vuelve a la escala a
+     la que se lee el mapa. Solo en el vacio: un toque en una tarjeta abre
+     su ficha. */
+  const dobleToque = (px, py) => {
+    const v = vistaRef.current
+    const lectura = escalaDeLectura(medida.ancho)
+    const factor = v.escala >= 1.6 ? lectura / v.escala : ACERCA_DOBLE_TOQUE
+    animarHacia(conZoom(v, factor, px, py), 300)
+  }
 
   const medirPellizco = () => {
     const [a, b] = [...punteros.current.values()]
@@ -545,6 +647,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
     refrescarCaja()
     punteros.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     huboMovimiento.current = false
+    muestras.current = []
+    deUnDedo.current = punteros.current.size === 1
 
     // Ojo: aqui NO se captura el puntero. Capturarlo en el pointerdown
     // redirige el click al elemento capturador, y entonces los botones
@@ -591,6 +695,11 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
 
     marcarGesto()
     aplicarVista({ ...vistaRef.current, x: inicio.vx + dx, y: inicio.vy + dy })
+    const ahora = performance.now()
+    muestras.current.push({ t: ahora, x: e.clientX, y: e.clientY })
+    while (muestras.current.length > 2 && ahora - muestras.current[0].t > 100) {
+      muestras.current.shift()
+    }
   }
 
   const alSoltar = (e) => {
@@ -598,12 +707,34 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
+    const tactil = e.pointerType !== 'mouse' && e.type === 'pointerup'
+    const eraArrastre = arrastre.current?.capturado && deUnDedo.current
     // Al levantar un dedo del pellizco no se reanuda el arrastre con el otro:
     // haria un salto feo. Hace falta volver a tocar.
     if (pellizco.current) asentarVista()
     pellizco.current = null
     arrastre.current = null
     if (punteros.current.size === 0) setArrastrando(false)
+
+    if (tactil && eraArrastre) lanzar()
+
+    // Un toque limpio de un dedo en el vacio: puede ser la mitad de un doble toque
+    if (tactil && deUnDedo.current && !huboMovimiento.current && punteros.current.size === 0) {
+      if (e.target.closest?.('.grupo-nodo, button')) return
+      const ahora = performance.now()
+      const antes = ultimoToque.current
+      if (
+        antes &&
+        ahora - antes.t < DOBLE_TOQUE_MS &&
+        Math.hypot(e.clientX - antes.x, e.clientY - antes.y) < DOBLE_TOQUE_PX
+      ) {
+        ultimoToque.current = null
+        const { left, top } = cajaRef.current
+        dobleToque(e.clientX - left, e.clientY - top)
+      } else {
+        ultimoToque.current = { t: ahora, x: e.clientX, y: e.clientY }
+      }
+    }
   }
 
   return {
@@ -616,7 +747,9 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada) {
     enGesto,
     refEnGesto,
     huboMovimiento,
-    encajar,
+    encajar: () => irDeGolpe(vistaEncajada()),
+    vistaEncajada,
+    irDeGolpe,
     acercar: () => zoomAlCentro(ZOOM.paso),
     alejar: () => zoomAlCentro(1 / ZOOM.paso),
     mostrar,

@@ -469,6 +469,25 @@ body {
   }
 }
 
+/* El mapa se asienta al llegar a una vista de golpe (ver llegar en
+   useVistaGrafo): sube unos pixeles y aparece. Con `translate` y no con
+   `transform`, que es donde vive el estiramiento del pellizco y de los
+   viajes, para no pisarlo. */
+.capa-grafo.capa-llegando {
+  animation: capa-llega 620ms cubic-bezier(0.22, 0.61, 0.2, 1) both;
+}
+
+@keyframes capa-llega {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
 /* Durante un viaje de camara la capa se estira en la GPU en todos los
    aparatos, tambien con raton: sin capa propia, cambiarle el transform
    obligaria a repintarla en cada cuadro, que es lo que se quiere evitar. */
@@ -2385,6 +2404,7 @@ body {
   .recogida-fila,
   .recogida-arco,
   .recogida-tiempo,
+  .capa-llegando,
   .recogida-velo,
   .recogida-velo-saliendo,
   .movil-pieza,

@@ -426,6 +426,7 @@ function VistaCarrera({ carrera, alVolver }) {
           <Horario carrera={carrera} estados={estados} />
         ) : vista === 'mapa' ? (
           <GrafoPensum
+            clave={carrera.slug}
             layout={layout}
             porCodigo={porCodigo}
             estados={estados}

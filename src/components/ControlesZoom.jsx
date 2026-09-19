@@ -1,4 +1,4 @@
-import { Maximize, Minus, Plus } from 'lucide-react'
+import { LocateFixed, Maximize, Minus, Plus } from 'lucide-react'
 
 /* Los controles del lienzo van juntos en un solo bloque con separadores,
    no como botones sueltos flotando: se leen como un mando, no como ruido. */
@@ -30,7 +30,14 @@ function BotonDock({ icono: Icono, titulo, alPulsar }) {
  * despierta y funciona a la primera. Perder el primer click seria peor que
  * no atenuarlo.
  */
-export default function ControlesZoom({ acercar, alejar, encajar, atenuado }) {
+/* El tercer boton, segun lo que va a hacer: ver la carrera entera, o
+   -en el telefono, cuando ya la estas viendo entera- volver a tu semestre. */
+const ENCAJE = {
+  todo: { icono: Maximize, titulo: 'Encajar en pantalla' },
+  frente: { icono: LocateFixed, titulo: 'Volver a tu semestre' },
+}
+
+export default function ControlesZoom({ acercar, alejar, encajar, encaje = 'todo', atenuado }) {
   return (
     <div
       data-atenuado={atenuado}
@@ -38,7 +45,7 @@ export default function ControlesZoom({ acercar, alejar, encajar, atenuado }) {
     >
       <BotonDock icono={Plus} titulo="Acercar" alPulsar={acercar} />
       <BotonDock icono={Minus} titulo="Alejar" alPulsar={alejar} />
-      <BotonDock icono={Maximize} titulo="Encajar en pantalla" alPulsar={encajar} />
+      <BotonDock icono={ENCAJE[encaje].icono} titulo={ENCAJE[encaje].titulo} alPulsar={encajar} />
     </div>
   )
 }

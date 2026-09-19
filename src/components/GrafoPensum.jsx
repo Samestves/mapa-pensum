@@ -11,6 +11,7 @@ import AvisoRecogida from './AvisoRecogida'
 import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
+import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
@@ -20,6 +21,7 @@ const SIN_FRANJA = []
 const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
 
 function GrafoPensum({
+  clave,
   layout,
   porCodigo,
   estados,
@@ -47,23 +49,6 @@ function GrafoPensum({
   const fichaAnclada = useRef(false)
   const esTelefono = useEsTelefono()
 
-  const {
-    contenedorRef,
-    capaRef,
-    vista,
-    medida,
-    encajado,
-    arrastrando,
-    enGesto,
-    refEnGesto,
-    huboMovimiento,
-    encajar,
-    acercar,
-    alejar,
-    mostrar,
-    controlesArrastre,
-  } = useVistaGrafo(ancho, alto, fichaAnclada)
-
   /* Situacion de cada materia -hecha, cursando, inscribible, proxima o
      lejana-. Cambia de identidad solo cuando cambian los estados, que es
      cuando de verdad hay que repintar. */
@@ -78,6 +63,63 @@ function GrafoPensum({
     for (const casilla of casillasFranja) poner(enCasilla(casilla.codigo))
     return mapa
   }, [nodos, casillasFranja, estados, enCasilla])
+
+  /* Tu semestre a escala de lectura: la columna donde tienes algo que
+     inscribir o que estas cursando (ver layout/camara.js). */
+  const vistaDelFrente = useCallback(
+    (m) => {
+      const semestre = semestreFrente(nodos, situaciones)
+      const columna = columnas.find((c) => c.semestre === semestre) ?? columnas[0]
+      return columna ? vistaDeColumna(columna, m) : null
+    },
+    [nodos, situaciones, columnas],
+  )
+
+  /* Con que vista abre el mapa. La de la ultima vez, si vuelves a esta
+     carrera en la misma sesion -del horario, de la lista, o recargando-. Si
+     no, en el telefono, tu semestre; en escritorio, la carrera entera, que
+     ahi si se lee. */
+  const vistaInicial = useCallback(
+    (m) => leerCamara(clave, m) ?? (m.ancho < 768 ? vistaDelFrente(m) : null),
+    [clave, vistaDelFrente],
+  )
+
+  const {
+    contenedorRef,
+    capaRef,
+    vista,
+    medida,
+    encajado,
+    arrastrando,
+    enGesto,
+    refEnGesto,
+    huboMovimiento,
+    encajar,
+    vistaEncajada,
+    irDeGolpe,
+    acercar,
+    alejar,
+    mostrar,
+    controlesArrastre,
+  } = useVistaGrafo(ancho, alto, fichaAnclada, vistaInicial)
+
+  /* Se guarda donde esta la camara cada vez que se queda quieta */
+  useEffect(() => {
+    if (!encajado || !medida.ancho) return
+    const reloj = setTimeout(() => guardarCamara(clave, vista, medida), 300)
+    return () => clearTimeout(reloj)
+  }, [clave, vista, medida, encajado])
+
+  /* En el telefono el boton de encajar va y viene: de donde estes a la
+     carrera entera, y de la carrera entera a tu semestre. Solo "ver todo"
+     dejaba el mapa ilegible y habia que volver a acercarse a mano. */
+  const escalaTodo = vistaEncajada()?.escala
+  const enTodo =
+    medida.ancho < 768 && escalaTodo != null && Math.abs(vista.escala - escalaTodo) < 0.005
+  const alternarEncaje = useCallback(() => {
+    if (medida.ancho >= 768) return encajar()
+    irDeGolpe(enTodo ? vistaDelFrente(medida) : vistaEncajada())
+  }, [medida, encajar, enTodo, irDeGolpe, vistaDelFrente, vistaEncajada])
 
   // El dock se apaga si nadie toca el mapa en dos segundos
   const { quieto, despertar } = useInactividad(2000)
@@ -469,7 +511,13 @@ function GrafoPensum({
         />
       ))}
 
-      <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
+      <ControlesZoom
+        acercar={acercar}
+        alejar={alejar}
+        encajar={alternarEncaje}
+        encaje={enTodo ? 'frente' : 'todo'}
+        atenuado={quieto}
+      />
     </div>
   )
 }
