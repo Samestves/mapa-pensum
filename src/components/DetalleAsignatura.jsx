@@ -34,6 +34,10 @@ function AroVacio({ size = 15 }) {
  * Una de las tres opciones para marcar la materia. Las tres forman un solo
  * selector partido por lineas finas, y la elegida se tiñe con el color de su
  * estado: el mismo verde o ambar que el borde de la tarjeta en el mapa.
+ *
+ * El icono lleva su color siempre, este elegida o no: asi el selector se
+ * explica solo -verde es aprobada, ambar es cursando- antes de tocarlo, y
+ * elegir es encender la palabra y el fondo.
  */
 function Opcion({ icono, texto, activa, color, alPulsar }) {
   return (
@@ -47,7 +51,9 @@ function Opcion({ icono, texto, activa, color, alPulsar }) {
         color: activa ? color : 'var(--tinta-tenue)',
       }}
     >
-      {icono}
+      <span className="transition-opacity" style={{ color, opacity: activa ? 1 : 0.8 }}>
+        {icono}
+      </span>
       <span className="font-ui text-[9.5px] font-medium tracking-[0.2em] uppercase">{texto}</span>
     </button>
   )
@@ -77,6 +83,10 @@ const iconoDeMarca = (marca, size) =>
  * La elegida la señala una lente que se desliza de una a otra, la misma
  * pieza que marca la vista en la barra de abajo, teñida con el color de su
  * estado. Al pulsar vibra un instante, el acuse de un mando.
+ *
+ * Cada icono lleva su color siempre -verde, ambar, gris- y no solo el de la
+ * elegida: sin eso las dos que no estaban elegidas eran dos palabras grises
+ * iguales, y habia que leerlas para saber que era cada una.
  */
 function SelectorTelefono({ marca, alMarcar }) {
   const indice = Math.max(
@@ -108,9 +118,14 @@ function SelectorTelefono({ marca, alMarcar }) {
               alMarcar(m.marca)
             }}
             className="relative flex items-center justify-center gap-1.5 rounded-[9px] transition-colors duration-300 active:scale-[0.97]"
-            style={{ color: activa ? m.color : 'var(--tinta-tenue)' }}
+            style={{ color: activa ? m.color : 'var(--tinta-suave)' }}
           >
-            {iconoDeMarca(m.marca, 15)}
+            <span
+              className="transition-opacity"
+              style={{ color: m.color, opacity: activa ? 1 : 0.85 }}
+            >
+              {iconoDeMarca(m.marca, 15)}
+            </span>
             <span className="font-ui text-[9px] font-medium tracking-[0.16em] whitespace-nowrap uppercase">
               {m.texto}
             </span>

@@ -747,20 +747,33 @@ body {
 
 /* ---- El aviso en el telefono (AvisoTelefono) ---------------------------
 
-   Una capsula de cristal -la misma pieza que la barra de abajo- justo
-   encima de ella. Entra con la misma espera que el de escritorio, cuando la
-   luz del cable ya llego, subiendo desde la barra con un rebote corto. */
-.aviso-telefono {
-  bottom: var(--reserva-barra, 1rem);
-  max-width: 26rem;
+   Arriba del mapa, bajo la cabecera, y no encima de la barra: abajo vive
+   todo lo que se pulsa en un telefono. Baja desde la cabecera con la misma
+   espera que el de escritorio, cuando la luz del cable ya llego.
+
+   El fondo es el panel casi opaco con el cristal detras, y desde la
+   izquierda un velo verde muy tenue que sale de la linea de luz: el color de
+   lo que acaba de pasar, sin teñir el aviso entero. */
+.aviso-arriba {
+  top: 1.25rem;
+  max-width: 28rem;
   margin-inline: auto;
-  animation: recoger-telefono 560ms cubic-bezier(0.22, 1.2, 0.36, 1) 1150ms both;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--estado-aprobada) 11%, transparent),
+      transparent 55%
+    ),
+    color-mix(in oklab, var(--panel) 90%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  animation: bajar-cartel 520ms cubic-bezier(0.22, 1.15, 0.36, 1) 1150ms both;
 }
 
-@keyframes recoger-telefono {
+@keyframes bajar-cartel {
   from {
     opacity: 0;
-    transform: translateY(18px) scale(0.94);
+    transform: translateY(-16px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -768,81 +781,47 @@ body {
   }
 }
 
-/* El destello: una franja de luz que cruza el cristal una sola vez, cuando
-   el emblema ya se esta dibujando. Es la luz que pega en el canto al
-   sacarlo, no un adorno que se repite. */
-.aviso-telefono-brillo {
+.aviso-arriba-saliendo {
+  animation: subir-cartel 240ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes subir-cartel {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+/* La linea de luz del borde izquierdo: se traza de arriba abajo cuando el
+   aviso ya esta entrando, con su resplandor. */
+.aviso-arriba-filo {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgb(255 255 255 / 0.14) 50%,
-    transparent 65%
-  );
-  transform: translateX(-110%);
-  animation: barrer-cristal 1100ms cubic-bezier(0.4, 0, 0.2, 1) 1400ms both;
+  left: 0;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--estado-aprobada);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--estado-aprobada) 70%, transparent);
+  transform-origin: top;
+  animation: trazar-filo 560ms cubic-bezier(0.22, 0.61, 0.2, 1) 1250ms both;
 }
 
-[data-tema='claro'] .aviso-telefono-brillo {
-  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.75) 50%, transparent 65%);
-}
-
-@keyframes barrer-cristal {
+@keyframes trazar-filo {
   from {
-    transform: translateX(-110%);
+    transform: scaleY(0);
   }
   to {
-    transform: translateX(110%);
+    transform: scaleY(1);
   }
 }
 
-/* El emblema: la pista apagada, el aro que se dibuja y luego se deshace
-   -es el tiempo que le queda al aviso- y el check. El aro empieza a las
-   doce, como cualquier reloj. */
-.emblema-pista {
-  fill: none;
-  stroke: color-mix(in oklab, currentColor 18%, transparent);
-  stroke-width: 1.5;
-}
-
-.emblema-aro,
-.emblema-tilde {
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-}
-
-.emblema-aro {
-  stroke-width: 1.75;
-  transform-box: view-box;
-  transform-origin: 20px 20px;
-  transform: rotate(-90deg);
-  animation:
-    trazar-recogida 620ms cubic-bezier(0.65, 0, 0.35, 1) 1300ms forwards,
-    vaciar-emblema var(--duracion, 5600ms) linear 2000ms forwards;
-}
-
-.emblema-tilde {
-  stroke-width: 2;
-  animation: trazar-recogida 340ms cubic-bezier(0.65, 0, 0.35, 1) 1780ms forwards;
-}
-
-@keyframes vaciar-emblema {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -1;
-  }
-}
-
-/* Con el dedo encima el tiempo se para, para poder leer o llegar a Deshacer */
-.aviso-telefono.tocando .emblema-aro {
+/* Con el dedo encima el tiempo se para, para leer o llegar a Deshacer */
+.aviso-arriba.tocando .recogida-tiempo {
   animation-play-state: paused;
 }
 
@@ -2361,9 +2340,9 @@ body {
   .recogida-fila,
   .recogida-arco,
   .recogida-tiempo,
-  .aviso-telefono,
-  .emblema-aro,
-  .emblema-tilde,
+  .aviso-arriba,
+  .aviso-arriba-saliendo,
+  .aviso-arriba-filo,
   .menu-clase.ficha-saliendo,
   .hoja-ficha.tarjeta-saliendo,
   .logo-entrada,
@@ -2423,14 +2402,8 @@ body {
   }
 
   .recogida-aro,
-  .recogida-tilde,
-  .emblema-aro,
-  .emblema-tilde {
+  .recogida-tilde {
     stroke-dashoffset: 0;
-  }
-
-  .aviso-telefono-brillo {
-    display: none;
   }
 }
 

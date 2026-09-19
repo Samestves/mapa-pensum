@@ -16,6 +16,9 @@ import { ESTADO } from '../data/estados'
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
 const SIN_FRANJA = []
 
+/* Marca para salir todos los avisos que haya en pantalla */
+const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
+
 function GrafoPensum({
   layout,
   porCodigo,
@@ -234,9 +237,21 @@ function GrafoPensum({
   }, [fichaSaliente])
   const ficha = fichaAbierta ?? fichaSaliente
 
-  /* Lo que acabas de conseguir al aprobar, para el aviso de la esquina */
-  const [recogida, setRecogida] = useState(null)
-  const cerrarRecogida = useCallback(() => setRecogida(null), [])
+  /* Los avisos de lo que acabas de conseguir al aprobar.
+
+     Una lista y no uno solo, aunque en pantalla nunca haya mas de uno: si
+     apruebas otra materia con un aviso todavia puesto, el viejo tiene que
+     salir con su animacion mientras el nuevo espera a que llegue la luz de
+     su cable. Con uno solo, el nuevo reemplazaba al viejo de golpe y durante
+     un segundo no habia ninguno. Todos menos el ultimo van con `retirar`. */
+  const [avisos, setAvisos] = useState([])
+  const cerrarAviso = useCallback((n) => setAvisos((lista) => lista.filter((a) => a.n !== n)), [])
+
+  /* Abrir otra ficha retira el aviso: ya estas en otra cosa, y en el
+     telefono la ficha abre justo debajo de donde el aviso se ve. */
+  useEffect(() => {
+    if (seleccionado != null) setAvisos((lista) => (lista.length ? retirarTodos(lista) : lista))
+  }, [seleccionado])
 
   /**
    * Marcar desde la ficha. Cursando y sin cursar se quedan con la ficha
@@ -288,30 +303,29 @@ function GrafoPensum({
             x1: Math.max(...cajas.map((a) => a.x + NODO.ancho)),
             y1: Math.max(...cajas.map((a) => a.y + NODO.alto)),
           },
-          // Abajo quedan la barra del telefono y el propio aviso
-          { arriba: 48, abajo: telefono ? 180 : 104, izq: 48, der: 48 },
+          // En el telefono el aviso sale arriba y abajo queda la barra; en
+          // escritorio el aviso va abajo, en la esquina
+          telefono
+            ? { arriba: 120, abajo: 100, izq: 32, der: 32 }
+            : { arriba: 48, abajo: 104, izq: 48, der: 48 },
         )
       }
 
       alSeleccionar(null)
       alMarcar(codigo, marca)
-      setRecogida({
-        codigo,
-        marcaAntes,
-        nombre: porCodigo.get(codigo)?.nombre ?? '',
-        desbloqueadas: abiertas.map((a) => a.nombre),
-        n: Date.now(),
-      })
+      setAvisos((lista) => [
+        ...retirarTodos(lista),
+        {
+          codigo,
+          marcaAntes,
+          nombre: porCodigo.get(codigo)?.nombre ?? '',
+          desbloqueadas: abiertas.map((a) => a.nombre),
+          n: Date.now(),
+        },
+      ])
     },
     [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
   )
-
-  /* Deshacer solo devuelve la marca: el aviso se va solo, con su salida, y al
-     acabar llama a cerrarRecogida. */
-  const deshacerRecogida = useCallback(() => {
-    if (!recogida) return
-    alMarcar(recogida.codigo, recogida.marcaAntes)
-  }, [recogida, alMarcar])
 
   const verFicha = useCallback(
     (codigo) => {
@@ -385,7 +399,6 @@ function GrafoPensum({
             className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
             style={{ textRendering: 'geometricPrecision' }}
           >
-
             {/* Oculto hasta que la vista se encaja. El primer fotograma tras
                 montar dibuja el mapa a tamaño natural desde la esquina, y
                 enseñarlo era el tiron que se veia al volver del horario. Se
@@ -443,14 +456,17 @@ function GrafoPensum({
         />
       )}
 
-      {recogida && (
+      {/* Deshacer solo devuelve la marca: el aviso se va solo, con su salida,
+          y al acabar se quita de la lista. */}
+      {avisos.map((a) => (
         <AvisoRecogida
-          key={recogida.n}
-          aviso={recogida}
-          alDeshacer={deshacerRecogida}
-          alCerrar={cerrarRecogida}
+          key={a.n}
+          aviso={a}
+          retirar={a.retirar}
+          alDeshacer={() => alMarcar(a.codigo, a.marcaAntes)}
+          alCerrar={() => cerrarAviso(a.n)}
         />
-      )}
+      ))}
 
       <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
     </div>
