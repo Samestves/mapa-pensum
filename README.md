@@ -2,8 +2,6 @@
 
 <img src="public/og.png" alt="Mapa de Pensum — las nueve carreras del Núcleo de Monagas" width="820">
 
-# Mapa de Pensum
-
 **Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto te falta.**
 
 Las nueve carreras de la Universidad de Oriente, Núcleo de Monagas, dibujadas como el grafo de prelaciones que en realidad son.
