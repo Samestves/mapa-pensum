@@ -197,7 +197,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
      responder. Escribir, leer, escribir, leer. Medido: eventos de rueda de
      hasta mil milisegundos.
      Solo hace falta de donde empieza el contenedor, y eso cambia al
-     redimensionar o al plegar la barra, no sesenta veces por segundo. */
+     redimensionar, no sesenta veces por segundo. */
   const cajaRef = useRef({ left: 0, top: 0 })
   const refrescarCaja = useCallback(() => {
     const el = contenedorRef.current
@@ -218,8 +218,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       cajaRef.current = caja
       const { width, height } = caja
       /* Cuanto de su borde de arriba tapa la cabecera flotante. Se lee del
-         CSS al medir y no se vigila: cambia al plegar la barra, y plegarla
-         no debe reencajar el mapa por debajo de quien lo esta mirando. */
+         CSS al medir y no se vigila: es fijo por breakpoint, asi que basta
+         con leerlo cuando cambia el tamaño. */
       const arriba =
         parseFloat(getComputedStyle(el).getPropertyValue('--reserva-cabecera')) || 0
       setMedida((previa) =>

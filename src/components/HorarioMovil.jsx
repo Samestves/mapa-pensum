@@ -130,13 +130,17 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col pt-[var(--reserva-cabecera)]">
+    <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+      {/* El hueco de las islas es un elemento del contenido: la vista ocupa
+          la pantalla entera y el horario pasa por detras de ellas al bajar. */}
+      <div aria-hidden="true" className="h-[var(--reserva-cabecera)]" />
+
       {/* Los cinco dias siempre a la vista, no solo el actual: enseñar donde
           estas Y a donde puedes ir es lo que convierte el deslizamiento en
           algo que se descubre en vez de adivinarse. El punto marca los dias
           que tienen clase, para saber si vale la pena ir sin ir. */}
       <div
-        className={`transicion-tema flex shrink-0 items-center gap-1 border-b ${LINEA} bg-panel-suave px-2 py-2`}
+        className={`transicion-tema sticky top-[var(--reserva-cabecera)] z-20 flex items-center gap-1 border-b ${LINEA} bg-panel-suave px-2 py-2`}
       >
         <button
           type="button"
@@ -185,7 +189,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
         {...gestos}
         onClick={tocarHueco}
         style={{ touchAction: 'pan-y' }}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-[var(--reserva-barra)]"
+        className="pb-[var(--reserva-barra)]"
       >
         {/* La key rearranca la animacion en cada cambio de dia, y el sentido
             decide por que lado entra: sin eso, pasar de dia no diria si se

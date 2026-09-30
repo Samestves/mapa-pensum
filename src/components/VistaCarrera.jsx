@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ChevronDown, ChevronUp, GraduationCap, Moon, Sun } from 'lucide-react'
+import { ArrowLeft, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
 import { anotarMarca, anotarMateria, anotarVista } from '../data/latido'
 import { calcularLayout } from '../layout/calcularLayout'
@@ -7,7 +7,6 @@ import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { VISTAS } from '../data/vistas'
-import { useCercaDelBorde } from '../hooks/useCercaDelBorde'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
 import { usePensum } from '../hooks/usePensum'
@@ -145,19 +144,6 @@ function VistaCarrera({ carrera, alVolver }) {
      y una caja es un valor muerto que no puede quedarse apuntando a un nodo
      que ya no existe. */
   const [anclaAvance, setAnclaAvance] = useState(null)
-  // Modo inmersivo: la cabecera se puede esconder para dejar solo el mapa
-  const [barraOculta, setBarraOculta] = useState(false)
-  /* Si el raton esta sobre la cabecera. La zona sensible es la cabecera y
-     nada mas: una franja invisible extra por debajo haria aparecer el
-     circulo antes, pero a cambio robaria los clicks de esa franja al
-     horario, y el control no puede estorbar a lo que hay debajo. */
-  const [cercaCabecera, setCercaCabecera] = useState(false)
-  /* Con la barra plegada no queda cabecera sobre la que hacer hover, asi que
-     ahi la señal es la cercania al borde de arriba de la ventana. Antes el
-     circulo se quedaba encendido permanentemente en ese caso -era el unico
-     camino de vuelta- y estorbaba justo encima del horario. */
-  const cercaDelBorde = useCercaDelBorde(barraOculta)
-  const visiblePestana = barraOculta ? cercaDelBorde : cercaCabecera
   const [planAbierto, setPlanAbierto] = useState(false)
   const [paletaAbierta, setPaletaAbierta] = useState(false)
 
@@ -287,85 +273,34 @@ function VistaCarrera({ carrera, alVolver }) {
     <div
       className="vista-carrera relative flex h-full flex-col overflow-hidden"
       style={tonos}
-      data-barra-oculta={barraOculta}
+      data-vista={vista}
     >
-      {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
-          ancla a su borde inferior con top-full, asi que al plegarse la barra
-          sube pegada a ella sin animar nada aparte. */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-40"
-        onPointerEnter={() => setCercaCabecera(true)}
-        onPointerLeave={() => setCercaCabecera(false)}
-      >
-        {/* La barra no se desmonta al ocultarse: colapsa su fila del grid de
-            1fr a 0fr. Cambiarla por la pestaña de golpe cortaba la animacion. */}
-        <div className="barra-colapsable" data-oculta={barraOculta}>
-          <div>
-          <BarraSuperior
-            carrera={carrera}
-            tema={tema}
-            alternarTema={alternarTema}
-            resumen={progreso}
-            vista={vista}
-            alCambiarVista={setVista}
-            avanceAbierto={abierto === 'avance'}
-            alAlternarAvance={(boton) => {
-              setAnclaAvance(boton.getBoundingClientRect())
-              alternar('avance')
-            }}
-            avisosAbiertos={abierto === 'avisos'}
-            alAlternarAvisos={() => alternar('avisos')}
-            alBuscar={() => setPaletaAbierta(true)}
-            alVolver={alVolver}
-          />
-          </div>
-        </div>
-
-        {/* Un circulo montado justo encima de la linea que separa la barra
-            del contenido, no una pestaña colgando de ella. Va invisible y
-            aparece al acercar el raton a la cabecera: es un control que se
-            usa una vez cada mucho, y teniendolo siempre encendido en el
-            centro de la pantalla competia con el mapa.
-            Con la barra plegada tampoco se queda encendido: ahi la señal es
-            acercar el raton al borde de arriba de la ventana. */}
-        {/* El envoltorio solo coloca; la animacion va en el boton, para que
-            escalar no pelee con el translate.
-            pointer-events-none mientras esta oculto: si no, seria un blanco
-            de click invisible plantado encima del horario.
-
-            El desplazamiento vertical NO es el mismo en los dos estados, y
-            ahi estaba el fallo. Iba siempre centrado sobre el borde inferior
-            de la barra -medio boton arriba, medio abajo-, que es justo lo que
-            se quiere mientras hay una linea que montar. Pero plegada, esa
-            linea es el borde de arriba de la ventana: el boton quedaba de -14
-            a 14 y el contenedor, que recorta, empieza en 0. Medido: catorce
-            pixeles cortados, la mitad exacta. De ahi que saliera "a medias".
-            Plegada baja entero por debajo de la linea, que es el unico sitio
-            donde hay pantalla. */}
-        <div
-          className={`pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 transition-transform duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            barraOculta ? 'translate-y-1.5' : '-translate-y-1.5'
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setBarraOculta((v) => !v)
-              cerrar()
-            }}
-            title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-            aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
-            aria-expanded={!barraOculta}
-            className={`pestana-barra barra-cristal relative grid size-7 place-items-center rounded-full text-tinta-tenue transition-[opacity,transform] duration-200 ease-out hover:text-tinta focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 ${
-              visiblePestana
-                ? 'pointer-events-auto scale-100 opacity-100'
-                : 'pointer-events-none scale-75 opacity-0'
-            }`}
-          >
-            {barraOculta ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-          </button>
-        </div>
+      {/* Las islas flotan sobre la vista: este envoltorio no ocupa sitio ni
+          captura el puntero, solo lo hacen las islas que lleva dentro. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-40">
+        <BarraSuperior
+          carrera={carrera}
+          tema={tema}
+          alternarTema={alternarTema}
+          resumen={progreso}
+          vista={vista}
+          alCambiarVista={setVista}
+          avanceAbierto={abierto === 'avance'}
+          alAlternarAvance={(boton) => {
+            setAnclaAvance(boton.getBoundingClientRect())
+            alternar('avance')
+          }}
+          avisosAbiertos={abierto === 'avisos'}
+          alAlternarAvisos={() => alternar('avisos')}
+          alBuscar={() => setPaletaAbierta(true)}
+          alVolver={alVolver}
+        />
       </div>
+
+      {/* Lista y horario pasan por detras de las islas. El velo las aparta
+          del texto sin ponerles un fondo: es un degradado que se funde, no una
+          franja. En el mapa no hay velo, el mapa ES el fondo. */}
+      {vista !== 'mapa' && <div className="velo-cabecera" aria-hidden="true" />}
 
       <PaletaComandos
         abierta={paletaAbierta}

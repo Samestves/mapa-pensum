@@ -12,10 +12,9 @@ import { CELDA_BASE } from './estiloCabecera'
  * las dudas en un JSON.
  *
  * Va partido en boton y panel, y no en un solo componente con su estado
- * dentro, por la misma razon que PanelProgreso: la cabecera es colapsable y
- * sus hijos llevan overflow:hidden para que la animacion de plegado no
- * desborde. Cualquier panel colgado del boton se recortaria contra ese borde.
- * El boton se queda en la barra y el panel se pinta sobre el mapa.
+ * dentro, por la misma razon que PanelProgreso: el panel se pinta sobre la
+ * vista y no dentro de la isla, que es una capsula con overflow recortado.
+ * El boton se queda en la isla y el panel cuelga de la vista.
  */
 export function BotonAvisos({ cantidad, abierto, alPulsar }) {
   if (!cantidad) return null

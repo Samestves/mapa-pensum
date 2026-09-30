@@ -1573,25 +1573,6 @@ body {
   animation: latir-esqueleto 1.8s ease-in-out infinite;
 }
 
-/* ---- Ocultar la cabecera ------------------------------------------------
-   El truco de grid-template-rows de 1fr a 0fr anima el alto real sin
-   necesidad de medirlo en JS ni de fijar un max-height inventado que
-   luego se rompe cuando la barra crece. La curva es la de las hojas de
-   iOS: sale rapido y frena al final, sin rebote. */
-.barra-colapsable {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows 420ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.barra-colapsable[data-oculta='true'] {
-  grid-template-rows: 0fr;
-}
-
-.barra-colapsable > * {
-  min-height: 0;
-}
-
 /* ---- Vista de lista -------------------------------------------------------
    Todo lo que se mueve aqui se mueve con la misma curva de hoja de iOS que la
    barra: sale rapido y frena al final. Nada se anima en bucle; cada
@@ -1901,60 +1882,6 @@ body {
     bottom 600ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* El contenido se desvanece y sube un pelo mientras la fila se cierra:
-   asi no se ve como un recorte, sino como que la barra se retira. */
-.barra-contenido {
-  transition:
-    opacity 240ms ease,
-    transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.barra-colapsable[data-oculta='true'] .barra-contenido {
-  opacity: 0;
-  transform: translateY(-14px);
-  visibility: hidden;
-  transition:
-    opacity 240ms ease,
-    transform 420ms cubic-bezier(0.32, 0.72, 0, 1),
-    visibility 0s 420ms;
-}
-
-/* La pestaña se ancla al borde inferior de la barra con top-full, asi que
-   sube y baja sola cuando la barra se pliega: no hace falta animarla ni
-   medir su alto.
-
-   Las tres propiedades van juntas AQUI y no en utilidades de Tailwind. Esta
-   regla vive fuera de @layer, asi que gana a las utilidades y las reemplaza:
-   cuando solo declaraba color, se cargaba la transicion de opacidad y escala
-   del boton y este aparecia y desaparecia de golpe. Un solo sitio que declare
-   transition evita que vuelva a pasar. */
-.pestana-barra {
-  transition:
-    opacity 240ms cubic-bezier(0.32, 0.72, 0, 1),
-    transform 240ms cubic-bezier(0.32, 0.72, 0, 1),
-    color 200ms ease,
-    background-color 200ms ease;
-}
-
-/* Donde no hay hover, la pestaña se queda puesta.
-   Aparecer al acercar el raton es la forma correcta en un escritorio: es un
-   control que se usa una vez cada mucho y encendido siempre competiria con el
-   mapa. Pero en un telefono ese "acercar el raton" no ocurre nunca. Medido en
-   un movil: opacidad 0 y pointer-events none, o sea que la funcion no existia
-   alli -no se podia plegar la barra, y si se hubiera podido, no habria manera
-   de traerla de vuelta-. Un modo inmersivo sin salida no es un modo, es una
-   trampa.
-   Es la misma regla que ya llevan los tres puntos de cada clase, y por la
-   misma razon: esconder algo tras un estado que el dispositivo no tiene no lo
-   hace discreto, lo hace inalcanzable. */
-@media (hover: none) {
-  .pestana-barra {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
-}
-
 /* El hueco que se propone -al pasar el raton en escritorio, al abrir el dia
    en el telefono- va OPACO y no translucido, aunque el color sea el mismo.
 
@@ -1975,14 +1902,13 @@ body {
    origen obliga a volver a buscar donde quedaste, mientras que algo que se
    mueve se sigue con la vista sin pensarlo.
 
-   Misma curva que la barra colapsable y las hojas -sale rapido y frena al
-   final, sin rebote-. Un rebote aqui haria que el unico control de la
+   Misma curva que las hojas -sale rapido y frena al final, sin rebote-. Un rebote aqui haria que el unico control de la
    cabecera se moviera con otra fisica que el resto de la app, y dos fisicas
    en la misma pantalla se notan aunque no se sepa decir por que.
 
-   La transicion va aqui y no en una utilidad por lo mismo que en
-   .pestana-barra: esta regla vive fuera de @layer y gana, asi que declararla
-   en un solo sitio evita que una utilidad de Tailwind la reemplace a medias. */
+   La transicion va aqui y no en una utilidad: esta regla vive fuera de
+   @layer y gana, asi que declararla en un solo sitio evita que una utilidad
+   de Tailwind la reemplace a medias. */
 /* ---- Barra inferior de cristal (telefono) -------------------------------
    Lo que reserva cada vista para que su final no quede debajo de la capsula
    flotante: su alto, la separacion del borde y un poco de aire. Cero en
@@ -2028,17 +1954,9 @@ body {
    -aire de arriba, la isla y un poco de aire debajo-. Cada vista lo suma a su
    propio margen de arriba, igual que suma --reserva-barra por abajo.
 
-   Va registrada como <length> para poder animarse: al plegar la cabecera el
-   contenido no debe dar un salto, tiene que subir con ella. */
-@property --reserva-cabecera {
-  syntax: '<length>';
-  inherits: true;
-  initial-value: 0px;
-}
-
+   Es solo un margen: nada en el arbol ocupa ese sitio. */
 .vista-carrera {
   --reserva-cabecera: 64px;
-  transition: --reserva-cabecera 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @media (max-width: 767.98px) {
@@ -2047,8 +1965,29 @@ body {
   }
 }
 
-.vista-carrera[data-barra-oculta='true'] {
-  --reserva-cabecera: 0px;
+/* Velo bajo las islas en lista y horario. La vista pasa por detras de ellas al
+   desplazarse, y sin nada el texto se cruza con los botones. Es un degradado
+   que empieza casi opaco y se funde en nada: las islas siguen flotando sobre
+   la vista -se ve que esta ahi-, solo que atenuada. Sin blur: es un degradado
+   y cuesta lo mismo que un color. */
+.velo-cabecera {
+  --velo: var(--lienzo);
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 30;
+  height: calc(var(--reserva-cabecera) + 14px);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--velo) 94%, transparent),
+    color-mix(in oklab, var(--velo) 72%, transparent) 50%,
+    transparent
+  );
+}
+
+.vista-carrera[data-vista='horario'] .velo-cabecera {
+  --velo: var(--panel-suave);
 }
 
 /* En claro el azul cielo se pierde sobre el cristal blanco: el tinte baja
@@ -2259,7 +2198,7 @@ body {
     color 200ms ease;
 }
 
-.pestana-barra[data-activa='true'] .etiqueta-pestana {
+.pestana-dock[data-activa='true'] .etiqueta-pestana {
   letter-spacing: 0.24em;
   margin-right: -0.24em;
   color: var(--isla-tinte);
@@ -2581,9 +2520,6 @@ body {
 
   /* Estas se mueven con transition, no con animation: hay que apagarlas
      aparte o siguen deslizandose. */
-  .barra-colapsable,
-  .barra-contenido,
-  .pestana-barra,
   .pulgar-vista,
   .lente-cristal,
   .selector-lente,

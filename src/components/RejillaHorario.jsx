@@ -152,7 +152,12 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
        reservar sitio para la barra: no aparece y desaparece segun el
        contenido, esta puesta desde el primer momento y no hay salto que
        amortiguar. La cabecera de dias se queda pegada arriba mientras se baja. */
-    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto pt-[var(--reserva-cabecera)]">
+    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
+      {/* El hueco de las islas es un elemento del contenido y no un padding del
+          contenedor: el offset de un sticky se mide desde DENTRO del padding,
+          asi que con padding la cabecera de dias se quedaba pegada a 64 + 64
+          px del borde en vez de a 64. */}
+      <div aria-hidden="true" className="h-[var(--reserva-cabecera)]" />
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
           las clases pasen por debajo sin transparentarse. */}
       <div

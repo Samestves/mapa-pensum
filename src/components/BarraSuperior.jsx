@@ -124,7 +124,7 @@ function BarraSuperior({
        piezas. El envoltorio no atrapa toques -pointer-events-none-; cada
        pieza los recibe por su cuenta, asi que entre ellas el dedo o el raton
        llegan al mapa de debajo. */
-    <header className="transicion-tema barra-contenido pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
+    <header className="transicion-tema pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
       <div className="flex min-w-0 items-center gap-2">
         {/* Volver: un circulo con la flecha, el gesto de "atras" de iOS. La
             flecha se adelanta un poco al pasar por encima. */}

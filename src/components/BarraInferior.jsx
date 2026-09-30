@@ -85,7 +85,7 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
               title={titulo}
               aria-label={titulo}
               aria-current={activo ? 'page' : undefined}
-              className="pestana-barra group relative flex flex-col items-center justify-center gap-[5px] rounded-full"
+              className="pestana-dock group relative flex flex-col items-center justify-center gap-[5px] rounded-full"
               data-activa={activo}
             >
               {/* El acuse del toque va en el icono. Y la que se acaba de

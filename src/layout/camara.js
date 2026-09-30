@@ -50,7 +50,7 @@ export function vistaDeColumna(columna, medida) {
    otro dia tiene que llevarte a tu semestre de ahora, no al de la semana
    pasada. Se descarta si la pantalla cambio de ancho -girar el telefono-,
    porque la misma vista en otra pantalla ya no enseña lo mismo; el alto
-   se tolera, que cambia solo con plegar la barra. */
+   se tolera, que cambia solo al esconderse la barra del navegador. */
 const claveDe = (slug) => `mapa-pensum:camara:${slug}`
 
 export function leerCamara(slug, medida, almacen = globalThis.sessionStorage) {

@@ -80,7 +80,7 @@ describe('donde la dejaste', () => {
     })
   })
 
-  test('plegar la barra no la invalida, girar el telefono si', () => {
+  test('cambiar solo el alto no la invalida, girar el telefono si', () => {
     const a = almacen()
     guardarCamara('sistemas', { x: 0, y: 0, escala: 0.5 }, { ancho: 390, alto: 700 }, a)
     assert.ok(leerCamara('sistemas', { ancho: 390, alto: 760 }, a))
