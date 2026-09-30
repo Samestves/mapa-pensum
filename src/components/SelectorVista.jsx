@@ -59,22 +59,19 @@ function SelectorVista({ vista, alCambiar }) {
             title={titulo}
             aria-label={titulo}
             aria-pressed={activo}
-            className={`group relative z-10 flex items-center justify-center gap-1.5 rounded-full transition-[color,background-color,transform] duration-200 active:scale-[0.96] ${
+            className={`group relative z-10 flex items-center justify-center gap-1.5 rounded-full transition-[color,background-color,transform] duration-200 active:scale-[0.95] ${
               activo ? 'vista-activa' : 'text-tinta-tenue hover:bg-tinta/[0.07] hover:text-tinta'
             }`}
           >
-            {/* Al elegirse el icono se rellena y se asienta con un pequeño rebote,
-                el mismo gesto que en la barra del telefono; y en reposo, los
-                demas se agrandan un pelo al pasar por encima. */}
+            {/* Al elegirse el icono se rellena y se asienta: el mismo gesto que
+                en la barra del telefono. La key reinicia la animacion. */}
             <Ico
               key={activo ? 'activo' : 'reposo'}
               size={17}
               relleno={activo}
-              className={`shrink-0 ${
-                activo ? 'icono-asentado' : 'transition-transform duration-200 group-hover:scale-110'
-              }`}
+              className={`shrink-0 ${activo ? 'icono-asentado' : ''}`}
             />
-            <span className="hidden text-[12px] font-semibold lg:inline">{etiqueta}</span>
+            <span className="hidden text-[12.5px] font-medium lg:inline">{etiqueta}</span>
           </button>
         )
       })}

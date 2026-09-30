@@ -64,8 +64,7 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
     >
       <div className="barra-cristal pointer-events-auto relative grid h-[56px] w-[252px] grid-cols-3 rounded-full p-1">
         {/* La lente: una gota de cristal detras de la vista elegida. Se
-            desliza hasta la nueva con un rebote corto al llegar, y es lo
-            unico de la barra que se mueve. */}
+            desliza hasta la nueva y es lo unico de la barra que se mueve. */}
         <span
           aria-hidden="true"
           className="lente-cristal pointer-events-none absolute inset-y-1 left-1 rounded-full"
@@ -89,8 +88,8 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
               data-activa={activo}
             >
               {/* El acuse del toque va en el icono. Y la que se acaba de
-                  elegir se asienta con un rebote: la key cambia al
-                  encenderse y eso reinicia su animacion. */}
+                  elegir se asienta: la key cambia al encenderse y eso
+                  reinicia su animacion. */}
               <span
                 key={activo ? 'encendida' : 'apagada'}
                 className={`grid h-5 place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
