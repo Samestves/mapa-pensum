@@ -15,7 +15,7 @@
 :root {
   color-scheme: dark;
 
-  --lienzo: #05080e;
+  --lienzo: #070b13;
   --rejilla: #101a28;
   /* El fondo del mapa. Hoy es el mismo lienzo en los dos temas; queda como
      variable aparte para poder separarlos sin tocar el mapa. */
@@ -28,9 +28,9 @@
   --peso-nombre: 380;
   --peso-rotulo: 460;
   --peso-dato: 300;
-  --panel: #0a1018;
-  --panel-borde: #1b2637;
-  --panel-suave: #111b28;
+  --panel: #0d131e;
+  --panel-borde: #1e293b;
+  --panel-suave: #131c2b;
   --nodo: #121d2c;
   --nodo-borde: #2a3a52;
   --tinta: #eaf1fa;
@@ -114,7 +114,7 @@
 [data-tema='claro'] {
   color-scheme: light;
 
-  --lienzo: #eef1f7;
+  --lienzo: #eff2f8;
   --rejilla: #dde4ee;
   --panel: #ffffff;
   --panel-borde: #d7dfea;
@@ -1943,7 +1943,7 @@ body {
    --isla-tinte es el color con el que se enciende lo elegido: el de la
    carrera si lo tiene, y un azul cielo donde no. */
 .vista-carrera {
-  --isla-tinte: var(--carrera, #5cc8ff);
+  --isla-tinte: var(--carrera, #4aa8ff);
 }
 
 /* ---- Cabecera flotante ---------------------------------------------------
@@ -1993,27 +1993,81 @@ body {
 /* En claro el azul cielo se pierde sobre el cristal blanco: el tinte baja
    a un azul de sistema con contraste suficiente para el texto pequeño. */
 [data-tema='claro'] .vista-carrera {
-  --isla-tinte: var(--carrera, #0a6fe0);
+  --isla-tinte: var(--carrera, #0a6cf0);
+}
+
+/* La paleta del cristal. Todo lo que cambia entre temas vive aqui como
+   variable, y las reglas de .barra-cristal de abajo se escriben una sola vez.
+
+   Oscuro: un pizarra azulado muy diluido. Sobre un fondo casi negro, un gris
+   neutro se lee barro; con un punto de azul se lee cristal ahumado, como el
+   de las islas de iOS sobre fondos oscuros.
+   Claro: blanco lechoso con el filo en azul marino casi transparente, para
+   que la isla no se funda con un lienzo que ya es claro. */
+:root {
+  --cristal-fondo:
+    linear-gradient(135deg, rgb(190 208 255 / 0.15), rgb(190 208 255 / 0.03) 45%, rgb(190 208 255 / 0.06)),
+    color-mix(in oklab, #7f93b8 13%, transparent);
+  --cristal-filtro: blur(26px) saturate(1.8) brightness(1.1);
+  --cristal-anillo:
+    inset 0 0 0 0.5px rgb(215 228 255 / 0.14),
+    inset 1.5px 1.5px 1px -1px rgb(235 242 255 / 0.55),
+    inset -1.5px -1.5px 1px -1px rgb(235 242 255 / 0.24),
+    inset 0 0 16px rgb(190 208 255 / 0.05),
+    0 12px 28px -10px rgb(2 6 14 / 0.65),
+    0 2px 6px rgb(2 6 14 / 0.25);
+  --cristal-filo: linear-gradient(
+    135deg,
+    rgb(225 235 255 / 0.5),
+    rgb(225 235 255 / 0.06) 30%,
+    rgb(225 235 255 / 0.01) 52%,
+    rgb(225 235 255 / 0.05) 72%,
+    rgb(225 235 255 / 0.3)
+  );
+  --cristal-brillo: radial-gradient(80% 60% at 50% -25%, rgb(225 235 255 / 0.16), transparent 70%);
+  --cristal-lente: linear-gradient(180deg, rgb(200 216 255 / 0.22), rgb(200 216 255 / 0.09));
+  --cristal-lente-anillo:
+    inset 0 0 0 0.5px rgb(215 228 255 / 0.16),
+    inset 0 1px 0.5px rgb(235 242 255 / 0.32),
+    inset 0 -1px 1px rgb(2 6 14 / 0.22),
+    0 4px 12px -4px rgb(2 6 14 / 0.5);
+}
+
+[data-tema='claro'] {
+  --cristal-fondo:
+    linear-gradient(135deg, rgb(255 255 255 / 0.72), rgb(255 255 255 / 0.3)),
+    color-mix(in oklab, #ffffff 30%, transparent);
+  --cristal-filtro: blur(26px) saturate(1.8);
+  /* En claro el cristal blanco sobre fondo claro se funde: un anillo de medio
+     pixel y una sombra algo mayor le devuelven el contorno. */
+  --cristal-anillo:
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.85),
+    inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 1),
+    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8),
+    0 0 0 0.5px rgb(16 32 64 / 0.1),
+    0 12px 26px -10px rgb(16 32 64 / 0.3),
+    0 2px 6px rgb(16 32 64 / 0.09);
+  --cristal-filo: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 1),
+    rgb(16 32 64 / 0.04) 35%,
+    rgb(16 32 64 / 0.07) 65%,
+    rgb(255 255 255 / 0.9)
+  );
+  --cristal-brillo: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.7), transparent 70%);
+  --cristal-lente: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(255 255 255 / 0.78));
+  --cristal-lente-anillo:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 1px rgb(16 32 64 / 0.06),
+    0 0 0 0.5px rgb(16 32 64 / 0.07),
+    0 4px 12px -4px rgb(16 32 64 / 0.22);
 }
 
 .barra-cristal {
-  background:
-    linear-gradient(
-      135deg,
-      rgb(255 255 255 / 0.13),
-      rgb(255 255 255 / 0.03) 42%,
-      rgb(255 255 255 / 0.05)
-    ),
-    color-mix(in oklab, #a9b3c4 10%, transparent);
-  -webkit-backdrop-filter: blur(26px) saturate(1.9) brightness(1.12);
-  backdrop-filter: blur(26px) saturate(1.9) brightness(1.12);
-  box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.13),
-    inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 0.6),
-    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.28),
-    inset 0 0 16px rgb(255 255 255 / 0.05),
-    0 12px 28px -10px rgb(0 0 0 / 0.6),
-    0 2px 6px rgb(0 0 0 / 0.22);
+  background: var(--cristal-fondo);
+  -webkit-backdrop-filter: var(--cristal-filtro);
+  backdrop-filter: var(--cristal-filtro);
+  box-shadow: var(--cristal-anillo);
 }
 
 /* El filo. Es el mismo trazo de un pixel de siempre pero con la luz de
@@ -2025,14 +2079,7 @@ body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgb(255 255 255 / 0.5),
-    rgb(255 255 255 / 0.06) 30%,
-    rgb(255 255 255 / 0.01) 52%,
-    rgb(255 255 255 / 0.05) 72%,
-    rgb(255 255 255 / 0.3)
-  );
+  background: var(--cristal-filo);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -2050,39 +2097,8 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.16), transparent 70%);
+  background: var(--cristal-brillo);
   pointer-events: none;
-}
-
-[data-tema='claro'] .barra-cristal {
-  background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.28)),
-    color-mix(in oklab, #ffffff 30%, transparent);
-  -webkit-backdrop-filter: blur(26px) saturate(1.9);
-  backdrop-filter: blur(26px) saturate(1.9);
-  /* En claro el cristal blanco sobre fondo claro se funde: un anillo de
-     medio pixel y una sombra algo mayor le devuelven el contorno. */
-  box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.8),
-    inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 1),
-    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8),
-    0 0 0 0.5px rgb(12 23 37 / 0.09),
-    0 12px 26px -10px rgb(12 23 37 / 0.32),
-    0 2px 6px rgb(12 23 37 / 0.1);
-}
-
-[data-tema='claro'] .barra-cristal::before {
-  background: linear-gradient(
-    135deg,
-    rgb(255 255 255 / 1),
-    rgb(12 23 37 / 0.04) 35%,
-    rgb(12 23 37 / 0.07) 65%,
-    rgb(255 255 255 / 0.9)
-  );
-}
-
-[data-tema='claro'] .barra-cristal::after {
-  background: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.7), transparent 70%);
 }
 
 /* Al pasar por encima el reflejo se enciende. Es solo opacidad de un
@@ -2106,8 +2122,7 @@ body {
    -el contenido no queda ilegible bajo un cristal que no desenfoca- y no hay
    nada que calcular por fotograma. */
 @media (prefers-reduced-transparency: reduce) {
-  .barra-cristal,
-  [data-tema='claro'] .barra-cristal {
+  .barra-cristal {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: color-mix(in oklab, var(--panel) 96%, transparent);
@@ -2115,8 +2130,7 @@ body {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .barra-cristal,
-  [data-tema='claro'] .barra-cristal {
+  .barra-cristal {
     background: color-mix(in oklab, var(--panel) 90%, transparent);
   }
 }
@@ -2126,22 +2140,9 @@ body {
    como una pieza que se desliza por encima y no como un fondo que cambia de
    sitio. La curva se pasa un poco y vuelve: el rebote corto de algo liquido. */
 .lente-cristal {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.08));
-  box-shadow:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.16),
-    inset 0 1px 0.5px rgb(255 255 255 / 0.32),
-    inset 0 -1px 1px rgb(0 0 0 / 0.2),
-    0 4px 12px -4px rgb(0 0 0 / 0.45);
+  background: var(--cristal-lente);
+  box-shadow: var(--cristal-lente-anillo);
   transition: transform 480ms cubic-bezier(0.34, 1.36, 0.64, 1);
-}
-
-[data-tema='claro'] .lente-cristal {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(255 255 255 / 0.75));
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 1),
-    inset 0 -1px 1px rgb(12 23 37 / 0.06),
-    0 0 0 0.5px rgb(12 23 37 / 0.06),
-    0 4px 12px -4px rgb(12 23 37 / 0.22);
 }
 
 /* Lo elegido se enciende con el tinte, como el rosa de "New" en iOS: el
