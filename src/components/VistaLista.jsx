@@ -532,7 +532,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto flex max-w-2xl flex-col px-4 pt-4 pb-[calc(var(--reserva-barra)+3rem)] md:pb-24">
+      <div className="mx-auto flex max-w-2xl flex-col px-4 pt-[calc(var(--reserva-cabecera)+1rem)] pb-[calc(var(--reserva-barra)+3rem)] md:pb-24">
         <Resumen
           progreso={progreso}
           semestres={semestres}
@@ -542,7 +542,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
 
         {/* Filtros: el icono de cada estado y cuantas hay. Pegados arriba al
             desplazarse, con un degradado debajo en vez de una linea. */}
-        <div className="transicion-tema sticky top-0 z-20 -mx-4 mt-6 bg-lienzo px-4 pt-2 pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-linear-to-b after:from-lienzo after:to-transparent">
+        <div className="transicion-tema sticky top-[var(--reserva-cabecera)] z-20 -mx-4 mt-6 bg-lienzo px-4 pt-2 pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-linear-to-b after:from-lienzo after:to-transparent">
           {/* Con su nombre: el icono solo se aprende, y un filtro tiene que
               entenderse antes de tocarlo. Se desplazan de lado si no caben. */}
           <div

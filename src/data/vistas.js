@@ -1,4 +1,4 @@
-import { CalendarDays, List, Waypoints } from 'lucide-react'
+import { IconoHorario, IconoLista, IconoMapa } from '../components/IconosSF'
 
 /**
  * Las tres formas de mirar la misma carrera.
@@ -22,11 +22,11 @@ import { CalendarDays, List, Waypoints } from 'lucide-react'
  * añada una cuarta tiene que aparecer en las dos sin que nadie se acuerde.
  */
 export const VISTAS = [
-  { id: 'mapa', icono: Waypoints, etiqueta: 'Mapa', titulo: 'Ver el mapa de prelaciones' },
-  { id: 'lista', icono: List, etiqueta: 'Lista', titulo: 'Ver el pensum como lista' },
+  { id: 'mapa', icono: IconoMapa, etiqueta: 'Mapa', titulo: 'Ver el mapa de prelaciones' },
+  { id: 'lista', icono: IconoLista, etiqueta: 'Lista', titulo: 'Ver el pensum como lista' },
   {
     id: 'horario',
-    icono: CalendarDays,
+    icono: IconoHorario,
     etiqueta: 'Horario',
     titulo: 'Ver mi horario de la semana',
   },

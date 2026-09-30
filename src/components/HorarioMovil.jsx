@@ -130,7 +130,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col pt-[var(--reserva-cabecera)]">
       {/* Los cinco dias siempre a la vista, no solo el actual: enseñar donde
           estas Y a donde puedes ir es lo que convierte el deslizamiento en
           algo que se descubre en vez de adivinarse. El punto marca los dias

@@ -1,7 +1,8 @@
-import { LocateFixed, Maximize, Minus, Plus } from 'lucide-react'
+import { IconoEncajar, IconoFrente, IconoMas, IconoMenos } from './IconosSF'
 
-/* Los controles del lienzo van juntos en un solo bloque con separadores,
-   no como botones sueltos flotando: se leen como un mando, no como ruido. */
+/* Las tres teclas comparten una isla de cristal, como el grupo de la
+   cabecera: una pieza con zonas y no tres botones sueltos. Cada una responde
+   al gesto con un fondo casi invisible y se hunde al pulsarla. */
 function BotonDock({ icono: Icono, titulo, alPulsar }) {
   return (
     <button
@@ -9,16 +10,19 @@ function BotonDock({ icono: Icono, titulo, alPulsar }) {
       title={titulo}
       aria-label={titulo}
       onClick={alPulsar}
-      className="grid size-9 place-items-center text-tinta-suave transition-colors hover:text-tinta"
+      className="group grid size-9 place-items-center rounded-full text-tinta-suave transition-[color,background-color,transform] duration-150 hover:bg-tinta/[0.09] hover:text-tinta active:scale-[0.9]"
     >
-      <Icono size={16} />
+      <Icono
+        size={17}
+        className="transition-transform duration-200 group-hover:scale-110"
+      />
     </button>
   )
 }
 
 /**
  * Dock de zoom: acercar, alejar y encajar en pantalla. Va fijo abajo a la
- * derecha del lienzo.
+ * derecha del lienzo, en una capsula vertical de cristal.
  *
  * Se atenua cuando el usuario lleva un par de segundos quieto y vuelve entero
  * en cuanto toca el mapa. NO desaparece del todo a proposito: un control que
@@ -33,18 +37,20 @@ function BotonDock({ icono: Icono, titulo, alPulsar }) {
 /* El tercer boton, segun lo que va a hacer: ver la carrera entera, o
    -en el telefono, cuando ya la estas viendo entera- volver a tu semestre. */
 const ENCAJE = {
-  todo: { icono: Maximize, titulo: 'Encajar en pantalla' },
-  frente: { icono: LocateFixed, titulo: 'Volver a tu semestre' },
+  todo: { icono: IconoEncajar, titulo: 'Encajar en pantalla' },
+  frente: { icono: IconoFrente, titulo: 'Volver a tu semestre' },
 }
 
 export default function ControlesZoom({ acercar, alejar, encajar, encaje = 'todo', atenuado }) {
   return (
     <div
       data-atenuado={atenuado}
-      className="dock-lienzo transicion-tema absolute right-4 bottom-[calc(var(--reserva-barra)+1rem)] z-20 flex flex-col divide-y divide-panel-borde overflow-hidden rounded-xl border border-panel-borde bg-panel/85 backdrop-blur"
+      className="dock-lienzo barra-cristal absolute right-4 bottom-[calc(var(--reserva-barra)+1rem)] z-20 flex flex-col items-center gap-px rounded-full p-1"
     >
-      <BotonDock icono={Plus} titulo="Acercar" alPulsar={acercar} />
-      <BotonDock icono={Minus} titulo="Alejar" alPulsar={alejar} />
+      <BotonDock icono={IconoMas} titulo="Acercar" alPulsar={acercar} />
+      <span aria-hidden="true" className="h-px w-4 shrink-0 rounded-full bg-tinta/15" />
+      <BotonDock icono={IconoMenos} titulo="Alejar" alPulsar={alejar} />
+      <span aria-hidden="true" className="h-px w-4 shrink-0 rounded-full bg-tinta/15" />
       <BotonDock icono={ENCAJE[encaje].icono} titulo={ENCAJE[encaje].titulo} alPulsar={encajar} />
     </div>
   )

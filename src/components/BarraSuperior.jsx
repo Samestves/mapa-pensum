@@ -1,116 +1,86 @@
-import { ArrowLeft, ChevronRight, Moon, Search, Sun } from 'lucide-react'
+import { IconoAtras, IconoBuscar, IconoLuna, IconoSol } from './IconosSF'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
+import { CELDA, CELDA_ACTIVA } from './estiloCabecera'
+import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { avanceDe } from '../data/avance'
 
-/* La forma comun de TODO lo que se pulsa en la cabecera. Vive en una
-   constante y no repetida en cada boton porque antes cada uno traia su
-   propia mezcla: el de volver se iluminaba de fondo al pasar por encima y
-   los demas solo cambiaban de tinta, y el anillo de avance ni siquiera media
-   lo mismo. Una barra donde cada boton responde distinto al mismo gesto se
-   lee como piezas pegadas, no como un mando. */
-/* Sin radio: lo pone cada uso. Dejarlo aqui hacia que el 'rounded-full' del
-   anillo compitiera con el 'rounded-lg' de la base a igual especificidad, y
-   ganaba el que Tailwind emitiese despues -salia cuadrado-. */
-const BASE =
-  'transicion-tema flex shrink-0 items-center justify-center gap-1.5 h-9 ' +
-  'transition-[background-color,color,transform] duration-150 active:scale-[0.92]'
+/* La cabecera ya no es una barra: son islas de cristal que flotan sobre la
+   vista -el mismo idioma que la capsula inferior del telefono-.
 
-/* Los tres pesos de la barra. Que existan TRES y no uno es lo que permite
-   saber de que clase es cada pieza sin leer su etiqueta:
+   Tres formas, cada una para lo que es:
+   - CIRCULO: un solo gesto -volver-.
+   - CAPSULA: algo con contenido -el titulo, el buscador, el mando de vistas-.
+   - GRUPO: varios botones pequeños que comparten una isla -el avance, los
+     avisos y el tema-, separados por una raya fina.
+   Todas miden lo mismo de alto -40 px en telefono, 44 en escritorio, el
+   minimo tactil- para que la fila se lea como una sola linea. */
+const CRISTAL = 'barra-cristal relative pointer-events-auto shrink-0'
+const CIRCULO =
+  `${CRISTAL} grid size-10 place-items-center rounded-full md:size-11 ` +
+  'text-tinta-suave transition-[color,transform] duration-200 ' +
+  'hover:scale-[1.06] hover:text-tinta active:scale-[0.92]'
 
-     HUNDIDO   aqui se interactua con algo   el campo de busqueda, el mando
-     FANTASMA  esto es auxiliar              volver, avance, tema
+/* La raya entre dos celdas de un grupo. */
+function Division() {
+  return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 rounded-full bg-tinta/15" />
+}
 
-   Antes todo era fantasma. Con siete piezas iguales en fila, el mando de
-   vistas no se leia como un grupo y Planificar, que va justo detras, parecia
-   su cuarta pestaña, la que se salio del riel. */
-const FANTASMA = 'text-tinta-suave hover:bg-panel-suave hover:text-tinta'
-const HUNDIDO = 'border border-panel-borde bg-lienzo text-tinta-tenue hover:text-tinta'
-
-const ACTIVO = 'bg-panel-suave text-tinta'
-
-/* Una tecla dibujada como tecla: cuadrada, con su contorno y su relieve. Un
-   atajo escrito en texto corrido -"Ctrl K"- se lee como una etiqueta mas; con
-   forma de tecla se lee como algo que se pulsa, que es el unico motivo de
-   enseñarlo. */
+/* Una tecla dibujada como tecla: cuadrada, con su contorno. Un atajo escrito
+   en texto corrido -"Ctrl K"- se lee como una etiqueta mas; con forma de
+   tecla se lee como algo que se pulsa, que es el unico motivo de enseñarlo.
+   Translucida, no maciza: va sobre cristal y una tecla opaca se despegaba
+   de el. */
 function Tecla({ children }) {
   return (
-    <kbd className="transicion-tema grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border border-panel-borde bg-panel px-1 text-[10px] leading-none font-bold text-tinta-tenue shadow-sm">
+    <kbd className="grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border border-tinta/15 bg-tinta/[0.07] px-1 text-[10px] leading-none font-bold text-tinta-tenue">
       {children}
     </kbd>
   )
 }
 
-/**
- * Boton fantasma de la cabecera. Todos miden y pesan igual.
- *
- * 'claveIcono' es para los botones cuyo icono cambia con el estado. Al
- * cambiar ese valor React remonta el icono y la animacion de giro vuelve a
- * correr, que es lo que convierte el cambio de tema en un gesto y no en un
- * salto de un glifo a otro.
- */
-function Icono({ icono: Ico, titulo, etiqueta, claveIcono, activo, alPulsar }) {
-  const ancho = etiqueta ? 'px-2.5' : 'w-9'
-
+/* Boton de icono dentro de un grupo. 'claveIcono' es para los botones cuyo
+   icono cambia con el estado: al cambiar ese valor React remonta el icono y
+   la animacion de giro vuelve a correr, que es lo que convierte el cambio de
+   tema en un gesto y no en un salto de un glifo a otro. */
+function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar }) {
   return (
     <button
       type="button"
       onClick={alPulsar}
       title={titulo}
       aria-label={titulo}
-      aria-pressed={activo === undefined ? undefined : activo}
-      className={`${BASE} group rounded-lg ${ancho} ${activo ? ACTIVO : FANTASMA}`}
+      className={`${CELDA} w-9 text-tinta-suave hover:text-tinta`}
     >
-      {/* Todos los iconos de la barra suben un pixel al pasar por encima. Es
-          la misma respuesta para todos a proposito: lo que hace que una fila
-          de botones se lea como un mando es que contesten igual al mismo
-          gesto. */}
       <Ico
         key={claveIcono}
-        size={16}
+        size={18}
         className={`shrink-0 transition-transform duration-200 group-hover:-translate-y-px ${
           claveIcono === undefined ? '' : 'icono-relevo'
         }`}
       />
-      {etiqueta && <span className="hidden text-[12px] font-bold lg:inline">{etiqueta}</span>}
     </button>
   )
 }
 
-/** Separador fino: agrupa la barra en bloques en vez de una fila plana */
-function Division() {
-  return <span aria-hidden="true" className="h-5 w-px shrink-0 bg-panel-borde" />
-}
-
 /**
- * La cabecera de una carrera, en TRES zonas.
+ * La cabecera de una carrera, en tres zonas sobre una rejilla de tres
+ * columnas -las de los lados flexibles, la del centro a su medida-, de modo
+ * que el centro cae en el eje de la ventana pase lo que pase con el largo
+ * del nombre de la carrera:
  *
- * Izquierda es DONDE ESTAS, en una linea: un rastro que va de "Carreras" a
- * la carrera abierta.
- * Centro es el BUSCADOR.
- * Derecha es COMO VAS, CON QUE MIRAS y QUE HACES.
+ * - Izquierda: DONDE ESTAS. Volver y el nombre.
+ * - Centro: CON QUE MIRAS. El mando de vistas, que es la navegacion
+ *   principal y por eso va en el eje, como el control segmentado de la barra
+ *   de herramientas de macOS.
+ * - Derecha: BUSCAR y COMO VAS. El buscador, y un grupo con el avance, los
+ *   avisos y el tema.
  *
- * Antes era una sola fila de siete piezas del mismo peso separadas por ocho
- * pixeles, y con todo al mismo nivel la unica forma de saber que hacia cada
- * cosa era leer su etiqueta.
- *
- * El anillo de avance se queda en la derecha, delante del mando de vistas,
- * que es donde la gente ya sabe buscarlo. Lo que cambia es su forma: pasa de
- * circulo con el numero dentro a insignia con el numero fuera. Encajado entre
- * el campo y la capsula, un circulo suelto era la pieza que peor caia; con
- * forma de pastilla se lee como un dato y no como un boton mas de la fila.
- *
- * Planificar ya no vive aqui. Se fue al panel de avance, que es donde encaja:
- * este panel contesta "como voy" y Planificar contesta "cuando termino", y es
- * la pregunta siguiente de la misma conversacion. Arriba era la unica ACCION
- * en una fila de SITIOS, y obligaba a la barra a tener un peso visual solo
- * para ella.
- *
- * El buscador queda centrado de verdad: las dos zonas de los lados llevan
- * flex-1, asi que el campo cae en el eje de la ventana pase lo que pase con
- * el largo del nombre de la carrera.
+ * El buscador se adapta al ancho: campo entero con su atajo desde xl, y solo
+ * la lupa en lg, donde el campo no cabe junto al grupo. Por debajo de lg no
+ * esta -en telefono la paleta no tiene puerta por decision propia: recorrer
+ * un pensum se hace con el dedo-.
  */
 function BarraSuperior({
   carrera,
@@ -144,143 +114,116 @@ function BarraSuperior({
     ? `Tu avance: ${Math.round(avance)}% · ${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC. Pulsa para ver el detalle.`
     : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`
 
+  /* El numero sube contando, igual que el anillo, con el mismo hook y la
+     misma duracion: van a la vez. */
+  const avanceAnimado = useNumeroAnimado(avance)
+  const hayAvisos = (carrera.avisos?.length ?? 0) > 0
+
   return (
-    <header className="transicion-tema barra-contenido z-40 flex shrink-0 items-center gap-1 border-b border-panel-borde bg-panel px-2.5 py-2.5 sm:gap-2 sm:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
-        {/* Volver al selector. Antes esto era el logo, y nadie lo encontraba:
-            un logo se lee como marca, no como boton. Una flecha con la palabra
-            al lado no deja lugar a dudas. En movil queda solo la flecha, que
-            es el gesto de "atras" que todo el mundo reconoce.
-            La flecha se adelanta medio pixel al pasar por encima: es la unica
-            pieza de la barra que te saca de aqui, y ese tiron hacia la
-            izquierda dice hacia donde vas antes de pulsarla. */}
+    /* Sin fondo ni linea: la cabecera es solo el hueco donde flotan las
+       piezas. El envoltorio no atrapa toques -pointer-events-none-; cada
+       pieza los recibe por su cuenta, asi que entre ellas el dedo o el raton
+       llegan al mapa de debajo. */
+    <header className="transicion-tema barra-contenido pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
+      <div className="flex min-w-0 items-center gap-2">
+        {/* Volver: un circulo con la flecha, el gesto de "atras" de iOS. La
+            flecha se adelanta un poco al pasar por encima. */}
         <button
           type="button"
           onClick={alVolver}
           title="Ver todas las carreras"
           aria-label="Ver todas las carreras"
-          className={`${BASE} group rounded-lg px-2 ${FANTASMA}`}
+          className={`${CIRCULO} group`}
         >
-          <ArrowLeft
-            size={16}
-            className="shrink-0 transition-transform duration-300 group-hover:-translate-x-0.5"
+          <IconoAtras
+            size={17}
+            className="transition-transform duration-300 group-hover:-translate-x-0.5"
           />
-          <span className="hidden text-[12px] font-bold xl:inline">Carreras</span>
         </button>
 
-        {/* Una sola linea, y con el nombre entero donde cabe.
-
-            Antes eran dos: "Sistemas" arriba y "Ingenieria de Sistemas ·
-            Nucleo de Monagas — Maturin" debajo. Las dos mitades de esa
-            segunda linea sobraban por motivos distintos. La primera repetia
-            el titulo, solo que mas largo -el nombre corto ES el nombre largo
-            recortado, no otro dato-. Y la segunda es la misma en las nueve
-            carreras: si nunca cambia, no informa de nada, solo alarga. Donde
-            el nucleo si dice algo es en la portada y en la hoja impresa, que
-            es donde alguien puede no saber de que universidad le hablan.
-
-            La flecha con "Carreras" y el nombre de la carrera pasan a leerse
-            como un rastro -de donde vengo, donde estoy- en vez de como un
-            boton con un titulo al lado. El chevron es lo que convierte dos
-            cosas sueltas en un camino, y solo aparece desde lg, que es donde
-            hay sitio para el nombre completo.
-
-            Debajo de lg va el nombre corto: "Licenciatura en Tecnologia de
-            los Alimentos" a 15 px son 330, y en un telefono de 375 eso no es
-            un titulo, es una linea cortada. */}
-        <ChevronRight
-          size={15}
-          aria-hidden="true"
-          className="hidden shrink-0 text-tinta-tenue lg:block"
-        />
-        {/* Peso fino, como el nombre en las tarjetas de la portada: es la
-            misma carrera, y en extrabold era lo mas pesado de toda la barra.
-            Un punto mas de cuerpo compensa el trazo delgado. */}
-        <h1 className="min-w-0 flex-1 truncate text-[16px] font-light tracking-[-0.015em] text-tinta">
-          <span className="lg:hidden">{carrera.nombreCorto}</span>
-          <span className="hidden lg:inline">{carrera.nombre}</span>
-        </h1>
-
+        {/* El nombre, en su propia capsula. Debajo de lg va el corto:
+            "Licenciatura en Tecnologia de los Alimentos" no cabe en un
+            telefono, y una capsula con el texto cortado se lee como un fallo. */}
+        <div
+          className={`${CRISTAL} flex h-10 min-w-0 shrink items-center rounded-full px-4 md:h-11 md:px-5`}
+        >
+          <h1 className="min-w-0 truncate text-[15px] font-light tracking-[-0.015em] text-tinta md:text-[16px]">
+            <span className="lg:hidden">{carrera.nombreCorto}</span>
+            <span className="hidden lg:inline">{carrera.nombre}</span>
+          </h1>
+        </div>
       </div>
 
-      {/* El campo de busqueda. Hundido y con contorno: no es un boton mas de
-          la fila, y tiene que parecer un campo antes de pulsarlo.
-          La lupa se queda tambien en el telefono, y ahi no es un adorno: es la
-          unica puerta a la paleta, porque un movil no tiene Ctrl+K, y es donde
-          mas falta hace, que es donde recorrer el mapa cuesta mas. */}
-      <button
-        type="button"
-        onClick={alBuscar}
-        title="Buscar materias y acciones"
-        aria-label="Buscar materias y acciones"
-        aria-keyshortcuts="Meta+K Control+K"
-        /* Solo desde lg, que es donde cabe el campo ENTERO -lupa, palabra y
-           teclas- y se lee como un campo.
-           Por debajo no sale en ningun sitio, y eso deja el telefono y la
-           tablet sin buscador: es una decision tomada a proposito. La lupa
-           suelta quedaba mal donde se pusiera -33 px redondeados pegados al
-           anillo de avance en la cabecera, una quinta celda en la barra de
-           abajo- y para un pensum de sesenta materias que se recorre con el
-           dedo, buscar es algo que se hace sentado delante de un teclado.
-           La paleta sigue entera en escritorio, con este campo y con Ctrl+K. */
-        className={`${BASE} hidden gap-2 rounded-lg px-3 lg:flex lg:w-[240px] lg:justify-start ${HUNDIDO}`}
-      >
-        <Search size={15} className="shrink-0" />
-        <span className="hidden flex-1 text-left text-[12px] font-medium lg:inline">Buscar…</span>
-        {/* Dos teclas y no una cadena de texto: asi se lee como se pulsa */}
-        <span className="hidden shrink-0 items-center gap-1 lg:flex" aria-hidden="true">
-          <Tecla>{modificador}</Tecla>
-          <Tecla>K</Tecla>
-        </span>
-      </button>
+      <SelectorVista vista={vista} alCambiar={alCambiarVista} />
 
-      <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:flex-1 lg:justify-end">
-        {/* El avance, en un anillo con el numero dentro.
-            Estuvo un rato con el numero FUERA, en una pastilla, porque a los
-            treinta pixeles de entonces no cabia legible. La respuesta no era
-            sacarlo: era darle sitio. El anillo sube a 34 px y su trazo baja a
-            2,5, y con eso el hueco de dentro pasa de 23 px a 27, que es donde
-            un numero de dos cifras se lee sin apretarse. Mas fino y mas
-            grande, no mas gordo: es lo que hace que se vea un anillo y no una
-            rosquilla.
-            El signo de porcentaje no entra a proposito. Un anillo que se
-            cierra ya dice que eso es una proporcion; el signo solo gastaria
-            el sitio que necesita la cifra. La frase entera vive en el title y
-            en la etiqueta accesible. */}
+      <div className="flex shrink-0 items-center justify-end gap-2">
         <button
           type="button"
-          onClick={(e) => alAlternarAvance(e.currentTarget)}
-          title={detalleAvance}
-          aria-label={detalleAvance}
-          aria-expanded={avanceAbierto}
-          className={`${BASE} w-9 rounded-full p-0 ${avanceAbierto ? ACTIVO : FANTASMA}`}
+          onClick={alBuscar}
+          title="Buscar materias y acciones"
+          aria-label="Buscar materias y acciones"
+          aria-keyshortcuts="Meta+K Control+K"
+          className={`${CRISTAL} group hidden h-11 w-11 items-center justify-center gap-2.5 rounded-full text-tinta-suave transition-[color,transform] duration-200 hover:scale-[1.03] hover:text-tinta active:scale-[0.97] lg:flex xl:w-[208px] xl:justify-start xl:px-4`}
         >
-          <AnilloAvance valor={avance} tamano={34} grosor={2.5} activo={avanceAbierto} />
+          <IconoBuscar size={17} className="shrink-0" />
+          <span className="hidden flex-1 text-left text-[12.5px] font-medium text-tinta-tenue transition-colors group-hover:text-tinta-suave xl:block">
+            Buscar…
+          </span>
+          <span className="hidden shrink-0 items-center gap-1 xl:flex" aria-hidden="true">
+            <Tecla>{modificador}</Tecla>
+            <Tecla>K</Tecla>
+          </span>
         </button>
 
-        {/* Mapa, lista y horario son la misma carrera mirada de tres maneras,
-            asi que son un mando de tres posiciones y no tres botones. */}
-        <SelectorVista vista={vista} alCambiar={alCambiarVista} />
+        {/* El grupo: una sola isla con tres zonas. El avance es una insignia
+            -el anillo y el numero al lado, a tamaño de texto- y no un
+            circulo con el numero dentro: a veinte pixeles el numero dentro
+            no se lee, y fuera se lee al doble de distancia. */}
+        <div className={`${CRISTAL} flex h-10 items-center rounded-full p-0.5 md:h-11 md:p-1`}>
+          <button
+            type="button"
+            onClick={(e) => alAlternarAvance(e.currentTarget)}
+            title={detalleAvance}
+            aria-label={detalleAvance}
+            aria-expanded={avanceAbierto}
+            className={`${CELDA} gap-1.5 pr-3 pl-2.5 ${
+              avanceAbierto ? CELDA_ACTIVA : 'text-tinta-suave hover:text-tinta'
+            }`}
+          >
+            <AnilloAvance
+              valor={avance}
+              tamano={20}
+              grosor={4.5}
+              activo={avanceAbierto}
+              conNumero={false}
+              /* Sobre cristal la pista de siempre casi no se ve: se pinta con la
+                 tinta del tema, que se adapta a claro y oscuro. */
+              pista="color-mix(in oklab, var(--tinta) 24%, transparent)"
+            />
+            <span className="text-[12.5px] leading-none font-semibold tabular-nums">
+              {Math.round(avanceAnimado)}%
+            </span>
+          </button>
 
-        {/* Solo aparece donde hay algo que advertir, o sea en las carreras cuya
-            fuente tiene huecos o dudas. En las demas no ocupa sitio. */}
-        <BotonAvisos
-          cantidad={carrera.avisos?.length ?? 0}
-          abierto={avisosAbiertos}
-          alPulsar={alAlternarAvisos}
-        />
+          {hayAvisos && (
+            <>
+              <Division />
+              <BotonAvisos
+                cantidad={carrera.avisos.length}
+                abierto={avisosAbiertos}
+                alPulsar={alAlternarAvisos}
+              />
+            </>
+          )}
 
-        <Division />
-
-        {/* Sol y luna se entienden sin palabra en cualquier idioma. El icono
-            entra girando: el tema tarda 200ms en cambiar en toda la app y sin
-            ese giro el boton se quedaba quieto mientras el resto se movia. */}
-        <Icono
-          icono={tema === 'oscuro' ? Sun : Moon}
-          claveIcono={tema}
-          titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-          alPulsar={alternarTema}
-        />
+          <Division />
+          <BotonCelda
+            icono={tema === 'oscuro' ? IconoSol : IconoLuna}
+            claveIcono={tema}
+            titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            alPulsar={alternarTema}
+          />
+        </div>
       </div>
     </header>
   )

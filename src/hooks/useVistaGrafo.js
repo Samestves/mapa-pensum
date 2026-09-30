@@ -106,7 +106,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
      calcular el destino dentro del updater, y un updater tiene que ser puro.
      Todo pasa por aplicarVista, asi que las dos nunca se separan. */
   const vistaRef = useRef(vista)
-  const [medida, setMedida] = useState({ ancho: 0, alto: 0 })
+  const [medida, setMedida] = useState({ ancho: 0, alto: 0, arriba: 0 })
 
   /* El pellizco en vivo, ver layout/vistaViva.js.
      capaRef es el <svg> del contenido; pintadaRef, la vista con la que esta
@@ -217,10 +217,15 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       const caja = el.getBoundingClientRect()
       cajaRef.current = caja
       const { width, height } = caja
+      /* Cuanto de su borde de arriba tapa la cabecera flotante. Se lee del
+         CSS al medir y no se vigila: cambia al plegar la barra, y plegarla
+         no debe reencajar el mapa por debajo de quien lo esta mirando. */
+      const arriba =
+        parseFloat(getComputedStyle(el).getPropertyValue('--reserva-cabecera')) || 0
       setMedida((previa) =>
-        previa.ancho === width && previa.alto === height
+        previa.ancho === width && previa.alto === height && previa.arriba === arriba
           ? previa
-          : { ancho: width, alto: height },
+          : { ancho: width, alto: height, arriba },
       )
     }
     medir()
@@ -237,10 +242,11 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   // La vista con el grafo completo encajado y centrado
   const vistaEncajada = useCallback(() => {
     if (!medida.ancho || !medida.alto) return null
+    const arriba = medida.arriba ?? 0
     const escala = acotar(
       Math.min(
         (medida.ancho - MARGEN_ENCAJE * 2) / anchoContenido,
-        (medida.alto - MARGEN_ENCAJE * 2) / altoContenido,
+        (medida.alto - arriba - MARGEN_ENCAJE * 2) / altoContenido,
       ),
       ZOOM.min,
       1,
@@ -248,7 +254,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     return {
       escala,
       x: (medida.ancho - anchoContenido * escala) / 2,
-      y: (medida.alto - altoContenido * escala) / 2,
+      y: arriba + (medida.alto - arriba - altoContenido * escala) / 2,
     }
   }, [medida, anchoContenido, altoContenido])
 
@@ -483,7 +489,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   const mostrar = useCallback(
     (caja, margenes = {}) => {
       if (!medida.ancho || !medida.alto) return
-      const m = { arriba: 40, abajo: 40, izq: 40, der: 40, ...margenes }
+      const m = { arriba: 40 + (medida.arriba ?? 0), abajo: 40, izq: 40, der: 40, ...margenes }
       const v = vistaRef.current
       const libreX = medida.ancho - m.izq - m.der
       const libreY = medida.alto - m.arriba - m.abajo

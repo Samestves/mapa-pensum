@@ -284,12 +284,16 @@ function VistaCarrera({ carrera, alVolver }) {
   )
 
   return (
-    <div className="vista-carrera relative flex h-full flex-col overflow-hidden" style={tonos}>
+    <div
+      className="vista-carrera relative flex h-full flex-col overflow-hidden"
+      style={tonos}
+      data-barra-oculta={barraOculta}
+    >
       {/* Barra y pestaña van juntas en un envoltorio relativo: la pestaña se
           ancla a su borde inferior con top-full, asi que al plegarse la barra
           sube pegada a ella sin animar nada aparte. */}
       <div
-        className="relative z-40 shrink-0"
+        className="pointer-events-none absolute inset-x-0 top-0 z-40"
         onPointerEnter={() => setCercaCabecera(true)}
         onPointerLeave={() => setCercaCabecera(false)}
       >
@@ -340,7 +344,7 @@ function VistaCarrera({ carrera, alVolver }) {
             donde hay pantalla. */}
         <div
           className={`pointer-events-none absolute top-full left-1/2 z-50 -translate-x-1/2 transition-transform duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            barraOculta ? 'translate-y-1.5' : '-translate-y-1/2'
+            barraOculta ? 'translate-y-1.5' : '-translate-y-1.5'
           }`}
         >
           <button
@@ -352,7 +356,7 @@ function VistaCarrera({ carrera, alVolver }) {
             title={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
             aria-label={barraOculta ? 'Mostrar la barra' : 'Ocultar la barra'}
             aria-expanded={!barraOculta}
-            className={`pestana-barra grid size-7 place-items-center rounded-full border border-panel-borde bg-panel text-tinta-tenue shadow-sm transition-[opacity,transform] duration-200 ease-out hover:text-tinta focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 ${
+            className={`pestana-barra barra-cristal relative grid size-7 place-items-center rounded-full text-tinta-tenue transition-[opacity,transform] duration-200 ease-out hover:text-tinta focus-visible:pointer-events-auto focus-visible:scale-100 focus-visible:opacity-100 ${
               visiblePestana
                 ? 'pointer-events-auto scale-100 opacity-100'
                 : 'pointer-events-none scale-75 opacity-0'

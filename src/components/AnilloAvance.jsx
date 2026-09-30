@@ -21,7 +21,14 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO
  * anillo se dibuja limpio y el numero se pone al lado, fuera, a tamaño de
  * texto normal. Es el mismo dato y se lee al doble de distancia.
  */
-function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo, conNumero = true }) {
+function AnilloAvance({
+  valor,
+  tamano = 34,
+  grosor = 3.5,
+  activo,
+  conNumero = true,
+  pista = 'var(--panel-borde)',
+}) {
   // El numero sube contando en vez de saltar. El hook ya respeta
   // prefers-reduced-motion y tiene red por si la pestaña esta de fondo.
   const animado = useNumeroAnimado(valor)
@@ -40,7 +47,7 @@ function AnilloAvance({ valor, tamano = 34, grosor = 3.5, activo, conNumero = tr
         cy="18"
         r={RADIO}
         fill="none"
-        stroke="var(--panel-borde)"
+        stroke={pista}
         strokeWidth={grosor}
       />
       <circle

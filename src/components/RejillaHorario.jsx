@@ -152,11 +152,11 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
        reservar sitio para la barra: no aparece y desaparece segun el
        contenido, esta puesta desde el primer momento y no hay salto que
        amortiguar. La cabecera de dias se queda pegada arriba mientras se baja. */
-    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
+    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto pt-[var(--reserva-cabecera)]">
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
           las clases pasen por debajo sin transparentarse. */}
       <div
-        className={`transicion-tema sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave`}
+        className={`transicion-tema sticky top-[var(--reserva-cabecera)] z-20 flex border-r border-b ${LINEA} bg-panel-suave`}
       >
         <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
         {DIAS.map((dia) => (

@@ -31,26 +31,22 @@ function SelectorVista({ vista, alCambiar }) {
   const indice = indiceDeVista(vista)
 
   return (
+    /* La misma capsula y la misma lente que la barra inferior del telefono:
+       son dos formas de ofrecer LAS MISMAS tres vistas y tienen que
+       moverse igual. Celdas de igual ancho -grid-cols-3- para que la cuenta
+       de la lente sea cierta: un translateX de una celda, sin medir nada. */
     <div
       role="group"
       aria-label="Vista de la carrera"
-      /* La pista va HUNDIDA y el pulgar SALE, y hasta ahora estaba al reves:
-         la pista era panel-suave y el pulgar panel, o sea la pista mas clara
-         que el pulgar y las dos mas claras que el lienzo. Resultado, un
-         rectangulo plano; y como en esta barra todo lo demas son botones sin
-         contorno, el mando no se leia como un grupo. Esa es la razon de que
-         Planificar, que va justo al lado, pareciera la cuarta pestaña que se
-         salio: no habia riel visible del que salirse.
-         Ahora la pista es el color del lienzo -mas oscura que la barra, o sea
-         un surco- y el pulgar es panel-suave, mas claro que los dos. Es el
-         mismo truco de un segmentado de iOS, y es lo que hace que tres
-         botones se lean como un mando. */
-      className="transicion-tema relative hidden h-8 shrink-0 grid-cols-3 rounded-xl border border-panel-borde bg-lienzo p-0.5 sm:h-9 md:grid"
+      className="barra-cristal pointer-events-auto relative hidden h-11 w-[140px] shrink-0 grid-cols-3 rounded-full p-1 md:grid lg:w-[270px]"
     >
       <span
         aria-hidden="true"
-        style={{ transform: `translateX(${indice * 100}%)` }}
-        className="pulgar-vista transicion-tema absolute top-0.5 bottom-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded-[0.625rem] bg-panel-suave shadow-sm"
+        style={{
+          width: 'calc((100% - 8px) / 3)',
+          transform: `translateX(${indice * 100}%)`,
+        }}
+        className="lente-cristal pointer-events-none absolute inset-y-1 left-1 rounded-full"
       />
 
       {VISTAS.map(({ id, icono: Ico, etiqueta, titulo }) => {
@@ -63,14 +59,22 @@ function SelectorVista({ vista, alCambiar }) {
             title={titulo}
             aria-label={titulo}
             aria-pressed={activo}
-            /* z-10 para quedar por encima del pulgar, que es un hermano
-               absoluto: si no, el pulgar taparia el icono al llegar. */
-            className={`relative z-10 flex items-center justify-center gap-1.5 rounded-[0.625rem] px-2.5 transition-colors duration-200 lg:px-3 ${
-              activo ? 'text-tinta' : 'text-tinta-tenue hover:text-tinta-suave'
+            className={`group relative z-10 flex items-center justify-center gap-1.5 rounded-full transition-[color,background-color,transform] duration-200 active:scale-[0.96] ${
+              activo ? 'vista-activa' : 'text-tinta-tenue hover:bg-tinta/[0.07] hover:text-tinta'
             }`}
           >
-            <Ico size={16} className="shrink-0" />
-            <span className="hidden text-[12px] font-bold lg:inline">{etiqueta}</span>
+            {/* Al elegirse el icono se rellena y se asienta con un pequeño rebote,
+                el mismo gesto que en la barra del telefono; y en reposo, los
+                demas se agrandan un pelo al pasar por encima. */}
+            <Ico
+              key={activo ? 'activo' : 'reposo'}
+              size={17}
+              relleno={activo}
+              className={`shrink-0 ${
+                activo ? 'icono-asentado' : 'transition-transform duration-200 group-hover:scale-110'
+              }`}
+            />
+            <span className="hidden text-[12px] font-semibold lg:inline">{etiqueta}</span>
           </button>
         )
       })}

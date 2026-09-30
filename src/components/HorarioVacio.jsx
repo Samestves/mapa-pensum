@@ -196,7 +196,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pb-[var(--reserva-barra)] [@media(max-height:760px)]:pt-3"
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-[var(--reserva-cabecera)] pb-[var(--reserva-barra)]"
       /* Soltar la imagen encima funciona en toda la zona, no solo sobre la
          tarjeta: en un escritorio, arrastrar la captura desde el escritorio a
          "por ahi en medio" es el gesto natural, y obligar a acertar un

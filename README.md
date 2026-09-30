@@ -460,4 +460,4 @@ Datos tomados de los pensums publicados por la [DACE del Núcleo de Monagas](htt
 > [!IMPORTANT]
 > Esta herramienta es un apoyo para visualizar tu carrera, **no una fuente oficial**. Confirma siempre con control de estudios antes de tomar cualquier decisión académica.
 
-Iconos de [Lucide](https://lucide.dev). Tipografías Manrope y JetBrains Mono servidas desde el propio bundle con `@fontsource`, sin llamadas a terceros.
+Iconos de [Lucide](https://lucide.dev) y, en la cabecera y la barra de vistas, de [Phosphor Icons](https://phosphoricons.com) (MIT). Tipografías Manrope y JetBrains Mono servidas desde el propio bundle con `@fontsource`, sin llamadas a terceros.

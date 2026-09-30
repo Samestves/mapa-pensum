@@ -40,7 +40,7 @@ export function escalaDeLectura(ancho) {
 /** La vista que pone una columna a la izquierda, con su cabecera arriba */
 export function vistaDeColumna(columna, medida) {
   const escala = escalaDeLectura(medida.ancho)
-  return { escala, x: 16 - columna.x * escala, y: 12 - MARGEN.top * escala }
+  return { escala, x: 16 - columna.x * escala, y: (medida.arriba ?? 0) + 12 - MARGEN.top * escala }
 }
 
 /* ---- Donde la dejaste --------------------------------------------------

@@ -1,4 +1,4 @@
-import { GraduationCap } from 'lucide-react'
+import { IconoGrado } from './IconosSF'
 import { VISTAS, indiceDeVista } from '../data/vistas'
 
 /**
@@ -94,10 +94,10 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
               <span
                 key={activo ? 'encendida' : 'apagada'}
                 className={`grid h-5 place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
-                  activo ? 'icono-asentado text-tinta' : 'text-tinta-tenue'
+                  activo ? 'icono-asentado vista-activa' : 'text-tinta-tenue'
                 }`}
               >
-                <Ico size={18} strokeWidth={1.5} />
+                <Ico size={20} relleno={activo} />
               </span>
               <span className="etiqueta-pestana font-ui text-[8.5px] leading-none font-medium uppercase">
                 {etiqueta}
@@ -115,7 +115,7 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
         className="barra-cristal group pointer-events-auto relative grid size-[56px] shrink-0 place-items-center rounded-full text-tinta-suave"
       >
         <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
-          <GraduationCap size={19} strokeWidth={1.5} />
+          <IconoGrado size={21} />
         </span>
       </button>
     </nav>
