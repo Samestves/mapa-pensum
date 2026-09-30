@@ -2211,6 +2211,40 @@ body {
   color: var(--isla-tinte);
 }
 
+/* ---- Foco del mapa ------------------------------------------------------
+   Al señalar una materia, lo que no esta en su cadena se aparta: baja de
+   opacidad y se desenfoca, como el fondo de una foto con poca profundidad de
+   campo. El desenfoque hace que lo atenuado se lea como "lejos" y no como
+   "apagado", y por eso la opacidad sube un poco respecto a la del telefono:
+   a 0,14 el desenfoque ya no se veria.
+
+   Solo con raton. Un dedo no señala -no hay hover-, y en el telefono el
+   atenuado sale de tocar una materia, donde el desenfoque de decenas de
+   tarjetas cuesta bateria y no aporta lo que en escritorio. Alli queda el
+   atenuado de siempre.
+
+   Que lo pague poco: el desenfoque es corto -2 px-, no se anima con el mapa
+   en movimiento -señalar se ignora mientras se arrastra- y las tarjetas que
+   lo llevan no cambian de sitio. Los dos valores se ajustan aqui:
+   --desenfoque-foco es el radio y --opacidad-foco lo que queda visible. */
+@media (hover: hover) and (pointer: fine) {
+  .vista-carrera {
+    --desenfoque-foco: 2px;
+    --opacidad-foco: 0.34;
+  }
+
+  .grupo-nodo[data-atenuado] {
+    opacity: var(--opacidad-foco);
+    filter: blur(var(--desenfoque-foco));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grupo-nodo {
+    transition: none !important;
+  }
+}
+
 /* Los nombres de las vistas: mayusculas espaciadas, apagadas. La elegida se
    enciende y se abre un poco, el mismo gesto del cartel de capitulo. El
    margen negativo compensa el espacio que el tracking deja detras de la

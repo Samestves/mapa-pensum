@@ -35,11 +35,15 @@ function NodoAsignatura({
     <g
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
+      data-atenuado={atenuado ? '' : undefined}
       onClick={() => alVerFicha(nodo.codigo)}
       onPointerEnter={() => alSenalar(nodo.codigo)}
       onPointerLeave={alDejarDeSenalar}
       className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
-      style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
+      style={{
+        transition:
+          'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1), filter 320ms cubic-bezier(0.32, 0.72, 0, 1)',
+      }}
     >
       {/* Etiqueta accesible. El area solo existe donde esta clasificada */}
       <title>
