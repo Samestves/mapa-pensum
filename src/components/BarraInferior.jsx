@@ -14,6 +14,8 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * mismo idioma que el mapa: los nombres en mayusculas espaciadas y la vista
  * elegida encendida sobre su gota de cristal, como se marca lo elegido en un
  * menu de juego; las otras quedan apagadas, sin caja ni fondo propio.
+ * Los nombres van en minusculas, como las pestañas de iOS: en mayusculas
+ * espaciadas a 8 px no se leian bien en un telefono.
  *
  * Dos piezas y no una. Las tres vistas son SITIOS -cambian lo que llena la
  * pantalla- y van juntas en la capsula. Planificar es una ACCION -abre un
@@ -62,7 +64,7 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
       aria-label="Vistas de la carrera"
       className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
     >
-      <div className="barra-cristal pointer-events-auto relative grid h-[56px] w-[252px] grid-cols-3 rounded-full p-1">
+      <div className="barra-cristal pointer-events-auto relative grid h-[58px] w-[264px] grid-cols-3 rounded-full p-1">
         {/* La lente: una gota de cristal detras de la vista elegida. Se
             desliza hasta la nueva y es lo unico de la barra que se mueve. */}
         <span
@@ -84,7 +86,7 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
               title={titulo}
               aria-label={titulo}
               aria-current={activo ? 'page' : undefined}
-              className="pestana-dock group relative flex flex-col items-center justify-center gap-[5px] rounded-full"
+              className="pestana-dock group relative flex flex-col items-center justify-center gap-1 rounded-full"
               data-activa={activo}
             >
               {/* El acuse del toque va en el icono. Y la que se acaba de
@@ -92,13 +94,13 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
                   reinicia su animacion. */}
               <span
                 key={activo ? 'encendida' : 'apagada'}
-                className={`grid h-5 place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
+                className={`grid h-[22px] place-items-center transition-[color,transform] duration-200 group-active:scale-90 ${
                   activo ? 'icono-asentado vista-activa' : 'text-tinta-tenue'
                 }`}
               >
-                <Ico size={20} relleno={activo} />
+                <Ico size={22} relleno={activo} />
               </span>
-              <span className="etiqueta-pestana font-ui text-[8.5px] leading-none font-medium uppercase">
+              <span className="etiqueta-pestana font-ui text-[10.5px] leading-none font-medium">
                 {etiqueta}
               </span>
             </button>
@@ -111,10 +113,10 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
         onClick={alPlanificar}
         title="Planificar mi ruta hasta el grado y exportarla"
         aria-label="Planificar mi ruta hasta el grado y exportarla"
-        className="barra-cristal group pointer-events-auto relative grid size-[56px] shrink-0 place-items-center rounded-full text-tinta-suave"
+        className="barra-cristal group pointer-events-auto relative grid size-[58px] shrink-0 place-items-center rounded-full text-tinta-suave"
       >
         <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
-          <IconoGrado size={21} />
+          <IconoGrado size={23} />
         </span>
       </button>
     </nav>

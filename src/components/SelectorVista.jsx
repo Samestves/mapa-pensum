@@ -67,11 +67,11 @@ function SelectorVista({ vista, alCambiar }) {
                 en la barra del telefono. La key reinicia la animacion. */}
             <Ico
               key={activo ? 'activo' : 'reposo'}
-              size={17}
+              size={18}
               relleno={activo}
               className={`shrink-0 ${activo ? 'icono-asentado' : ''}`}
             />
-            <span className="hidden text-[12.5px] font-medium lg:inline">{etiqueta}</span>
+            <span className="hidden text-[13px] font-medium lg:inline">{etiqueta}</span>
           </button>
         )
       })}

@@ -1908,7 +1908,7 @@ body {
 
 @media (max-width: 767.98px) {
   .vista-carrera {
-    --reserva-barra: calc(env(safe-area-inset-bottom) + 82px);
+    --reserva-barra: calc(env(safe-area-inset-bottom) + 86px);
   }
 }
 
@@ -2161,11 +2161,9 @@ body {
   }
 }
 
-/* Los nombres de las vistas en el dock: mayusculas espaciadas y apagadas; la
-   elegida se enciende. Solo cambia el color: lo que se mueve es la lente. */
+/* El nombre de cada vista en el dock: apagado, y la elegida se enciende. Solo
+   cambia el color: lo que se mueve es la lente. */
 .etiqueta-pestana {
-  letter-spacing: 0.14em;
-  margin-right: -0.14em;
   color: var(--tinta-tenue);
   transition: color 200ms ease;
 }
