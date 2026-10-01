@@ -9,6 +9,7 @@ import { CARRERAS } from '../data/carreras'
 import { VISTAS } from '../data/vistas'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
+import { useEsTelefono } from '../hooks/useEsTelefono'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
@@ -17,6 +18,7 @@ import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
+import HojaAvance from './HojaAvance'
 import PanelProgreso from './PanelProgreso'
 import Horario from './Horario'
 import PlanRuta from './PlanRuta'
@@ -145,12 +147,19 @@ function VistaCarrera({ carrera, alVolver }) {
      que ya no existe. */
   const [anclaAvance, setAnclaAvance] = useState(null)
   /* Lo abren dos botones, el de la cabecera en escritorio y la isla de abajo
-     en el telefono: uno solo se ve a la vez, y los dos hacen lo mismo. */
+     en el telefono: uno solo se ve a la vez, y los dos hacen lo mismo. Lo
+     que se abre si cambia: en escritorio la nubecita colgada del boton, en el
+     telefono una hoja desde abajo. */
+  const esTelefono = useEsTelefono()
   const alternarAvance = (boton) => {
     setAnclaAvance(boton.getBoundingClientRect())
     alternar('avance')
   }
   const [planAbierto, setPlanAbierto] = useState(false)
+  const abrirPlan = () => {
+    cerrar()
+    setPlanAbierto(true)
+  }
   const [paletaAbierta, setPaletaAbierta] = useState(false)
 
   /* Ctrl+K, o ⌘K en un Mac. Se escucha en captura para adelantarse a
@@ -406,21 +415,20 @@ function VistaCarrera({ carrera, alVolver }) {
             que se apoyan en el borde de abajo -la ficha del horario en
             telefono- tienen que apoyarse en el borde de la barra, no en el de
             la ventana, o quedan por debajo de ella. */}
-        <PanelProgreso
-          progreso={progreso}
-          avanceGrupos={avanceGrupos}
-          reiniciar={reiniciar}
-          hayMarcas={hayMarcas}
-          abierto={abierto === 'avance'}
-          ancla={anclaAvance}
-          alCerrar={cerrar}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={filtrarArea}
-          alPlanificar={() => {
-            cerrar()
-            setPlanAbierto(true)
-          }}
-        />
+        {!esTelefono && (
+          <PanelProgreso
+            progreso={progreso}
+            avanceGrupos={avanceGrupos}
+            reiniciar={reiniciar}
+            hayMarcas={hayMarcas}
+            abierto={abierto === 'avance'}
+            ancla={anclaAvance}
+            alCerrar={cerrar}
+            areaFiltrada={areaFiltrada}
+            alFiltrarArea={filtrarArea}
+            alPlanificar={abrirPlan}
+          />
+        )}
       </div>
 
       {/* La navegacion del telefono va al final del arbol y fuera del
@@ -434,6 +442,27 @@ function VistaCarrera({ carrera, alVolver }) {
         avanceAbierto={abierto === 'avance'}
         alAlternarAvance={alternarAvance}
       />
+
+      {/* Fuera del contenedor de la vista, que se remonta al cambiar de vista:
+          la hoja tiene animacion de salida y no puede desmontarse a medias. */}
+      {esTelefono && (
+        <HojaAvance
+          abierta={abierto === 'avance'}
+          alCerrar={cerrar}
+          carrera={carrera}
+          progreso={progreso}
+          avanceGrupos={avanceGrupos}
+          marcas={marcas}
+          estados={estados}
+          relaciones={layout.relaciones}
+          elegidas={elegidas}
+          reiniciar={reiniciar}
+          hayMarcas={hayMarcas}
+          alPlanificar={abrirPlan}
+          tema={tema}
+          alternarTema={alternarTema}
+        />
+      )}
     </div>
   )
 }

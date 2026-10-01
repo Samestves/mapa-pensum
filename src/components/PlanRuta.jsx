@@ -5,11 +5,11 @@ import { planificar, horasDe, mesEstimadoGrado } from '../layout/planificador'
 import { pesoDesbloqueo } from '../layout/relaciones'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { guardar, leer } from '../data/almacen'
+import { guardarUcPorSemestre, leerUcPorSemestre } from '../data/cargaPlan'
 import { descargarMarkdown, MES } from '../data/exportarPlan'
 import HojaPlan, { ANCHO_HOJA } from './HojaPlan'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
-const CLAVE_UC = 'mapa-pensum:uc-semestre'
 
 /**
  * La vista previa enseña la hoja ENTERA, encogida hasta que quepa.
@@ -98,7 +98,7 @@ function Resumen({ semestres, grado, materias }) {
 function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, alCerrar }) {
   const { asignaturas, grupos } = carrera
   const [nombre, setNombre] = useState(() => leer(CLAVE_NOMBRE, ''))
-  const [ucPorSemestre, setUc] = useState(() => Number(leer(CLAVE_UC)) || 16)
+  const [ucPorSemestre, setUc] = useState(leerUcPorSemestre)
   // En movil los ajustes arrancan plegados para que la hoja tenga sitio
   const [ajustes, setAjustes] = useState(() => window.innerWidth >= 768)
 
@@ -106,7 +106,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
     guardar(CLAVE_NOMBRE, nombre)
   }, [nombre])
   useEffect(() => {
-    guardar(CLAVE_UC, String(ucPorSemestre))
+    guardarUcPorSemestre(ucPorSemestre)
   }, [ucPorSemestre])
 
   useCerrarConEscape(alCerrar)

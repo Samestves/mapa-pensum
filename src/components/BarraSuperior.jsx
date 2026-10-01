@@ -13,8 +13,9 @@ import { avanceDe, describirAvance } from '../data/avance'
    - CIRCULO: un solo gesto -volver-.
    - CAPSULA: algo con contenido -el titulo, el buscador, el mando de vistas-.
    - GRUPO: varios botones pequeños que comparten una isla -el avance, los
-     avisos y el tema-, separados por una raya fina. En el telefono el avance
-     no va aqui: vive abajo, en su propia isla, junto a las vistas.
+     avisos y el tema-, separados por una raya fina. En el telefono solo
+     quedan los avisos: el avance vive abajo, en su propia isla, y el tema
+     dentro de la hoja que esa isla abre.
    Todas miden lo mismo de alto -40 px en telefono, 44 en escritorio, el
    minimo tactil- para que la fila se lea como una sola linea. */
 const CRISTAL = 'barra-cristal relative pointer-events-auto shrink-0'
@@ -50,14 +51,14 @@ function Tecla({ children }) {
    icono cambia con el estado: al cambiar ese valor React remonta el icono y
    la animacion de giro vuelve a correr, que es lo que convierte el cambio de
    tema en un gesto y no en un salto de un glifo a otro. */
-function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar }) {
+function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar, className = '' }) {
   return (
     <button
       type="button"
       onClick={alPulsar}
       title={titulo}
       aria-label={titulo}
-      className={`${CELDA} w-9 text-tinta-suave hover:text-tinta`}
+      className={`${CELDA} w-9 text-tinta-suave hover:text-tinta ${className}`}
     >
       <Ico
         key={claveIcono}
@@ -84,9 +85,11 @@ function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar }) {
  *   avisos y el tema.
  *
  * En el telefono la cabecera se queda en lo minimo: volver, y a la derecha los
- * avisos y el tema. El nombre de la carrera ya no tiene isla -ocupaba un
- * rincon de la pantalla para repetir algo que ya se sabe- y el avance baja a
- * la barra de abajo, que es donde llega el pulgar.
+ * avisos si la carrera los tiene. El nombre de la carrera ya no tiene isla
+ * -ocupaba un rincon de la pantalla para repetir algo que ya se sabe; ahora
+ * encabeza la hoja de avance-, el avance baja a la barra de abajo, que es donde
+ * llega el pulgar, y el tema entra en esa hoja: es un ajuste que se toca una
+ * vez, no algo que merezca una esquina de la pantalla.
  *
  * El buscador se adapta al ancho: campo entero con su atajo desde xl, y solo
  * la lupa en lg, donde el campo no cabe junto al grupo. Por debajo de lg no
@@ -187,7 +190,11 @@ function BarraSuperior({
             -el anillo y el numero al lado, a tamaño de texto- y no un
             circulo con el numero dentro: a veinte pixeles el numero dentro
             no se lee, y fuera se lee al doble de distancia. */}
-        <div className={`${CRISTAL} flex h-10 items-center rounded-full p-0.5 md:h-11 md:p-1`}>
+        <div
+          className={`${CRISTAL} h-10 items-center rounded-full p-0.5 md:flex md:h-11 md:p-1 ${
+            hayAvisos ? 'flex' : 'hidden'
+          }`}
+        >
           {/* El avance solo desde md: en el telefono lo lleva la isla de abajo. */}
           <button
             type="button"
@@ -195,7 +202,7 @@ function BarraSuperior({
             title={detalleAvance}
             aria-label={detalleAvance}
             aria-expanded={avanceAbierto}
-            className={`${CELDA} hidden gap-1.5 pr-3 pl-2.5 md:flex ${
+            className={`${CELDA} gap-1.5 pr-3 pl-2.5 max-md:hidden ${
               avanceAbierto ? CELDA_ACTIVA : 'text-tinta-suave hover:text-tinta'
             }`}
           >
@@ -223,15 +230,17 @@ function BarraSuperior({
                 abierto={avisosAbiertos}
                 alPulsar={alAlternarAvisos}
               />
-              <Division />
+              <Division className="max-md:hidden" />
             </>
           )}
 
+          {/* El tema solo desde md: en el telefono esta en la hoja de avance. */}
           <BotonCelda
             icono={tema === 'oscuro' ? IconoSol : IconoLuna}
             claveIcono={tema}
             titulo={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
             alPulsar={alternarTema}
+            className="max-md:hidden"
           />
         </div>
       </div>

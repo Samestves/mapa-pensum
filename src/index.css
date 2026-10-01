@@ -2172,6 +2172,90 @@ body {
   color: var(--tinta);
 }
 
+/* ---- Isla de avance (telefono) -----------------------------------------
+   El arco recorre el canto de la isla. La pista es la tinta casi
+   transparente, para que el circulo entero se lea aunque el avance sea poco,
+   y el arco se mueve con transicion de CSS -sin JavaScript por fotograma-. */
+.vista-carrera {
+  --isla-avance-pista: color-mix(in oklab, var(--tinta) 11%, transparent);
+}
+
+.arco-avance {
+  transition: stroke-dashoffset 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---- Hoja inferior (telefono) ------------------------------------------
+   Sube con la curva de hoja de iOS y baja igual. La entrada es una animacion
+   sin relleno -no se queda aplicada al terminar- para que el arrastre pueda
+   mover la hoja con un transform en linea; la salida es una transicion,
+   porque tiene que poder salir desde donde la dejo el dedo. */
+.hoja-inferior {
+  box-shadow:
+    0 -1px 0 rgb(255 255 255 / 0.04),
+    0 24px 60px -12px rgb(0 0 0 / 0.6);
+  animation: hoja-entra 420ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-tema='claro'] .hoja-inferior {
+  box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
+}
+
+.hoja-inferior[data-saliendo='true'] {
+  transform: translateY(calc(100% + 24px));
+}
+
+@keyframes hoja-entra {
+  from {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+
+/* El velo oscurece poco: lo de detras sigue siendo la pantalla en la que
+   estas, no algo que haya desaparecido. */
+.velo-hoja {
+  background: rgb(0 0 0 / 0.45);
+  animation: velo-entra 300ms ease backwards;
+  transition: opacity 300ms ease;
+}
+
+[data-tema='claro'] .velo-hoja {
+  background: rgb(16 32 64 / 0.22);
+}
+
+.velo-hoja[data-saliendo='true'] {
+  opacity: 0;
+}
+
+@keyframes velo-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+/* La tarjeta del plan: un tinte del verde de aprobada sobre el panel, con su
+   propio contorno. Es lo unico de color en la hoja, porque es lo unico que
+   lleva a otro sitio. */
+.tarjeta-plan {
+  --tarjeta-plan-linea: color-mix(in oklab, var(--estado-aprobada) 18%, transparent);
+  background: color-mix(in oklab, var(--estado-aprobada) 9%, var(--panel));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
+}
+
+/* La pieza que marca el tema elegido en la hoja de avance. */
+.lente-tema {
+  background: color-mix(in oklab, var(--tinta) 14%, var(--panel));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-tema='claro'] .lente-tema {
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgb(16 32 64 / 0.14),
+    0 0 0 0.5px rgb(16 32 64 / 0.06);
+}
+
 /* El icono de la vista que se acaba de elegir se asienta: pasa de contorno a
    relleno y crece un pelo hasta su sitio, sin rebote. */
 .icono-asentado {
@@ -2456,6 +2540,8 @@ body {
   .marca-cadena,
   .chip-entrar,
   .clase-muestra,
+  .hoja-inferior,
+  .velo-hoja,
   .semana-muestra[data-foco='foto'] .escaneo-muestra {
     animation: none;
   }
@@ -2467,6 +2553,10 @@ body {
      aparte o siguen deslizandose. */
   .lente-cristal,
   .selector-lente,
+  .lente-tema,
+  .arco-avance,
+  .hoja-inferior,
+  .velo-hoja,
   .tarjeta-carrera,
   .tarjeta-carrera > *,
   .plegable,

@@ -1,6 +1,5 @@
-import AnilloAvance from './AnilloAvance'
+import IslaAvance from './IslaAvance'
 import { VISTAS, indiceDeVista } from '../data/vistas'
-import { avanceDe, describirAvance } from '../data/avance'
 
 /**
  * Las tres vistas, abajo, en el telefono.
@@ -19,10 +18,10 @@ import { avanceDe, describirAvance } from '../data/avance'
  * espaciadas a 8 px no se leian bien en un telefono.
  *
  * Dos piezas y no una. Las tres vistas son SITIOS -cambian lo que llena la
- * pantalla- y van juntas en la capsula. El avance es una CONSULTA -abre un
- * panel encima y te deja donde estabas- y va aparte, en su propio circulo: el
- * anillo de progreso rodea el borde de la isla y el numero va dentro. Desde
- * ese panel se llega tambien a Planificar.
+ * pantalla- y van juntas en la capsula. El avance es una CONSULTA -abre una
+ * hoja encima y te deja donde estabas- y va aparte, en su propia isla
+ * (IslaAvance), cuyo borde es la barra de progreso. Desde esa hoja se llega a
+ * Planificar.
  *
  * Probe un adorno mas y se fue: una raya de luz verde bajo la vista elegida.
  * La gota ya dice donde estas.
@@ -36,7 +35,6 @@ import { avanceDe, describirAvance } from '../data/avance'
  */
 function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance }) {
   const indice = indiceDeVista(vista)
-  const detalleAvance = describirAvance(resumen)
 
   const cambiar = (id) => {
     if (id === vista) return
@@ -111,27 +109,7 @@ function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAva
         })}
       </div>
 
-      {/* El anillo va pegado al borde de la isla y el numero dentro: a 50 px
-          cabe el "100%" entero sin tocar el trazo. */}
-      <button
-        type="button"
-        onClick={(e) => alAlternarAvance(e.currentTarget)}
-        title={detalleAvance}
-        aria-label={detalleAvance}
-        aria-expanded={avanceAbierto}
-        className="barra-cristal group pointer-events-auto relative grid size-[58px] shrink-0 place-items-center rounded-full"
-      >
-        <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
-          <AnilloAvance
-            valor={avanceDe(resumen)}
-            tamano={50}
-            grosor={2.8}
-            activo={avanceAbierto}
-            simbolo
-            pista="color-mix(in oklab, var(--tinta) 18%, transparent)"
-          />
-        </span>
-      </button>
+      <IslaAvance resumen={resumen} abierta={avanceAbierto} alPulsar={alAlternarAvance} />
     </nav>
   )
 }
