@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
-import { aprobadasPorSemestre, avanceDe } from './avance.js'
+import { aprobadasPorSemestre, avanceDe, describirAvance } from './avance.js'
 
 const carrera = {
   semestres: [{ numero: 1 }, { numero: 2 }, { numero: 3 }],
@@ -27,5 +27,19 @@ describe('el avance del anillo', () => {
     assert.equal(avanceDe({ porcentaje: 28, aprobadas: 1, total: 4 }), 28)
     assert.equal(avanceDe({ porcentaje: null, aprobadas: 1, total: 4 }), 25)
     assert.equal(avanceDe({ porcentaje: null, aprobadas: 0, total: 0 }), 0)
+  })
+})
+
+describe('la frase del anillo', () => {
+  test('dice si el porcentaje es de UC o de materias', () => {
+    const conCreditos = { porcentaje: 28.4, ucAprobadas: 40, ucElectivas: 3, ucTitulo: 153 }
+    assert.equal(
+      describirAvance(conCreditos),
+      'Tu avance: 28% · 43 de 153 UC. Pulsa para ver el detalle.',
+    )
+    assert.equal(
+      describirAvance({ porcentaje: null, aprobadas: 1, total: 4 }),
+      'Tu avance: 25% · 1 de 4 materias. Pulsa para ver el detalle.',
+    )
   })
 })

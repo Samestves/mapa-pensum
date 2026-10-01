@@ -4,7 +4,7 @@ import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
 import { CELDA, CELDA_ACTIVA } from './estiloCabecera'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import { avanceDe } from '../data/avance'
+import { avanceDe, describirAvance } from '../data/avance'
 
 /* La cabecera ya no es una barra: son islas de cristal que flotan sobre la
    vista -el mismo idioma que la capsula inferior del telefono-.
@@ -13,7 +13,8 @@ import { avanceDe } from '../data/avance'
    - CIRCULO: un solo gesto -volver-.
    - CAPSULA: algo con contenido -el titulo, el buscador, el mando de vistas-.
    - GRUPO: varios botones pequeños que comparten una isla -el avance, los
-     avisos y el tema-, separados por una raya fina.
+     avisos y el tema-, separados por una raya fina. En el telefono el avance
+     no va aqui: vive abajo, en su propia isla, junto a las vistas.
    Todas miden lo mismo de alto -40 px en telefono, 44 en escritorio, el
    minimo tactil- para que la fila se lea como una sola linea. */
 const CRISTAL = 'barra-cristal relative pointer-events-auto shrink-0'
@@ -23,8 +24,13 @@ const CIRCULO =
   'hover:scale-[1.06] hover:text-tinta active:scale-[0.92]'
 
 /* La raya entre dos celdas de un grupo. */
-function Division() {
-  return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 rounded-full bg-tinta/15" />
+function Division({ className = '' }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`mx-0.5 h-4 w-px shrink-0 rounded-full bg-tinta/15 ${className}`}
+    />
+  )
 }
 
 /* Una tecla dibujada como tecla: cuadrada, con su contorno. Un atajo escrito
@@ -77,6 +83,11 @@ function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar }) {
  * - Derecha: BUSCAR y COMO VAS. El buscador, y un grupo con el avance, los
  *   avisos y el tema.
  *
+ * En el telefono la cabecera se queda en lo minimo: volver, y a la derecha los
+ * avisos y el tema. El nombre de la carrera ya no tiene isla -ocupaba un
+ * rincon de la pantalla para repetir algo que ya se sabe- y el avance baja a
+ * la barra de abajo, que es donde llega el pulgar.
+ *
  * El buscador se adapta al ancho: campo entero con su atajo desde xl, y solo
  * la lupa en lg, donde el campo no cabe junto al grupo. Por debajo de lg no
  * esta -en telefono la paleta no tiene puerta por decision propia: recorrer
@@ -108,11 +119,8 @@ function BarraSuperior({
      trae, el de materias, que es lo unico que se puede saber. El title dice
      cual de los dos es, para que el numero no signifique dos cosas distintas
      sin avisar. */
-  const conCreditos = resumen.porcentaje != null
   const avance = avanceDe(resumen)
-  const detalleAvance = conCreditos
-    ? `Tu avance: ${Math.round(avance)}% · ${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC. Pulsa para ver el detalle.`
-    : `Tu avance: ${Math.round(avance)}% · ${resumen.aprobadas} de ${resumen.total} materias. Pulsa para ver el detalle.`
+  const detalleAvance = describirAvance(resumen)
 
   /* El numero sube contando, igual que el anillo, con el mismo hook y la
      misma duracion: van a la vez. */
@@ -141,13 +149,13 @@ function BarraSuperior({
           />
         </button>
 
-        {/* El nombre, en su propia capsula. Debajo de lg va el corto:
-            "Licenciatura en Tecnologia de los Alimentos" no cabe en un
-            telefono, y una capsula con el texto cortado se lee como un fallo. */}
+        {/* El nombre, en su propia capsula, solo desde md. Debajo de lg va el
+            corto: "Licenciatura en Tecnologia de los Alimentos" no cabe, y una
+            capsula con el texto cortado se lee como un fallo. */}
         <div
-          className={`${CRISTAL} flex h-10 min-w-0 shrink items-center rounded-full px-4 md:h-11 md:px-5`}
+          className={`${CRISTAL} hidden h-11 min-w-0 shrink items-center rounded-full px-5 md:flex`}
         >
-          <h1 className="min-w-0 truncate text-[15px] font-light tracking-[-0.015em] text-tinta md:text-[16px]">
+          <h1 className="min-w-0 truncate text-[16px] font-light tracking-[-0.015em] text-tinta">
             <span className="lg:hidden">{carrera.nombreCorto}</span>
             <span className="hidden lg:inline">{carrera.nombre}</span>
           </h1>
@@ -180,13 +188,14 @@ function BarraSuperior({
             circulo con el numero dentro: a veinte pixeles el numero dentro
             no se lee, y fuera se lee al doble de distancia. */}
         <div className={`${CRISTAL} flex h-10 items-center rounded-full p-0.5 md:h-11 md:p-1`}>
+          {/* El avance solo desde md: en el telefono lo lleva la isla de abajo. */}
           <button
             type="button"
             onClick={(e) => alAlternarAvance(e.currentTarget)}
             title={detalleAvance}
             aria-label={detalleAvance}
             aria-expanded={avanceAbierto}
-            className={`${CELDA} gap-1.5 pr-3 pl-2.5 ${
+            className={`${CELDA} hidden gap-1.5 pr-3 pl-2.5 md:flex ${
               avanceAbierto ? CELDA_ACTIVA : 'text-tinta-suave hover:text-tinta'
             }`}
           >
@@ -205,18 +214,19 @@ function BarraSuperior({
             </span>
           </button>
 
+          <Division className="max-md:hidden" />
+
           {hayAvisos && (
             <>
-              <Division />
               <BotonAvisos
                 cantidad={carrera.avisos.length}
                 abierto={avisosAbiertos}
                 alPulsar={alAlternarAvisos}
               />
+              <Division />
             </>
           )}
 
-          <Division />
           <BotonCelda
             icono={tema === 'oscuro' ? IconoSol : IconoLuna}
             claveIcono={tema}

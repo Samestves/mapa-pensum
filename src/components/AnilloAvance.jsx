@@ -20,6 +20,9 @@ const CIRCUNFERENCIA = 2 * Math.PI * RADIO
  * el numero se queda en trece y hay que acercarse a leerlo, asi que alli el
  * anillo se dibuja limpio y el numero se pone al lado, fuera, a tamaño de
  * texto normal. Es el mismo dato y se lee al doble de distancia.
+ *
+ * `simbolo` añade el "%" pequeño tras el numero. Con cien el numero se
+ * encoge un punto para no tocar el trazo.
  */
 function AnilloAvance({
   valor,
@@ -27,6 +30,7 @@ function AnilloAvance({
   grosor = 3.5,
   activo,
   conNumero = true,
+  simbolo = false,
   pista = 'var(--panel-borde)',
 }) {
   // El numero sube contando en vez de saltar. El hook ya respeta
@@ -72,11 +76,16 @@ function AnilloAvance({
           y="18"
           textAnchor="middle"
           dominantBaseline="central"
-          fontSize="14"
+          fontSize={simbolo ? (pct >= 99.5 ? 10.5 : 12.5) : 14}
           fill={activo ? 'var(--tinta)' : 'var(--tinta-suave)'}
           className="font-bold tabular-nums tracking-tight"
         >
           {Math.round(pct)}
+          {simbolo && (
+            <tspan fontSize="7" fontWeight="600" dx="0.5">
+              %
+            </tspan>
+          )}
         </text>
       )}
     </svg>

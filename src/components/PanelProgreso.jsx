@@ -275,12 +275,12 @@ function PanelProgreso({
               estaba al lado del mando de vistas -que son SITIOS- pareciendo
               su cuarta pestaña, y siendo la unica accion de la fila obligaba
               a la barra a tener un peso visual solo para ella.
-              En el telefono no sale de aqui porque alli ya esta en la barra
-              de abajo, que es donde llega el pulgar. */}
+              Tambien en el telefono: el circulo de abajo es el que abre este
+              panel, y desde aqui se llega a Planificar. */}
           <button
             type="button"
             onClick={alPlanificar}
-            className="group hidden w-full items-center justify-center gap-2 rounded-xl bg-aprobada px-3 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98] md:flex"
+            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-aprobada px-3 py-2.5 text-[12.5px] font-extrabold text-[var(--lienzo)] transition-transform active:scale-[0.98]"
           >
             <GraduationCap
               size={15}

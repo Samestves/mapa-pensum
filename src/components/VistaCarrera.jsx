@@ -144,6 +144,12 @@ function VistaCarrera({ carrera, alVolver }) {
      y una caja es un valor muerto que no puede quedarse apuntando a un nodo
      que ya no existe. */
   const [anclaAvance, setAnclaAvance] = useState(null)
+  /* Lo abren dos botones, el de la cabecera en escritorio y la isla de abajo
+     en el telefono: uno solo se ve a la vez, y los dos hacen lo mismo. */
+  const alternarAvance = (boton) => {
+    setAnclaAvance(boton.getBoundingClientRect())
+    alternar('avance')
+  }
   const [planAbierto, setPlanAbierto] = useState(false)
   const [paletaAbierta, setPaletaAbierta] = useState(false)
 
@@ -286,10 +292,7 @@ function VistaCarrera({ carrera, alVolver }) {
           vista={vista}
           alCambiarVista={setVista}
           avanceAbierto={abierto === 'avance'}
-          alAlternarAvance={(boton) => {
-            setAnclaAvance(boton.getBoundingClientRect())
-            alternar('avance')
-          }}
+          alAlternarAvance={alternarAvance}
           avisosAbiertos={abierto === 'avisos'}
           alAlternarAvisos={() => alternar('avisos')}
           alBuscar={() => setPaletaAbierta(true)}
@@ -427,7 +430,9 @@ function VistaCarrera({ carrera, alVolver }) {
       <BarraInferior
         vista={vista}
         alCambiar={setVista}
-        alPlanificar={() => setPlanAbierto(true)}
+        resumen={progreso}
+        avanceAbierto={abierto === 'avance'}
+        alAlternarAvance={alternarAvance}
       />
     </div>
   )

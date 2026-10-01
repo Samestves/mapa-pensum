@@ -1,5 +1,6 @@
-import { IconoGrado } from './IconosSF'
+import AnilloAvance from './AnilloAvance'
 import { VISTAS, indiceDeVista } from '../data/vistas'
+import { avanceDe, describirAvance } from '../data/avance'
 
 /**
  * Las tres vistas, abajo, en el telefono.
@@ -18,12 +19,13 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * espaciadas a 8 px no se leian bien en un telefono.
  *
  * Dos piezas y no una. Las tres vistas son SITIOS -cambian lo que llena la
- * pantalla- y van juntas en la capsula. Planificar es una ACCION -abre un
- * panel encima y te deja donde estabas- y va aparte, en su propio circulo.
+ * pantalla- y van juntas en la capsula. El avance es una CONSULTA -abre un
+ * panel encima y te deja donde estabas- y va aparte, en su propio circulo: el
+ * anillo de progreso rodea el borde de la isla y el numero va dentro. Desde
+ * ese panel se llega tambien a Planificar.
  *
- * Probe dos adornos mas y se fueron: una raya de luz verde bajo la vista
- * elegida y un aro de avance alrededor del boton de planificar. La gota ya
- * dice donde estas, y el avance ya lo dice el anillo de la cabecera.
+ * Probe un adorno mas y se fue: una raya de luz verde bajo la vista elegida.
+ * La gota ya dice donde estas.
  *
  * Sobre el coste: el desenfoque de fondo es lo caro del cristal, asi que solo
  * lo llevan estas dos superficies, que suman poco area. Nada se anima en
@@ -32,8 +34,9 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * El area de toque de cada pestaña es su tercio entero de la capsula, unos
  * 80 x 46 px: por encima de los 44 que se consideran el minimo.
  */
-function BarraInferior({ vista, alCambiar, alPlanificar }) {
+function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance }) {
   const indice = indiceDeVista(vista)
+  const detalleAvance = describirAvance(resumen)
 
   const cambiar = (id) => {
     if (id === vista) return
@@ -108,15 +111,25 @@ function BarraInferior({ vista, alCambiar, alPlanificar }) {
         })}
       </div>
 
+      {/* El anillo va pegado al borde de la isla y el numero dentro: a 50 px
+          cabe el "100%" entero sin tocar el trazo. */}
       <button
         type="button"
-        onClick={alPlanificar}
-        title="Planificar mi ruta hasta el grado y exportarla"
-        aria-label="Planificar mi ruta hasta el grado y exportarla"
-        className="barra-cristal group pointer-events-auto relative grid size-[58px] shrink-0 place-items-center rounded-full text-tinta-suave"
+        onClick={(e) => alAlternarAvance(e.currentTarget)}
+        title={detalleAvance}
+        aria-label={detalleAvance}
+        aria-expanded={avanceAbierto}
+        className="barra-cristal group pointer-events-auto relative grid size-[58px] shrink-0 place-items-center rounded-full"
       >
         <span className="grid place-items-center transition-transform duration-200 group-active:scale-90">
-          <IconoGrado size={23} />
+          <AnilloAvance
+            valor={avanceDe(resumen)}
+            tamano={50}
+            grosor={2.8}
+            activo={avanceAbierto}
+            simbolo
+            pista="color-mix(in oklab, var(--tinta) 18%, transparent)"
+          />
         </span>
       </button>
     </nav>
