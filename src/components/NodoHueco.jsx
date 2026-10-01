@@ -36,6 +36,14 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
 
   return (
     <g
+      role="button"
+      /* Sin <title> por lo mismo que en NodoAsignatura: tambien sale como
+         cartel nativo al pasar el raton. */
+      aria-label={
+        vacia
+          ? `${nombre} — casilla libre: pulsa para elegir una`
+          : `${codigoVisible(electiva)} — ${electiva.nombre} · ${electiva.uc} UC · ${ETIQUETA_SITUACION[situacion]}`
+      }
       transform={`translate(${x}, ${y})`}
       /* Vacia lleva a elegir; llena lleva a la ficha de esa materia.
          Que una casilla llena volviera a abrir la lista era un fallo de
@@ -49,12 +57,6 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
       opacity={atenuado ? 0.14 : 1}
       style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
-      <title>
-        {vacia
-          ? `${nombre} — casilla libre: pulsa para elegir una`
-          : `${codigoVisible(electiva)} — ${electiva.nombre} · ${electiva.uc} UC · ${ETIQUETA_SITUACION[situacion]}`}
-      </title>
-
       {vacia && (
         <>
           <rect width={NODO.ancho} height={NODO.alto} rx={NODO.radio} fill="var(--nodo)" />

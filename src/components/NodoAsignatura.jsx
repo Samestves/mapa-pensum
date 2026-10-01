@@ -38,8 +38,25 @@ function NodoAsignatura({
 }) {
   const { x, y, nombre, uc, lineasNombre } = nodo
 
+  /* El nombre accesible va en aria-label y no en un <title>. El <title> de
+     un SVG lo lee el lector de pantalla, pero el navegador ademas lo saca
+     como cartel nativo al dejar el raton quieto encima: un recuadro del
+     sistema, con su letra y su fondo, tapando el mapa para repetir lo que la
+     tarjeta ya dice. El area solo existe donde esta clasificada. */
+  const etiqueta = [
+    codigoVisible(nodo),
+    '—',
+    nombre,
+    nodo.area && `· ${etiquetaArea(nodo.area)}`,
+    `· ${ETIQUETA_SITUACION[situacion]}`,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <g
+      role="button"
+      aria-label={etiqueta}
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
       data-atenuado={atenuado ? '' : undefined}
@@ -52,19 +69,6 @@ function NodoAsignatura({
           'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1), filter 320ms cubic-bezier(0.32, 0.72, 0, 1)',
       }}
     >
-      {/* Etiqueta accesible. El area solo existe donde esta clasificada */}
-      <title>
-        {[
-          codigoVisible(nodo),
-          '—',
-          nombre,
-          nodo.area && `· ${etiquetaArea(nodo.area)}`,
-          `· ${ETIQUETA_SITUACION[situacion]}`,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      </title>
-
       <CaraTarjeta
         situacion={situacion}
         codigo={codigoVisible(nodo)}
