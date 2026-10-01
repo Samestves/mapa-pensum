@@ -1,5 +1,5 @@
 import { IconoBuscar, IconoInicio } from './IconosSF'
-import IslaAvance from './IslaAvance'
+import CapsulaAvance from './CapsulaAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
 
@@ -7,8 +7,8 @@ import { BotonAvisos } from './AvisosCarrera'
    vista -el mismo idioma que la capsula inferior del telefono-.
 
    Dos formas, cada una para lo que es:
-   - CIRCULO: un solo gesto -ir al inicio, buscar, el avance, los avisos-.
-   - CAPSULA: algo con contenido -el titulo, el mando de vistas-.
+   - CIRCULO: un solo gesto -ir al inicio, buscar, los avisos-.
+   - CAPSULA: algo con contenido -el titulo, el mando de vistas, el avance-.
    Todas miden lo mismo de alto -40 px en telefono, 44 en escritorio, el
    minimo tactil- para que la fila se lea como una sola linea. */
 const CRISTAL = 'barra-cristal relative pointer-events-auto shrink-0'
@@ -16,9 +16,6 @@ const CIRCULO =
   `${CRISTAL} grid size-10 place-items-center rounded-full md:size-11 ` +
   'text-tinta-suave transition-[color,transform] duration-200 ' +
   'hover:scale-[1.06] hover:text-tinta active:scale-[0.92]'
-
-/* El alto de la fila en escritorio, que es el lado de la isla de avance */
-const ALTO_FILA = 44
 
 /**
  * La cabecera de una carrera, en tres zonas sobre una rejilla de tres
@@ -35,10 +32,11 @@ const ALTO_FILA = 44
  *   atencion para algo que se usa de vez en cuando; abre la paleta, que es
  *   donde se escribe. En el telefono no esta: alli la paleta no tiene puerta
  *   por decision propia, recorrer un pensum se hace con el dedo.
- * - Derecha: COMO VAS. La isla de avance, la misma del telefono: el borde es
- *   la barra de progreso y el porcentaje va dentro. El tema ya no tiene boton
- *   aqui: vive en el panel que abre esa isla, como en el telefono vive en su
- *   hoja. Una pieza para "como voy" en vez de un grupo de botones sueltos.
+ * - Derecha: COMO VAS. La capsula de avance: el aro de la isla del telefono
+ *   y, al lado, cuanto llevas. Espejo de la capsula del nombre, al otro lado.
+ *   El tema no tiene boton aqui: vive en el panel que abre esa capsula, como
+ *   en el telefono vive en su hoja. Una pieza para "como voy" en vez de un
+ *   grupo de botones sueltos.
  *
  * Los avisos, en las carreras que los tienen, son una isla aparte: no son
  * avance, son una salvedad sobre los datos, y en ambar se distinguen solos.
@@ -123,14 +121,13 @@ function BarraSuperior({
           </div>
         )}
 
-        {/* Solo desde md: en el telefono la misma isla va en la barra de
-            abajo. */}
-        <IslaAvance
+        {/* Solo desde md: en el telefono el avance es la isla redonda de la
+            barra de abajo. */}
+        <CapsulaAvance
           resumen={resumen}
           abierta={avanceAbierto}
           alPulsar={alAlternarAvance}
-          lado={ALTO_FILA}
-          className="hover:scale-[1.06] max-md:hidden"
+          className="max-md:hidden"
         />
       </div>
     </header>

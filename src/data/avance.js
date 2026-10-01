@@ -5,11 +5,23 @@ import { ESTADO } from './estados.js'
  *
  * Donde el pensum trae creditos oficiales es el de UC, que es el que cuenta
  * para graduarse; donde no, el de materias, que es lo unico que se puede
- * saber. Lo usan el anillo de la cabecera de escritorio y el del telefono.
+ * saber. Lo usan la capsula de la cabecera de escritorio y la isla del
+ * telefono.
  */
 export function avanceDe(resumen) {
   if (resumen.porcentaje != null) return resumen.porcentaje
   return resumen.total ? (resumen.aprobadas / resumen.total) * 100 : 0
+}
+
+/**
+ * Cuanto llevas, en la misma unidad que el porcentaje: UC del titulo donde
+ * hay creditos oficiales, materias donde no. Es lo que la capsula de avance
+ * de escritorio escribe al lado del anillo.
+ */
+export function cuantoLlevas(resumen) {
+  return resumen.porcentaje != null
+    ? `${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC`
+    : `${resumen.aprobadas} de ${resumen.total} materias`
 }
 
 /**
@@ -19,11 +31,7 @@ export function avanceDe(resumen) {
  */
 export function describirAvance(resumen) {
   const redondeado = Math.round(avanceDe(resumen))
-  const detalle =
-    resumen.porcentaje != null
-      ? `${resumen.ucAprobadas + resumen.ucElectivas} de ${resumen.ucTitulo} UC`
-      : `${resumen.aprobadas} de ${resumen.total} materias`
-  return `Tu avance: ${redondeado}% · ${detalle}. Pulsa para ver el detalle.`
+  return `Tu avance: ${redondeado}% · ${cuantoLlevas(resumen)}. Pulsa para ver el detalle.`
 }
 
 /**
