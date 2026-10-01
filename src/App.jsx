@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { cargarCarrera, carreraEnCache, existe, resumenDe } from './data/carreras'
 import { recordarCarrera } from './data/ultimaCarrera'
 import { anotarCarrera } from './data/latido'
@@ -106,7 +106,7 @@ function App() {
     </div>
   ) : !lista ? (
     <div className="grid h-full place-items-center">
-      <EsqueletoMapa slug={slug} conNombre />
+      <EsqueletoMapa slug={slug} />
     </div>
   ) : (
     /* El fallback de Suspense es EXACTAMENTE el mismo que el de esperar los
@@ -117,7 +117,7 @@ function App() {
     <Suspense
       fallback={
         <div className="grid h-full place-items-center">
-          <EsqueletoMapa slug={slug} conNombre />
+          <EsqueletoMapa slug={slug} />
         </div>
       }
     >
@@ -132,10 +132,15 @@ function App() {
   // ninguna de las dos sepa que existe la otra.
   //
   // La key lleva tambien la fase, no solo la ruta: una animacion CSS no se
-  // reinicia sola si el elemento sobrevive al cambio, y entrar con la red
-  // lenta pasa por el esqueleto antes que por el mapa sin cambiar de ruta.
-  // Sin la fase, ese segundo relevo apareceria de golpe.
-  const fase = ruta === PANEL ? 'panel' : !slug ? 'selector' : error ? 'error' : !lista ? 'esqueleto' : 'mapa'
+  // reinicia sola si el elemento sobrevive al cambio, y pasar de la carrera
+  // a su error, o al reves, sin cambiar de ruta apareceria de golpe.
+  //
+  // La espera y la carrera son la MISMA fase a proposito. Las dos enseñan la
+  // misma silueta en el mismo sitio -la de App mientras baja el pensum, la de
+  // VistaCarrera mientras se monta el mapa-, y separarlas remontaba todo al
+  // llegar los datos: la silueta se fundia desde cero y parpadeaba. El
+  // relevo de la silueta al mapa lo anima ya la propia VistaCarrera.
+  const fase = ruta === PANEL ? 'panel' : !slug ? 'selector' : error ? 'error' : 'carrera'
 
   /* La entrada se anima SOLO al cambiar de ruta, y esto es un arreglo, no un
      ajuste fino.
@@ -144,34 +149,34 @@ function App() {
      despedida: la vista actual se va, la nueva llega. En un cambio de ruta eso
      es un fundido correcto.
 
-     El problema era que tambien corria en la primera pintada, donde no hay
-     nada de lo que despedirse. Lo que hay es la cabecera que llega escrita en
-     el HTML: React la sustituia por un contenedor invisible que tardaba 420 ms
-     en aparecer, y durante ese rato lo unico a la vista era el fondo. En tema
-     oscuro, negro. Ese era el destello de entrada -y no se arreglaba
-     colocando mejor lo prerenderizado, porque el hueco lo dejaba la animacion,
-     no la posicion-.
+     En la primera pintada no corre: no hay nada de lo que despedirse, y las
+     piezas de cada pantalla ya traen su propia entrada -el logo, las
+     tarjetas, la silueta del mapa-. Un fundido de la vista entera encima las
+     retrasaria 420 ms sobre el fondo vacio, que es lo unico que hay a la
+     vista antes de React (lo prerenderizado es solo legible, ver
+     scripts/prerenderizar.js).
 
      Al navegar SI se mantiene, y ahi es correcta: la vista anterior acaba de
      irse con salida-vista, o sea que en ese momento detras no hay nada que
      tapar. El fundido cruza por el fondo a proposito.
 
-     Se probo a decidirlo comparando con la ruta anterior, y salio peor: el
-     valor cambiaba en el render siguiente y le arrancaba la clase a la
-     animacion a los cuatro milisegundos de empezar, con lo que el cambio de
-     ruta se quedaba sin su fundido. Una marca de "ya se pinto una vez" no
-     tiene ese problema porque no vuelve a cambiar nunca. */
-  const yaPinto = useRef(false)
-  useEffect(() => {
-    yaPinto.current = true
-  }, [])
+     Por eso se decide por la clave de la vista: la primera que se monta no
+     se anima NUNCA, ni siquiera al repintarse. Antes era una marca de "ya se
+     pinto una vez" puesta en un efecto, y fallaba al primer repintado: la
+     clase entrada-vista aparecia sobre el MISMO elemento en cuanto llegaban
+     los datos de la carrera, y añadir una clase con animacion la arranca. La
+     silueta que ya estaba en pantalla se fundia desde cero: un parpadeo justo
+     al entrar. En cuanto se navega una vez, todas las vistas que vengan
+     -tambien volver a la primera- entran con su fundido. */
+  const clave = `${ruta}:${fase}`
+  const [claveInicial] = useState(clave)
+  const [navego, setNavego] = useState(false)
+  if (clave !== claveInicial && !navego) setNavego(true)
 
   return (
     <div
-      key={`${ruta}:${fase}`}
-      className={`h-full ${
-        saliendo ? 'salida-vista' : yaPinto.current ? 'entrada-vista' : ''
-      }`}
+      key={clave}
+      className={`h-full ${saliendo ? 'salida-vista' : navego ? 'entrada-vista' : ''}`}
     >
       {/* La key es la ruta y no algo fijo: un limite que ya atrapo se queda
           enseñando el fallo para siempre, asi que cambiar de carrera tiene

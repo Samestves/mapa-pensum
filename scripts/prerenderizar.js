@@ -11,6 +11,16 @@
  * Cada pagina lleva su <title>, su descripcion, canonical, Open Graph y
  * JSON-LD, mas la lista completa de materias dentro de <main>. React vacia
  * ese <main> y monta la app encima al arrancar.
+ *
+ * Ese <main> es SOLO legible (.seo-solo-lectura): esta en el documento para
+ * los buscadores y los lectores de pantalla, pero no se dibuja. Antes llevaba
+ * ademas una copia a mano de la cabecera -de la portada y de la barra de cada
+ * carrera- para tener algo que pintar antes que React, y esa copia se quedaba
+ * atras cada vez que la interfaz cambiaba: al entrar se veia una decima de
+ * segundo el logo, las letras y la barra de la version anterior, y luego
+ * saltaban a las nuevas. Lo primero que se ve ahora es el fondo del tema -que
+ * pone el script de index.html antes de pintar- y despues la aplicacion con
+ * su propia entrada. Ninguna copia que pueda envejecer.
  */
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
@@ -139,42 +149,15 @@ function paginaDe(carrera) {
     )
     .join('')
 
-  /* Misma idea que en la portada: lo que se pinta va donde la aplicacion lo
-     va a poner. Aqui es la barra de arriba, con el nombre de la carrera a la
-     izquierda, de modo que al montar el mapa nada se mueve de sitio. */
-  const barra =
-    `<div class="flex items-center gap-1 border-b border-panel-borde bg-panel ` +
-    `px-2.5 py-2.5 sm:gap-2 sm:px-5">` +
-    /* La flecha de volver va tambien, y no por adorno: ocupa 34 px y empuja
-       al titulo. Sin ella el nombre de la carrera se pintaba 37 px a la
-       izquierda de donde la aplicacion lo iba a dejar, y ese desplazamiento
-       lateral es exactamente el parpadeo que se venia a quitar. */
-    `<span class="flex h-9 shrink-0 items-center justify-center rounded-lg px-2 ` +
-    `text-tinta-suave">` +
-    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
-    `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
-    `<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>` +
-    `</span>` +
-    `<div class="min-w-0 flex-1 pl-1">` +
-    `<h1 class="truncate text-base leading-tight font-extrabold tracking-tight ` +
-    `text-tinta">${escapar(carrera.nombreCorto ?? carrera.nombre)}</h1>` +
-    `<p class="mt-0.5 truncate text-[11px] leading-tight font-medium text-tinta-tenue">` +
-    `${escapar(carrera.nombre)}</p>` +
-    `</div>` +
-    `</div>`
-
   const contenido =
-    `<main id="contenido-seo">` +
-    barra +
-    `<div class="seo-solo-lectura">` +
-    `<h2>Pensum de ${escapar(carrera.nombre)}</h2>` +
+    `<main id="contenido-seo" class="seo-solo-lectura">` +
+    `<h1>Pensum de ${escapar(carrera.nombre)}</h1>` +
     `<p>${escapar(carrera.nucleo)} · ${carrera.asignaturas.length} materias · ` +
     `${carrera.semestres.length} semestres</p>` +
     secciones +
     grupos +
     `<p>Fuente: pensum publicado por la DACE del Núcleo de Monagas. ` +
     `Confirma siempre con control de estudios.</p>` +
-    `</div>` +
     `</main>`
 
   /* Una pagina de carrera SABE que va a necesitar el chunk de la vista, asi
@@ -201,28 +184,9 @@ function paginaDe(carrera) {
 }
 
 /**
- * La portada, que era la unica pagina sin contenido que pintar.
- *
- * Las nueve carreras ya salian prerenderizadas y el inicio no, y eso costaba
- * dos cosas a la vez.
- *
- * En velocidad: el movil recibia un <div id="root"> vacio, asi que no se
- * pintaba NADA hasta bajar 320 KB de JavaScript, parsearlos y montar React.
- * Medido sobre el build servido en local, sin latencia de red: la portada
- * tardaba 780 ms en pintar el primer pixel y una pagina de carrera 84. Nueve
- * veces, con el mismo JS y el mismo CSS; lo unico distinto era tener algo que
- * pintar. En un telefono con datos de verdad esa espera eran los 4,28 s de
- * First Contentful Paint que marcaba el panel.
- *
- * Y en SEO: la portada no tenia un solo enlace rastreable a las carreras. Un
- * buscador que aterrizara en la raiz no encontraba camino a ninguna de las
- * nueve salvo ejecutando la aplicacion.
- *
- * Esto NO es una copia de las tarjetas. Es la misma clase de contenido
- * semantico que ya llevan las paginas de carrera: una lista con enlaces y
- * cifras. Copiar el diseño de la tarjeta habria creado dos versiones de la
- * misma interfaz que divergen en cuanto una se toque; una lista no compite
- * con nada porque no pretende parecerse.
+ * La portada: la lista de las nueve carreras con sus enlaces, para que un
+ * buscador que aterrice en la raiz encuentre camino a cada una sin ejecutar
+ * la aplicacion.
  */
 function paginaInicio(indice) {
   const items = indice
@@ -246,56 +210,14 @@ function paginaInicio(indice) {
     })),
   }
 
-  /* El primer fotograma es la CABECERA REAL de la portada, en su sitio, no
-     un rotulo centrado en mitad de la pantalla.
-
-     Esa es toda la diferencia entre que se lea como "la web esta cargando" o
-     como un destello. Un titulo en el centro que un instante despues salta a
-     la esquina superior izquierda es un cambio de sitio, y el ojo lo ve como
-     un parpadeo aunque dure una decima. Escrito donde React lo va a poner, lo
-     que ocurre despues es que las tarjetas RELLENAN lo que faltaba: nada se
-     mueve de donde estaba.
-
-     Si, esto duplica el marcado de la cabecera. Es una duplicacion pequeña y
-     consciente -un logotipo, un titulo y una linea, que no cambian nunca- y
-     se paga a cambio de que la entrada no de un salto. Si algun dia la
-     cabecera cambia, lo peor que pasa es que durante una decima de segundo
-     se vea la anterior. */
-  const cabecera =
-    `<div class="mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 ` +
-    `xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">` +
-    `<header class="flex items-center gap-3">` +
-    `<span class="grid size-11 shrink-0 place-items-center rounded-2xl xl:size-12" ` +
-    `style="background-color:color-mix(in oklab, var(--estado-aprobada) 16%, transparent);` +
-    `color:var(--estado-aprobada)">` +
-    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
-    `stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">` +
-    `<path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/>` +
-    `<path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/>` +
-    `<circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>` +
-    `</span>` +
-    `<div class="min-w-0">` +
-    `<h1 class="truncate text-[22px] leading-none font-extrabold tracking-tight text-tinta ` +
-    `sm:text-2xl xl:text-3xl">Mapa de Pensum</h1>` +
-    `<p class="mt-1 truncate text-[11.5px] leading-none font-medium text-tinta-tenue ` +
-    `xl:mt-1.5 xl:text-[13px]">` +
-    `<span class="sm:hidden">UDO</span>` +
-    `<span class="hidden sm:inline">Universidad de Oriente</span>` +
-    ` · Núcleo de Monagas</p>` +
-    `</div>` +
-    `</header>` +
-    `</div>`
-
   const contenido =
-    `<main id="contenido-seo">` +
-    cabecera +
-    `<div class="seo-solo-lectura">` +
+    `<main id="contenido-seo" class="seo-solo-lectura">` +
+    `<h1>Mapa de Pensum — UDO Núcleo de Monagas</h1>` +
     `<p>Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes ` +
     `inscribir ahora y cuánto te falta.</p>` +
     `<ul>${items}</ul>` +
     `<p>Datos tomados de los pensums publicados por la DACE del Núcleo de ` +
     `Monagas. Confirma siempre con control de estudios.</p>` +
-    `</div>` +
     `</main>`
 
   return plantilla.replace(

@@ -208,6 +208,8 @@ Para que un buscador encuentre "pensum administración UDO Monagas" hace falta H
 
 Así que el build escribe un HTML por carrera con su `<title>`, canonical, Open Graph, JSON-LD y **la lista completa de materias en el markup**. React vacía ese contenido y monta la aplicación encima.
 
+Ese contenido es solo legible: lo leen los buscadores y los lectores de pantalla, pero no se dibuja. Durante un tiempo llevó además una copia a mano de la cabecera para tener algo que pintar antes que React, y esa copia envejecía con cada rediseño: al entrar se veían una décima de segundo el logo, las letras y la barra de la versión anterior. Ahora lo primero que se ve es el fondo del tema, y después la aplicación con su propia entrada. Las fuentes de la primera pantalla se precargan desde el HTML (un plugin de `vite.config.js` las busca en el bundle), así que el primer texto ya sale con su letra y no con la del sistema.
+
 </details>
 
 <details>

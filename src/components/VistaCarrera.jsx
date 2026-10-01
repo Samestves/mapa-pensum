@@ -361,10 +361,14 @@ function VistaCarrera({ carrera, alVolver }) {
           entre mapa, lista y horario rearranca la animacion y la vista nueva
           entra fundiendose en vez de aparecer de golpe. Antes la key solo
           cambiaba una vez -cuando el mapa relevaba a la silueta- y los
-          cambios de vista posteriores eran un corte seco. */}
+          cambios de vista posteriores eran un corte seco.
+          La silueta NO entra animada: es la misma que ya estaba en pantalla
+          mientras bajaba el codigo (el fallback de App), y fundirla desde
+          cero la hacia parpadear -visible, invisible, visible- justo al
+          llegar. */}
       <div
         key={mapaMontado ? vista : 'esqueleto'}
-        className="entrada-panel relative flex flex-1 overflow-hidden"
+        className={`relative flex flex-1 overflow-hidden ${mapaMontado ? 'entrada-panel' : ''}`}
       >
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />

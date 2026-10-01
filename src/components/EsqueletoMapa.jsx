@@ -15,7 +15,7 @@ import MiniMapa from './MiniMapa'
  * pinta esto puede ser App, que no monta useTema. Es decoracion, y si por un
  * fotograma cayera en el color equivocado tampoco pasaria nada.
  */
-function EsqueletoMapa({ slug, conNombre = false }) {
+function EsqueletoMapa({ slug }) {
   const resumen = resumenDe(slug)
   if (!resumen) return null
 
@@ -34,13 +34,12 @@ function EsqueletoMapa({ slug, conNombre = false }) {
           color={color}
           className="esqueleto-mapa h-28 w-full sm:h-40"
         />
-        {conNombre ? (
-          <span className="text-[11px] font-semibold text-tinta-tenue">
-            Abriendo {resumen.nombreCorto}…
-          </span>
-        ) : (
-          <span className="sr-only">Cargando el mapa de {resumen.nombre}</span>
-        )}
+        {/* El rotulo va siempre, tambien en el ultimo fotograma de espera
+            dentro de la vista: si unas veces estaba y otras no, la silueta
+            se recentraba y bajaba una docena de pixeles justo al relevo. */}
+        <span className="text-[11px] font-semibold text-tinta-tenue">
+          Abriendo {resumen.nombreCorto}…
+        </span>
       </div>
     </div>
   )
