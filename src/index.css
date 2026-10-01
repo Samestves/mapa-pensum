@@ -2123,48 +2123,34 @@ body {
   color: var(--tinta);
 }
 
-/* La lupa de la cabecera (IslaBuscar). En reposo es un circulo; al pasar el
-   raton o al llegar con el tabulador se estira hacia la derecha y aparece
-   "Buscar" con su atajo.
+/* ---- La paleta de busqueda (PaletaComandos) -----------------------------
 
-   Crece con max-width sobre un ancho de contenido, y no con width: lo que
-   mide abierta lo decide el texto -que cambia entre ⌘ y Ctrl-, sin medir
-   nada en JavaScript. El tope va algo por encima de lo que mide, asi que la
-   expansion acaba un poco antes que su curva; no se nota.
+   El mismo cristal que las islas de la cabecera -mismo filo de luz, mismo
+   reflejo, mismo desenfoque-, pero mas denso: una isla lleva un icono y
+   poco mas, y la paleta lleva filas de texto que tienen que leerse encima
+   de las tarjetas del mapa. Con la transparencia de una isla, los nombres
+   de las materias se mezclaban con los de debajo.
 
-   El texto entra un instante despues de que empiece a abrirse, para no
-   asomar cortado por el borde, y al cerrarse se va antes de encogerse. */
-.isla-buscar {
-  width: max-content;
-  max-width: 2.75rem;
-  transition:
-    max-width 360ms cubic-bezier(0.32, 0.72, 0, 1),
-    color 200ms ease,
-    transform 150ms ease;
+   Detras, un velo del color del lienzo y no negro: en claro tiene que ser
+   una bruma clara, no una sombra. */
+.paleta-velo {
+  background: color-mix(in oklab, var(--lienzo) 55%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
-.isla-buscar-texto {
-  opacity: 0;
-  transition: opacity 140ms ease;
+.paleta-cristal {
+  background: color-mix(in oklab, var(--panel) 86%, transparent);
+  box-shadow:
+    var(--cristal-anillo),
+    0 32px 80px -24px rgb(0 0 0 / 0.45);
 }
 
-.isla-buscar:focus-visible {
-  max-width: 12rem;
-}
-
-.isla-buscar:focus-visible .isla-buscar-texto {
-  opacity: 1;
-}
-
-@media (hover: hover) {
-  .isla-buscar:hover {
-    max-width: 12rem;
-  }
-
-  .isla-buscar:hover .isla-buscar-texto {
-    opacity: 1;
-    transition: opacity 260ms ease 90ms;
-  }
+/* La fila elegida lleva la lente del mando de vistas: lo elegido se marca
+   igual en toda la cabecera, y la paleta es parte de ella. */
+.paleta-activa {
+  background: var(--cristal-lente);
+  box-shadow: var(--cristal-lente-anillo);
 }
 
 /* ---- Foco del mapa ------------------------------------------------------
@@ -2550,8 +2536,6 @@ body {
   .lente-cristal,
   .selector-lente,
   .lente-tema,
-  .isla-buscar,
-  .isla-buscar-texto,
   .arco-avance,
   .hoja-inferior,
   .velo-hoja,
