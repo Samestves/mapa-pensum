@@ -53,6 +53,17 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
     if (!saliendo && refHoja.current) refHoja.current.style.transform = ''
   }, [saliendo])
 
+  /* Mientras haya una hoja, la luz de los cables del mapa se congela (ver
+     .flujo en index.css). Detras del velo apenas se ve, y es la unica
+     animacion que repinta en el hilo principal: le quitaba cuadros a la
+     subida de la hoja justo cuando el telefono mas trabajo tiene. */
+  useLayoutEffect(() => {
+    if (!montada) return
+    const raiz = document.documentElement
+    raiz.dataset.hoja = ''
+    return () => delete raiz.dataset.hoja
+  }, [montada])
+
   /* El foco entra en la hoja al abrirse y vuelve a lo que la abrio al
      cerrarse: con teclado o lector de pantalla no se pierde el sitio. */
   useEffect(() => {

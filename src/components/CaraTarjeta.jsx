@@ -78,7 +78,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         y={TEXTO.lineaSuperior}
         fontSize={TEXTO.codigo}
         fill="var(--sit-codigo)"
-        className="font-dato"
+        className="font-dato texto-menor"
         style={{ fontWeight: 'var(--peso-dato)', letterSpacing: '0.04em' }}
       >
         {codigo}
@@ -90,6 +90,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
           y={TEXTO.lineaSuperior}
           textAnchor="end"
           fontSize={TEXTO.rotulo}
+          className="texto-menor"
           style={{
             fill: a.marca.color,
             fontWeight: 'var(--peso-rotulo)',
@@ -123,7 +124,7 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         y={alto - 12.5}
         fontSize={TEXTO.meta}
         fill="var(--sit-codigo)"
-        className="font-dato tabular-nums"
+        className="font-dato tabular-nums texto-menor"
         style={{ fontWeight: 'var(--peso-dato)' }}
       >
         {uc} UC

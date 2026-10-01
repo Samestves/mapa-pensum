@@ -279,7 +279,7 @@ body {
    pointer y ahora se quedan en default, que es lo que hace el navegador con
    un boton nativo. La consecuencia en esta aplicacion era que casi nada
    parecia pulsable -las tarjetas de carrera del inicio, las filas de la
-   lista de electivas, los controles de zoom, el horario-, y el cursor es la
+   lista de electivas, las islas de la barra, el horario-, y el cursor es la
    unica señal que tiene alguien con raton de que ahi hay una accion.
 
    Se arregla en un sitio y no en los cuarenta botones que hay. Poner
@@ -394,6 +394,12 @@ body {
   }
 }
 
+/* Y con una hoja abierta encima (HojaInferior), en cualquier pantalla: el
+   mapa queda detras del velo y la luz solo le robaria cuadros a la hoja. */
+[data-hoja] .flujo {
+  animation-play-state: paused;
+}
+
 /* La capa del contenido del mapa, la que se estira durante el pellizco.
 
    No atrapa el puntero ella misma, solo lo que tiene dibujado: asi el click
@@ -412,6 +418,14 @@ body {
 
 .capa-grafo > svg > g {
   pointer-events: auto;
+}
+
+/* Nivel de detalle (ver nivelDeDetalle en layout/vistaViva.js): de lejos el
+   texto que ya no se lee no se pinta. display:none y no opacidad: lo que se
+   busca es que el navegador ni lo maquete ni lo rasterice. */
+.capa-grafo svg[data-detalle='medio'] .texto-menor,
+.capa-grafo svg[data-detalle='silueta'] text:not(.texto-mayor) {
+  display: none;
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -724,8 +738,7 @@ body {
    a pieza. */
 
 /* El velo: la esquina de abajo a la izquierda del mapa se apaga hacia el
-   color del lienzo, y se difumina antes de llegar a la barra y a los
-   botones de zoom. Con el lienzo como color vale para los dos temas: en
+   color del lienzo, y se difumina antes de llegar a la barra. Con el lienzo como color vale para los dos temas: en
    claro es una bruma clara y el texto va en tinta oscura. */
 .recogida-velo {
   position: absolute;
@@ -768,7 +781,7 @@ body {
   }
 }
 
-/* El texto, a la izquierda y lejos de los botones de zoom de la derecha */
+/* El texto, a la izquierda y sin ocupar todo el ancho: no tapa el mapa entero */
 .recogida-movil {
   position: absolute;
   left: 1.375rem;
@@ -2172,12 +2185,6 @@ body {
 
 .velo-hoja[data-saliendo='true'] {
   opacity: 0;
-}
-
-@keyframes velo-entra {
-  from {
-    opacity: 0;
-  }
 }
 
 /* La tarjeta del plan: un tinte del verde de aprobada sobre el panel, con su

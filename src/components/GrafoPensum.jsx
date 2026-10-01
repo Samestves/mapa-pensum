@@ -10,6 +10,7 @@ import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
+import { nivelDeDetalle } from '../layout/vistaViva'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
@@ -17,6 +18,16 @@ const SIN_FRANJA = []
 
 /* Marca para salir todos los avisos que haya en pantalla */
 const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
+
+/* La capa pintada con margen: se sale de la ventana `margen` (fraccion de la
+   ventana) por cada lado, y su origen de transformacion es la esquina de la
+   ventana dentro de ella. Asi el estiramiento del pellizco usa las mismas
+   cuentas con margen que sin el (ver layout/vistaViva.js). */
+function estiloCapa(margen) {
+  if (!margen) return undefined
+  const origen = `${(margen / (1 + 2 * margen)) * 100}%`
+  return { inset: `${-margen * 100}%`, transformOrigin: `${origen} ${origen}` }
+}
 
 function GrafoPensum({
   clave,
@@ -85,6 +96,7 @@ function GrafoPensum({
   const {
     contenedorRef,
     capaRef,
+    margen,
     vista,
     medida,
     encajado,
@@ -408,12 +420,13 @@ function GrafoPensum({
             geometricPrecision usa el tamaño declarado y escala los glifos:
             medido a CPU x4, de 40-45 ms por cuadro a 16-17. En pantalla no se
             distingue. */}
-        <div ref={capaRef} className="capa-grafo absolute inset-0">
+        <div ref={capaRef} className="capa-grafo absolute inset-0" style={estiloCapa(margen)}>
           <svg
             width="100%"
             height="100%"
             className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
             style={{ textRendering: 'geometricPrecision' }}
+            data-detalle={nivelDeDetalle(vista.escala)}
           >
             {/* Oculto hasta que la vista se encaja. El primer fotograma tras
                 montar dibuja el mapa a tamaño natural desde la esquina, y
@@ -421,7 +434,9 @@ function GrafoPensum({
                 revela con una transicion corta de opacidad, que el compositor
                 resuelve sin repintar los mil seiscientos elementos. */}
             <g
-              transform={`translate(${vista.x}, ${vista.y}) scale(${vista.escala})`}
+              transform={`translate(${vista.x + margen * medida.ancho}, ${
+                vista.y + margen * medida.alto
+              }) scale(${vista.escala})`}
               style={{
                 opacity: encajado ? 1 : 0,
                 transition: 'opacity 200ms ease-out',

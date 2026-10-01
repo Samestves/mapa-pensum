@@ -18,6 +18,20 @@
    se nota borrosa; hasta aqui pasa por el desenfoque normal de un gesto. */
 export const AUMENTO_MAX = 1.8
 
+/* Cuanto mas grande que la ventana se pinta la capa en los aparatos tactiles,
+   por cada lado y en fraccion de la ventana. Con 0,4 la capa mide 1,8 veces
+   la ventana en cada eje, asi que se puede alejar hasta 1/1,8 -o arrastrar
+   el 40 % de la pantalla- estirando lo ya pintado, sin repintar nada.
+
+   Sin margen la capa media justo la ventana, y alejar con el mapa llenando
+   la pantalla destapaba un borde en el primer cuadro: el pellizco hacia
+   alejarse repintaba el mapa entero en CADA cuadro, mientras que acercarse
+   casi nunca. Esa era la diferencia entre alejar con tirones y acercar fluido.
+
+   No mas: la capa vive en la memoria de la GPU, y a 1,8 por eje ya ocupa
+   3,2 veces la ventana. */
+export const MARGEN_CAPA = 0.4
+
 /* Holgura alrededor del contenido, en unidades del mapa: el halo de las
    tarjetas y los puntos de llegada de los cables asoman unos pixeles fuera
    de la caja que da el layout. */
@@ -42,11 +56,11 @@ export function mismaVista(a, b) {
  * Si estirar la capa pintada basta para enseñar la vista viva sin que falte
  * nada.
  *
- * La capa solo tiene lo que cabia en la ventana cuando se pinto. Estirada,
- * cubre ese rectangulo transformado; si lo que la vista viva tiene de mapa
- * dentro de la ventana se sale de ahi, se veria un borde vacio. Pasa al
- * alejar con el mapa llenando la pantalla, o al arrastrar mientras se
- * pellizca: en esos cuadros toca pintar de verdad.
+ * La capa solo tiene lo que cabia en ella cuando se pinto: la ventana y
+ * `margen` (fraccion de la ventana) por cada lado. Estirada, cubre ese
+ * rectangulo transformado; si lo que la vista viva tiene de mapa dentro de la
+ * ventana se sale de ahi, se veria un borde vacio. Pasa al alejar o arrastrar
+ * mas alla del margen: en esos cuadros toca pintar de verdad.
  *
  * Alejando desde el mapa entero si cubre: contenido y ventana encogen
  * alrededor del mismo punto, asi que lo que estaba dentro sigue dentro.
@@ -58,6 +72,7 @@ export function capaCubre(
   anchoContenido,
   altoContenido,
   aumentoMax = AUMENTO_MAX,
+  margen = 0,
 ) {
   const { k, x, y } = transformRelativo(viva, pintada)
   if (k > aumentoMax) return false
@@ -71,11 +86,13 @@ export function capaCubre(
   if (x0 >= x1 || y0 >= y1) return true
 
   const TOLERANCIA = 0.5
+  const mx = margen * medida.ancho
+  const my = margen * medida.alto
   return (
-    x0 >= x - TOLERANCIA &&
-    y0 >= y - TOLERANCIA &&
-    x1 <= x + k * medida.ancho + TOLERANCIA &&
-    y1 <= y + k * medida.alto + TOLERANCIA
+    x0 >= x - k * mx - TOLERANCIA &&
+    y0 >= y - k * my - TOLERANCIA &&
+    x1 <= x + k * (medida.ancho + mx) + TOLERANCIA &&
+    y1 <= y + k * (medida.alto + my) + TOLERANCIA
   )
 }
 
@@ -108,9 +125,9 @@ export const AUMENTO_VIAJE = 3
  *  - Desplazarse, cuando ninguna punta contiene a la otra: una vista algo
  *    mas lejana que abarque las dos, y se pinta nitido al final.
  */
-export function vistaParaViaje(desde, hasta, medida, anchoContenido, altoContenido) {
+export function vistaParaViaje(desde, hasta, medida, anchoContenido, altoContenido, margen = 0) {
   const cubre = (viva, pintada) =>
-    capaCubre(viva, pintada, medida, anchoContenido, altoContenido, AUMENTO_VIAJE)
+    capaCubre(viva, pintada, medida, anchoContenido, altoContenido, AUMENTO_VIAJE, margen)
   const [cerca, lejos] = hasta.escala < desde.escala ? [desde, hasta] : [hasta, desde]
   if (cubre(lejos, cerca)) return cerca
   if (cubre(cerca, lejos)) return lejos
@@ -138,3 +155,30 @@ export function vistaParaViaje(desde, hasta, medida, anchoContenido, altoConteni
   }
   return cubre(desde, base) && cubre(hasta, base) ? base : null
 }
+
+/* Por debajo de estas escalas un texto queda en menos de 4 px de pantalla:
+   no se lee, pero cuesta lo mismo maquetarlo y rasterizarlo. La letra menor
+   del mapa -codigos, UC, rotulos, cifras de cabecera- mide 10 unidades; los
+   nombres, 14. */
+const ESCALA_TEXTO_MENOR = 0.4
+const ESCALA_NOMBRES = 0.28
+
+/**
+ * Cuanto detalle se dibuja a una escala, como en los mapas y los videojuegos:
+ * lo que de lejos no se distingue, no se pinta.
+ *
+ *  - 'completo': todo.
+ *  - 'medio': sin la letra menor.
+ *  - 'silueta': sin texto, salvo las cifras grandes de cada semestre. Las
+ *    tarjetas, sus colores y los cables siguen: es lo que se lee de lejos.
+ *
+ * Lo aplica el CSS (ver .capa-grafo en index.css) y solo cambia cuando la
+ * capa se repinta, no mientras se estira: durante un gesto se ve lo que ya
+ * estaba pintado y al soltar se pinta con el detalle de la escala nueva.
+ */
+export function nivelDeDetalle(escala) {
+  if (escala < ESCALA_NOMBRES) return 'silueta'
+  if (escala < ESCALA_TEXTO_MENOR) return 'medio'
+  return 'completo'
+}
+

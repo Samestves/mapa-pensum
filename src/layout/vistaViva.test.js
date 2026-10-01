@@ -3,8 +3,10 @@ import assert from 'node:assert/strict'
 import {
   AUMENTO_MAX,
   AUMENTO_VIAJE,
+  MARGEN_CAPA,
   capaCubre,
   mismaVista,
+  nivelDeDetalle,
   transformRelativo,
   vistaParaViaje,
 } from './vistaViva.js'
@@ -62,6 +64,21 @@ test('pasado el aumento maximo se repinta aunque cubra, para que no se vea borro
   assert.ok(!capaCubre(acercar(pintada, AUMENTO_MAX + 0.01, 200, 150), pintada, VENTANA, 2000, 1500))
 })
 
+test('con margen, alejar y arrastrar dentro de el se resuelven estirando la capa', () => {
+  const pintada = { x: -300, y: -200, escala: 1 }
+  const m = MARGEN_CAPA
+  // Alejar hasta casi 1/(1 + 2m) alrededor del centro de la ventana
+  const lejos = acercar(pintada, 1 / (1 + 2 * m) + 0.01, 200, 150)
+  assert.ok(capaCubre(lejos, pintada, VENTANA, 2000, 1500, AUMENTO_MAX, m))
+  assert.ok(!capaCubre(lejos, pintada, VENTANA, 2000, 1500))
+  // Arrastrar algo menos que el margen
+  const arrastre = { ...pintada, x: pintada.x + VENTANA.ancho * m * 0.9 }
+  assert.ok(capaCubre(arrastre, pintada, VENTANA, 2000, 1500, AUMENTO_MAX, m))
+  // y pasado el margen, pintar
+  const lejosDelMargen = { ...pintada, x: pintada.x + VENTANA.ancho * m * 1.1 }
+  assert.ok(!capaCubre(lejosDelMargen, pintada, VENTANA, 2000, 1500, AUMENTO_MAX, m))
+})
+
 test('desplazarse mientras se pellizca destapa un borde: hay que pintar', () => {
   const pintada = { x: -300, y: -200, escala: 1 }
   const viva = { ...acercar(pintada, 1.1, 200, 150), x: -300 * 1.1 + 200 }
@@ -112,3 +129,12 @@ describe('la vista para un viaje de camara', () => {
     assert.equal(vistaParaViaje(desde, hasta, VENTANA, ...MAPA), null)
   })
 })
+
+test('el detalle baja al alejarse: primero la letra menor, luego los nombres', () => {
+  assert.equal(nivelDeDetalle(0.8), 'completo')
+  assert.equal(nivelDeDetalle(0.4), 'completo')
+  assert.equal(nivelDeDetalle(0.35), 'medio')
+  assert.equal(nivelDeDetalle(0.28), 'medio')
+  assert.equal(nivelDeDetalle(0.2), 'silueta')
+})
+

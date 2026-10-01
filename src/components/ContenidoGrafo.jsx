@@ -218,7 +218,7 @@ function CabeceraFranja({ fila }) {
         y={y + CABECERA.datos}
         fontSize="10"
         fill="var(--tinta-tenue)"
-        className="font-dato tabular-nums"
+        className="font-dato tabular-nums texto-menor"
         style={{ ...espaciado(0.04), fontWeight: 'var(--peso-dato)' }}
       >
         {datos.join(' · ')}
@@ -317,7 +317,7 @@ function CabeceraSemestre({ columna, datos }) {
         y={y + CABECERA.datos}
         fontSize="10"
         fill="var(--tinta-tenue)"
-        className="font-dato tabular-nums"
+        className="font-dato tabular-nums texto-menor"
         style={{ ...espaciado(0.04), fontWeight: 'var(--peso-dato)' }}
       >
         {datos?.uc ?? 0} UC · {total} {total === 1 ? 'MATERIA' : 'MATERIAS'}
@@ -330,7 +330,7 @@ function CabeceraSemestre({ columna, datos }) {
         y={y + CABECERA.datos}
         textAnchor="end"
         fontSize="32"
-        className="tabular-nums"
+        className="tabular-nums texto-mayor"
         style={{
           fill: completo ? 'var(--estado-aprobada)' : 'var(--tinta)',
           fontWeight: 200,
@@ -374,7 +374,7 @@ function CabeceraSemestre({ columna, datos }) {
         x={x}
         y={y + CABECERA.pie}
         fontSize="9.5"
-        className="tabular-nums"
+        className="tabular-nums texto-menor"
         style={{
           ...espaciado(0.22),
           fontWeight: 500,
@@ -395,7 +395,7 @@ function CabeceraSemestre({ columna, datos }) {
               x={e.x + 16}
               y={y + CABECERA.pie}
               fontSize="11"
-              className="font-dato tabular-nums"
+              className="font-dato tabular-nums texto-menor"
               style={{ fill: a.marca.color, fontWeight: 400 }}
             >
               {e.n}

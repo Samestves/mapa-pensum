@@ -3,6 +3,7 @@ import { ZOOM } from '../layout/constantes'
 import { escalaDeLectura } from '../layout/camara'
 import {
   AUMENTO_VIAJE,
+  MARGEN_CAPA,
   capaCubre,
   mismaVista,
   transformRelativo,
@@ -111,6 +112,13 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
      y la diferencia entre las dos se aplica a la capa como transform CSS. */
   const capaRef = useRef(null)
   const pintadaRef = useRef(vista)
+  /* Cuanto se pinta la capa por fuera de la ventana (ver MARGEN_CAPA). Solo
+     en tactil, que es donde la capa vive en su propia capa de GPU y estirarla
+     no cuesta nada; con raton no hay pellizco, y una capa mas grande solo
+     seria mas que pintar en cada cuadro. */
+  const [margen] = useState(() =>
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches ? MARGEN_CAPA : 0,
+  )
 
   const estirarCapa = useCallback(() => {
     const capa = capaRef.current
@@ -146,13 +154,24 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     (siguiente, enVivo = false) => {
       const acotada = acotarVista(siguiente, medida, anchoContenido, altoContenido)
       vistaRef.current = acotada
-      if (enVivo && capaCubre(acotada, pintadaRef.current, medida, anchoContenido, altoContenido)) {
+      if (
+        enVivo &&
+        capaCubre(
+          acotada,
+          pintadaRef.current,
+          medida,
+          anchoContenido,
+          altoContenido,
+          undefined,
+          margen,
+        )
+      ) {
         estirarCapa()
         return
       }
       setVista(acotada)
     },
-    [medida, anchoContenido, altoContenido, estirarCapa],
+    [medida, anchoContenido, altoContenido, margen, estirarCapa],
   )
 
   /* Al acabar el pellizco se pinta la vista a la que llegaron los dedos */
@@ -354,7 +373,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       const destino = acotarVista(hasta, medida, anchoContenido, altoContenido)
       const base = fichaAnclada?.current
         ? null
-        : vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido)
+        : vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido, margen)
 
       if (base) {
         enViaje.current = true
@@ -395,6 +414,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
             anchoContenido,
             altoContenido,
             AUMENTO_VIAJE,
+            margen,
           )
           if (cubre) estirarCapa()
           else setVista(v)
@@ -433,6 +453,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       anchoContenido,
       altoContenido,
       fichaAnclada,
+      margen,
       estirarCapa,
       asentarViaje,
       aplicarVista,
@@ -552,20 +573,23 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   /* Soltar un arrastre con velocidad lo deja seguir solo y frenar poco a
      poco, como cualquier lista o mapa de un telefono. Parado en seco, cada
      arrastre largo pedia tres o cuatro arrastres cortos. Si choca con el
-     borde, ese eje se para. */
+     borde, ese eje se para.
+
+     Como el arrastre, va estirando la capa (en vivo) y se pinta una vez al
+     pararse. Devuelve si hubo inercia: si no, quien suelta asienta ya. */
   const lanzar = () => {
     const m = muestras.current
     muestras.current = []
-    if (m.length < 2) return
+    if (m.length < 2) return false
     const ultimo = m[m.length - 1]
     // Si el dedo se quedo quieto antes de soltar, no lo estaba lanzando
-    if (performance.now() - ultimo.t > 60) return
+    if (performance.now() - ultimo.t > 60) return false
     const primero = m.find((p) => ultimo.t - p.t <= 80) ?? m[0]
     const dt = ultimo.t - primero.t
-    if (dt <= 0) return
+    if (dt <= 0) return false
     let vx = (ultimo.x - primero.x) / dt
     let vy = (ultimo.y - primero.y) / dt
-    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return
+    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return false
 
     let previo = null
     const paso = (ahora) => {
@@ -573,20 +597,24 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
         const d = Math.min(32, ahora - previo)
         const v = vistaRef.current
         const quiere = { ...v, x: v.x + vx * d, y: v.y + vy * d }
-        aplicarVista(quiere)
+        aplicarVista(quiere, true)
         const llego = vistaRef.current
         if (Math.abs(llego.x - quiere.x) > 0.5) vx = 0
         if (Math.abs(llego.y - quiere.y) > 0.5) vy = 0
         const f = Math.exp(-d / FRICCION_MS)
         vx *= f
         vy *= f
-        if (Math.hypot(vx, vy) < 0.02) return
+        if (Math.hypot(vx, vy) < 0.02) {
+          asentarVista()
+          return
+        }
       }
       previo = ahora
       marcarGesto()
       inercia.current = requestAnimationFrame(paso)
     }
     inercia.current = requestAnimationFrame(paso)
+    return true
   }
 
   /* Doble toque en el lienzo: acerca al doble alrededor del dedo, que es
@@ -664,7 +692,9 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     if (!inicio.capturado) return
 
     marcarGesto()
-    aplicarVista({ ...vistaRef.current, x: inicio.vx + dx, y: inicio.vy + dy })
+    /* En vivo: el arrastre desplaza la capa ya pintada en la GPU, y solo se
+       repinta al soltar o al pasar del margen que se pinto alrededor. */
+    aplicarVista({ ...vistaRef.current, x: inicio.vx + dx, y: inicio.vy + dy }, true)
     const ahora = performance.now()
     muestras.current.push({ t: ahora, x: e.clientX, y: e.clientY })
     while (muestras.current.length > 2 && ahora - muestras.current[0].t > 100) {
@@ -686,7 +716,12 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     arrastre.current = null
     if (punteros.current.size === 0) setArrastrando(false)
 
-    if (tactil && eraArrastre) lanzar()
+    /* Con el ultimo dedo fuera se pinta donde quedo la capa, salvo que el
+       arrastre siga solo con inercia, que asienta al pararse. Tambien cubre
+       el toque que frena una inercia: la capa se quedo desplazada y hay que
+       pintarla ahi. */
+    const sigueSola = tactil && eraArrastre && lanzar()
+    if (punteros.current.size === 0 && !sigueSola) asentarVista()
 
     // Un toque limpio de un dedo en el vacio: puede ser la mitad de un doble toque
     if (tactil && deUnDedo.current && !huboMovimiento.current && punteros.current.size === 0) {
@@ -710,6 +745,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   return {
     contenedorRef,
     capaRef,
+    margen,
     vista,
     medida,
     encajado,

@@ -14,6 +14,13 @@ import CaraTarjeta from './CaraTarjeta'
  * hay es nada que se mueva mientras nadie toca el mapa: el borde que
  * respiraba en las materias en curso era una animacion infinita por tarjeta
  * para decir algo que la etiqueta "Cursando" ya dice quieta.
+ *
+ * Señalar es cosa del raton (y del lapiz), no del dedo. Un dedo que se apoya
+ * dispara pointerenter igual que un cursor que llega, y el primer dedo de un
+ * pellizco caia casi siempre sobre una tarjeta: su cadena se encendia, el
+ * resto del mapa se atenuaba y al llegar el segundo dedo todo volvia. Ese ida
+ * y vuelta era el parpadeo de las tarjetas al alejar. Con el dedo, la cadena
+ * la enciende el toque -que abre la ficha y selecciona-, no el roce.
  */
 function NodoAsignatura({
   nodo,
@@ -37,8 +44,8 @@ function NodoAsignatura({
       opacity={atenuado ? 0.14 : 1}
       data-atenuado={atenuado ? '' : undefined}
       onClick={() => alVerFicha(nodo.codigo)}
-      onPointerEnter={() => alSenalar(nodo.codigo)}
-      onPointerLeave={alDejarDeSenalar}
+      onPointerEnter={(e) => e.pointerType !== 'touch' && alSenalar(nodo.codigo)}
+      onPointerLeave={(e) => e.pointerType !== 'touch' && alDejarDeSenalar()}
       className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
       style={{
         transition:
