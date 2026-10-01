@@ -759,4 +759,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
   )
 }
 
-export default VistaLista
+/* memo: VistaCarrera se repinta por cosas que a esta vista no le tocan -abrir
+   el avance, cambiar el tema, la paleta-, y sin esto cada una repintaba la
+   vista entera. Sus props son estables (useCallback/useMemo arriba). */
+export default memo(VistaLista)

@@ -2371,27 +2371,6 @@ body {
   }
 }
 
-/* El dock del lienzo se atenua cuando nadie toca el mapa. Solo opacidad, que
-   el compositor resuelve sin repintar, y con una salida lenta y una entrada
-   rapida: apagarse puede ser gradual, encenderse tiene que ser inmediato
-   porque significa que el usuario acaba de moverse. */
-.dock-lienzo {
-  opacity: 1;
-  transition: opacity 180ms ease-out;
-}
-
-.dock-lienzo[data-atenuado='true'] {
-  opacity: 0.22;
-  transition: opacity 900ms ease-in;
-}
-
-/* Al pasar el raton o al tabular vuelve entero aunque el mapa este quieto */
-.dock-lienzo:hover,
-.dock-lienzo:focus-within {
-  opacity: 1;
-  transition: opacity 180ms ease-out;
-}
-
 /* ------------------------------------------------------------------
    Impresion.
 
@@ -2535,12 +2514,6 @@ body {
   .riel-tramo,
   .barra-semestre {
     transition: none;
-  }
-
-  /* Nada de atenuar el dock: quien pide menos movimiento tambien pide que
-     los controles no se le vayan apagando solos. */
-  .dock-lienzo[data-atenuado='true'] {
-    opacity: 1;
   }
 
   .hoja-ficha {

@@ -10,11 +10,9 @@ import {
 } from '../layout/vistaViva'
 
 const MARGEN_ENCAJE = 28
-/* Lo que tarda el zoom de los botones en llegar a su destino */
-const DURACION_ZOOM = 220
-/* Y lo que tarda el mapa en apartarse para enseñar algo, como lo que se
-   desbloquea al aprobar: mas despacio que un boton, porque es un viaje y no
-   un paso, y el ojo tiene que poder seguirlo. */
+/* Lo que tarda el mapa en apartarse para enseñar algo, como lo que se
+   desbloquea al aprobar: un viaje y no un salto, a una velocidad que el ojo
+   pueda seguir. */
 const DURACION_MOSTRAR = 420
 
 const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
@@ -39,8 +37,7 @@ const MARGEN_PAN = 96
  *
  * Sin esto se podia arrastrar indefinidamente en cualquier direccion y
  * acabar mirando una cuadricula vacia, sin nada en pantalla que dijera hacia
- * donde estaba el mapa ni cuanto habia que volver. El unico camino de vuelta
- * era el boton de encajar, y hay que saber que existe.
+ * donde estaba el mapa ni cuanto habia que volver.
  *
  * No es una cuestion de rendimiento, aunque lo parezca: el contenido es un
  * <g> con un transform, siempre los mismos elementos, y el navegador descarta
@@ -68,7 +65,7 @@ const MARGEN_PAN = 96
 const HOLGURA_TELEFONO = 0.62
 const ANCHO_TELEFONO = 768
 
-export function acotarVista(v, medida, anchoContenido, altoContenido) {
+function acotarVista(v, medida, anchoContenido, altoContenido) {
   if (!medida.ancho || !medida.alto) return v
 
   const rango = (ventana, contenido, extra = 0) => {
@@ -313,19 +310,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     asentarViaje()
   }, [asentarViaje])
 
-  /* Salta a una vista sin viaje, asentandose al llegar. Para saltos grandes
-     -de ver la carrera entera a leer un semestre-, donde un viaje animado
-     tendria que repintar el mapa entero en cada cuadro. */
-  const irDeGolpe = useCallback(
-    (v) => {
-      if (!v) return
-      detenerViaje()
-      aplicarVista(v)
-      llegar()
-    },
-    [detenerViaje, aplicarVista, llegar],
-  )
-
   /** Donde queda la vista al aplicar un factor de zoom dejando fijo un punto */
   const conZoom = (v, factor, puntoX, puntoY) => {
     const escala = acotar(v.escala * factor, ZOOM.min, ZOOM.max)
@@ -454,26 +438,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       aplicarVista,
       marcarGesto,
     ],
-  )
-
-  /**
-   * Zoom de los botones, deslizando en vez de saltando.
-   *
-   * Un boton no es un gesto continuo: no hay dedo ni rueda que reparta el
-   * cambio en el tiempo, asi que sin animar la vista aparecia de golpe un
-   * treinta por ciento mas cerca y el ojo perdia donde estaba mirando. Dos
-   * decimas de segundo con una curva que frena al final bastan para que el
-   * salto se lea como un movimiento.
-   */
-  const zoomAlCentro = useCallback(
-    (factor) => {
-      const desde = vistaRef.current
-      const hasta = conZoom(desde, factor, medida.ancho / 2, medida.alto / 2)
-      // Si el zoom ya esta topado no hay nada que animar
-      if (hasta.escala === desde.escala) return
-      animarHacia(hasta, DURACION_ZOOM)
-    },
-    [medida, animarHacia],
   )
 
   /**
@@ -753,9 +717,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     enGesto,
     refEnGesto,
     huboMovimiento,
-    encajar: () => irDeGolpe(vistaEncajada()),
-    acercar: () => zoomAlCentro(ZOOM.paso),
-    alejar: () => zoomAlCentro(1 / ZOOM.paso),
     mostrar,
     controlesArrastre: {
       onPointerDown: alPresionar,

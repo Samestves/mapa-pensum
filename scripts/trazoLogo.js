@@ -27,11 +27,10 @@ const TRAMOS = 16
    de reescribir cuatro mil coordenadas se aplica aqui, que es una linea. */
 const situar = (x, y) => [x * 0.1, 1278 - y * 0.1]
 
-const NUMERO = /-?\d*\.?\d+(?:e[-+]?\d+)?/y
 const LETRA = /[A-Za-z]/
 
 /** Un trazo "d" a lista de poligonos, cada uno como array de [x, y] */
-export function aPoligonos(d) {
+function aPoligonos(d) {
   const piezas = d.match(/[A-Za-z]|-?\d*\.?\d+(?:e[-+]?\d+)?/g) ?? []
   const poligonos = []
   let actual = null

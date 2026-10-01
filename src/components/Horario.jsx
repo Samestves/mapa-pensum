@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
@@ -236,4 +236,7 @@ function Horario({ carrera, estados }) {
   )
 }
 
-export default Horario
+/* memo: VistaCarrera se repinta por cosas que a esta vista no le tocan -abrir
+   el avance, cambiar el tema, la paleta-, y sin esto cada una repintaba la
+   vista entera. Sus props son estables (useCallback/useMemo arriba). */
+export default memo(Horario)

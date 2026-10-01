@@ -37,15 +37,15 @@ const R_PUNTA = 2
 /* Cuanto se mete el relleno DENTRO del panel. Solo hace falta tapar el pixel
    del borde; mas seria una mancha opaca sobre el contenido cuando el panel
    lleva scroll. */
-export const PISADA = 2
+const PISADA = 2
 
 const LARGO = Math.hypot(SEMIBASE, APICE)
 
 /** Lo que asoma de verdad. Tiene que ser menor que el HUECO de popover.js. */
-export const ALTO = APICE - (R_PUNTA * LARGO) / SEMIBASE + R_PUNTA
+const ALTO = APICE - (R_PUNTA * LARGO) / SEMIBASE + R_PUNTA
 
 /** Ancho de la base, faldas incluidas. */
-export const ANCHO = 2 * (SEMIBASE + (R_FALDA * (LARGO - SEMIBASE)) / APICE)
+const ANCHO = 2 * (SEMIBASE + (R_FALDA * (LARGO - SEMIBASE)) / APICE)
 
 const MEDIO = ANCHO / 2
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
+import { sinTildes } from '../data/texto'
 import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import Popover from './Popover'
@@ -30,13 +31,6 @@ const etiquetaDuracion = (min) =>
 const CAMPO =
   'seleccionable w-full rounded-lg border border-panel-borde bg-panel-suave px-2 py-1.5 text-[12px] text-tinta outline-none placeholder:text-tinta-tenue focus:border-aprobada'
 const ROTULO = 'text-[9.5px] font-medium tracking-[0.14em] text-tinta-tenue uppercase'
-
-/** Quita tildes y baja a minusculas para poder buscar sin acentos */
-const normalizar = (t) =>
-  t
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
 
 /**
  * Alta y edicion de una clase, colgando del bloque que se pulso.
@@ -83,10 +77,10 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
      es lo que el estudiante puede inscribir de verdad este semestre. La
      busqueda libre sigue llegando a cualquier otra, porque una equivalencia
      o un permiso especial no salen de nuestros datos. */
-  const busca = normalizar(busqueda.trim())
+  const busca = sinTildes(busqueda.trim())
   const resultados = busca
     ? materias
-        .filter((a) => normalizar(a.nombre).includes(busca) || a.codigo.includes(busca))
+        .filter((a) => sinTildes(a.nombre).includes(busca) || a.codigo.includes(busca))
         .slice(0, 5)
     : (sugeridas.length ? sugeridas : materias).slice(0, 5)
 

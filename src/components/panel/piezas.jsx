@@ -14,7 +14,7 @@ export const Tarjeta = ({ children, className = '' }) => (
 )
 
 /** El +12 % o -8 % junto a una cifra, en verde o en rojo */
-export function Cambio({ valor, className = '' }) {
+function Cambio({ valor, className = '' }) {
   if (valor == null) return null
   const color = valor > 0 ? VERDE : valor < 0 ? 'var(--estado-rojo)' : 'var(--tinta-tenue)'
   return (

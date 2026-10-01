@@ -1,21 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CornerDownLeft, Search } from 'lucide-react'
+import { sinTildes } from '../data/texto'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { ETIQUETA_ESTADO } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
-
-/* Quita tildes y baja a minusculas: nadie escribe "Matemáticas" con tilde en
-   un buscador. Es la misma funcion que usa el buscador del horario; si
-   aparece una tercera, toca sacarla a un modulo. */
-const normalizar = (t) =>
-  t
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
 
 const TOPE_MATERIAS = 7
 const TOPE_CARRERAS = 4
@@ -80,7 +72,7 @@ function Fila({ resultado, activa, alElegir, alSenalar }) {
  * kB comprimidos sobre un total de 123, o sea un 13% mas de JavaScript por
  * una pantalla. Lo que aporta -filtrar, moverse con flechas y los papeles
  * ARIA- son las doscientas lineas de aqui, y la mitad ya estaba escrita en
- * este proyecto: normalizar viene del buscador del horario y el foco lo
+ * este proyecto: sinTildes es la de todos los buscadores y el foco lo
  * encierra el mismo hook que usan los modales.
  */
 function PaletaComandos({ abierta, alCerrar, acciones, materias, estados, carreras, alIrAMateria, alIrACarrera }) {
@@ -107,10 +99,10 @@ function PaletaComandos({ abierta, alCerrar, acciones, materias, estados, carrer
     refEntrada.current?.focus()
   }, [abierta])
 
-  const busca = normalizar(texto.trim())
+  const busca = sinTildes(texto.trim())
 
   const resultados = useMemo(() => {
-    const coincide = (t) => normalizar(t).includes(busca)
+    const coincide = (t) => sinTildes(t).includes(busca)
 
     const acts = acciones
       .filter((a) => !busca || coincide(a.etiqueta) || (a.pista && coincide(a.pista)))

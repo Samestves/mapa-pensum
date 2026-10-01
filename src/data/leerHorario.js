@@ -17,7 +17,7 @@ const CALIDAD = 0.85
    no hay transparencia que conservar y el modelo no ve la diferencia. */
 const TIPO_SUBIDA = 'image/jpeg'
 
-export const TAMANO_MAXIMO = 12 * 1024 * 1024
+const TAMANO_MAXIMO = 12 * 1024 * 1024
 
 /* Lo que el selector de archivos deja elegir. Sin esto, en el telefono se
    abre el explorador entero y hay que ir a buscar la foto entre los PDF.
@@ -27,7 +27,7 @@ export const TAMANO_MAXIMO = 12 * 1024 * 1024
 export const FORMATOS = 'image/png,image/jpeg,image/webp,image/heic,image/heif'
 
 /** Los mensajes de cada fallo, en cristiano. La vista los enseña tal cual. */
-export const EXPLICACION = {
+const EXPLICACION = {
   'sin-clave': 'Falta configurar la clave del lector en el servidor.',
   fuera: 'Esta petición no viene de la web. Recarga la página.',
   'sin-imagen': 'No llegó ninguna imagen.',
@@ -174,4 +174,3 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
    problema donde no esta. */
 export const SE_REINTENTA = new Set(['saturado', 'red', 'ia', 'vacia'])
 
-export { FalloLectura }

@@ -56,5 +56,5 @@ export const TEXTO = {
 }
 
 // El minimo es muy bajo a proposito: en un movil el mapa completo solo cabe
-// a ~0.10, y "encajar en pantalla" tiene que poder cumplir lo que promete.
-export const ZOOM = { min: 0.08, max: 2.5, paso: 1.25 }
+// a ~0.10, y la vista inicial de escritorio tiene que poder encajarlo entero.
+export const ZOOM = { min: 0.08, max: 2.5 }

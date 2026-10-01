@@ -1,4 +1,5 @@
 import { ABRE, CIERRA, DIAS, MIN_DURACION, solapan } from './horario.js'
+import { sinTildes } from '../data/texto.js'
 
 /* Lo que la lectura devuelve es texto que alguien -o algo- leyo de una foto.
    Aqui no se confia en nada: cada fila se comprueba contra el pensum de LA
@@ -19,14 +20,9 @@ const DIAS_ALIAS = [
 
 const ROMANOS = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10 }
 
-/* Sin tildes y en minusculas. Es la misma normalizacion del buscador y de la
-   paleta; si aparece una cuarta copia, toca sacarla a un modulo. */
-export const normalizar = (t) =>
-  String(t ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim()
+/* Sin tildes, en minusculas y sin espacios en los bordes: lo que llega de una
+   foto trae de todo. */
+const normalizar = (t) => sinTildes(t).trim()
 
 /** El dia como indice 0..4, o null si no se reconoce. */
 export function aDia(crudo) {

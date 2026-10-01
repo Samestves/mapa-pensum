@@ -1,17 +1,12 @@
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Info, Lock, Search, Trash2, X } from 'lucide-react'
+import { sinTildes } from '../data/texto'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { tituloGrupo } from '../layout/franjaElectivas'
-
-const sinTildes = (t) =>
-  t
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
 
 /**
  * Elegir que electiva va en una casilla del pensum.

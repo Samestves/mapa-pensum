@@ -4,12 +4,9 @@ import { anchoQueCabe, colocar } from '../layout/popover'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import PicoPopover from './PicoPopover'
 
-/* El aspecto de la nubecita, en una constante, porque lo comparten dos
-   montajes distintos: el de aqui -que va por portal a <body>- y la ficha del
-   mapa, que no puede portarse porque tiene que moverse con el lienzo. Si el
-   radio o la sombra vivieran escritos en cada uno, se separarian el dia que
-   alguien afine uno solo. */
-export const CARA =
+/* El aspecto de la nubecita. La ficha del mapa lleva el suyo (CARA_FICHA en
+   DetalleAsignatura): esquina mas cerrada, de la familia de las tarjetas. */
+const CARA =
   'relative w-full rounded-2xl border border-panel-borde bg-panel shadow-2xl'
 
 /**

@@ -39,7 +39,7 @@ function trozo(tipo, datos) {
   return Buffer.concat([largo, cuerpo, crc])
 }
 
-export function codificarPng(ancho, alto, rgba) {
+function codificarPng(ancho, alto, rgba) {
   // Cada fila lleva delante su byte de filtro; 0 = sin filtro
   const crudo = Buffer.alloc((ancho * 4 + 1) * alto)
   for (let y = 0; y < alto; y++) {

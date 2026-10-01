@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
-import { useInactividad } from '../hooks/useInactividad'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
-import ControlesZoom from './ControlesZoom'
 import AvisoRecogida from './AvisoRecogida'
 import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
@@ -94,9 +92,6 @@ function GrafoPensum({
     enGesto,
     refEnGesto,
     huboMovimiento,
-    encajar,
-    acercar,
-    alejar,
     mostrar,
     controlesArrastre,
   } = useVistaGrafo(ancho, alto, fichaAnclada, vistaInicial)
@@ -107,12 +102,6 @@ function GrafoPensum({
     const reloj = setTimeout(() => guardarCamara(clave, vista, medida), 300)
     return () => clearTimeout(reloj)
   }, [clave, vista, medida, encajado])
-
-  /* El dock de zoom solo existe en escritorio: en el telefono se acerca con
-     el pellizco y el doble toque, como cualquier mapa, y tres botones
-     flotando sobre las tarjetas solo quitaban sitio. Se apaga si nadie toca
-     el mapa en dos segundos; en el telefono ni siquiera cuenta. */
-  const { quieto, despertar } = useInactividad(2000, !esTelefono)
 
   const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
@@ -376,19 +365,13 @@ function GrafoPensum({
       style={{ backgroundColor: 'var(--lienzo-mapa)' }}
     >
       {/* El lienzo: aqui van los gestos, y no en el contenedor, para que la
-          ficha y los botones de zoom -hermanos de este div- no arranquen un
-          arrastre al pulsarlos.
-
-          Los *Capture avisan de actividad en fase de captura, antes de que
-          corran los manejadores de arrastre de controlesArrastre: asi
-          despiertan el dock sin pisar ni duplicar el pan y el zoom. */}
+          ficha -hermana de este div- no arranque un arrastre al pulsarla.
+          El zoom es la rueda o el pellizco del trackpad en escritorio, y el
+          pellizco o el doble toque en el telefono: sin botones encima. */}
       <div
         className={`absolute inset-0 select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{ touchAction: 'none' }}
         {...controlesArrastre}
-        onPointerMoveCapture={esTelefono ? undefined : despertar}
-        onPointerDownCapture={esTelefono ? undefined : despertar}
-        onWheelCapture={esTelefono ? undefined : despertar}
       >
         {/* Dos <svg> y no uno: la rejilla del fondo se queda quieta, y el
             contenido va en su propia capa para poder estirarla entera
@@ -500,12 +483,11 @@ function GrafoPensum({
           alCerrar={() => cerrarAviso(a.n)}
         />
       ))}
-
-      {!esTelefono && (
-        <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
-      )}
     </div>
   )
 }
 
-export default GrafoPensum
+/* memo: VistaCarrera se repinta por cosas que a esta vista no le tocan -abrir
+   el avance, cambiar el tema, la paleta-, y sin esto cada una repintaba la
+   vista entera. Sus props son estables (useCallback/useMemo arriba). */
+export default memo(GrafoPensum)

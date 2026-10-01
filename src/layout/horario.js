@@ -42,7 +42,7 @@ export const CIERRA = 19 * 60
 
    Es una tabla y no tres constantes sueltas para que anadir un tramo sea
    anadir una linea, y para que la funcion de abajo pueda probarse sola. */
-export const ALTO_HORA_ESCRITORIO = [
+const ALTO_HORA_ESCRITORIO = [
   { desde: 1280, alto: 144 }, // xl
   { desde: 1024, alto: 124 }, // lg
   { desde: 0, alto: 100 }, // md
@@ -58,7 +58,7 @@ export const ANCHO_HORAS_PX = 88
 /* Una clase no puede durar menos de media hora ni crearse mas corta que una:
    pulsar un hueco propone una hora, que es lo que dura casi todo. */
 export const MIN_DURACION = 30
-export const DURACION_POR_DEFECTO = 60
+const DURACION_POR_DEFECTO = 60
 
 /* El tiempo se guarda en minutos desde medianoche y no como "08:40". Con un
    numero se compara, se resta y se posiciona en la rejilla sin parsear nada;
@@ -161,11 +161,11 @@ export const acotar = (v, min, max) => Math.max(min, Math.min(max, v))
 
 /* Al arrastrar, las horas se redondean al cuarto: nadie inscribe una clase a
    las 08:07, pero si a las 08:15. */
-export const PASO = 15
+const PASO = 15
 export const imantar = (min) => Math.round(min / PASO) * PASO
 
 /* Minutos alrededor del borde de otra clase donde el iman agarra */
-export const TOLERANCIA_IMAN = 9
+const TOLERANCIA_IMAN = 9
 
 /**
  * A donde va el inicio de una clase que se esta arrastrando.

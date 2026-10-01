@@ -89,7 +89,7 @@ function franjaUtil(sesiones) {
 }
 
 /** Dibuja el horario y devuelve el PNG como Blob */
-export async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
+async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   await document.fonts.ready
 
   const { desde, hasta } = franjaUtil(sesiones)
