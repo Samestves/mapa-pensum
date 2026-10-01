@@ -1,13 +1,14 @@
+import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
 import { ASPECTO } from '../theme/situacion'
+import Texto, { GrupoTexto } from './Texto'
 
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
 
 /**
- * La cara de una tarjeta de materia: lo que se DIBUJA, sin la interaccion.
- * La usan la materia obligatoria y la casilla de electiva ya llena, que por
- * eso se ven exactamente iguales.
+ * La cara de una tarjeta de materia. La usan la materia obligatoria y la
+ * casilla de electiva ya llena, que por eso se ven exactamente iguales.
  *
  *   0713632                DISPONIBLE     codigo | estado
  *   Teoria de Sistemas                    nombre, protagonista
@@ -19,25 +20,19 @@ const SUAVE =
  * aire se lee como un rotulo, y el color del borde ya dice lo mismo desde
  * lejos, cuando la palabra ya no se alcanza a leer.
  *
- * El filo con degradado de la disponible y su halo quieto se fueron. Eran luz
- * puesta encima; ahora la disponible es simplemente la de borde mas claro, y
- * lo unico que brilla en el mapa es lo que acaba de cambiar.
+ * Va en dos piezas porque el mapa las dibuja en dos sitios: la FORMA en el
+ * SVG y el TEXTO en HTML, encima (ver Texto). El texto de un SVG se vuelve a
+ * maquetar cada vez que cambia la escala a la que se ve, y la capa del mapa
+ * cambia de escala en cada cuadro de un zoom.
  */
-function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado, resaltado }) {
+
+/** Lo que se dibuja de la tarjeta: fondo, borde, sombra y el punto del area */
+export function FormaTarjeta({ situacion, acento, seleccionado, resaltado }) {
   const a = ASPECTO[situacion]
-  const { ancho, alto, radio, padIzq, padDer } = NODO
+  const { ancho, alto, radio, padIzq } = NODO
 
   const borde = seleccionado || resaltado ? a.fuerte : a.borde
   const grosor = seleccionado ? a.grosor + 0.75 : a.grosor
-
-  // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
-  const primeraLinea = TEXTO.centroNombre - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
-
-  /* El espaciado de las mayusculas se añade tambien detras de la ultima
-     letra: sin esta correccion la palabra quedaba despegada del borde
-     derecho, mas adentro que el codigo del izquierdo. */
-  const espaciadoRotulo = 0.22
-  const xRotulo = ancho - padDer + TEXTO.rotulo * espaciadoRotulo
 
   return (
     <>
@@ -73,64 +68,88 @@ function CaraTarjeta({ situacion, codigo, lineasNombre, uc, acento, seleccionado
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
 
-      <text
-        x={padIzq}
-        y={TEXTO.lineaSuperior}
-        fontSize={TEXTO.codigo}
-        fill="var(--sit-codigo)"
-        className="font-dato texto-menor"
-        style={{ fontWeight: 'var(--peso-dato)', letterSpacing: '0.04em' }}
-      >
-        {codigo}
-      </text>
-
-      {a.marca.texto && (
-        <text
-          x={xRotulo}
-          y={TEXTO.lineaSuperior}
-          textAnchor="end"
-          fontSize={TEXTO.rotulo}
-          className="texto-menor"
-          style={{
-            fill: a.marca.color,
-            fontWeight: 'var(--peso-rotulo)',
-            letterSpacing: `${espaciadoRotulo}em`,
-            transition: 'fill 280ms ease',
-          }}
-        >
-          {a.marca.texto.toUpperCase()}
-        </text>
-      )}
-
-      {lineasNombre.map((linea, i) => (
-        <text
-          key={i}
-          x={padIzq}
-          y={primeraLinea + i * TEXTO.altoLinea}
-          fontSize={TEXTO.nombre}
-          style={{
-            fill: a.nombre,
-            fontWeight: 'var(--peso-nombre)',
-            transition: 'fill 280ms ease',
-          }}
-        >
-          {linea}
-        </text>
-      ))}
-
       <circle cx={padIzq + 3} cy={alto - 16} r={3} fill={acento} />
-      <text
-        x={padIzq + 12}
-        y={alto - 12.5}
-        fontSize={TEXTO.meta}
-        fill="var(--sit-codigo)"
-        className="font-dato tabular-nums texto-menor"
-        style={{ fontWeight: 'var(--peso-dato)' }}
-      >
-        {uc} UC
-      </text>
     </>
   )
 }
 
-export default CaraTarjeta
+/**
+ * Lo que se lee de la tarjeta, en la capa de texto del plano. Va colocado en
+ * el sitio de la tarjeta; dentro, las mismas lineas base que tenia en el SVG.
+ * Memoizado: todas sus props son valores simples o vienen fijas del layout.
+ */
+function TextoTarjetaSinMemo({ x, y, situacion, codigo, lineasNombre, uc }) {
+  const a = ASPECTO[situacion]
+  const { ancho, alto, padIzq, padDer } = NODO
+
+  // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
+  const primeraLinea = TEXTO.centroNombre - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
+
+  /* El espaciado de las mayusculas se añade tambien detras de la ultima
+     letra: sin esta correccion la palabra quedaba despegada del borde
+     derecho, mas adentro que el codigo del izquierdo. */
+  const espaciadoRotulo = 0.22
+  const xRotulo = ancho - padDer + TEXTO.rotulo * espaciadoRotulo
+
+  return (
+    <GrupoTexto x={x} y={y}>
+      <Texto
+        x={padIzq}
+        y={TEXTO.lineaSuperior}
+        className="font-dato"
+        style={{
+          fontSize: TEXTO.codigo,
+          color: 'var(--sit-codigo)',
+          fontWeight: 'var(--peso-dato)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {codigo}
+      </Texto>
+
+      {a.marca.texto && (
+        <Texto
+          x={xRotulo}
+          y={TEXTO.lineaSuperior}
+          ancla="fin"
+          style={{
+            fontSize: TEXTO.rotulo,
+            color: a.marca.color,
+            fontWeight: 'var(--peso-rotulo)',
+            letterSpacing: `${espaciadoRotulo}em`,
+            transition: 'color 280ms ease',
+          }}
+        >
+          {a.marca.texto.toUpperCase()}
+        </Texto>
+      )}
+
+      {lineasNombre.map((linea, i) => (
+        <Texto
+          key={i}
+          x={padIzq}
+          y={primeraLinea + i * TEXTO.altoLinea}
+          style={{
+            fontSize: TEXTO.nombre,
+            color: a.nombre,
+            fontWeight: 'var(--peso-nombre)',
+            transition: 'color 280ms ease',
+          }}
+        >
+          {linea}
+        </Texto>
+      ))}
+
+      <Texto
+        x={padIzq + 12}
+        y={alto - 12.5}
+        className="font-dato tabular-nums"
+        style={{ fontSize: TEXTO.meta, color: 'var(--sit-codigo)', fontWeight: 'var(--peso-dato)' }}
+      >
+        {uc} UC
+      </Texto>
+    </GrupoTexto>
+  )
+}
+
+export const TextoTarjeta = memo(TextoTarjetaSinMemo)

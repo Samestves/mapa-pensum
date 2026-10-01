@@ -6,7 +6,6 @@ import {
   MARGEN_CAPA,
   capaCubre,
   mismaVista,
-  nivelDeDetalle,
   transformRelativo,
   vistaParaViaje,
 } from './vistaViva.js'
@@ -129,12 +128,3 @@ describe('la vista para un viaje de camara', () => {
     assert.equal(vistaParaViaje(desde, hasta, VENTANA, ...MAPA), null)
   })
 })
-
-test('el detalle baja al alejarse: primero la letra menor, luego los nombres', () => {
-  assert.equal(nivelDeDetalle(0.8), 'completo')
-  assert.equal(nivelDeDetalle(0.4), 'completo')
-  assert.equal(nivelDeDetalle(0.35), 'medio')
-  assert.equal(nivelDeDetalle(0.28), 'medio')
-  assert.equal(nivelDeDetalle(0.2), 'silueta')
-})
-

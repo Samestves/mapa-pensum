@@ -3,10 +3,11 @@ import { NODO } from '../layout/constantes'
 import { colorNodo, etiquetaArea } from '../theme/areas'
 import { ETIQUETA_SITUACION } from '../theme/situacion'
 import { codigoVisible } from '../data/codigoVisible'
-import CaraTarjeta from './CaraTarjeta'
+import { FormaTarjeta } from './CaraTarjeta'
 
 /**
- * Una materia del mapa. Lo que se ve lo pone CaraTarjeta; aqui solo vive la
+ * Una materia del mapa, en el SVG. La forma la pone FormaTarjeta y el texto
+ * va aparte, en la capa de texto del plano (ver TextoTarjeta); aqui vive la
  * interaccion y los dos avisos de un instante: el pulso de la materia que se
  * acaba de abrir y el anillo de la que se acaba de tocar.
  *
@@ -23,12 +24,15 @@ import CaraTarjeta from './CaraTarjeta'
  * se pide manteniendolo quieto medio segundo, y se queda puesta aunque el
  * mapa se mueva (ver layout/mantenerRuta.js). data-codigo es como ese gesto
  * sabe sobre que tarjeta se mantiene.
+ *
+ * No sabe si esta apagada. El foco del mapa no apaga tarjeta por tarjeta: la
+ * misma tarjeta se dibuja en el plano base, siempre igual, y si esta en foco
+ * otra vez encima, nitida y resaltada (ver layout/foco.js).
  */
 function NodoAsignatura({
   nodo,
   situacion,
   resaltado,
-  atenuado,
   seleccionado,
   destellando,
   claveDestello,
@@ -38,7 +42,7 @@ function NodoAsignatura({
   alSenalar,
   alDejarDeSenalar,
 }) {
-  const { x, y, nombre, uc, lineasNombre } = nodo
+  const { x, y, nombre } = nodo
 
   /* El nombre accesible va en aria-label y no en un <title>. El <title> de
      un SVG lo lee el lector de pantalla, pero el navegador ademas lo saca
@@ -61,22 +65,13 @@ function NodoAsignatura({
       aria-label={etiqueta}
       data-codigo={nodo.codigo}
       transform={`translate(${x}, ${y})`}
-      opacity={atenuado ? 0.14 : 1}
-      data-atenuado={atenuado ? '' : undefined}
       onClick={() => alVerFicha(nodo.codigo)}
       onPointerEnter={(e) => e.pointerType !== 'touch' && alSenalar(nodo.codigo)}
       onPointerLeave={(e) => e.pointerType !== 'touch' && alDejarDeSenalar()}
-      className={`grupo-nodo cursor-pointer ${seleccionado ? 'activo' : ''}`}
-      style={{
-        transition:
-          'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1), filter 320ms cubic-bezier(0.32, 0.72, 0, 1)',
-      }}
+      className="grupo-nodo cursor-pointer"
     >
-      <CaraTarjeta
+      <FormaTarjeta
         situacion={situacion}
-        codigo={codigoVisible(nodo)}
-        lineasNombre={lineasNombre}
-        uc={uc}
         acento={colorNodo(nodo)}
         seleccionado={seleccionado}
         resaltado={resaltado}
@@ -116,9 +111,9 @@ function NodoAsignatura({
 }
 
 /**
- * memo porque son hasta ciento siete de estos en pantalla y todos cuelgan de
- * un estado que vive arriba: sin el, señalar UNA materia repintaba el mapa
- * entero. Todas las props son valores simples menos las tres funciones, que
- * vienen fijadas con useCallback desde GrafoPensum.
+ * memo porque son hasta ciento siete de estos y todos cuelgan de un estado
+ * que vive arriba: sin el, aprobar UNA materia repintaba el mapa entero.
+ * Todas las props son valores simples menos las tres funciones, que vienen
+ * fijadas con useCallback desde GrafoPensum.
  */
 export default memo(NodoAsignatura)

@@ -25,15 +25,41 @@ const girar = (color, grados) => `oklch(from ${color} l c calc(h + ${grados}))`
    de CSS y ahi prefiero no depender de que el navegador sea indulgente. */
 const idDe = (id) => `flujo-${id.replace(/[^a-zA-Z0-9]/g, '_')}`
 
+/* Los colores de un cable: el del area de la que sale, el del area a la que
+   llega, y el id de sus degradados. */
+function coloresDe(arista, areaDestino) {
+  return {
+    desde: colorNodo({ area: arista.area, codigo: arista.origen }),
+    hacia: colorNodo({ area: areaDestino, codigo: arista.destino }),
+    gid: idDe(arista.id),
+  }
+}
+
+/* Cada luz a su ritmo, sacado del indice del cable: con retraso negativo
+   nace ya a mitad de su viaje, y cada una a un paso distinto, entre 2,6 y
+   3,2 s. Todas a la vez y al mismo paso se verian como un metronomo. */
+function ritmoDeLuz(indice) {
+  return {
+    animationDelay: `-${((indice * 7) % 11) * 0.26}s`,
+    animationDuration: `${(2.6 + ((indice * 5) % 7) * 0.1).toFixed(1)}s`,
+  }
+}
+
 /**
- * Cable entre un prerrequisito y la materia que desbloquea.
+ * Cable entre un prerrequisito y la materia que desbloquea, en el plano base.
+ *
+ * El mapa va por planos (ver GrafoPensum) y un cable se reparte entre ellos:
+ * aqui el trazo quieto, en LuzCable la luz que viaja, y en CableEnFoco la
+ * copia nitida que se dibuja encima cuando el cable esta en foco. Este no
+ * cambia al señalar nada: solo con el avance, que es cuando cambia lo que
+ * dice.
  *
  * El color se fija una vez en el <g> como `color` y lo de dentro lo usa como
- * currentColor. La excepcion es la frontera, que lleva degradado.
+ * currentColor. La excepcion es la frontera -de lo aprobado a lo que puedes
+ * inscribir-, que lleva degradado.
  *
- * LA FRONTERA -de lo aprobado a lo que puedes inscribir- es el unico cable
- * con luz, y su luz CAMBIA de tono mientras viaja hasta llegar pintada como
- * la tarjeta a la que te lleva. Ver los degradados, mas abajo.
+ * Sus degradados viven aqui y los usan tambien los otros dos planos: un id
+ * de SVG vale en todo el documento, y el plano base siempre esta dibujado.
  *
  * La luz es un solo trazo fino. Con ocho cables de frontera, que es un avance
  * tipico, son ocho animaciones; las 215 del principio eran de animar los
@@ -43,37 +69,11 @@ const idDe = (id) => `flujo-${id.replace(/[^a-zA-Z0-9]/g, '_')}`
  * de pantalla mientras pathLength lo normaliza en coordenadas del dibujo, y la
  * luz salia de otro tamaño y a saltos.
  */
-function Arista({
-  id,
-  d,
-  x1,
-  y1,
-  x2,
-  y2,
-  area,
-  codigoOrigen,
-  areaDestino,
-  codigoDestino,
-  tramo,
-  retraso,
-  duracion,
-  resaltada,
-  atenuada,
-  foco,
-  descargando,
-  claveDescarga,
-}) {
+function CableBase({ arista, areaDestino, tramo, descargando, claveDescarga }) {
   const f = FUERZA[tramo]
-  const opacidad = atenuada ? 0.04 : resaltada ? 0.2 : f.opacidad
   const frontera = tramo === TRAMO.FRONTERA
-  const conLuz = frontera && !atenuada
-
-  const desde = colorNodo({ area, codigo: codigoOrigen })
-  const hacia = colorNodo({ area: areaDestino, codigo: codigoDestino })
-  /* Con respaldo: si algun dia llega una arista sin id, que salga un cable
-     sin degradado propio antes que tumbar el mapa entero por un .replace. */
-  const gid = idDe(id ?? `${codigoOrigen}-${codigoDestino}`)
-  const ritmo = { animationDelay: retraso, animationDuration: duracion }
+  const { desde, hacia, gid } = coloresDe(arista, areaDestino)
+  const { d, x1, y1, x2, y2 } = arista
 
   return (
     <g color={desde}>
@@ -133,55 +133,14 @@ function Arista({
         strokeLinecap="round"
         style={{
           stroke: frontera ? `url(#${gid})` : 'currentColor',
-          strokeOpacity: opacidad,
+          strokeOpacity: f.opacidad,
           strokeWidth: f.grosor,
           transition: 'stroke-opacity 240ms ease',
         }}
       />
 
-      {/* La luz de la frontera: UN trazo fino, sin halo ni estela. Tuvo las
-          dos cosas -un resplandor ancho debajo y una cola detras de la
-          cabeza- y juntas se leian como una sombra alrededor de la luz, una
-          capsula mas que un destello. El color ya hace el trabajo: sale del
-          area de la que viene, gira de tono por el camino y llega con el de
-          la tarjeta a la que lleva. */}
-      {conLuz && (
-        <path
-          d={d}
-          fill="none"
-          pathLength="100"
-          strokeLinecap="round"
-          className="flujo"
-          style={{ stroke: `url(#${gid}-vivo)`, strokeWidth: 2.25, ...ritmo }}
-        />
-      )}
-
-      {/* La cadena de la materia que se mira, dibujandose en su color */}
-      {resaltada && (
-        <path
-          key={foco}
-          d={d}
-          fill="none"
-          pathLength="100"
-          strokeLinecap="round"
-          className="trazar"
-          style={{
-            stroke: frontera ? `url(#${gid})` : 'currentColor',
-            strokeWidth: 2.25,
-            strokeOpacity: 0.95,
-          }}
-        />
-      )}
-
       {/* Punto de llegada, del color al que llega la luz */}
-      {(frontera || resaltada) && !atenuada && (
-        <circle
-          cx={x2}
-          cy={y2}
-          r={3}
-          style={{ fill: frontera ? hacia : 'currentColor', fillOpacity: resaltada ? 1 : 0.9 }}
-        />
-      )}
+      {frontera && <circle cx={x2} cy={y2} r={3} style={{ fill: hacia, fillOpacity: 0.9 }} />}
 
       {/* La luz al aprobar: el cable entero se enciende en verde, con un
           halo ancho y flojo debajo que hace de resplandor sin usar filtro. */}
@@ -209,5 +168,91 @@ function Arista({
   )
 }
 
-// Todas sus props son valores simples, asi que el memo compara barato
-export default memo(Arista)
+/**
+ * La luz que viaja por un cable de la frontera hacia lo que puedes inscribir:
+ * UN trazo fino, sin halo ni estela. Tuvo las dos cosas -un resplandor ancho
+ * debajo y una cola detras de la cabeza- y juntas se leian como una sombra
+ * alrededor de la luz, una capsula mas que un destello. El color ya hace el
+ * trabajo: sale del area de la que viene, gira de tono por el camino y llega
+ * con el de la tarjeta a la que lleva.
+ *
+ * Va en su propio plano porque es lo unico del mapa que se mueve solo: cada
+ * cuadro de su animacion repinta el plano en el que esta, y aqui ese plano no
+ * tiene nada mas que repintar.
+ */
+function LuzCable({ arista, indice }) {
+  return (
+    <path
+      d={arista.d}
+      fill="none"
+      pathLength="100"
+      strokeLinecap="round"
+      className="flujo"
+      style={{
+        stroke: `url(#${idDe(arista.id)}-vivo)`,
+        strokeWidth: 2.25,
+        ...ritmoDeLuz(indice),
+      }}
+    />
+  )
+}
+
+/**
+ * La copia nitida de un cable en foco, en el plano de encima: el trazo, su
+ * luz si es de frontera y, si es de la cadena que se mira, ese mismo cable
+ * dibujandose en su color de origen a destino.
+ */
+function CableEnFoco({ arista, indice, areaDestino, tramo, resaltada, foco }) {
+  const f = FUERZA[tramo]
+  const frontera = tramo === TRAMO.FRONTERA
+  const { desde, hacia, gid } = coloresDe(arista, areaDestino)
+  const trazo = frontera ? `url(#${gid})` : 'currentColor'
+
+  return (
+    <g color={desde}>
+      <path
+        d={arista.d}
+        fill="none"
+        strokeLinecap="round"
+        style={{
+          stroke: trazo,
+          strokeOpacity: resaltada ? 0.2 : f.opacidad,
+          strokeWidth: f.grosor,
+        }}
+      />
+
+      {frontera && <LuzCable arista={arista} indice={indice} />}
+
+      {/* La cadena de la materia que se mira, dibujandose en su color. La
+          key es la materia: mirar otra vuelve a dibujarla desde el origen. */}
+      {resaltada && (
+        <path
+          key={foco}
+          d={arista.d}
+          fill="none"
+          pathLength="100"
+          strokeLinecap="round"
+          className="trazar"
+          style={{ stroke: trazo, strokeWidth: 2.25, strokeOpacity: 0.95 }}
+        />
+      )}
+
+      {(frontera || resaltada) && (
+        <circle
+          cx={arista.x2}
+          cy={arista.y2}
+          r={3}
+          style={{ fill: frontera ? hacia : 'currentColor', fillOpacity: resaltada ? 1 : 0.9 }}
+        />
+      )}
+    </g>
+  )
+}
+
+/* Todas sus props son valores simples o vienen fijas del layout -la arista es
+   el mismo objeto mientras no cambie la carrera-: el memo compara barato. */
+const CableBaseMemo = memo(CableBase)
+const LuzCableMemo = memo(LuzCable)
+const CableEnFocoMemo = memo(CableEnFoco)
+
+export { CableBaseMemo as CableBase, LuzCableMemo as LuzCable, CableEnFocoMemo as CableEnFoco }

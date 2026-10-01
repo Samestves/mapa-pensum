@@ -10,6 +10,7 @@
     "build": "npm run datos && npm run validar && node scripts/og.js && node scripts/iconos.js && vite build && node scripts/prerenderizar.js && node scripts/serviceworker.js",
     "lint": "oxlint",
     "preview": "vite preview",
+    "rendimiento": "node scripts/rendimiento.js",
     "test": "node --test \"src/**/*.test.js\" \"api/**/*.test.js\""
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "playwright-core": "^1.56.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
   }

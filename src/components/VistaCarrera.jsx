@@ -178,7 +178,6 @@ function VistaCarrera({ carrera, alVolver }) {
   }, [])
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
-  const [senalado, setSenalado] = useState(null)
 
   // El mapa se monta un fotograma DESPUES de que aparece la vista. Son mil
   // seiscientos elementos SVG: aqui cuestan unas decimas, en un telefono de
@@ -382,8 +381,6 @@ function VistaCarrera({ carrera, alVolver }) {
             toque={toque}
             areaFiltrada={areaFiltrada}
             seleccionado={seleccionado}
-            senalado={senalado}
-            alSenalar={setSenalado}
             alSeleccionar={alternarSeleccion}
             alMarcar={marcarYContar}
             enCasilla={enCasilla}

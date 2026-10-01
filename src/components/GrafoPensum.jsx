@@ -1,9 +1,9 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
-import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useMantenerRuta } from '../hooks/useMantenerRuta'
-import ContenidoGrafo from './ContenidoGrafo'
+import { FormasBase, Luces, Plano, PlanosFoco, TextosBase } from './PlanosGrafo'
+import { RotulosFormas, RotulosTextos } from './RotulosGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ContornoCarga from './ContornoCarga'
@@ -12,7 +12,8 @@ import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
-import { nivelDeDetalle } from '../layout/vistaViva'
+import { cabecerasDe } from '../layout/cabeceras'
+import { MARGEN_CAPA } from '../layout/vistaViva'
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
@@ -37,14 +38,14 @@ function ambos(a, b) {
 /* Marca para salir todos los avisos que haya en pantalla */
 const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
 
-/* La capa pintada con margen: se sale de la ventana `margen` (fraccion de la
-   ventana) por cada lado, y su origen de transformacion es la esquina de la
-   ventana dentro de ella. Asi el estiramiento del pellizco usa las mismas
-   cuentas con margen que sin el (ver layout/vistaViva.js). */
-function estiloCapa(margen) {
-  if (!margen) return undefined
-  const origen = `${(margen / (1 + 2 * margen)) * 100}%`
-  return { inset: `${-margen * 100}%`, transformOrigin: `${origen} ${origen}` }
+/* La capa pintada con margen: se sale de la ventana MARGEN_CAPA (fraccion
+   de la ventana) por cada lado, y su origen de transformacion es la esquina
+   de la ventana dentro de ella. Asi el estiramiento usa las mismas cuentas
+   con margen que sin el (ver layout/vistaViva.js). */
+const ORIGEN_CAPA = `${(MARGEN_CAPA / (1 + 2 * MARGEN_CAPA)) * 100}%`
+const ESTILO_CAPA = {
+  inset: `${-MARGEN_CAPA * 100}%`,
+  transformOrigin: `${ORIGEN_CAPA} ${ORIGEN_CAPA}`,
 }
 
 function GrafoPensum({
@@ -56,8 +57,6 @@ function GrafoPensum({
   toque,
   areaFiltrada,
   seleccionado,
-  senalado,
-  alSenalar,
   alSeleccionar,
   alMarcar,
   enCasilla,
@@ -68,13 +67,6 @@ function GrafoPensum({
   // La franja de electivas solo existe en las carreras sin casillas oficiales
   const casillasFranja = layout.casillasFranja ?? SIN_FRANJA
   const filasFranja = layout.filasFranja ?? SIN_FRANJA
-
-  /* Si hay una ficha colocada al lado de su tarjeta, que solo pasa en
-     escritorio: con ella abierta la camara pinta cada cuadro del viaje para
-     que la ficha la siga (ver animarHacia). Se rellena mas abajo, cuando ya
-     se sabe si hay ficha. */
-  const fichaAnclada = useRef(false)
-  const esTelefono = useEsTelefono()
 
   /* Situacion de cada materia -hecha, cursando, inscribible, proxima o
      lejana-. Cambia de identidad solo cuando cambian los estados, que es
@@ -90,6 +82,12 @@ function GrafoPensum({
     for (const casilla of casillasFranja) poner(enCasilla(casilla.codigo))
     return mapa
   }, [nodos, casillasFranja, estados, enCasilla])
+
+  /* Lo que dice la cabecera de cada semestre, para sus formas y su texto */
+  const cabeceras = useMemo(
+    () => cabecerasDe(columnas, nodos, enCasilla, situaciones),
+    [columnas, nodos, enCasilla, situaciones],
+  )
 
   /* Tu semestre a escala de lectura: la columna donde tienes algo que
      inscribir o que estas cursando (ver layout/camara.js). */
@@ -114,7 +112,7 @@ function GrafoPensum({
   const {
     contenedorRef,
     capaRef,
-    margen,
+    seguir,
     vista,
     medida,
     encajado,
@@ -124,7 +122,7 @@ function GrafoPensum({
     huboMovimiento,
     mostrar,
     controlesArrastre,
-  } = useVistaGrafo(ancho, alto, fichaAnclada, vistaInicial)
+  } = useVistaGrafo(ancho, alto, vistaInicial)
 
   /* Se guarda donde esta la camara cada vez que se queda quieta */
   useEffect(() => {
@@ -145,21 +143,27 @@ function GrafoPensum({
   const soltarRuta = useCallback(() => setRuta(null), [])
   const { carga, manejadores: gestosRuta, tragarToque } = useMantenerRuta(fijarRuta)
 
+  /* La materia que señala el raton. Vive aqui y no mas arriba a proposito:
+     cambia cada vez que el raton cruza una tarjeta, y en VistaCarrera cada
+     cambio repintaba la pantalla entera -cabecera, paneles, paleta- para
+     algo que solo le importa al mapa. */
+  const [senalado, alSenalar] = useState(null)
+
   // Manda la seleccion, luego la ruta fijada, y por ultimo el raton
   const senaladoVisible = rutaFijada ?? senalado
 
-  const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
+  const { mirada, foco, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
     senalado: senaladoVisible,
     areaFiltrada,
     estados,
     relaciones,
     porCodigo,
+    nodos,
+    casillasFranja,
+    aristas,
+    enCasilla,
     vista,
-  })
-
-  useLayoutEffect(() => {
-    fichaAnclada.current = detalle != null && !esTelefono
   })
 
   // Los nodos estan memoizados, asi que lo que reciben tiene que mantener su
@@ -167,14 +171,9 @@ function GrafoPensum({
   // son las unicas props de los nodos que no son valores simples, y por eso
   // son las unicas que hay que fijar. Reciben el codigo en vez de venir ya
   // atadas a un nodo concreto: una funcion por mapa, no una por materia.
-  /* Señalar se ignora mientras el mapa se mueve.
-     Al arrastrar, el puntero cruza decenas de tarjetas y cada una dispara su
-     hover: eso recalcula la cadena, cambia la identidad de `atenuado` y
-     obliga a rehacer los ciento treinta y un hijos memoizados, ademas de
-     relanzar la transicion de opacidad de setenta y cinco nodos. Medido: el
-     arrastre pasa de 6,9 a entre 9,7 y 15,9 ms por movimiento.
-     Ademas de caro, no es lo que se pide: quien arrastra el mapa lo esta
-     moviendo, no inspeccionando lo que le pasa por debajo.
+  /* Señalar se ignora mientras el mapa se mueve: quien arrastra el mapa lo
+     esta moviendo, no inspeccionando lo que le pasa por debajo, y cada
+     tarjeta cruzada encenderia y apagaria su cadena.
      Se consulta una ref y no el estado para no cambiar de identidad, que es
      lo unico que mantiene vivo el memo. */
   /* Soltar el señalado espera un poco; cambiarlo, no.
@@ -303,6 +302,15 @@ function GrafoPensum({
   }, [fichaSaliente])
   const ficha = fichaAbierta ?? fichaSaliente
 
+  /* En escritorio la ficha va al lado de su tarjeta, fuera de la capa del
+     mapa. Mientras un gesto estira la capa, se engancha al borde derecho de
+     la tarjeta y se desplaza con el (ver seguir en useVistaGrafo). */
+  const nodoFicha = ficha?.nodo
+  const refFicha = useMemo(
+    () => (nodoFicha ? seguir(nodoFicha.x + NODO.ancho, nodoFicha.y) : undefined),
+    [nodoFicha, seguir],
+  )
+
   /* Los avisos de lo que acabas de conseguir al aprobar.
 
      Una lista y no uno solo, aunque en pantalla nunca haya mas de uno: si
@@ -359,9 +367,6 @@ function GrafoPensum({
         .filter((a) => a && Number.isFinite(a.x) && Number.isFinite(a.y))
       if (cajas.length) {
         const telefono = medida.ancho < 768
-        // La ficha se esta cerrando: ya no hay nada que tenga que seguir al
-        // mapa, y el viaje puede hacerse estirando la capa
-        fichaAnclada.current = false
         mostrar(
           {
             x0: Math.min(...cajas.map((a) => a.x)),
@@ -406,6 +411,31 @@ function GrafoPensum({
     [alSeleccionar, huboMovimiento, tragarToque, soltarRuta],
   )
 
+  /* La vista de todos los planos: la de la camara, corrida el margen con el
+     que se pinta la capa por fuera de la ventana. */
+  const vistaPlanos = {
+    x: vista.x + MARGEN_CAPA * medida.ancho,
+    y: vista.y + MARGEN_CAPA * medida.alto,
+    escala: vista.escala,
+  }
+  const conFoco = foco ? '' : undefined
+  /* Lo que necesitan los planos de foco para dibujar una tarjeta igual que
+     la base. Todo estable entre renders: ver FormasBase. */
+  const contexto = {
+    situaciones,
+    aristas,
+    nodos,
+    casillasFranja,
+    porCodigo,
+    descarga,
+    toque,
+    enCasilla,
+    alAbrirCasilla,
+    alSenalar: senalar,
+    alDejarDeSenalar: dejarDeSenalar,
+    alVerFicha: verFicha,
+  }
+
   return (
     <div
       ref={contenedorRef}
@@ -423,10 +453,10 @@ function GrafoPensum({
         style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
         {...ambos(gestosRuta, controlesArrastre)}
       >
-        {/* Dos <svg> y no uno: la rejilla del fondo se queda quieta, y el
-            contenido va en su propia capa para poder estirarla entera
-            durante el pellizco (ver layout/vistaViva.js). Un <g> no se puede
-            estirar en la GPU; una capa HTML si. */}
+        {/* La rejilla del fondo va aparte y se queda quieta; el contenido va
+            en su propia capa para poder estirarla entera durante los gestos
+            (ver layout/vistaViva.js). Un <g> no se puede estirar en la GPU;
+            una capa HTML si. */}
         <svg width="100%" height="100%" className="absolute inset-0">
           <DefsGrafo />
 
@@ -444,89 +474,77 @@ function GrafoPensum({
           />
         </svg>
 
-        {/* La capa que se estira es un div y no el propio <svg>. Medido:
-            cambiar el transform CSS del <svg> hace a Chrome rehacer la
-            maqueta de todo su texto igual que cambiar el del <g>, porque lo
-            toma como un cambio de escala del dibujo; el de un div que lo
-            envuelve no le afecta, y el cuadro pasa de 3,8 ms a 0,01.
+        {/* La capa que se estira: un div que envuelve los planos, y no los
+            planos mismos. Estirarla mueve en la GPU lo ya pintado sin tocar
+            nada de dentro; cambiarle el transform a un <svg> lo toma Chrome
+            como un cambio de escala del dibujo y lo vuelve a maquetar.
 
-            lienzo-en-gesto congela la luz de los cables mientras el mapa se
-            mueve. Ver .lienzo-en-gesto en index.css.
+            Dentro, los planos del mapa (ver PlanosGrafo), de abajo arriba:
+            rotulos, base, luces y foco. Con foco, la base y las luces se
+            apagan enteras (data-foco); los rotulos no, para que se siga
+            leyendo en que semestre cae cada materia de la cadena.
 
-            textRendering geometricPrecision es por el zoom que si repinta.
-            Chrome dibuja el texto de un SVG recalculando la letra al tamaño
-            al que se ve en pantalla, asi que cada cuadro de zoom rehace la
-            maqueta de los doscientos y pico textos del mapa. Con
-            geometricPrecision usa el tamaño declarado y escala los glifos:
-            medido a CPU x4, de 40-45 ms por cuadro a 16-17. En pantalla no se
-            distingue. */}
-        <div ref={capaRef} className="capa-grafo absolute inset-0" style={estiloCapa(margen)}>
-          <svg
-            width="100%"
-            height="100%"
-            className={`font-ui ${enGesto ? 'lienzo-en-gesto' : ''}`}
-            style={{ textRendering: 'geometricPrecision' }}
-            data-detalle={nivelDeDetalle(vista.escala)}
-          >
-            {/* Oculto hasta que la vista se encaja. El primer fotograma tras
-                montar dibuja el mapa a tamaño natural desde la esquina, y
-                enseñarlo era el tiron que se veia al volver del horario. Se
-                revela con una transicion corta de opacidad, que el compositor
-                resuelve sin repintar los mil seiscientos elementos. */}
-            <g
-              transform={`translate(${vista.x + margen * medida.ancho}, ${
-                vista.y + margen * medida.alto
-              }) scale(${vista.escala})`}
-              style={{
-                opacity: encajado ? 1 : 0,
-                transition: 'opacity 200ms ease-out',
-              }}
-            >
-              {/* Todo el contenido del mapa vive memoizado ahi dentro. Este <g>
-                  es lo unico que cambia al desplazar o acercar, y su unico
-                  hijo se salta el render entero comparando una prop. */}
-              <ContenidoGrafo
-                situaciones={situaciones}
-                foco={seleccionado ?? senaladoVisible}
-                columnas={columnas}
-                aristas={aristas}
-                nodos={nodos}
-                casillasFranja={casillasFranja}
-                filasFranja={filasFranja}
-                porCodigo={porCodigo}
-                descarga={descarga}
-                toque={toque}
-                seleccionado={seleccionado}
-                cadena={cadena}
-                atenuado={atenuado}
-                enCasilla={enCasilla}
-                alAbrirCasilla={alAbrirCasilla}
-                ancho={ancho}
-                alSenalar={senalar}
-                alDejarDeSenalar={dejarDeSenalar}
-                alVerFicha={verFicha}
-                alMarcar={alMarcar}
-              />
+            Oculta hasta que la vista se encaja. El primer fotograma tras
+            montar dibuja el mapa a tamaño natural desde la esquina, y
+            enseñarlo era el tiron que se veia al volver del horario. Se revela
+            con la animacion de llegada (ver llegar en useVistaGrafo). */}
+        <div
+          ref={capaRef}
+          className="capa-grafo font-ui absolute"
+          style={{ ...ESTILO_CAPA, opacity: encajado ? 1 : 0 }}
+        >
+          <Plano
+            vista={vistaPlanos}
+            className="plano-rotulos"
+            formas={<RotulosFormas cabeceras={cabeceras} filasFranja={filasFranja} ancho={ancho} />}
+            textos={<RotulosTextos cabeceras={cabeceras} filasFranja={filasFranja} />}
+          />
 
-              {/* Fuera de ContenidoGrafo a proposito: va y viene en cada
-                  pulsacion, y como prop de el obligaria a repasar sus ciento
-                  y pico hijos para dibujar una sola linea. */}
-              {carga && porCodigo.get(carga.codigo) && (
+          <Plano
+            vista={vistaPlanos}
+            className="plano-base"
+            data-foco={conFoco}
+            formas={<FormasBase {...contexto} />}
+            textos={<TextosBase {...contexto} />}
+          />
+
+          {/* lienzo-en-gesto congela las luces mientras el mapa se mueve. Ver
+              .lienzo-en-gesto en index.css. */}
+          <Plano
+            vista={vistaPlanos}
+            className={`plano-luces ${enGesto ? 'lienzo-en-gesto' : ''}`}
+            data-foco={conFoco}
+            formas={<Luces situaciones={situaciones} aristas={aristas} />}
+          />
+
+          <PlanosFoco
+            vista={vistaPlanos}
+            foco={foco}
+            mirada={mirada}
+            seleccionado={seleccionado}
+            {...contexto}
+            extra={
+              /* Fuera de los planos memoizados a proposito: va y viene en
+                 cada pulsacion, y como prop de ellos obligaria a repasar sus
+                 ciento y pico hijos para dibujar una sola linea. */
+              carga &&
+              porCodigo.get(carga.codigo) && (
                 <ContornoCarga
                   key={carga.t}
                   nodo={porCodigo.get(carga.codigo)}
                   hecha={carga.fase === 'hecha'}
                   escala={vista.escala}
                 />
-              )}
-            </g>
-          </svg>
+              )
+            }
+          />
         </div>
       </div>
 
       {ficha && (
         <DetalleAsignatura
           {...ficha}
+          refSeguir={refFicha}
           saliendo={!fichaAbierta}
           situacionDe={situacionDeCodigo}
           medida={medida}

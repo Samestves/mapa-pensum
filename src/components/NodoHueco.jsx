@@ -4,7 +4,8 @@ import { NODO, TEXTO } from '../layout/constantes'
 import { colorNodo } from '../theme/areas'
 import { ETIQUETA_SITUACION } from '../theme/situacion'
 import { codigoVisible } from '../data/codigoVisible'
-import CaraTarjeta from './CaraTarjeta'
+import { FormaTarjeta, TextoTarjeta } from './CaraTarjeta'
+import Texto, { GrupoTexto } from './Texto'
 
 /**
  * La casilla de electiva: el sitio que el pensum reserva para una materia que
@@ -28,8 +29,11 @@ import CaraTarjeta from './CaraTarjeta'
  * esa materia ES tu pensum: se aprueba, cuenta UC y se cursa igual que las
  * obligatorias, asi que dibujarla distinta la dejaria en un limbo visual que
  * no corresponde a nada real.
+ *
+ * Como las materias, va en dos piezas: la forma aqui, en el SVG, y el texto
+ * en TextoCasilla, en la capa de texto del plano.
  */
-function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir, alVerFicha }) {
+function NodoHueco({ nodo, electiva, situacion, seleccionado, alAbrir, alVerFicha }) {
   const { x, y, nombre } = nodo
   const vacia = electiva == null
   const acento = 'var(--tinta-tenue)'
@@ -54,8 +58,6 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
          estas mirando la materia que quieres cambiar. */
       onClick={() => (electiva ? alVerFicha(electiva.codigo) : alAbrir(nodo.codigo))}
       className="grupo-casilla cursor-pointer"
-      opacity={atenuado ? 0.14 : 1}
-      style={{ transition: 'opacity 320ms cubic-bezier(0.32, 0.72, 0, 1)' }}
     >
       {vacia && (
         <>
@@ -113,29 +115,10 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
             strokeWidth={1.6}
             aria-hidden="true"
           />
-
-          {/* Y debajo, lo unico que hay que saber: QUE va aqui.
-              Antes decia ademas "elige una", y sobraba: el borde discontinuo
-              ya dice que esta vacio y el mas ya dice que se agrega algo.
-              Tres elementos diciendo lo mismo dejan la tarjeta cargada sin
-              añadir un dato. */}
-          <text
-            x={NODO.ancho / 2}
-            y={71}
-            textAnchor="middle"
-            fontSize={TEXTO.nombre}
-            fill="var(--tinta-suave)"
-            style={{ fontWeight: 'var(--peso-nombre)' }}
-          >
-            {nombre}
-          </text>
         </>
       ) : (
-        <CaraTarjeta
+        <FormaTarjeta
           situacion={situacion}
-          codigo={codigoVisible(electiva)}
-          lineasNombre={electiva.lineasNombre}
-          uc={electiva.uc}
           acento={colorNodo(electiva)}
           seleccionado={seleccionado}
         />
@@ -144,4 +127,43 @@ function NodoHueco({ nodo, electiva, situacion, atenuado, seleccionado, alAbrir,
   )
 }
 
+/**
+ * El texto de la casilla, en la capa de texto del plano: el de la electiva
+ * que lleva, o si esta vacia, lo unico que hay que saber: QUE va aqui.
+ * Antes decia ademas "elige una", y sobraba: el borde discontinuo ya dice
+ * que esta vacio y el mas ya dice que se agrega algo. Tres elementos diciendo
+ * lo mismo dejan la tarjeta cargada sin añadir un dato.
+ */
+function TextoCasillaSinMemo({ nodo, electiva, situacion }) {
+  if (electiva) {
+    return (
+      <TextoTarjeta
+        x={nodo.x}
+        y={nodo.y}
+        situacion={situacion}
+        codigo={codigoVisible(electiva)}
+        lineasNombre={electiva.lineasNombre}
+        uc={electiva.uc}
+      />
+    )
+  }
+  return (
+    <GrupoTexto x={nodo.x} y={nodo.y}>
+      <Texto
+        x={NODO.ancho / 2}
+        y={71}
+        ancla="medio"
+        style={{
+          fontSize: TEXTO.nombre,
+          color: 'var(--tinta-suave)',
+          fontWeight: 'var(--peso-nombre)',
+        }}
+      >
+        {nodo.nombre}
+      </Texto>
+    </GrupoTexto>
+  )
+}
+
+export const TextoCasilla = memo(TextoCasillaSinMemo)
 export default memo(NodoHueco)

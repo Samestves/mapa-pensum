@@ -87,14 +87,16 @@ function acotarVista(v, medida, anchoContenido, altoContenido) {
  * transform sobre un <g>, no tocando el viewBox: asi el fondo se queda
  * quieto y solo se mueve el contenido.
  *
- * `fichaAnclada` es una ref que dice si hay una ficha colocada al lado de su
- * tarjeta, que es lo que decide como se hacen los viajes de camara (ver
- * animarHacia).
+ * Ningun gesto repinta el mapa mientras dura. El arrastre, la rueda, el
+ * pellizco y los viajes de camara estiran la capa ya pintada en la GPU, y el
+ * mapa se pinta una vez al acabar (ver layout/vistaViva.js). Lo que tiene que
+ * ir pegado al mapa sin estar dentro de el -la ficha de escritorio- se
+ * engancha con `seguir` y se desplaza con la capa.
  *
  * `vistaInicial(medida)` da la vista con la que abre el mapa, o null para
  * abrirlo encajado entero (ver layout/camara.js).
  */
-export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vistaInicial) {
+export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   const contenedorRef = useRef(null)
   const [vista, setVista] = useState({ x: 0, y: 0, escala: 1 })
 
@@ -107,19 +109,27 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   const vistaRef = useRef(vista)
   const [medida, setMedida] = useState({ ancho: 0, alto: 0, arriba: 0 })
 
-  /* El pellizco en vivo, ver layout/vistaViva.js.
-     capaRef es el <svg> del contenido; pintadaRef, la vista con la que esta
-     pintado ahora mismo. Mientras los dedos se mueven, vistaRef se adelanta
-     y la diferencia entre las dos se aplica a la capa como transform CSS. */
+  /* La vista viva, ver layout/vistaViva.js.
+     capaRef es la capa del contenido; pintadaRef, la vista con la que esta
+     pintado ahora mismo. Mientras dura un gesto, vistaRef se adelanta y la
+     diferencia entre las dos se aplica a la capa como transform CSS. */
   const capaRef = useRef(null)
   const pintadaRef = useRef(vista)
-  /* Cuanto se pinta la capa por fuera de la ventana (ver MARGEN_CAPA). Solo
-     en tactil, que es donde la capa vive en su propia capa de GPU y estirarla
-     no cuesta nada; con raton no hay pellizco, y una capa mas grande solo
-     seria mas que pintar en cada cuadro. */
-  const [margen] = useState(() =>
-    window.matchMedia('(hover: none) and (pointer: coarse)').matches ? MARGEN_CAPA : 0,
-  )
+
+  /* Lo que va pegado a un punto del mapa sin estar dentro de la capa: cada
+     elemento con el punto del mapa al que sigue. Mientras la capa se estira,
+     se desplaza lo mismo que ese punto (con `translate`, que no pisa su
+     transform); al pintarse la vista nueva, React lo recoloca y el
+     desplazamiento vuelve a cero. No se escala: es una ficha, no parte del
+     dibujo. */
+  const seguidores = useRef(new Map())
+  const moverSeguidor = useCallback((el, punto) => {
+    const viva = vistaRef.current
+    const pintada = pintadaRef.current
+    const dx = viva.x - pintada.x + punto.x * (viva.escala - pintada.escala)
+    const dy = viva.y - pintada.y + punto.y * (viva.escala - pintada.escala)
+    el.style.translate = dx || dy ? `${dx}px ${dy}px` : ''
+  }, [])
 
   const estirarCapa = useCallback(() => {
     const capa = capaRef.current
@@ -128,11 +138,24 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     const pintada = pintadaRef.current
     if (mismaVista(viva, pintada)) {
       capa.style.transform = ''
-      return
+    } else {
+      const { k, x, y } = transformRelativo(viva, pintada)
+      capa.style.transform = `translate(${x}px, ${y}px) scale(${k})`
     }
-    const { k, x, y } = transformRelativo(viva, pintada)
-    capa.style.transform = `translate(${x}px, ${y}px) scale(${k})`
-  }, [])
+    for (const [el, punto] of seguidores.current) moverSeguidor(el, punto)
+  }, [moverSeguidor])
+
+  /* Un ref de React para enganchar un elemento al punto (x, y) del mapa. */
+  const seguir = useCallback(
+    (x, y) => (el) => {
+      if (!el) return
+      const punto = { x, y }
+      seguidores.current.set(el, punto)
+      moverSeguidor(el, punto)
+      return () => seguidores.current.delete(el)
+    },
+    [moverSeguidor],
+  )
 
   /* Cuando React pinta una vista nueva, la capa se reajusta en el mismo
      cuadro, antes de que se vea: si los dedos ya van por delante, queda
@@ -148,7 +171,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
      forma de dejar el mapa fuera de la pantalla. Ponerlo en cada gesto seria
      cuatro sitios donde acordarse.
 
-     `enVivo` lo pide solo el pellizco. Si estirar la capa basta, no se toca
+     `enVivo` lo piden los gestos. Si estirar la capa basta, no se toca
      React; si no -se destaparia un borde o ya se ve borroso-, se pinta de
      verdad ese cuadro y el gesto sigue estirando desde ahi. */
   const aplicarVista = useCallback(
@@ -164,7 +187,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
           anchoContenido,
           altoContenido,
           undefined,
-          margen,
+          MARGEN_CAPA,
         )
       ) {
         estirarCapa()
@@ -172,10 +195,10 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       }
       setVista(acotada)
     },
-    [medida, anchoContenido, altoContenido, margen, estirarCapa],
+    [medida, anchoContenido, altoContenido, estirarCapa],
   )
 
-  /* Al acabar el pellizco se pinta la vista a la que llegaron los dedos */
+  /* Al acabar un gesto se pinta la vista a la que llego */
   const asentarVista = useCallback(() => {
     if (!mismaVista(vistaRef.current, pintadaRef.current)) setVista(vistaRef.current)
   }, [])
@@ -359,12 +382,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
    * cuadro, y al alejarse para enseñar lo que desbloquea aprobar eso es
    * justo lo que se siente como lag. Asi que el mapa se pinta UNA vez, a una
    * vista que tenga dentro la salida y la llegada (ver vistaParaViaje), y el
-   * viaje entero es estirar esa capa en la GPU.
-   *
-   * Con una ficha anclada al lado de su tarjeta -escritorio- se sigue
-   * pintando cada cuadro: la ficha se coloca con la vista de React, y si
-   * esta no cambiara durante el viaje se quedaria atras y saltaria al final.
-   * En escritorio pintar cada cuadro sale barato.
+   * viaje entero es estirar esa capa en la GPU. Si no hay ninguna que sirva,
+   * se pinta cada cuadro, como antes.
    */
   const animarHacia = useCallback(
     (hasta, duracion) => {
@@ -372,9 +391,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       clearTimeout(redZoom.current)
       const desde = vistaRef.current
       const destino = acotarVista(hasta, medida, anchoContenido, altoContenido)
-      const base = fichaAnclada?.current
-        ? null
-        : vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido, margen)
+      const base = vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido, MARGEN_CAPA)
 
       if (base) {
         enViaje.current = true
@@ -415,7 +432,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
             anchoContenido,
             altoContenido,
             AUMENTO_VIAJE,
-            margen,
+            MARGEN_CAPA,
           )
           if (cubre) estirarCapa()
           else setVista(v)
@@ -449,17 +466,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
       animacion.current = requestAnimationFrame(paso)
       programarRed(duracion + 1000)
     },
-    [
-      medida,
-      anchoContenido,
-      altoContenido,
-      fichaAnclada,
-      margen,
-      estirarCapa,
-      asentarViaje,
-      aplicarVista,
-      marcarGesto,
-    ],
+    [medida, anchoContenido, altoContenido, estirarCapa, asentarViaje, aplicarVista, marcarGesto],
   )
 
   /**
@@ -527,26 +534,35 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
      un trackpad disparan mas eventos de rueda que fotogramas tiene la
      pantalla, y sin agrupar cada uno forzaba su propio ciclo de recalculo
      para un zoom que nadie llega a ver. Sumar el desplazamiento y aplicarlo
-     una vez da exactamente el mismo destino con una fraccion del trabajo. */
+     una vez da exactamente el mismo destino con una fraccion del trabajo.
+
+     Y en vivo, como el pellizco: la rueda estira la capa y el mapa se pinta
+     nitido cuando deja de girar. La rueda no avisa de cuando termina, asi
+     que eso es a los 150 ms del ultimo giro. Antes cada cuadro de rueda
+     repintaba el mapa entero a la escala nueva, y en un portatil eso era el
+     zoom a tirones. */
   useEffect(() => {
     const el = contenedorRef.current
     if (!el) return
 
     let acumulado = 0
     let cuadro = 0
+    let reposo = 0
     let puntero = { x: 0, y: 0 }
 
     const alRodar = (e) => {
       e.preventDefault()
       acumulado += e.deltaY
       puntero = { x: e.clientX, y: e.clientY }
+      clearTimeout(reposo)
+      reposo = setTimeout(asentarVista, 150)
       if (cuadro) return
       cuadro = requestAnimationFrame(() => {
         cuadro = 0
         const paso = acumulado
         acumulado = 0
         const { left, top } = cajaRef.current
-        zoomEn(Math.exp(-paso * 0.0015), puntero.x - left, puntero.y - top)
+        zoomEn(Math.exp(-paso * 0.0015), puntero.x - left, puntero.y - top, true)
       })
     }
 
@@ -554,8 +570,9 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     return () => {
       el.removeEventListener('wheel', alRodar)
       cancelAnimationFrame(cuadro)
+      clearTimeout(reposo)
     }
-  }, [zoomEn])
+  }, [zoomEn, asentarVista])
 
   // --- Arrastre y pellizco ----------------------------------------------
   // Se lleva la cuenta de los punteros activos: uno = mover, dos = pellizcar
@@ -749,7 +766,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
   return {
     contenedorRef,
     capaRef,
-    margen,
+    seguir,
     vista,
     medida,
     encajado,

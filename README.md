@@ -189,6 +189,30 @@ La diferencia de fondo no está en los números sino en qué son: antes eran seg
 </details>
 
 <details>
+<summary><b>El mapa se pinta por planos, como un motor de juego</b></summary>
+
+<br>
+
+Lo caro de un mapa en el navegador no es dibujarlo: es **volver a dibujarlo**. Así que cada gesto y cada efecto está pensado para no repintar nada mientras dura.
+
+- **La cámara estira lo ya pintado.** El mapa se pinta en una capa de la GPU un 40 % más grande que la pantalla por cada lado. Arrastrar, la rueda, el pellizco y los viajes de cámara solo cambian el `transform` de esa capa, y el mapa se pinta una vez, nítido, cuando el gesto acaba (`layout/vistaViva.js`). De lejos se ve un poco menos definido mientras te mueves, nunca con menos información.
+- **Planos separados.** Rótulos, base, luces y foco van cada uno en su propia capa (`components/PlanosGrafo.jsx`). La base solo se repinta cuando cambia tu avance. Las luces de la frontera, que son lo único que se anima solo, repintan su plano y nada más.
+- **El foco no toca las tarjetas.** Al señalar una materia, la base entera se apaga y se desenfoca como **una sola textura en la GPU**, y la cadena se dibuja nítida en el plano de encima (`layout/foco.js`). Antes eran ochenta filtros de desenfoque animados a la vez, uno por tarjeta, y cada tarjeta que cruzaba el ratón repintaba la pantalla entera, cabecera incluida.
+- **El texto del mapa es HTML, no SVG.** Este fue el hallazgo raro. Con un ratón o un trackpad real, cada evento de rueda hace que Chrome mire qué hay bajo el puntero, y eso le obliga a volver a maquetar el texto de un SVG cuya escala cambió: trescientos textos y el plano entero repintado en cada cuadro. El texto HTML no depende de la escala. Las formas siguen en SVG y el texto va encima, colocado sobre la misma línea base (`components/Texto.jsx`).
+
+Medido con la CPU frenada, antes y después:
+
+| | Antes | Ahora |
+|---|---|---|
+| Zoom con rueda en portátil (CPU ×4) | 23 cuadros perdidos, 409 ms maquetando | **0 perdidos, 0 ms** |
+| Pasar el ratón por el mapa (CPU ×4) | cuadros de 150 ms, hilo principal al 65 % | sin filtros por tarjeta ni re-render de la pantalla |
+| Pellizco en un teléfono de gama baja (CPU ×6) | peor cuadro 83–133 ms | **16,8 ms**, con todo el texto visible |
+
+`npm run rendimiento` repite esas medidas en Chrome sobre el build y **sale con código 1 si un gesto se pasa de su presupuesto**: veces que se repinta, milisegundos maquetando y de JavaScript. Es lo que evita que el mapa vuelva a ponerse lento sin que nada falle.
+
+</details>
+
+<details>
 <summary><b>El color sale del dato, no de una decisión por componente</b></summary>
 
 <br>
@@ -366,6 +390,7 @@ npm run dev
 | `npm run build` | Normaliza, valida, compila, genera la miniatura y prerenderiza |
 | `npm run preview` | Sirve el build ya compilado |
 | `npm run lint` | oxlint |
+| `npm run rendimiento` | Mide los gestos del mapa sobre el build y falla si alguno se pasa de presupuesto |
 | `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
 `src/data/carreras/` está generado y no se versiona: sale minificado y su diff sería una sola línea gigante.
@@ -447,7 +472,7 @@ Ninguna de las dos listas se lee al cargar el módulo sino en cada llamada, así
 
 ## Accesibilidad
 
-Navegación por teclado en los controles, `<title>` descriptivo en cada nodo del SVG, contraste AA verificado en ambos temas y `prefers-reduced-motion` respetado en todas las animaciones, incluidas las transiciones de página y el efecto 3D del selector.
+Navegación por teclado en los controles, nombre accesible (`aria-label`) en cada tarjeta del mapa, contraste AA verificado en ambos temas y `prefers-reduced-motion` respetado en todas las animaciones, incluidas las transiciones de página y el efecto 3D del selector.
 
 ## ¿Ves un dato mal?
 

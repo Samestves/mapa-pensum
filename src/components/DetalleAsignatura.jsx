@@ -324,6 +324,10 @@ function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, filo, sal
  * Al marcarla aprobada se aparta sola: el que decide eso es GrafoPensum, que
  * cierra la ficha y mueve el mapa para que se vea la luz llegar a lo que se
  * desbloquea. Aqui solo se avisa de que se pulso.
+ *
+ * `refSeguir` engancha la nubecita de escritorio al mapa: mientras un gesto
+ * mueve el mapa sin repintarlo, la desplaza con el (ver seguir en
+ * useVistaGrafo).
  */
 function DetalleAsignatura({
   nodo,
@@ -341,6 +345,7 @@ function DetalleAsignatura({
   alIrA,
   puedeIr,
   alTapar,
+  refSeguir,
   saliendo = false,
 }) {
   const esTelefono = useEsTelefono()
@@ -561,6 +566,7 @@ function DetalleAsignatura({
        El envoltorio lleva el sitio y la ficha lleva el recorte: el piquito
        asoma por fuera, y dentro de ella habria desaparecido recortado. */
     <div
+      ref={refSeguir}
       className={`menu-clase absolute top-0 left-0 z-30 ${saliendo ? 'ficha-saliendo pointer-events-none' : ''}`}
       style={{
         width: ancho,

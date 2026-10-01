@@ -400,37 +400,139 @@ body {
   animation-play-state: paused;
 }
 
-/* La capa del contenido del mapa, la que se estira durante el pellizco.
+/* La capa del contenido del mapa, la que se estira durante los gestos (ver
+   layout/vistaViva.js), y sus planos (ver PlanosGrafo).
 
    No atrapa el puntero ella misma, solo lo que tiene dibujado: asi el click
    en el hueco entre tarjetas llega a la rejilla de debajo, que es la que
-   cierra la seleccion.
+   cierra la seleccion. Y un plano de encima deja pasar el puntero por donde
+   no tiene nada hasta el de debajo.
 
-   will-change solo en tactil. Es lo que la sube a su propia capa de GPU de
-   antemano, para que el primer cuadro del pellizco no tenga que crearla; y
-   con ella, estirarla no vuelve a rasterizar nada. En escritorio no hace
-   falta -no hay pellizco- y una capa propia le quitaria al texto el
-   suavizado de subpixel de Windows. */
+   will-change la sube a su propia capa de GPU de antemano, en todos los
+   aparatos: es lo que hace que estirarla no vuelva a rasterizar nada. Con el
+   raton se pierde el suavizado de subpixel del texto de Windows, que en un
+   SVG que se escala y se mueve no se notaba; lo que si se notaba era el
+   mapa repintandose entero en cada cuadro de rueda.
+
+   geometricPrecision porque el texto del mapa se maqueta a su tamaño y se
+   pinta escalado: sin el, Chrome ajusta cada letra a la rejilla de pixeles
+   de ese tamaño, y escalada se ve deforme o baila al acercar. */
 .capa-grafo {
   pointer-events: none;
   transform-origin: 0 0;
+  text-rendering: geometricPrecision;
+  will-change: transform;
 }
 
-.capa-grafo > svg > g {
+.plano,
+.plano > svg {
+  position: absolute;
+  inset: 0;
+}
+
+.plano > svg > g {
   pointer-events: auto;
 }
 
-/* Nivel de detalle (ver nivelDeDetalle en layout/vistaViva.js): de lejos el
-   texto que ya no se lee no se pinta. display:none y no opacidad: lo que se
-   busca es que el navegador ni lo maquete ni lo rasterice. */
-.capa-grafo svg[data-detalle='medio'] .texto-menor,
-.capa-grafo svg[data-detalle='silueta'] text:not(.texto-mayor) {
-  display: none;
+/* Las luces no se pulsan: el click pasa a la tarjeta o al cable de debajo */
+.plano-luces > svg > g {
+  pointer-events: none;
 }
 
-@media (hover: none) and (pointer: coarse) {
-  .capa-grafo {
-    will-change: transform;
+/* El texto del mapa: HTML por encima de las formas, con el mismo pan y zoom
+   (ver Texto). No atrapa el puntero: lo pulsable es la tarjeta del SVG de
+   debajo. text-size-adjust para que el ajuste de tamaño de letra del
+   telefono no lo agrande y se salga de su tarjeta, que en el SVG no pasaba.
+
+   Nada va posicionado: cada grupo y cada texto cae en la unica celda de la
+   rejilla de su padre y se corre con margenes. Una celda por padre, y no un
+   position absolute por texto, que para Chrome es una capa de pintado cada
+   uno. */
+.textos-plano {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.textos-plano,
+.grupo-texto {
+  display: grid;
+}
+
+.textos-plano > *,
+.grupo-texto > * {
+  grid-area: 1 / 1;
+  justify-self: start;
+  align-self: start;
+}
+
+/* Cada texto apoya su linea base en el punto que le dan: un flex alineado
+   por la linea base cuyo primer hijo es este ::before vacio, que la tiene en
+   su borde de abajo. 40 px es ALTO_SOBRE_BASE en Texto.jsx. */
+.texto-mapa {
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.texto-mapa::before {
+  content: '';
+  height: 40px;
+}
+
+/* Cada plano que cambia por su cuenta, en su propia capa de GPU: lo que se
+   repinta en uno no obliga a rasterizar los otros. Los rotulos no la
+   necesitan: casi nunca cambian y se pintan en la de la capa.
+
+   La base y las luces se apagan ENTERAS con el foco puesto: opacidad y
+   desenfoque sobre la textura ya pintada, que la GPU resuelve sin tocar el
+   SVG y con una transicion que corre en el compositor. Los valores se ajustan
+   en .vista-carrera (--opacidad-foco, --filtro-foco). */
+.plano-base,
+.plano-luces,
+.plano-foco {
+  will-change: transform;
+}
+
+.plano-base,
+.plano-luces {
+  transition:
+    opacity 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    filter 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.plano-base[data-foco] {
+  opacity: var(--opacidad-foco);
+  filter: var(--filtro-foco);
+}
+
+/* Las luces de la frontera, con el foco puesto, se van del todo: las de la
+   cadena las dibuja el plano de foco, y las demas, apagadas y quietas, no
+   dirian nada. Paradas, ademas, dejan de repintar su plano. */
+.plano-luces[data-foco] {
+  opacity: 0;
+}
+
+.plano-luces[data-foco] .flujo {
+  animation-play-state: paused;
+}
+
+/* Lo que sale del foco se apaga en su propio plano, entero, sobre su copia
+   apagada de la base (ver salidaDeFoco en layout/foco.js): una animacion de
+   opacidad de una capa, que corre en el compositor sin repintar nada. La
+   misma duracion y la misma curva que la base: DURACION_FOCO en PlanosGrafo. */
+.foco-saliendo {
+  animation: foco-sale 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes foco-sale {
+  to {
+    opacity: 0;
   }
 }
 
@@ -451,13 +553,6 @@ body {
     opacity: 1;
     translate: 0 0;
   }
-}
-
-/* Durante un viaje de camara la capa se estira en la GPU en todos los
-   aparatos, tambien con raton: sin capa propia, cambiarle el transform
-   obligaria a repintarla en cada cuadro, que es lo que se quiere evitar. */
-.capa-grafo.capa-viajando {
-  will-change: transform;
 }
 
 /* Y nada de lo que hay dentro se mueve mientras tanto: cualquier cosa que
@@ -2154,36 +2249,40 @@ body {
 }
 
 /* ---- Foco del mapa ------------------------------------------------------
-   Al señalar una materia, lo que no esta en su cadena se aparta: baja de
-   opacidad y se desenfoca, como el fondo de una foto con poca profundidad de
-   campo. El desenfoque hace que lo atenuado se lea como "lejos" y no como
-   "apagado", y por eso la opacidad sube un poco respecto a la del telefono:
-   a 0,14 el desenfoque ya no se veria.
+   Al señalar una materia, lo que no esta en su cadena se aparta: el plano
+   base del mapa baja de opacidad y, con raton, se desenfoca, como el fondo de
+   una foto con poca profundidad de campo. El desenfoque hace que lo apagado
+   se lea como "lejos" y no como "apagado", y por eso con el la opacidad sube
+   un poco: a 0,14 ya no se veria.
 
-   Solo con raton. Un dedo no señala -no hay hover-, y en el telefono el
-   atenuado sale de tocar una materia, donde el desenfoque de decenas de
-   tarjetas cuesta bateria y no aporta lo que en escritorio. Alli queda el
-   atenuado de siempre.
+   Se aplica al plano entero y no tarjeta por tarjeta (ver .plano-base), asi
+   que el desenfoque es una sola pasada de la GPU sobre una textura ya
+   pintada, cueste lo mismo con diez tarjetas que con cien. Por tarjeta eran
+   ochenta filtros animados a la vez.
 
-   Que lo pague poco: el desenfoque es corto -2 px-, no se anima con el mapa
-   en movimiento -señalar se ignora mientras se arrastra- y las tarjetas que
-   lo llevan no cambian de sitio. Los dos valores se ajustan aqui:
-   --desenfoque-foco es el radio y --opacidad-foco lo que queda visible. */
+   En el telefono se queda en el apagado de siempre: alli el foco sale de
+   tocar una materia, con el mapa casi siempre acercado, y el desenfoque no
+   aporta lo que en escritorio. Los valores se ajustan aqui. */
+.vista-carrera {
+  --opacidad-foco: 0.14;
+  --filtro-foco: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .vista-carrera {
-    --desenfoque-foco: 2px;
     --opacidad-foco: 0.34;
-  }
-
-  .grupo-nodo[data-atenuado] {
-    opacity: var(--opacidad-foco);
-    filter: blur(var(--desenfoque-foco));
+    --filtro-foco: blur(2px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .grupo-nodo {
-    transition: none !important;
+  .plano-base,
+  .plano-luces {
+    transition: none;
+  }
+
+  .foco-saliendo {
+    animation: none;
   }
 }
 
