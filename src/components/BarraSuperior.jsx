@@ -7,7 +7,7 @@ import { BotonAvisos } from './AvisosCarrera'
    vista -el mismo idioma que la capsula inferior del telefono-.
 
    Dos formas, cada una para lo que es:
-   - CIRCULO: un solo gesto -ir al inicio, el avance, los avisos-.
+   - CIRCULO: un solo gesto -ir al inicio, buscar, el avance, los avisos-.
    - CAPSULA: algo con contenido -el titulo, el mando de vistas-.
    Todas miden lo mismo de alto -40 px en telefono, 44 en escritorio, el
    minimo tactil- para que la fila se lea como una sola linea. */
@@ -29,12 +29,12 @@ const ALTO_FILA = 44
  * - Izquierda: DONDE ESTAS. Volver y el nombre.
  * - Centro: COMO TE MUEVES. El mando de vistas, que es la navegacion
  *   principal y por eso va en el eje, como el control segmentado de la barra
- *   de herramientas de macOS. Al final de la misma isla, tras una raya, la
- *   lupa: buscar es la otra forma de moverse por la carrera. Una celda mas, y
- *   no un campo de texto que pida atencion para algo que se usa de vez en
- *   cuando; abre la paleta, que es donde se escribe. En el telefono no esta:
- *   alli la paleta no tiene puerta por decision propia, recorrer un pensum se
- *   hace con el dedo.
+ *   de herramientas de macOS. Delante, en su propio circulo, la lupa:
+ *   buscar es la otra forma de moverse por la carrera, y lo primero que se
+ *   lee de izquierda a derecha. Un circulo y no un campo de texto que pida
+ *   atencion para algo que se usa de vez en cuando; abre la paleta, que es
+ *   donde se escribe. En el telefono no esta: alli la paleta no tiene puerta
+ *   por decision propia, recorrer un pensum se hace con el dedo.
  * - Derecha: COMO VAS. La isla de avance, la misma del telefono: el borde es
  *   la barra de progreso y el porcentaje va dentro. El tema ya no tiene boton
  *   aqui: vive en el panel que abre esa isla, como en el telefono vive en su
@@ -97,17 +97,20 @@ function BarraSuperior({
         </div>
       </div>
 
-      <SelectorVista vista={vista} alCambiar={alCambiarVista}>
+      <div className="flex items-center gap-2">
+        {/* Sin el crecer al pasar el raton de los otros circulos: solo se
+            enciende el color, y el reflejo del cristal, como el resto. */}
         <button
           type="button"
           onClick={alBuscar}
           aria-label="Buscar materias y acciones"
           aria-keyshortcuts="Meta+K Control+K"
-          className="grid h-full w-9 shrink-0 place-items-center rounded-full text-tinta-tenue transition-[color,background-color,transform] duration-200 hover:bg-tinta/[0.07] hover:text-tinta active:scale-[0.95]"
+          className={`${CRISTAL} hidden size-11 place-items-center rounded-full text-tinta-suave transition-colors duration-200 hover:text-tinta active:scale-[0.94] md:grid`}
         >
           <IconoBuscar size={17} />
         </button>
-      </SelectorVista>
+        <SelectorVista vista={vista} alCambiar={alCambiarVista} />
+      </div>
 
       <div className="flex shrink-0 items-center justify-end gap-2">
         {hayAvisos && (
