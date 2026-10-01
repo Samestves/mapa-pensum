@@ -368,6 +368,21 @@ body {
     color 200ms ease;
 }
 
+/* El cambio de tema, donde hay View Transitions: la pantalla entera se funde
+   de una foto a otra (ver useTema). Mientras dura, ninguna pieza anima su
+   color por su cuenta, o la foto de "despues" saldria a medio camino. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-cambiando-tema] *,
+[data-cambiando-tema] *::before,
+[data-cambiando-tema] *::after {
+  transition: none !important;
+}
+
 /* El piquito de las nubecitas es un SVG, y un SVG no se pinta con background
    ni con border sino con fill y stroke: 'transicion-tema' no le llega. Sin
    esta regla el panel se funde de un tema a otro en 200 ms y su pico salta de
@@ -1441,22 +1456,6 @@ body {
   animation: entrar-vista 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* El relevo de la silueta por el mapa, anidado dentro de la entrada de ruta.
-   Corta y de sola opacidad: las dos se multiplican, y sumarle escala encima
-   de la escala de fuera haria que el mapa entrara torcido. */
-@keyframes entrar-mapa {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.entrada-mapa {
-  animation: entrar-mapa 280ms ease-out;
-}
-
 /* Cambiar de vista -mapa, lista, horario- funde la que entra. Sin esto el
    relevo era un corte seco: la vista nueva aparecia de golpe y, en el caso
    del mapa, encima de un fotograma en el que todavia no se habia encajado.
@@ -1947,29 +1946,63 @@ body {
   }
 }
 
-/* Velo bajo las islas en lista y horario. La vista pasa por detras de ellas al
-   desplazarse, y sin nada el texto se cruza con los botones. Es un degradado
-   que empieza casi opaco y se funde en nada: las islas siguen flotando sobre
-   la vista -se ve que esta ahi-, solo que atenuada. Sin blur: es un degradado
-   y cuesta lo mismo que un color. */
-.velo-cabecera {
-  --velo: var(--lienzo);
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  z-index: 30;
-  height: calc(var(--reserva-cabecera) + 14px);
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklab, var(--velo) 94%, transparent),
-    color-mix(in oklab, var(--velo) 72%, transparent) 50%,
-    transparent
-  );
+/* Lo que una fila pegada arriba deja libre en el TELEFONO para las islas que
+   flotan en su misma linea: el boton de volver a la izquierda y, si la carrera
+   los tiene, los avisos a la derecha (12 de margen + 40 de boton + 8 de
+   aire). En escritorio las islas van por encima de las filas y no comparten
+   linea con ellas, asi que solo queda el margen de siempre.
+
+   --margen-seccion es donde queda el titulo de una seccion al saltar a ella:
+   por debajo de las islas y de la fila de filtros pegada, no tapado. */
+.vista-carrera {
+  --hueco-volver: 1rem;
+  --hueco-avisos: 1rem;
+  --margen-seccion: calc(var(--reserva-cabecera) + 4.75rem);
 }
 
-.vista-carrera[data-vista='horario'] .velo-cabecera {
-  --velo: var(--panel-suave);
+@media (max-width: 767.98px) {
+  .vista-carrera {
+    --hueco-volver: 60px;
+    --margen-seccion: 5.25rem;
+  }
+
+  .vista-carrera[data-con-avisos='true'] {
+    --hueco-avisos: 60px;
+  }
+}
+
+/* El borde de arriba de la lista. La lista pasa por detras de las islas al
+   desplazarse, y sin nada el texto se cruzaba con los botones y asomaba entre
+   las islas y la fila de filtros. Es una franja del color del lienzo -no se
+   ve como barra, es el mismo fondo- que se funde en 16 px por abajo: lo que
+   sube se desvanece antes de llegar a las islas.
+
+   Va DENTRO del contenedor que se desplaza, pegada y sin alto propio en el
+   flujo, para que la fila de filtros, que es posterior y esta por encima,
+   la tape al pegarse. Sin blur: un degradado cuesta lo que un color. */
+.velo-lista {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: calc(var(--reserva-cabecera) + 16px);
+  margin-bottom: calc(-1 * (var(--reserva-cabecera) + 16px));
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--lienzo) var(--reserva-cabecera), transparent);
+}
+
+/* Los filtros de la lista. En el telefono, al pegarse arriba, se apartan para
+   compartir linea con el boton de volver y los avisos; en su sitio dentro de
+   la lista van alineados con el resto del contenido. */
+.fila-filtros-chips {
+  padding-inline: 1rem;
+  transition: padding 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (max-width: 767.98px) {
+  .fila-filtros[data-pegada='true'] .fila-filtros-chips {
+    padding-left: var(--hueco-volver);
+    padding-right: var(--hueco-avisos);
+  }
 }
 
 /* La paleta del cristal. Todo lo que cambia entre temas vive aqui como
@@ -2242,11 +2275,19 @@ body {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
 }
 
-/* La pieza que marca el tema elegido en la hoja de avance. */
+/* La pieza que marca el tema elegido en la hoja de avance. Lleva nombre de
+   transicion propio: asi, mientras la pantalla se funde de un tema al otro,
+   ella no se funde sino que se desliza a su sitio nuevo. */
 .lente-tema {
+  view-transition-name: lente-tema;
   background: color-mix(in oklab, var(--tinta) 14%, var(--panel));
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
   transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-group(lente-tema) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 [data-tema='claro'] .lente-tema {
@@ -2310,26 +2351,8 @@ body {
   }
 }
 
-@keyframes entrar-cajon {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.hoja-avance,
 .hoja-ficha {
   animation: subir-hoja 320ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@media (min-width: 48rem) {
-  .hoja-avance {
-    animation: entrar-cajon 320ms cubic-bezier(0.32, 0.72, 0, 1);
-  }
 }
 
 /* ---- Horario -----------------------------------------------------------
@@ -2523,7 +2546,6 @@ body {
   .surgir,
   .entrada-vista,
   .salida-vista,
-  .entrada-mapa,
   .entrada-panel,
   .entra-dia-derecha,
   .entra-dia-izquierda,
@@ -2555,6 +2577,7 @@ body {
   .selector-lente,
   .lente-tema,
   .arco-avance,
+  .fila-filtros-chips,
   .hoja-inferior,
   .velo-hoja,
   .tarjeta-carrera,
@@ -2572,7 +2595,6 @@ body {
     opacity: 1;
   }
 
-  .hoja-avance,
   .hoja-ficha {
     animation: none;
   }

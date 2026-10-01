@@ -153,15 +153,13 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
        contenido, esta puesta desde el primer momento y no hay salto que
        amortiguar. La cabecera de dias se queda pegada arriba mientras se baja. */
     <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
-      {/* El hueco de las islas es un elemento del contenido y no un padding del
-          contenedor: el offset de un sticky se mide desde DENTRO del padding,
-          asi que con padding la cabecera de dias se quedaba pegada a 64 + 64
-          px del borde en vez de a 64. */}
-      <div aria-hidden="true" className="h-[var(--reserva-cabecera)]" />
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
-          las clases pasen por debajo sin transparentarse. */}
+          las clases pasen por debajo sin transparentarse. Llega hasta el
+          borde de arriba: su franja superior es el sitio de las islas, que
+          flotan sobre ella, y asi ninguna clase asoma entre las islas y los
+          dias al bajar. */}
       <div
-        className={`transicion-tema sticky top-[var(--reserva-cabecera)] z-20 flex border-r border-b ${LINEA} bg-panel-suave`}
+        className={`transicion-tema sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave pt-[var(--reserva-cabecera)]`}
       >
         <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
         {DIAS.map((dia) => (

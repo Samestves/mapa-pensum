@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   ABRE,
   CIERRA,
@@ -131,33 +130,27 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
 
   return (
     <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-      {/* El hueco de las islas es un elemento del contenido: la vista ocupa
-          la pantalla entera y el horario pasa por detras de ellas al bajar. */}
-      <div aria-hidden="true" className="h-[var(--reserva-cabecera)]" />
-
       {/* Los cinco dias siempre a la vista, no solo el actual: enseñar donde
           estas Y a donde puedes ir es lo que convierte el deslizamiento en
           algo que se descubre en vez de adivinarse. El punto marca los dias
-          que tienen clase, para saber si vale la pena ir sin ir. */}
-      <div
-        className={`transicion-tema sticky top-[var(--reserva-cabecera)] z-20 flex items-center gap-1 border-b ${LINEA} bg-panel-suave px-2 py-2`}
-      >
-        <button
-          type="button"
-          onClick={() => irA(dia - 1)}
-          disabled={dia === 0}
-          aria-label="Día anterior"
-          className="grid size-8 shrink-0 place-items-center rounded-lg text-tinta-tenue transition-colors hover:text-tinta disabled:opacity-25"
-        >
-          <ChevronLeft size={17} />
-        </button>
+          que tienen clase, para saber si vale la pena ir sin ir.
 
+          Es la primera fila de la pantalla y comparte linea con las islas:
+          el boton de volver a la izquierda y, si los hay, los avisos a la
+          derecha. Por eso deja sus huecos y mide lo mismo que la cabecera.
+          Sin flechas de dia anterior y siguiente: los cinco dias se tocan
+          directamente y se pasa de uno a otro deslizando, y una flecha "<"
+          pegada a la del boton de volver se leia como dos botones de atras. */}
+      <div
+        className={`transicion-tema sticky top-0 z-20 flex h-[var(--reserva-cabecera)] items-center gap-1 border-b ${LINEA} bg-panel-suave pt-1 pr-[var(--hueco-avisos)] pl-[var(--hueco-volver)]`}
+      >
         {DIAS.map((nombre, i) => (
           <button
             key={nombre}
             type="button"
             onClick={() => irA(i)}
             aria-current={i === dia ? 'true' : undefined}
+            aria-label={nombre}
             className={`flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase transition-colors ${
               i === dia ? 'bg-panel text-tinta shadow-sm' : 'text-tinta-tenue'
             }`}
@@ -171,16 +164,6 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
             />
           </button>
         ))}
-
-        <button
-          type="button"
-          onClick={() => irA(dia + 1)}
-          disabled={dia === DIAS.length - 1}
-          aria-label="Día siguiente"
-          className="grid size-8 shrink-0 place-items-center rounded-lg text-tinta-tenue transition-colors hover:text-tinta disabled:opacity-25"
-        >
-          <ChevronRight size={17} />
-        </button>
       </div>
 
       {/* pan-y reparte el gesto: lo vertical lo desplaza el navegador, que lo

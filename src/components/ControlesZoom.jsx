@@ -1,4 +1,4 @@
-import { IconoEncajar, IconoFrente, IconoMas, IconoMenos } from './IconosSF'
+import { IconoEncajar, IconoMas, IconoMenos } from './IconosSF'
 
 /* Las tres teclas comparten una isla de cristal, como el grupo de la
    cabecera: una pieza con zonas y no tres botones sueltos. Cada una responde
@@ -21,8 +21,9 @@ function BotonDock({ icono: Icono, titulo, alPulsar }) {
 }
 
 /**
- * Dock de zoom: acercar, alejar y encajar en pantalla. Va fijo abajo a la
- * derecha del lienzo, en una capsula vertical de cristal.
+ * Dock de zoom de ESCRITORIO: acercar, alejar y encajar en pantalla. Va fijo
+ * abajo a la derecha del lienzo, en una capsula vertical de cristal. En el
+ * telefono no sale: alli el zoom es el pellizco y el doble toque.
  *
  * Se atenua cuando el usuario lleva un par de segundos quieto y vuelve entero
  * en cuanto toca el mapa. NO desaparece del todo a proposito: un control que
@@ -34,24 +35,17 @@ function BotonDock({ icono: Icono, titulo, alPulsar }) {
  * despierta y funciona a la primera. Perder el primer click seria peor que
  * no atenuarlo.
  */
-/* El tercer boton, segun lo que va a hacer: ver la carrera entera, o
-   -en el telefono, cuando ya la estas viendo entera- volver a tu semestre. */
-const ENCAJE = {
-  todo: { icono: IconoEncajar, titulo: 'Encajar en pantalla' },
-  frente: { icono: IconoFrente, titulo: 'Volver a tu semestre' },
-}
-
-export default function ControlesZoom({ acercar, alejar, encajar, encaje = 'todo', atenuado }) {
+export default function ControlesZoom({ acercar, alejar, encajar, atenuado }) {
   return (
     <div
       data-atenuado={atenuado}
-      className="dock-lienzo barra-cristal absolute right-4 bottom-[calc(var(--reserva-barra)+1rem)] z-20 flex flex-col items-center gap-px rounded-full p-1"
+      className="dock-lienzo barra-cristal absolute right-4 bottom-4 z-20 flex flex-col items-center gap-px rounded-full p-1"
     >
       <BotonDock icono={IconoMas} titulo="Acercar" alPulsar={acercar} />
       <span aria-hidden="true" className="h-px w-4 shrink-0 rounded-full bg-tinta/15" />
       <BotonDock icono={IconoMenos} titulo="Alejar" alPulsar={alejar} />
       <span aria-hidden="true" className="h-px w-4 shrink-0 rounded-full bg-tinta/15" />
-      <BotonDock icono={ENCAJE[encaje].icono} titulo={ENCAJE[encaje].titulo} alPulsar={encajar} />
+      <BotonDock icono={IconoEncajar} titulo="Encajar en pantalla" alPulsar={encajar} />
     </div>
   )
 }

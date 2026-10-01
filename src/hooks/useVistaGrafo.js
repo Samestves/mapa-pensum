@@ -754,8 +754,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     refEnGesto,
     huboMovimiento,
     encajar: () => irDeGolpe(vistaEncajada()),
-    vistaEncajada,
-    irDeGolpe,
     acercar: () => zoomAlCentro(ZOOM.paso),
     alejar: () => zoomAlCentro(1 / ZOOM.paso),
     mostrar,

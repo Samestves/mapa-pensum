@@ -7,8 +7,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * tambien 'despertar', para que quien mueve el mapa pueda avisar sin que
  * este hook tenga que escuchar eventos del documento entero: quien sabe que
  * cuenta como actividad es el lienzo, no un temporizador global.
+ *
+ * Con `activo` en false no arranca el reloj: donde no hay dock que apagar
+ * -el telefono- no hay por que repintar el mapa cada dos segundos.
  */
-export function useInactividad(espera = 2000) {
+export function useInactividad(espera = 2000, activo = true) {
   const [quieto, setQuieto] = useState(false)
   const reloj = useRef(null)
 
@@ -20,9 +23,10 @@ export function useInactividad(espera = 2000) {
 
   // Arranca contando: si nadie toca nada, el dock se apaga solo
   useEffect(() => {
+    if (!activo) return
     despertar()
     return () => clearTimeout(reloj.current)
-  }, [despertar])
+  }, [despertar, activo])
 
   return { quieto, despertar }
 }

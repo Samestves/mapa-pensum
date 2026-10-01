@@ -95,8 +95,6 @@ function GrafoPensum({
     refEnGesto,
     huboMovimiento,
     encajar,
-    vistaEncajada,
-    irDeGolpe,
     acercar,
     alejar,
     mostrar,
@@ -110,19 +108,11 @@ function GrafoPensum({
     return () => clearTimeout(reloj)
   }, [clave, vista, medida, encajado])
 
-  /* En el telefono el boton de encajar va y viene: de donde estes a la
-     carrera entera, y de la carrera entera a tu semestre. Solo "ver todo"
-     dejaba el mapa ilegible y habia que volver a acercarse a mano. */
-  const escalaTodo = vistaEncajada()?.escala
-  const enTodo =
-    medida.ancho < 768 && escalaTodo != null && Math.abs(vista.escala - escalaTodo) < 0.005
-  const alternarEncaje = useCallback(() => {
-    if (medida.ancho >= 768) return encajar()
-    irDeGolpe(enTodo ? vistaDelFrente(medida) : vistaEncajada())
-  }, [medida, encajar, enTodo, irDeGolpe, vistaDelFrente, vistaEncajada])
-
-  // El dock se apaga si nadie toca el mapa en dos segundos
-  const { quieto, despertar } = useInactividad(2000)
+  /* El dock de zoom solo existe en escritorio: en el telefono se acerca con
+     el pellizco y el doble toque, como cualquier mapa, y tres botones
+     flotando sobre las tarjetas solo quitaban sitio. Se apaga si nadie toca
+     el mapa en dos segundos; en el telefono ni siquiera cuenta. */
+  const { quieto, despertar } = useInactividad(2000, !esTelefono)
 
   const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
@@ -396,9 +386,9 @@ function GrafoPensum({
         className={`absolute inset-0 select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{ touchAction: 'none' }}
         {...controlesArrastre}
-        onPointerMoveCapture={despertar}
-        onPointerDownCapture={despertar}
-        onWheelCapture={despertar}
+        onPointerMoveCapture={esTelefono ? undefined : despertar}
+        onPointerDownCapture={esTelefono ? undefined : despertar}
+        onWheelCapture={esTelefono ? undefined : despertar}
       >
         {/* Dos <svg> y no uno: la rejilla del fondo se queda quieta, y el
             contenido va en su propia capa para poder estirarla entera
@@ -511,13 +501,9 @@ function GrafoPensum({
         />
       ))}
 
-      <ControlesZoom
-        acercar={acercar}
-        alejar={alejar}
-        encajar={alternarEncaje}
-        encaje={enTodo ? 'frente' : 'todo'}
-        atenuado={quieto}
-      />
+      {!esTelefono && (
+        <ControlesZoom acercar={acercar} alejar={alejar} encajar={encajar} atenuado={quieto} />
+      )}
     </div>
   )
 }

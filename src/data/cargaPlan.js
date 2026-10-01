@@ -4,7 +4,7 @@ const CLAVE = 'mapa-pensum:uc-semestre'
 
 /* La carga por defecto: dieciseis UC, lo que inscribe un estudiante regular
    de la UDO en un semestre sin sobrecarga. */
-export const UC_POR_DEFECTO = 16
+const UC_POR_DEFECTO = 16
 
 /**
  * Cuantas UC por semestre quiere llevar el estudiante.

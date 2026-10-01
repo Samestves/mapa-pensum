@@ -288,7 +288,7 @@ function VistaCarrera({ carrera, alVolver }) {
     <div
       className="vista-carrera relative flex h-full flex-col overflow-hidden"
       style={tonos}
-      data-vista={vista}
+      data-con-avisos={(carrera.avisos?.length ?? 0) > 0}
     >
       {/* Las islas flotan sobre la vista: este envoltorio no ocupa sitio ni
           captura el puntero, solo lo hacen las islas que lleva dentro. */}
@@ -308,11 +308,6 @@ function VistaCarrera({ carrera, alVolver }) {
           alVolver={alVolver}
         />
       </div>
-
-      {/* Lista y horario pasan por detras de las islas. El velo las aparta
-          del texto sin ponerles un fondo: es un degradado que se funde, no una
-          franja. En el mapa no hay velo, el mapa ES el fondo. */}
-      {vista !== 'mapa' && <div className="velo-cabecera" aria-hidden="true" />}
 
       <PaletaComandos
         abierta={paletaAbierta}
