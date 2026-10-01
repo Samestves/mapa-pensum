@@ -9,6 +9,7 @@ import {
   transformRelativo,
   vistaParaViaje,
 } from '../layout/vistaViva'
+import { holguraDe } from '../layout/mantenerRuta'
 
 const MARGEN_ENCAJE = 28
 /* Lo que tarda el mapa en apartarse para enseñar algo, como lo que se
@@ -682,8 +683,11 @@ export function useVistaGrafo(anchoContenido, altoContenido, fichaAnclada, vista
     const dy = e.clientY - inicio.y
 
     // Solo a partir del umbral esto es un arrastre. Ahi si se captura el
-    // puntero, para no perderlo si el cursor se sale del lienzo.
-    if (!inicio.capturado && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+    // puntero, para no perderlo si el cursor se sale del lienzo. Con el dedo
+    // el umbral es mas ancho: un dedo apoyado tiembla, y con 3 px mantenerlo
+    // en una tarjeta movia el mapa en vez de cargar su ruta (ver
+    // layout/mantenerRuta.js).
+    if (!inicio.capturado && Math.hypot(dx, dy) > holguraDe(e.pointerType)) {
       inicio.capturado = true
       huboMovimiento.current = true
       e.currentTarget.setPointerCapture(e.pointerId)

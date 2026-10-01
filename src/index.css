@@ -562,6 +562,42 @@ body {
   animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 1000ms both;
 }
 
+/* ---- Mantener una tarjeta en el telefono (ContornoCarga) ----------------
+
+   Una linea recorre el borde de la tarjeta mientras el dedo se queda quieto:
+   asoma a los --espera ms -un toque normal termina antes y no ve nada- y da
+   la vuelta en --carga ms. Al cerrarse se fija la ruta, y la linea se apaga
+   en --apagado ms mientras las demas tarjetas se atenuan. Los tres tiempos
+   los pone ContornoCarga desde layout/mantenerRuta.js, que es de donde los
+   toma tambien el reloj que fija la ruta.
+
+   La curva arranca suave y llega firme: se lee como algo que se carga, no
+   como una barra que corre a velocidad fija. */
+.contorno-carga {
+  pointer-events: none;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: cargar-contorno var(--carga) cubic-bezier(0.45, 0, 0.25, 1) var(--espera) forwards;
+}
+
+.contorno-carga.hecha {
+  stroke-dashoffset: 0;
+  animation: apagar-contorno var(--apagado) cubic-bezier(0.22, 0.61, 0.2, 1) forwards;
+}
+
+@keyframes cargar-contorno {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes apagar-contorno {
+  to {
+    opacity: 0;
+  }
+}
+
 /* ---- El aviso de lo que se desbloqueo (AvisoRecogida) -------------------
 
    Todo va encadenado a la luz del cable, que sale a los 380 ms y llega hacia
@@ -2419,6 +2455,7 @@ body {
   .trazar,
   .destello,
   .anillo-cambio,
+  .contorno-carga,
   .aviso-recogida,
   .recogida-saliendo,
   .icono-asentado,

@@ -20,7 +20,9 @@ import CaraTarjeta from './CaraTarjeta'
  * pellizco caia casi siempre sobre una tarjeta: su cadena se encendia, el
  * resto del mapa se atenuaba y al llegar el segundo dedo todo volvia. Ese ida
  * y vuelta era el parpadeo de las tarjetas al alejar. Con el dedo, la cadena
- * la enciende el toque -que abre la ficha y selecciona-, no el roce.
+ * se pide manteniendolo quieto medio segundo, y se queda puesta aunque el
+ * mapa se mueva (ver layout/mantenerRuta.js). data-codigo es como ese gesto
+ * sabe sobre que tarjeta se mantiene.
  */
 function NodoAsignatura({
   nodo,
@@ -57,6 +59,7 @@ function NodoAsignatura({
     <g
       role="button"
       aria-label={etiqueta}
+      data-codigo={nodo.codigo}
       transform={`translate(${x}, ${y})`}
       opacity={atenuado ? 0.14 : 1}
       data-atenuado={atenuado ? '' : undefined}

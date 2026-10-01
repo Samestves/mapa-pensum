@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { TRAMO } from '../layout/situacion'
-import { colorNodo } from '../theme/areas'
+import { avivar, colorNodo } from '../theme/areas'
 
 /**
  * Cuanto se enciende un cable segun lo que dice. El COLOR lo pone el area de
@@ -14,9 +14,6 @@ const FUERZA = {
   [TRAMO.PROXIMA]: { opacidad: 0.32, grosor: 1.25 },
   [TRAMO.LEJANA]: { opacidad: 0.12, grosor: 1 },
 }
-
-/* Una luz aclarada hacia --flujo-luz: el blanco en oscuro, la tinta en claro */
-const avivar = (color) => `color-mix(in oklab, var(--flujo-luz) var(--flujo-mezcla), ${color})`
 
 /* El mismo color con el tono girado en OKLCH, conservando luz y croma. Girar
    en OKLCH y no en HSL es lo que hace que un verde girado 50 grados salga

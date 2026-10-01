@@ -2,9 +2,11 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import { useEsTelefono } from '../hooks/useEsTelefono'
+import { useMantenerRuta } from '../hooks/useMantenerRuta'
 import ContenidoGrafo from './ContenidoGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
+import ContornoCarga from './ContornoCarga'
 import AvisoRecogida from './AvisoRecogida'
 import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
@@ -15,6 +17,22 @@ import { nivelDeDetalle } from '../layout/vistaViva'
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
 const SIN_FRANJA = []
+
+/* Dos juegos de manejadores de puntero sobre el mismo elemento: el lienzo
+   lleva el arrastre del mapa y, encima, el mantener de las tarjetas. Se
+   llaman los dos, primero `a`. */
+function ambos(a, b) {
+  const juntos = { ...a }
+  for (const evento in b) {
+    juntos[evento] = a[evento]
+      ? (e) => {
+          a[evento](e)
+          b[evento](e)
+        }
+      : b[evento]
+  }
+  return juntos
+}
 
 /* Marca para salir todos los avisos que haya en pantalla */
 const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
@@ -115,9 +133,24 @@ function GrafoPensum({
     return () => clearTimeout(reloj)
   }, [clave, vista, medida, encajado])
 
+  /* La ruta fijada manteniendo el dedo en una tarjeta (ver
+     layout/mantenerRuta.js). Vive aqui y no con el señalado de arriba porque
+     es otra cosa: el señalado se apaga al mover el mapa, y esta existe
+     justamente para recorrerlo con ella puesta.
+     Se guarda con la carrera a la que pertenece: al cambiar de carrera deja
+     de valer sola, sin un efecto que la limpie. */
+  const [ruta, setRuta] = useState(null)
+  const rutaFijada = ruta?.clave === clave ? ruta.codigo : null
+  const fijarRuta = useCallback((codigo) => setRuta({ clave, codigo }), [clave])
+  const soltarRuta = useCallback(() => setRuta(null), [])
+  const { carga, manejadores: gestosRuta, tragarToque } = useMantenerRuta(fijarRuta)
+
+  // Manda la seleccion, luego la ruta fijada, y por ultimo el raton
+  const senaladoVisible = rutaFijada ?? senalado
+
   const { cadena, atenuado, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
-    senalado,
+    senalado: senaladoVisible,
     areaFiltrada,
     estados,
     relaciones,
@@ -365,9 +398,12 @@ function GrafoPensum({
     (codigo) => {
       // Si el puntero se movio, fue un arrastre del lienzo, no un click
       if (huboMovimiento.current) return
+      // El click de levantar el dedo de una ruta recien fijada no abre nada
+      if (tragarToque()) return
+      soltarRuta()
       alSeleccionar(codigo)
     },
-    [alSeleccionar, huboMovimiento],
+    [alSeleccionar, huboMovimiento, tragarToque, soltarRuta],
   )
 
   return (
@@ -380,10 +416,12 @@ function GrafoPensum({
           ficha -hermana de este div- no arranque un arrastre al pulsarla.
           El zoom es la rueda o el pellizco del trackpad en escritorio, y el
           pellizco o el doble toque en el telefono: sin botones encima. */}
+      {/* Sin el globo del sistema al mantener el dedo (iOS lo saca sobre
+          texto e imagenes aunque no se pueda seleccionar nada) */}
       <div
         className={`absolute inset-0 select-none ${arrastrando ? 'cursor-grabbing' : 'cursor-grab'}`}
-        style={{ touchAction: 'none' }}
-        {...controlesArrastre}
+        style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
+        {...ambos(gestosRuta, controlesArrastre)}
       >
         {/* Dos <svg> y no uno: la rejilla del fondo se queda quieta, y el
             contenido va en su propia capa para poder estirarla entera
@@ -399,7 +437,9 @@ function GrafoPensum({
             height="100%"
             fill="url(#rejilla)"
             onClick={() => {
-              if (!huboMovimiento.current) alSeleccionar(null)
+              if (huboMovimiento.current) return
+              alSeleccionar(null)
+              soltarRuta()
             }}
           />
         </svg>
@@ -447,7 +487,7 @@ function GrafoPensum({
                   hijo se salta el render entero comparando una prop. */}
               <ContenidoGrafo
                 situaciones={situaciones}
-                foco={seleccionado ?? senalado}
+                foco={seleccionado ?? senaladoVisible}
                 columnas={columnas}
                 aristas={aristas}
                 nodos={nodos}
@@ -467,6 +507,18 @@ function GrafoPensum({
                 alVerFicha={verFicha}
                 alMarcar={alMarcar}
               />
+
+              {/* Fuera de ContenidoGrafo a proposito: va y viene en cada
+                  pulsacion, y como prop de el obligaria a repasar sus ciento
+                  y pico hijos para dibujar una sola linea. */}
+              {carga && porCodigo.get(carga.codigo) && (
+                <ContornoCarga
+                  key={carga.t}
+                  nodo={porCodigo.get(carga.codigo)}
+                  hecha={carga.fase === 'hecha'}
+                  escala={vista.escala}
+                />
+              )}
             </g>
           </svg>
         </div>
