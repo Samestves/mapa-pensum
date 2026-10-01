@@ -5,8 +5,8 @@ import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 /* La geometria sale del lado de la isla. El arco va centrado en el canto: su
    borde de fuera coincide con el de la isla, asi que el progreso no es un
    anillo dentro de un boton sino el contorno mismo del boton. */
-const LADO = 58
-const GROSOR = 3
+const LADO = 52
+const GROSOR = 2.75
 const CENTRO = LADO / 2
 const RADIO = (LADO - GROSOR) / 2
 const CIRCUNFERENCIA = 2 * Math.PI * RADIO
@@ -39,7 +39,7 @@ function IslaAvance({ resumen, abierta, alPulsar }) {
       aria-label={detalle}
       aria-expanded={abierta}
       aria-haspopup="dialog"
-      className="barra-cristal pointer-events-auto relative grid size-[58px] shrink-0 place-items-center rounded-full transition-transform duration-200 ease-out active:scale-[0.94]"
+      className="barra-cristal pointer-events-auto relative grid size-[52px] shrink-0 place-items-center rounded-full transition-transform duration-200 ease-out active:scale-[0.94]"
     >
       <svg
         viewBox={`0 0 ${LADO} ${LADO}`}
@@ -75,8 +75,8 @@ function IslaAvance({ resumen, abierta, alPulsar }) {
       </svg>
 
       <span className="relative flex items-baseline leading-none text-tinta tabular-nums">
-        <span className="text-[17px] font-semibold tracking-[-0.04em]">{numero}</span>
-        <span className="ml-[1px] text-[10px] font-semibold text-tinta-tenue">%</span>
+        <span className="text-[16px] font-semibold tracking-[-0.04em]">{numero}</span>
+        <span className="ml-[1px] text-[9.5px] font-semibold text-tinta-tenue">%</span>
       </span>
     </button>
   )

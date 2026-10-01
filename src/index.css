@@ -1885,7 +1885,7 @@ body {
 
 @media (max-width: 767.98px) {
   .vista-carrera {
-    --reserva-barra: calc(env(safe-area-inset-bottom) + 86px);
+    --reserva-barra: calc(env(safe-area-inset-bottom) + 80px);
   }
 }
 

@@ -1,4 +1,4 @@
-import { IconoAtras, IconoBuscar, IconoLuna, IconoSol } from './IconosSF'
+import { IconoBuscar, IconoInicio, IconoLuna, IconoSol } from './IconosSF'
 import AnilloAvance from './AnilloAvance'
 import SelectorVista from './SelectorVista'
 import { BotonAvisos } from './AvisosCarrera'
@@ -10,7 +10,7 @@ import { avanceDe, describirAvance } from '../data/avance'
    vista -el mismo idioma que la capsula inferior del telefono-.
 
    Tres formas, cada una para lo que es:
-   - CIRCULO: un solo gesto -volver-.
+   - CIRCULO: un solo gesto -ir al inicio-.
    - CAPSULA: algo con contenido -el titulo, el buscador, el mando de vistas-.
    - GRUPO: varios botones pequeños que comparten una isla -el avance, los
      avisos y el tema-, separados por una raya fina. En el telefono solo
@@ -137,9 +137,9 @@ function BarraSuperior({
        llegan al mapa de debajo. */
     <header className="pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
       <div className="flex min-w-0 items-center gap-2">
-        {/* Volver: un circulo con la flecha, el gesto de "atras" de iOS. La
-            flecha se adelanta un poco al pasar por encima. Solo desde md: en
-            el telefono vive en la barra de abajo, donde llega el pulgar. */}
+        {/* Inicio: un circulo con la casa, que lleva a todas las carreras. La
+            casa sube un pelo al pasar por encima. Solo desde md: en el
+            telefono vive en la barra de abajo, donde llega el pulgar. */}
         <button
           type="button"
           onClick={alVolver}
@@ -147,9 +147,9 @@ function BarraSuperior({
           aria-label="Ver todas las carreras"
           className={`${CIRCULO} group max-md:hidden`}
         >
-          <IconoAtras
-            size={17}
-            className="transition-transform duration-300 group-hover:-translate-x-0.5"
+          <IconoInicio
+            size={18}
+            className="transition-transform duration-300 group-hover:-translate-y-px"
           />
         </button>
 
