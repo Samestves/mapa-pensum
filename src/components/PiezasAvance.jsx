@@ -53,7 +53,7 @@ export function BotonReinicio({ reiniciar, hayMarcas }) {
   return (
     <div ref={caja}>
       {confirmando ? (
-        <div className="transicion-tema surgir rounded-lg border border-panel-borde bg-panel-suave p-3">
+        <div className="surgir rounded-lg border border-panel-borde bg-panel-suave p-3">
           <p className="flex items-start gap-2 text-[11px] leading-snug text-tinta">
             <TriangleAlert size={14} className="mt-0.5 shrink-0 text-cursando" />
             Se borrarán todas tus marcas. No se puede deshacer.

@@ -118,7 +118,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
         aria-label={etiqueta}
         tabIndex={-1}
         data-saliendo={saliendo}
-        className="hoja-inferior transicion-tema absolute inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-[30px] border border-panel-borde bg-panel outline-none"
+        className="hoja-inferior absolute inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-[30px] border border-panel-borde bg-panel outline-none"
       >
         {/* La zona de la que se tira: el asa y la cabecera. Una franja entera
             y no solo la rayita, que a cinco pixeles de alto no hay dedo que la

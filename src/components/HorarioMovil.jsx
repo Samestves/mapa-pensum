@@ -60,18 +60,24 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
   /* Hacia donde se va, solo para que la animacion entre por el lado correcto */
   const [sentido, setSentido] = useState(1)
   const refDia = useRef(null)
+  /* La capa que se arrastra con el dedo al deslizar (ver useDeslizar) */
+  const refCapa = useRef(null)
 
-  const irA = useCallback((siguiente) => {
-    setDia((actual) => {
-      const destino = Math.max(0, Math.min(siguiente, DIAS.length - 1))
-      setSentido(destino >= actual ? 1 : -1)
-      return destino
-    })
-  }, [])
+  const irA = useCallback(
+    (destino) => {
+      if (destino === dia || destino < 0 || destino >= DIAS.length) return
+      setSentido(destino > dia ? 1 : -1)
+      setDia(destino)
+    },
+    [dia],
+  )
 
   const { fueDeslizamiento, gestos } = useDeslizar({
-    alIzquierda: () => irA(dia + 1),
-    alDerecha: () => irA(dia - 1),
+    refCapa,
+    hayAnterior: dia > 0,
+    haySiguiente: dia < DIAS.length - 1,
+    alAnterior: () => irA(dia - 1),
+    alSiguiente: () => irA(dia + 1),
   })
 
   const pxPorMinuto = ALTO_HORA / 60
@@ -135,14 +141,13 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
           algo que se descubre en vez de adivinarse. El punto marca los dias
           que tienen clase, para saber si vale la pena ir sin ir.
 
-          Es la primera fila de la pantalla y comparte linea con las islas:
-          el boton de volver a la izquierda y, si los hay, los avisos a la
-          derecha. Por eso deja sus huecos y mide lo mismo que la cabecera.
+          Es la primera fila de la pantalla: arriba no hay islas en el
+          telefono, salvo el circulo de avisos en las carreras que los tienen,
+          que flota en esta misma linea y por eso le deja sitio a la derecha.
           Sin flechas de dia anterior y siguiente: los cinco dias se tocan
-          directamente y se pasa de uno a otro deslizando, y una flecha "<"
-          pegada a la del boton de volver se leia como dos botones de atras. */}
+          directamente y se pasa de uno a otro deslizando. */}
       <div
-        className={`transicion-tema sticky top-0 z-20 flex h-[var(--reserva-cabecera)] items-center gap-1 border-b ${LINEA} bg-panel-suave pt-1 pr-[var(--hueco-avisos)] pl-[var(--hueco-volver)]`}
+        className={`sticky top-0 z-20 flex min-h-[max(52px,var(--reserva-cabecera))] items-center gap-1 border-b ${LINEA} bg-panel-suave pt-1 pr-[calc(var(--hueco-avisos)-0.5rem)] pl-2`}
       >
         {DIAS.map((nombre, i) => (
           <button
@@ -177,7 +182,11 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
         {/* La key rearranca la animacion en cada cambio de dia, y el sentido
             decide por que lado entra: sin eso, pasar de dia no diria si se
             avanza o se retrocede. */}
-        <div key={dia} className={sentido > 0 ? 'entra-dia-derecha' : 'entra-dia-izquierda'}>
+        <div
+          key={dia}
+          ref={refCapa}
+          className={sentido > 0 ? 'entra-dia-derecha' : 'entra-dia-izquierda'}
+        >
           {/* Una sola superficie, no un carril de horas mas una columna de
               dia. Las lineas la cruzan ENTERA y de borde a borde de la
               pantalla, y la hora va escrita encima de ellas: eso es lo que

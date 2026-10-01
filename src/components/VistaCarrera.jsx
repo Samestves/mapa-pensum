@@ -436,6 +436,7 @@ function VistaCarrera({ carrera, alVolver }) {
         resumen={progreso}
         avanceAbierto={abierto === 'avance'}
         alAlternarAvance={alternarAvance}
+        alVolver={alVolver}
       />
 
       {/* Fuera del contenedor de la vista, que se remonta al cambiar de vista:

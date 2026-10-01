@@ -1,39 +1,35 @@
+import { IconoAtras } from './IconosSF'
 import IslaAvance from './IslaAvance'
 import { VISTAS, indiceDeVista } from '../data/vistas'
 
 /**
- * Las tres vistas, abajo, en el telefono.
+ * La barra de abajo del telefono: volver, las tres vistas y el avance.
  *
- * Estaban arriba, dentro de la cabecera, y esa es la peor esquina de un
- * telefono: sujetando el aparato con una mano, el pulgar llega comodo al
- * tercio de abajo y hay que recolocar el agarre para tocar el borde superior.
- * Poner ahi lo que MAS se toca -cambiar de vista es el gesto mas repetido de
- * la aplicacion- era cobrar ese peaje cada vez.
+ * Todo lo que se toca vive aqui y no arriba. Sujetando el telefono con una
+ * mano, el pulgar llega comodo al tercio de abajo y hay que recolocar el
+ * agarre para tocar el borde superior; y lo que se quita de arriba se le da a
+ * la vista, que llega hasta el borde.
  *
- * Es una capsula de cristal que flota sobre el contenido. Por dentro habla el
- * mismo idioma que el mapa: los nombres en mayusculas espaciadas y la vista
- * elegida encendida sobre su gota de cristal, como se marca lo elegido en un
- * menu de juego; las otras quedan apagadas, sin caja ni fondo propio.
- * Los nombres van en minusculas, como las pestañas de iOS: en mayusculas
- * espaciadas a 8 px no se leian bien en un telefono.
+ * Tres piezas, cada una para lo que es:
+ * - Volver, un circulo a la izquierda: salir de la carrera. Es lo que menos se
+ *   usa, y por eso es la pieza mas pequeña.
+ * - Las vistas, juntas en una capsula: son SITIOS -cambian lo que llena la
+ *   pantalla-. La elegida va encendida sobre su gota de cristal; las otras
+ *   quedan apagadas, sin caja ni fondo propio. Los nombres van en minusculas,
+ *   como las pestañas de iOS.
+ * - El avance, una isla redonda (IslaAvance) cuyo borde es la barra de
+ *   progreso: es una CONSULTA -abre una hoja encima y te deja donde estabas-,
+ *   y desde esa hoja se llega a Planificar.
  *
- * Dos piezas y no una. Las tres vistas son SITIOS -cambian lo que llena la
- * pantalla- y van juntas en la capsula. El avance es una CONSULTA -abre una
- * hoja encima y te deja donde estabas- y va aparte, en su propia isla
- * (IslaAvance), cuyo borde es la barra de progreso. Desde esa hoja se llega a
- * Planificar.
+ * Sobre el coste: el desenfoque de fondo es lo caro del cristal, y estas tres
+ * superficies suman poco area. Nada se anima en bucle; la lente solo se mueve
+ * al cambiar de vista.
  *
- * Probe un adorno mas y se fue: una raya de luz verde bajo la vista elegida.
- * La gota ya dice donde estas.
- *
- * Sobre el coste: el desenfoque de fondo es lo caro del cristal, asi que solo
- * lo llevan estas dos superficies, que suman poco area. Nada se anima en
- * bucle; la lente solo se mueve al cambiar de vista.
- *
- * El area de toque de cada pestaña es su tercio entero de la capsula, unos
- * 80 x 46 px: por encima de los 44 que se consideran el minimo.
+ * El area de toque de cada pestaña es su tercio entero de la capsula, de 70 a
+ * 85 px de ancho segun la pantalla por 50 de alto: por encima de los 44 que
+ * se consideran el minimo.
  */
-function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance }) {
+function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance, alVolver }) {
   const indice = indiceDeVista(vista)
 
   const cambiar = (id) => {
@@ -63,9 +59,24 @@ function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAva
        quedaria encima del indicador de inicio. */
     <nav
       aria-label="Vistas de la carrera"
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2 px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
     >
-      <div className="barra-cristal pointer-events-auto relative grid h-[58px] w-[264px] grid-cols-3 rounded-full p-1">
+      {/* Volver, abajo a la izquierda: el pulgar llega sin recolocar la mano
+          y la parte de arriba queda libre para la vista. Algo mas pequeño que
+          las otras dos piezas, porque es la que menos se usa. */}
+      <button
+        type="button"
+        onClick={alVolver}
+        title="Ver todas las carreras"
+        aria-label="Ver todas las carreras"
+        className="barra-cristal group pointer-events-auto relative grid size-[50px] shrink-0 place-items-center rounded-full text-tinta-suave transition-transform duration-200 ease-out active:scale-[0.92]"
+      >
+        <IconoAtras size={19} />
+      </button>
+
+      {/* Crece hasta 264 px y encoge en pantallas estrechas: en 360 px de
+          ancho las tres piezas no caben a su tamaño entero. */}
+      <div className="barra-cristal pointer-events-auto relative grid h-[58px] max-w-[264px] min-w-0 flex-1 grid-cols-3 rounded-full p-1">
         {/* La lente: una gota de cristal detras de la vista elegida. Se
             desliza hasta la nueva y es lo unico de la barra que se mueve. */}
         <span

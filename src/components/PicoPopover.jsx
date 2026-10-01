@@ -43,7 +43,7 @@ function PicoPopover({ lado, posicion }) {
       height={h}
       viewBox={`0 0 ${w} ${h}`}
       style={{ [eje]: SALIENTE, [cruce]: posicion, overflow: 'visible' }}
-      className={`pico-popover pointer-events-none absolute ${
+      className={`pointer-events-none absolute ${
         cruce === 'left' ? '-translate-x-1/2' : '-translate-y-1/2'
       }`}
     >

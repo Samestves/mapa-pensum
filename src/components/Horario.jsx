@@ -105,7 +105,7 @@ function Horario({ carrera, estados }) {
   }
 
   return (
-    <div className="transicion-tema relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
       {/* Dos formas del mismo horario. En el telefono la semana de cinco
           columnas dejaria cada dia en unos sesenta pixeles, menos que el
           nombre de cualquier materia, asi que se apila y se pasa de dia
@@ -149,7 +149,7 @@ function Horario({ carrera, estados }) {
           onClick={bajar}
           disabled={bajando}
           title="Descargar el horario como imagen PNG"
-          className="transicion-tema absolute right-5 bottom-[calc(var(--reserva-barra)+1.25rem)] z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-medium text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
+          className="absolute right-5 bottom-[calc(var(--reserva-barra)+1.25rem)] z-30 flex items-center gap-2 rounded-full border border-panel-borde bg-panel/90 py-2.5 pr-4 pl-3.5 text-[12.5px] font-medium text-tinta-suave shadow-lg backdrop-blur transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60"
         >
           {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           Descargar Horario

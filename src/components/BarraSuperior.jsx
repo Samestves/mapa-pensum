@@ -84,12 +84,12 @@ function BotonCelda({ icono: Ico, titulo, claveIcono, alPulsar, className = '' }
  * - Derecha: BUSCAR y COMO VAS. El buscador, y un grupo con el avance, los
  *   avisos y el tema.
  *
- * En el telefono la cabecera se queda en lo minimo: volver, y a la derecha los
- * avisos si la carrera los tiene. El nombre de la carrera ya no tiene isla
- * -ocupaba un rincon de la pantalla para repetir algo que ya se sabe; ahora
- * encabeza la hoja de avance-, el avance baja a la barra de abajo, que es donde
- * llega el pulgar, y el tema entra en esa hoja: es un ajuste que se toca una
- * vez, no algo que merezca una esquina de la pantalla.
+ * En el telefono la cabecera se vacia: solo quedan los avisos, en las
+ * carreras que los tienen. Volver y el avance bajan a la barra de abajo, que
+ * es donde llega el pulgar; el nombre de la carrera encabeza la hoja de
+ * avance, y el tema entra en esa hoja: es un ajuste que se toca una vez, no
+ * algo que merezca una esquina de la pantalla. Asi la vista llega hasta
+ * arriba.
  *
  * El buscador se adapta al ancho: campo entero con su atajo desde xl, y solo
  * la lupa en lg, donde el campo no cabe junto al grupo. Por debajo de lg no
@@ -135,16 +135,17 @@ function BarraSuperior({
        piezas. El envoltorio no atrapa toques -pointer-events-none-; cada
        pieza los recibe por su cuenta, asi que entre ellas el dedo o el raton
        llegan al mapa de debajo. */
-    <header className="transicion-tema pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
+    <header className="pointer-events-none z-40 flex shrink-0 items-center justify-between gap-2 px-3 pt-3 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:px-5">
       <div className="flex min-w-0 items-center gap-2">
         {/* Volver: un circulo con la flecha, el gesto de "atras" de iOS. La
-            flecha se adelanta un poco al pasar por encima. */}
+            flecha se adelanta un poco al pasar por encima. Solo desde md: en
+            el telefono vive en la barra de abajo, donde llega el pulgar. */}
         <button
           type="button"
           onClick={alVolver}
           title="Ver todas las carreras"
           aria-label="Ver todas las carreras"
-          className={`${CIRCULO} group`}
+          className={`${CIRCULO} group max-md:hidden`}
         >
           <IconoAtras
             size={17}

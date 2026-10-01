@@ -1,10 +1,9 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { ArrowRight, Check, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { ASPECTO } from '../theme/situacion'
 import { SITUACION, situacionDe } from '../layout/situacion'
 import { tituloGrupo } from '../layout/franjaElectivas'
-import { useFilaPegada } from '../hooks/useFilaPegada'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { IconoSituacion } from './IconoSituacion'
 
@@ -384,8 +383,6 @@ function Resumen({ progreso, semestres, actual, alIr }) {
  * Asi "si paso esta, se me abre aquella" se ve, no se lee.
  */
 function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, alMirar, alMarcar }) {
-  const refDesplazable = useRef(null)
-  const [refCentinela, pegada] = useFilaPegada(refDesplazable)
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
   const [filtro, setFiltro] = useState('todo')
   /* La materia abierta. Una sola a la vez: es la que ordena la lista a su
@@ -534,7 +531,7 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
     .filter((s) => filtro === 'todo' || s.filas.length)
 
   return (
-    <div ref={refDesplazable} className="min-h-0 flex-1 overflow-y-auto">
+    <div className="min-h-0 flex-1 overflow-y-auto">
       <div aria-hidden="true" className="velo-lista" />
       <div className="mx-auto flex max-w-2xl flex-col px-4 pt-[calc(var(--reserva-cabecera)+1rem)] pb-[calc(var(--reserva-barra)+3rem)] md:pb-24">
         <Resumen
@@ -546,21 +543,17 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
 
         {/* Filtros: el icono de cada estado y cuantas hay. Pegados arriba al
             desplazarse, con un degradado debajo en vez de una linea.
-            En escritorio se pegan bajo las islas. En el telefono suben hasta
-            el borde y comparten linea con el boton de volver: al pegarse, los
-            filtros se apartan para dejarle sitio (ver .fila-filtros). El
-            centinela es lo que dice cuando se han pegado. */}
-        <div ref={refCentinela} aria-hidden="true" className="mt-6 h-px" />
-        <div
-          data-pegada={pegada}
-          className="fila-filtros transicion-tema sticky top-0 z-20 -mx-4 bg-lienzo pt-3.5 pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-linear-to-b after:from-lienzo after:to-transparent md:top-[var(--reserva-cabecera)] md:pt-2"
-        >
+            En escritorio se pegan bajo las islas; en el telefono, donde arriba
+            no hay islas, suben hasta el borde. Si la carrera tiene avisos, su
+            circulo flota en esa misma linea y los filtros le dejan sitio al
+            final (--hueco-avisos). */}
+        <div className="sticky top-0 z-20 -mx-4 mt-6 bg-lienzo pt-3.5 pb-3 after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-5 after:bg-linear-to-b after:from-lienzo after:to-transparent md:top-[var(--reserva-cabecera)] md:pt-2">
           {/* Con su nombre: el icono solo se aprende, y un filtro tiene que
               entenderse antes de tocarlo. Se desplazan de lado si no caben. */}
           <div
             role="tablist"
             aria-label="Filtrar materias"
-            className="fila-filtros-chips flex gap-1.5 overflow-x-auto [scrollbar-width:none]"
+            className="flex gap-1.5 overflow-x-auto pr-[var(--hueco-avisos)] pl-4 [scrollbar-width:none]"
           >
             {FILTROS.map((f) => {
               const activo = f.id === filtro

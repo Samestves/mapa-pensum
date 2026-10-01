@@ -361,38 +361,16 @@ body {
   -webkit-user-select: text;
 }
 
-.transicion-tema {
-  transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease;
-}
-
-/* El cambio de tema, donde hay View Transitions: la pantalla entera se funde
-   de una foto a otra (ver useTema). Mientras dura, ninguna pieza anima su
-   color por su cuenta, o la foto de "despues" saldria a medio camino. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 340ms;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-[data-cambiando-tema] *,
+/* El cambio de tema es instantaneo y de una vez (ver useTema): mientras se
+   aplica, ninguna pieza anima su color por su cuenta. Sin esto, lo que lleva
+   transicion de color -un boton con hover, el pico de una nubecita- llegaba
+   tarde al tema nuevo y el cambio se leia como un retraso. La excepcion es la
+   pieza del selector de tema, que es el acuse del toque: se desliza. */
+[data-cambiando-tema] *:not(.lente-tema),
 [data-cambiando-tema] *::before,
 [data-cambiando-tema] *::after {
   transition: none !important;
 }
-
-/* El piquito de las nubecitas es un SVG, y un SVG no se pinta con background
-   ni con border sino con fill y stroke: 'transicion-tema' no le llega. Sin
-   esta regla el panel se funde de un tema a otro en 200 ms y su pico salta de
-   golpe, que es justo el detalle que delata que son dos cosas y no una. */
-.pico-popover path {
-  transition:
-    fill 200ms ease,
-    stroke 200ms ease;
-}
-
 
 /* ------------------------------------------------------------------
    Animaciones del grafo.
@@ -1935,39 +1913,32 @@ body {
    -aire de arriba, la isla y un poco de aire debajo-. Cada vista lo suma a su
    propio margen de arriba, igual que suma --reserva-barra por abajo.
 
-   Es solo un margen: nada en el arbol ocupa ese sitio. */
+   En el telefono arriba no hay islas: volver baja a la barra de abajo y el
+   avance y el tema a su hoja. Solo quedan los avisos, en las carreras que los
+   tienen, en la esquina derecha. Sin ellos la reserva es un poco de aire.
+
+   Es solo un margen: nada en el arbol ocupa ese sitio.
+
+   --hueco-avisos es lo que una fila pegada arriba en el telefono deja libre a
+   la derecha para el circulo de avisos, que flota en su misma linea (12 de
+   margen + 40 de boton + 12 de aire). --margen-seccion es donde queda el titulo
+   de una seccion al saltar a ella: por debajo de las islas y de la fila de
+   filtros pegada, no tapado. */
 .vista-carrera {
   --reserva-cabecera: 64px;
-}
-
-@media (max-width: 767.98px) {
-  .vista-carrera {
-    --reserva-cabecera: 60px;
-  }
-}
-
-/* Lo que una fila pegada arriba deja libre en el TELEFONO para las islas que
-   flotan en su misma linea: el boton de volver a la izquierda y, si la carrera
-   los tiene, los avisos a la derecha (12 de margen + 40 de boton + 8 de
-   aire). En escritorio las islas van por encima de las filas y no comparten
-   linea con ellas, asi que solo queda el margen de siempre.
-
-   --margen-seccion es donde queda el titulo de una seccion al saltar a ella:
-   por debajo de las islas y de la fila de filtros pegada, no tapado. */
-.vista-carrera {
-  --hueco-volver: 1rem;
   --hueco-avisos: 1rem;
   --margen-seccion: calc(var(--reserva-cabecera) + 4.75rem);
 }
 
 @media (max-width: 767.98px) {
   .vista-carrera {
-    --hueco-volver: 60px;
+    --reserva-cabecera: 12px;
     --margen-seccion: 5.25rem;
   }
 
   .vista-carrera[data-con-avisos='true'] {
-    --hueco-avisos: 60px;
+    --reserva-cabecera: 60px;
+    --hueco-avisos: 64px;
   }
 }
 
@@ -1988,21 +1959,6 @@ body {
   margin-bottom: calc(-1 * (var(--reserva-cabecera) + 16px));
   pointer-events: none;
   background: linear-gradient(to bottom, var(--lienzo) var(--reserva-cabecera), transparent);
-}
-
-/* Los filtros de la lista. En el telefono, al pegarse arriba, se apartan para
-   compartir linea con el boton de volver y los avisos; en su sitio dentro de
-   la lista van alineados con el resto del contenido. */
-.fila-filtros-chips {
-  padding-inline: 1rem;
-  transition: padding 320ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-@media (max-width: 767.98px) {
-  .fila-filtros[data-pegada='true'] .fila-filtros-chips {
-    padding-left: var(--hueco-volver);
-    padding-right: var(--hueco-avisos);
-  }
 }
 
 /* La paleta del cristal. Todo lo que cambia entre temas vive aqui como
@@ -2275,20 +2231,13 @@ body {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
 }
 
-/* La pieza que marca el tema elegido en la hoja de avance. Lleva nombre de
-   transicion propio: asi, mientras la pantalla se funde de un tema al otro,
-   ella no se funde sino que se desliza a su sitio nuevo. */
+/* La pieza que marca el tema elegido en la hoja de avance. */
 .lente-tema {
-  view-transition-name: lente-tema;
   background: color-mix(in oklab, var(--tinta) 14%, var(--panel));
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
   transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-::view-transition-group(lente-tema) {
-  animation-duration: 340ms;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
-}
 
 [data-tema='claro'] .lente-tema {
   background: #ffffff;
@@ -2577,7 +2526,6 @@ body {
   .selector-lente,
   .lente-tema,
   .arco-avance,
-  .fila-filtros-chips,
   .hoja-inferior,
   .velo-hoja,
   .tarjeta-carrera,

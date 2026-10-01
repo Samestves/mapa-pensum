@@ -96,7 +96,7 @@ function SelectorCarrera({ alElegir }) {
               <span className="marca-caja" aria-hidden="true" />
               <Logo
                 animado
-                className="transicion-tema relative size-[30px] text-tinta sm:size-[35px]"
+                className="relative size-[30px] text-tinta sm:size-[35px]"
               />
             </span>
             <div className="min-w-0">
@@ -143,7 +143,7 @@ function SelectorCarrera({ alElegir }) {
               onClick={alternarTema}
               title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
               aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-              className="boton-aro transicion-tema grid size-10 shrink-0 place-items-center rounded-full"
+              className="boton-aro grid size-10 shrink-0 place-items-center rounded-full"
             >
               {tema === 'oscuro' ? (
                 <Sun size={16} strokeWidth={1.6} />

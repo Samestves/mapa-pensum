@@ -42,7 +42,7 @@ function SemanaMuestra({ foco, soltando }) {
   return (
     <div
       aria-hidden="true"
-      className="semana-muestra transicion-tema relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-panel-borde bg-panel p-3"
+      className="semana-muestra relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-panel-borde bg-panel p-3"
       data-foco={soltando ? 'foto' : foco}
     >
       <div className="grid grid-cols-5 gap-1.5 pb-2">
@@ -125,8 +125,8 @@ function Accion({ icono: Ico, titulo, detalle, destacada, alPulsar, alEnfocar })
       onPointerEnter={alEnfocar}
       onFocus={alEnfocar}
       data-destacada={destacada || undefined}
-      /* Sin transicion-tema ni utilidades de transicion: .accion-horario
-         declara la suya, y dos declaraciones se pisarian entre si. */
+      /* Sin utilidades de transicion: .accion-horario declara la suya, y dos
+         declaraciones se pisarian entre si. */
       className="accion-horario group relative flex w-full items-center gap-3.5 rounded-[20px] p-3 text-left active:scale-[0.985] sm:py-3.5"
     >
       <span

@@ -70,7 +70,7 @@ function TarjetaCarrera({ carrera, tema, indice = 0, hechas, esUltima, alElegir 
       onFocus={precargar}
       onPointerLeave={() => setGiro(null)}
       onClick={entrar}
-      className="tarjeta-carrera tarjeta-entrar group transicion-tema relative flex w-full items-center gap-4 rounded-[14px] border border-panel-borde bg-panel py-3 pr-4 pl-3 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none sm:block sm:rounded-2xl sm:p-5 xl:p-6"
+      className="tarjeta-carrera tarjeta-entrar group relative flex w-full items-center gap-4 rounded-[14px] border border-panel-borde bg-panel py-3 pr-4 pl-3 text-left focus-visible:ring-2 focus-visible:ring-[var(--acento)] focus-visible:outline-none sm:block sm:rounded-2xl sm:p-5 xl:p-6"
       style={{
         '--acento': color,
         '--i': indice,

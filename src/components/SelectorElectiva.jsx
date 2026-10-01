@@ -91,7 +91,7 @@ function SelectorElectiva({ casilla, grupo, opciones, estados, casillaDe, alColo
         role="dialog"
         aria-modal="true"
         aria-label={`Elegir ${casilla.nombre}`}
-        className="surgir transicion-tema relative z-10 mt-auto flex max-h-[88dvh] w-full max-w-[440px] flex-col overflow-hidden rounded-t-2xl border border-panel-borde bg-panel shadow-2xl md:mt-0 md:rounded-2xl"
+        className="surgir relative z-10 mt-auto flex max-h-[88dvh] w-full max-w-[440px] flex-col overflow-hidden rounded-t-2xl border border-panel-borde bg-panel shadow-2xl md:mt-0 md:rounded-2xl"
       >
         <header className="flex items-start gap-3 border-b border-panel-borde px-5 py-4">
           <div className="min-w-0 flex-1">

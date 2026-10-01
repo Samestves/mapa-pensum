@@ -46,7 +46,7 @@ function VistaPrevia({ children }) {
             un vistazo que esto se imprime. */}
         <div
           style={{ zoom: escala }}
-          className="transicion-tema mx-auto w-fit overflow-hidden rounded-lg border border-panel-borde bg-panel shadow-xl"
+          className="mx-auto w-fit overflow-hidden rounded-lg border border-panel-borde bg-panel shadow-xl"
         >
           {children}
         </div>
@@ -59,7 +59,7 @@ function VistaPrevia({ children }) {
 function Resumen({ semestres, grado, materias }) {
   if (semestres === 0) {
     return (
-      <div className="transicion-tema rounded-xl border border-panel-borde bg-panel-suave px-4 py-3.5">
+      <div className="rounded-xl border border-panel-borde bg-panel-suave px-4 py-3.5">
         <p className="text-sm font-extrabold text-aprobada">No queda nada pendiente.</p>
         <p className="mt-1 text-[11px] text-tinta-suave">Terminaste el pensum. Enhorabuena.</p>
       </div>
@@ -67,7 +67,7 @@ function Resumen({ semestres, grado, materias }) {
   }
 
   return (
-    <div className="transicion-tema rounded-xl border border-panel-borde bg-panel-suave px-4 py-3.5">
+    <div className="rounded-xl border border-panel-borde bg-panel-suave px-4 py-3.5">
       <p className="text-[9.5px] font-extrabold tracking-[0.14em] text-tinta-tenue uppercase">
         {grado ? 'Te gradúas en' : 'Te faltan'}
       </p>
@@ -222,7 +222,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
               <button
                 type="button"
                 onClick={() => setAjustes((v) => !v)}
-                className="transicion-tema flex items-center justify-between rounded-lg border border-panel-borde px-3 py-2.5 text-[11.5px] font-bold text-tinta-suave md:hidden"
+                className="flex items-center justify-between rounded-lg border border-panel-borde px-3 py-2.5 text-[11.5px] font-bold text-tinta-suave md:hidden"
               >
                 <span>Ajustar mi carga</span>
                 <span className="flex items-center gap-1.5 font-mono text-tinta">
@@ -285,7 +285,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
           <VistaPrevia>{hoja}</VistaPrevia>
 
           {/* En movil van fijas abajo, siempre al alcance del pulgar */}
-          <div className="no-imprimir transicion-tema shrink-0 border-t border-panel-borde bg-panel px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+          <div className="no-imprimir shrink-0 border-t border-panel-borde bg-panel px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
             {acciones}
           </div>
         </div>

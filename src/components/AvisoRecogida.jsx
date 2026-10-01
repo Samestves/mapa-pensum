@@ -276,7 +276,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
   return (
     <div
       role="status"
-      className={`aviso-recogida transicion-tema absolute z-30 overflow-hidden rounded-[12px] border border-panel-borde bg-panel shadow-2xl ${
+      className={`aviso-recogida absolute z-30 overflow-hidden rounded-[12px] border border-panel-borde bg-panel shadow-2xl ${
         saliendo ? 'recogida-saliendo pointer-events-none' : ''
       }`}
     >

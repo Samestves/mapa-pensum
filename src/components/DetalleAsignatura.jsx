@@ -18,7 +18,7 @@ const MARGEN = 12
    Esquina de 10 y no de 16 -la tarjeta tiene 7-, borde de un pixel y la
    sombra que la separa del mapa que queda debajo. */
 const CARA_FICHA =
-  'transicion-tema relative w-full rounded-[10px] border border-panel-borde bg-panel shadow-2xl'
+  'relative w-full rounded-[10px] border border-panel-borde bg-panel shadow-2xl'
 
 /* El aro vacio de «sin cursar», de la misma familia que los otros dos:
    mismo radio y mismo trazo, sin nada dentro. */
@@ -269,7 +269,7 @@ function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, filo, sal
       ref={ref}
       role="dialog"
       aria-label={nombre}
-      className={`hoja-ficha transicion-tema absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[16px] border border-panel-borde bg-panel shadow-2xl ${
+      className={`hoja-ficha absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[16px] border border-panel-borde bg-panel shadow-2xl ${
         saliendo ? 'tarjeta-saliendo pointer-events-none' : ''
       }`}
       style={{

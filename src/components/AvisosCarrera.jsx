@@ -53,7 +53,7 @@ function PanelAvisos({ avisos, abierto, alCerrar }) {
         onClick={alCerrar}
         className="fixed inset-0 z-30 cursor-default"
       />
-      <div className="surgir transicion-tema absolute top-[calc(var(--reserva-cabecera)+0.25rem)] right-3 z-40 flex max-h-[calc(100%-var(--reserva-cabecera)-1.25rem)] w-[21rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
+      <div className="surgir absolute top-[calc(var(--reserva-cabecera)+0.25rem)] right-3 z-40 flex max-h-[calc(100%-var(--reserva-cabecera)-1.25rem)] w-[21rem] max-w-[calc(100vw-1.5rem)] flex-col overflow-y-auto rounded-2xl border border-panel-borde bg-panel/95 p-4 shadow-2xl backdrop-blur-xl">
         <div className="flex items-start justify-between gap-3">
           <h2 className="flex items-center gap-2 text-[12px] leading-snug font-extrabold text-tinta">
             <IconoAviso size={15} relleno className="shrink-0 text-cursando" />

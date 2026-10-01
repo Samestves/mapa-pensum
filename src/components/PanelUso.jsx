@@ -198,7 +198,7 @@ function PanelUso({ alVolver }) {
   return (
     <div
       ref={contenedor}
-      className="transicion-tema h-full overflow-y-auto bg-lienzo px-5 pb-10 text-tinta"
+      className="h-full overflow-y-auto bg-lienzo px-5 pb-10 text-tinta"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <header className="flex items-start justify-between gap-3 pt-8">

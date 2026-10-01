@@ -10,7 +10,7 @@ import PicoPopover from './PicoPopover'
    radio o la sombra vivieran escritos en cada uno, se separarian el dia que
    alguien afine uno solo. */
 export const CARA =
-  'transicion-tema relative w-full rounded-2xl border border-panel-borde bg-panel shadow-2xl'
+  'relative w-full rounded-2xl border border-panel-borde bg-panel shadow-2xl'
 
 /**
  * La nubecita. UNA, para todo lo que se abre colgando de algo.

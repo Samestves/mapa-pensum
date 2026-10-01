@@ -198,7 +198,7 @@ function PaletaComandos({ abierta, alCerrar, acciones, materias, estados, carrer
         role="dialog"
         aria-modal="true"
         aria-label="Buscar y ejecutar"
-        className="surgir transicion-tema relative flex max-h-[70vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-panel-borde bg-panel shadow-2xl"
+        className="surgir relative flex max-h-[70vh] w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-panel-borde bg-panel shadow-2xl"
       >
         <div className="flex shrink-0 items-center gap-2.5 border-b border-panel-borde px-4">
           <Search size={16} className="shrink-0 text-tinta-tenue" aria-hidden="true" />

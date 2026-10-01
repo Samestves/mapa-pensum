@@ -62,7 +62,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
     .join(' · ')
 
   return (
-    <li className="transicion-tema border-b border-panel-borde last:border-b-0">
+    <li className="border-b border-panel-borde last:border-b-0">
       <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
         {/* La casilla es lo primero de la fila porque es la unica decision
             que hay que tomar en todas: entra o no entra. */}
@@ -129,7 +129,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
             value={materia?.codigo ?? ''}
             onChange={(e) => alCambiar({ codigo: e.target.value || null })}
             aria-label="Materia"
-            className="transicion-tema col-span-2 min-w-0 rounded-lg border border-panel-borde bg-panel px-2.5 py-2 text-[12px] text-tinta sm:col-span-1"
+            className="col-span-2 min-w-0 rounded-lg border border-panel-borde bg-panel px-2.5 py-2 text-[12px] text-tinta sm:col-span-1"
           >
             <option value="">— Elige la materia —</option>
             {materias.map((m) => (
@@ -143,7 +143,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
             value={dia ?? ''}
             onChange={(e) => alCambiar({ dia: e.target.value === '' ? null : Number(e.target.value) })}
             aria-label="Día"
-            className="transicion-tema rounded-lg border border-panel-borde bg-panel px-2.5 py-2 text-[12px] text-tinta"
+            className="rounded-lg border border-panel-borde bg-panel px-2.5 py-2 text-[12px] text-tinta"
           >
             <option value="">— Día —</option>
             {DIAS.map((d, i) => (
@@ -159,7 +159,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
               value={inicio == null ? '' : aTexto(inicio)}
               onChange={(e) => alCambiar({ inicio: aMinutosDeCampo(e.target.value) })}
               aria-label="Hora de inicio"
-              className="transicion-tema w-full min-w-0 rounded-lg border border-panel-borde bg-panel px-2 py-2 text-[12px] text-tinta"
+              className="w-full min-w-0 rounded-lg border border-panel-borde bg-panel px-2 py-2 text-[12px] text-tinta"
             />
             <span className="shrink-0 text-[11px] text-tinta-tenue">–</span>
             <input
@@ -167,7 +167,7 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
               value={fin == null ? '' : aTexto(fin)}
               onChange={(e) => alCambiar({ fin: aMinutosDeCampo(e.target.value) })}
               aria-label="Hora de fin"
-              className="transicion-tema w-full min-w-0 rounded-lg border border-panel-borde bg-panel px-2 py-2 text-[12px] text-tinta"
+              className="w-full min-w-0 rounded-lg border border-panel-borde bg-panel px-2 py-2 text-[12px] text-tinta"
             />
           </div>
         </div>
@@ -301,7 +301,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
         role="dialog"
         aria-modal="true"
         aria-label="Leer mi horario de una imagen"
-        className="surgir transicion-tema relative z-10 mt-auto flex max-h-[92dvh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-2xl border border-panel-borde bg-panel shadow-2xl md:mt-0 md:max-h-[88vh] md:rounded-2xl"
+        className="surgir relative z-10 mt-auto flex max-h-[92dvh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-2xl border border-panel-borde bg-panel shadow-2xl md:mt-0 md:max-h-[88vh] md:rounded-2xl"
       >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-panel-borde px-4 py-3.5 sm:px-5">
           <div className="min-w-0">
@@ -342,7 +342,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
               type="button"
               onClick={() => setAmpliada((v) => !v)}
               aria-label={ampliada ? 'Reducir la imagen' : 'Ampliar la imagen'}
-              className="transicion-tema absolute right-2.5 bottom-2.5 grid size-8 place-items-center rounded-lg border border-panel-borde bg-panel/90 text-tinta-suave backdrop-blur transition-colors hover:text-tinta"
+              className="absolute right-2.5 bottom-2.5 grid size-8 place-items-center rounded-lg border border-panel-borde bg-panel/90 text-tinta-suave backdrop-blur transition-colors hover:text-tinta"
             >
               {ampliada ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
@@ -421,7 +421,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
           <button
             type="button"
             onClick={alCerrar}
-            className="transicion-tema rounded-xl border border-panel-borde px-4 py-2.5 text-[12.5px] font-medium text-tinta-suave transition-colors hover:text-tinta"
+            className="rounded-xl border border-panel-borde px-4 py-2.5 text-[12.5px] font-medium text-tinta-suave transition-colors hover:text-tinta"
           >
             {fase === 'revisar' && listas.length ? 'Cancelar' : 'Volver'}
           </button>
@@ -448,7 +448,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
               onClick={() => refArchivo.current?.click()}
               className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-transform active:scale-[0.98] ${
                 fase === 'error' && SE_REINTENTA.has(fallo?.codigo)
-                  ? 'transicion-tema border border-panel-borde text-tinta-suave hover:text-tinta'
+                  ? 'border border-panel-borde text-tinta-suave hover:text-tinta transition-colors'
                   : 'flex-1 bg-aprobada text-[var(--lienzo)]'
               }`}
             >

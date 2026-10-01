@@ -159,7 +159,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
           flotan sobre ella, y asi ninguna clase asoma entre las islas y los
           dias al bajar. */}
       <div
-        className={`transicion-tema sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave pt-[var(--reserva-cabecera)]`}
+        className={`sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave pt-[var(--reserva-cabecera)]`}
       >
         <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
         {DIAS.map((dia) => (

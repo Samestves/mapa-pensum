@@ -21,9 +21,6 @@ function IconoGitHub({ size = 14, className }) {
 /**
  * Un enlace del pie. Todos se mueven igual que el resto de la app: 300 ms y
  * el mismo medio pixel de desplazamiento que la flecha de las tarjetas.
- *
- * No lleva .transicion-tema: esa clase declara su propia transition y pisaria
- * a esta. Las propiedades del cambio de tema van incluidas aqui.
  */
 function Enlace({ href, icono: Icono, children }) {
   return (

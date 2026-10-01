@@ -71,7 +71,7 @@ class LimiteDeError extends Component {
             <button
               type="button"
               onClick={alReintentar}
-              className="transicion-tema mt-4 inline-flex items-center gap-2 rounded-lg border border-panel-borde px-3.5 py-2 text-[12px] font-bold text-tinta-suave transition-colors hover:text-tinta"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-panel-borde px-3.5 py-2 text-[12px] font-bold text-tinta-suave transition-colors hover:text-tinta"
             >
               <RotateCcw size={14} />
               {etiquetaReintento}
