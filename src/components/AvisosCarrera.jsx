@@ -27,8 +27,8 @@ export function BotonAvisos({ cantidad, abierto, alPulsar }) {
       title={etiqueta}
       aria-label={etiqueta}
       aria-expanded={abierto}
-      /* Es una celda del grupo de la cabecera, no una isla: el cristal lo
-         pone el grupo. El ambar ya lo distingue de sobra. */
+      /* Es una celda, no una isla: el cristal lo pone la isla que la
+         envuelve en la cabecera. El ambar ya lo distingue de sobra. */
       className={`${CELDA_BASE} w-9 text-cursando ${abierto ? 'bg-cursando/15' : 'hover:bg-cursando/10'}`}
     >
       {/* Sube un pixel como el resto de la barra: es un boton mas de la fila

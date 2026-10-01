@@ -295,8 +295,6 @@ function VistaCarrera({ carrera, alVolver }) {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-40">
         <BarraSuperior
           carrera={carrera}
-          tema={tema}
-          alternarTema={alternarTema}
           resumen={progreso}
           vista={vista}
           alCambiarVista={setVista}
@@ -426,6 +424,8 @@ function VistaCarrera({ carrera, alVolver }) {
             areaFiltrada={areaFiltrada}
             alFiltrarArea={filtrarArea}
             alPlanificar={abrirPlan}
+            tema={tema}
+            alternarTema={alternarTema}
           />
         )}
       </div>

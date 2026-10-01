@@ -3,6 +3,7 @@ import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { colorArea, etiquetaArea } from '../theme/areas'
 import { BotonReinicio, CuotaGrupo } from './PiezasAvance'
 import Popover from './Popover'
+import SelectorTema from './SelectorTema'
 
 const ANCHO = 304
 
@@ -133,6 +134,8 @@ function PanelProgreso({
   alCerrar,
   areaFiltrada,
   alFiltrarArea,
+  tema,
+  alternarTema,
 }) {
   const { ucAprobadas, ucElectivas, ucTitulo, aprobadas, cursando, disponibles, total } = progreso
   // Sin creditos oficiales no hay porcentaje: se muestran materias y UC sueltas
@@ -238,7 +241,13 @@ function PanelProgreso({
             </details>
           )}
 
-          <div className="border-t border-panel-borde pt-2.5">
+          {/* El tema, abajo, como en la hoja del telefono: salio de la
+              cabecera para que el avance fuera una sola isla. */}
+          <div className="flex flex-col gap-2 border-t border-panel-borde pt-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[12px] text-tinta-suave">Apariencia</span>
+              <SelectorTema tema={tema} alternarTema={alternarTema} />
+            </div>
             <BotonReinicio reiniciar={reiniciar} hayMarcas={hayMarcas} />
           </div>
         </>

@@ -1,10 +1,11 @@
-import { ChevronRight, Moon, Route, Sun, X } from 'lucide-react'
+import { ChevronRight, Route, X } from 'lucide-react'
 import { avanceDe } from '../data/avance'
 import { leerUcPorSemestre } from '../data/cargaPlan'
 import { MES } from '../data/exportarPlan'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import HojaInferior from './HojaInferior'
+import SelectorTema from './SelectorTema'
 import { BotonReinicio, CuotaGrupo } from './PiezasAvance'
 
 /* Los tres estados que importan para decidir que inscribir. Las bloqueadas no
@@ -14,11 +15,6 @@ const TRAMOS = [
   { clave: 'aprobadas', color: 'var(--estado-aprobada)', texto: 'aprobadas' },
   { clave: 'cursando', color: 'var(--estado-cursando)', texto: 'cursando' },
   { clave: 'disponibles', color: 'var(--tinta-suave)', texto: 'puedes inscribir' },
-]
-
-const TEMAS = [
-  { id: 'claro', texto: 'Claro', icono: Sun },
-  { id: 'oscuro', texto: 'Oscuro', icono: Moon },
 ]
 
 /** El porcentaje grande y, al lado, de que es ese porcentaje. */
@@ -141,41 +137,6 @@ function TarjetaPlan({ carrera, marcas, estados, relaciones, elegidas, alPlanifi
         />
       </div>
     </button>
-  )
-}
-
-/** Claro u oscuro, como el mando segmentado de Ajustes en iOS. */
-function SelectorTema({ tema, alternarTema }) {
-  return (
-    <div
-      role="radiogroup"
-      aria-label="Apariencia"
-      className="relative grid h-9 w-[184px] shrink-0 grid-cols-2 rounded-full bg-tinta/[0.07] p-[3px]"
-    >
-      <span
-        aria-hidden="true"
-        style={{ transform: `translateX(${tema === 'oscuro' ? 100 : 0}%)` }}
-        className="lente-tema pointer-events-none absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-full"
-      />
-      {TEMAS.map(({ id, texto, icono: Icono }) => {
-        const activo = id === tema
-        return (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={activo}
-            onClick={() => !activo && alternarTema()}
-            className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full text-[13px] font-medium transition-colors duration-200 ${
-              activo ? 'text-tinta' : 'text-tinta-tenue'
-            }`}
-          >
-            <Icono size={14} strokeWidth={2} />
-            {texto}
-          </button>
-        )
-      })}
-    </div>
   )
 }
 

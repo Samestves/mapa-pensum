@@ -2123,6 +2123,50 @@ body {
   color: var(--tinta);
 }
 
+/* La lupa de la cabecera (IslaBuscar). En reposo es un circulo; al pasar el
+   raton o al llegar con el tabulador se estira hacia la derecha y aparece
+   "Buscar" con su atajo.
+
+   Crece con max-width sobre un ancho de contenido, y no con width: lo que
+   mide abierta lo decide el texto -que cambia entre ⌘ y Ctrl-, sin medir
+   nada en JavaScript. El tope va algo por encima de lo que mide, asi que la
+   expansion acaba un poco antes que su curva; no se nota.
+
+   El texto entra un instante despues de que empiece a abrirse, para no
+   asomar cortado por el borde, y al cerrarse se va antes de encogerse. */
+.isla-buscar {
+  width: max-content;
+  max-width: 2.75rem;
+  transition:
+    max-width 360ms cubic-bezier(0.32, 0.72, 0, 1),
+    color 200ms ease,
+    transform 150ms ease;
+}
+
+.isla-buscar-texto {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.isla-buscar:focus-visible {
+  max-width: 12rem;
+}
+
+.isla-buscar:focus-visible .isla-buscar-texto {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .isla-buscar:hover {
+    max-width: 12rem;
+  }
+
+  .isla-buscar:hover .isla-buscar-texto {
+    opacity: 1;
+    transition: opacity 260ms ease 90ms;
+  }
+}
+
 /* ---- Foco del mapa ------------------------------------------------------
    Al señalar una materia, lo que no esta en su cadena se aparta: baja de
    opacidad y se desenfoca, como el fondo de una foto con poca profundidad de
@@ -2506,6 +2550,8 @@ body {
   .lente-cristal,
   .selector-lente,
   .lente-tema,
+  .isla-buscar,
+  .isla-buscar-texto,
   .arco-avance,
   .hoja-inferior,
   .velo-hoja,
