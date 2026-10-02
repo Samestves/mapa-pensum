@@ -439,80 +439,95 @@ body {
 /* La casilla de marcar un semestre entero, en la cabecera del mapa y en la
    de la lista (ver GlifoCasilla). Vacia es un contorno; a medias lleva una
    raya verde; marcada se llena con su check. Al apuntarle anticipa lo que
-   hara el click: la vacia se enciende, la llena se apaga. Solo transiciones
-   de color: nada que repinte mas que la propia casilla. */
+   hara el click: la vacia se enciende, la llena se apaga.
+
+   Cada estado solo cambia variables en la casilla misma, y la caja, la raya
+   y el check las leen. No hay reglas de ":hover" con descendientes: con una
+   asi, cada vez que el puntero entra o sale de CUALQUIER cosa del mapa el
+   navegador revisa los descendientes de todos sus ancestros por si son una
+   caja.
+
+   En el mapa cambia de golpe, sin transicion: la casilla esta pintada en el
+   plano de los rotulos, y animarla repinta el plano entero en cada cuadro
+   de la animacion -el hover de las tarjetas, que pasa por encima, perdia un
+   cuadro por eso (medido con npm run rendimiento)-. En la lista, que es un
+   boton suelto, si se anima. */
 .casilla-semestre {
+  --caja-relleno: transparent;
+  --caja-trazo: color-mix(in oklab, var(--tinta) 40%, transparent);
+  --caja-grosor: 1.4;
+  --raya: 0;
+  --tilde: 0;
+  --tilde-color: var(--estado-aprobada);
   cursor: pointer;
   outline: none;
 }
 
-.casilla-semestre .caja {
-  fill: transparent;
-  stroke: color-mix(in oklab, var(--tinta) 40%, transparent);
-  stroke-width: 1.4;
-  transition:
-    fill 200ms ease,
-    stroke 200ms ease;
+.casilla-semestre[data-marca='mixto'] {
+  --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
+  --caja-trazo: var(--estado-aprobada);
+  --raya: 1;
 }
 
-.casilla-semestre :is(.raya, .tilde) {
-  fill: none;
-  stroke: var(--estado-aprobada);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0;
-  transition:
-    opacity 200ms ease,
-    stroke 200ms ease;
+.casilla-semestre[data-marca='marcado'] {
+  --caja-relleno: var(--estado-aprobada);
+  --caja-trazo: var(--estado-aprobada);
+  --tilde: 1;
+  --tilde-color: var(--lienzo);
 }
 
-.casilla-semestre[data-marca='mixto'] .caja {
-  fill: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
-  stroke: var(--estado-aprobada);
-}
-
-.casilla-semestre[data-marca='mixto'] .raya {
-  opacity: 1;
-}
-
-.casilla-semestre[data-marca='marcado'] .caja {
-  fill: var(--estado-aprobada);
-  stroke: var(--estado-aprobada);
-}
-
-.casilla-semestre[data-marca='marcado'] .tilde {
-  stroke: var(--lienzo);
-  opacity: 1;
-}
-
-.casilla-semestre:focus-visible .caja {
-  stroke: var(--estado-aprobada);
-  stroke-width: 2.2;
+.casilla-semestre:focus-visible {
+  --caja-trazo: var(--estado-aprobada);
+  --caja-grosor: 2.2;
 }
 
 @media (hover: hover) {
-  .casilla-semestre:not([data-marca='marcado']):hover .caja {
-    fill: color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
-    stroke: var(--estado-aprobada);
+  .casilla-semestre[data-marca='vacio']:hover,
+  .casilla-semestre[data-marca='mixto']:hover {
+    --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
+    --caja-trazo: var(--estado-aprobada);
+    --raya: 0;
+    --tilde: 1;
   }
 
-  .casilla-semestre:not([data-marca='marcado']):hover .raya {
-    opacity: 0;
+  .casilla-semestre[data-marca='marcado']:hover {
+    --caja-relleno: transparent;
+    --tilde: 0.45;
+    --tilde-color: var(--estado-aprobada);
   }
+}
 
-  .casilla-semestre:not([data-marca='marcado']):hover .tilde {
-    opacity: 1;
-  }
+.casilla-semestre .caja {
+  fill: var(--caja-relleno);
+  stroke: var(--caja-trazo);
+  stroke-width: var(--caja-grosor);
+}
 
-  .casilla-semestre[data-marca='marcado']:hover .caja {
-    fill: transparent;
-  }
+.casilla-semestre .raya,
+.casilla-semestre .tilde {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .casilla-semestre[data-marca='marcado']:hover .tilde {
-    stroke: var(--estado-aprobada);
-    opacity: 0.45;
-  }
+button.casilla-semestre .caja,
+button.casilla-semestre .raya,
+button.casilla-semestre .tilde {
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease,
+    opacity 200ms ease;
+}
+
+.casilla-semestre .raya {
+  stroke: var(--estado-aprobada);
+  opacity: var(--raya);
+}
+
+.casilla-semestre .tilde {
+  stroke: var(--tilde-color);
+  opacity: var(--tilde);
 }
 
 /* Las luces no se pulsan: el click pasa a la tarjeta o al cable de debajo */
@@ -840,7 +855,8 @@ body {
   );
 }
 
-.recogida-neutra :is(.recogida-filo, .recogida-tiempo) {
+.recogida-neutra .recogida-filo,
+.recogida-neutra .recogida-tiempo {
   background: color-mix(in oklab, var(--tinta) 30%, transparent);
 }
 
@@ -2308,16 +2324,25 @@ body {
   color: var(--tinta);
 }
 
-/* La hoja de la semana en escritorio (RejillaHorario). En oscuro se separa
-   del lienzo por su tono; en claro el blanco sobre el gris del lienzo no
-   basta, y lleva la misma sombra baja que las islas. */
-.hoja-semana {
-  background: var(--panel-suave);
+/* Las celdas de la semana en escritorio (RejillaHorario). En oscuro, un
+   tono apenas por encima del lienzo; en claro, blancas sobre su gris con una
+   sombra de un pixel, como las teclas de un teclado. Las de hoy, un punto
+   mas presentes. */
+.celda-horario {
+  background: color-mix(in oklab, var(--tinta) 4.5%, var(--lienzo-mapa));
 }
 
-[data-tema='claro'] .hoja-semana {
+.celda-horario[data-hoy='true'] {
+  background: color-mix(in oklab, var(--tinta) 8%, var(--lienzo-mapa));
+}
+
+[data-tema='claro'] .celda-horario {
+  background: color-mix(in oklab, var(--panel) 72%, transparent);
+  box-shadow: 0 1px 2px rgb(16 32 64 / 0.06);
+}
+
+[data-tema='claro'] .celda-horario[data-hoy='true'] {
   background: var(--panel);
-  box-shadow: 0 14px 34px -20px rgb(16 32 64 / 0.28);
 }
 
 /* El canto de color de una clase: una barra a la izquierda, como los eventos

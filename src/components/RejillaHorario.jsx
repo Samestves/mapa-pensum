@@ -5,6 +5,7 @@ import {
   FILAS,
   ANCHO_HORAS_PX,
   DIAS,
+  HUECO_CELDA,
   acotar,
   altoHoraPara,
   enDoceHoras,
@@ -17,17 +18,16 @@ import { useAhora } from '../hooks/useAhora'
 import BloqueClase from './BloqueClase'
 import HuecoPropuesto from './HuecoPropuesto'
 
-/* Aire arriba y abajo de la jornada, dentro de la hoja: la etiqueta de las
-   7 AM va centrada en su linea, que es el borde de arriba, y sin este aire
-   saldria cortada por la mitad. */
-const AIRE = 14
+/* Las celdas de cada dia, una por hora, de una vez: no cambian nunca. */
+const FILAS_DEL_DIA = Array.from({ length: FILAS }, (_, i) => i)
 
 /**
  * Cuanto mide de alto una fila de hora: lo que da repartir entre las doce
- * horas el alto que tiene la hoja (ver altoHoraPara). Se mide la zona que se
- * desplaza y no la ventana, porque lo que le toca a la semana es lo que dejan
- * las islas y los margenes. Cuando el alto cambia sin que cambie la fila
- * -ya en el minimo o en el maximo-, React no vuelve a pintar.
+ * horas el alto que tiene la semana (ver altoHoraPara). Se mide la zona que
+ * se desplaza y no la ventana, porque lo que le toca a la semana es lo que
+ * dejan las islas y los margenes. La ultima fila no lleva hueco debajo, y
+ * por eso se le suma uno al repartir. Cuando el alto cambia sin que cambie
+ * la fila -ya en el minimo o en el maximo-, React no vuelve a pintar.
  */
 function useAltoHora(refVista) {
   const [alto, setAlto] = useState(() => altoHoraPara(window.innerHeight - 160))
@@ -35,7 +35,9 @@ function useAltoHora(refVista) {
   useLayoutEffect(() => {
     const el = refVista.current
     if (!el) return
-    const ro = new ResizeObserver(([e]) => setAlto(altoHoraPara(e.contentRect.height - AIRE * 2)))
+    const ro = new ResizeObserver(([e]) =>
+      setAlto(altoHoraPara(e.contentRect.height + HUECO_CELDA)),
+    )
     ro.observe(el)
     return () => ro.disconnect()
   }, [refVista])
@@ -44,22 +46,18 @@ function useAltoHora(refVista) {
 }
 
 /**
- * La cuadricula de la semana, con sus clases.
- *
- * Va en una hoja flotante, con el mismo canto redondeado y el mismo aire que
- * las islas de arriba: la semana es una pieza mas de la interfaz, no un
- * papel cuadriculado que se sale por los bordes de la ventana. Dentro, los
- * cinco dias se reparten en columnas de flex-1 que miden exactamente lo mismo.
+ * La semana, en cuadros: una celda redondeada por cada hora de cada dia,
+ * separadas por un hueco fino, sobre el lienzo y sin hoja que las envuelva.
+ * Se lee como una cuadricula de papel sin dibujar ni una linea, y cada hora
+ * libre es un sitio que se ve pulsable. Los cinco dias se reparten en
+ * columnas de flex-1 que miden exactamente lo mismo, y la semana entera
+ * cabe en el alto que dejan las islas de arriba (ver useAltoHora).
  *
  * Las clases NO viven en celdas. Se colocan en posicion absoluta a partir de
  * sus minutos, que es lo unico que permite dibujar una clase de 08:15 a 09:50
- * en su sitio exacto y que dos seguidas -una acaba a las nueve, la otra
- * empieza a las nueve- queden pegadas sin hueco.
- *
- * Las lineas cruzan la semana entera de una vez, una por hora y otra mas
- * tenue por media hora, y no se repiten columna por columna: veinticinco
- * nodos en total. Asoman un poco hacia la columna de horas, hasta la
- * etiqueta que las nombra, como en el calendario de un Mac.
+ * en su sitio exacto. Pero las celdas y las clases comparten hueco
+ * (HUECO_CELDA): una clase en punto cubre sus celdas al pixel, como si las
+ * fundiera, y dos seguidas quedan separadas igual que dos celdas.
  */
 function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMoverClase, alAbrirMenu }) {
   const refVista = useRef(null)
@@ -141,16 +139,16 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-x-auto bg-[var(--lienzo-mapa)] px-5 pt-[calc(var(--reserva-cabecera)+0.25rem)] pb-5">
-      <div className="hoja-semana flex min-h-0 min-w-[46rem] flex-1 flex-col overflow-hidden rounded-[26px] border border-panel-borde">
+      <div className="flex min-h-0 min-w-[46rem] flex-1 flex-col">
         {/* Los dias. Hoy se enciende: es el que se viene a mirar. */}
-        <div className="flex shrink-0 border-b border-[var(--horario-linea)]">
+        <div className="flex shrink-0 pb-2">
           <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
           {DIAS.map((dia, i) => (
-            <span key={dia} className="flex flex-1 justify-center py-3">
+            <span key={dia} className="flex flex-1 justify-center">
               <span
                 aria-current={ahora?.dia === i ? 'date' : undefined}
                 className={`rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.22em] uppercase ${
-                  ahora?.dia === i ? 'bg-tinta/[0.08] text-tinta' : 'text-tinta-tenue'
+                  ahora?.dia === i ? 'bg-tinta text-[var(--lienzo)]' : 'text-tinta-tenue'
                 }`}
               >
                 {dia}
@@ -161,36 +159,19 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
 
         {/* La jornada. Cabe entera casi siempre; en una ventana baja se
             desplaza aqui dentro, con los dias quietos arriba. */}
-        <div ref={refVista} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="relative flex" style={{ height: FILAS * altoHora + AIRE * 2 }}>
-            {/* Las etiquetas, centradas en su linea. La del cierre -7 PM- no
-                se rotula: no abre ninguna fila (ver ABRE y CIERRA). */}
+        <div ref={refVista} className="desplazable-limpio min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="relative flex" style={{ height: FILAS * altoHora - HUECO_CELDA }}>
+            {/* Cada hora rotulada arriba de su fila, a la altura del borde
+                de sus celdas. La del cierre -7 PM- no abre fila y no va. */}
             <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
               {horasEnPunto().map((min) => (
                 <span
                   key={min}
-                  style={{ top: AIRE + aY(min) }}
-                  className="absolute right-3 -translate-y-1/2 text-[11px] font-medium tabular-nums text-tinta-tenue"
+                  style={{ top: aY(min) + 7 }}
+                  className="absolute right-3 text-[11px] leading-none font-medium tabular-nums text-tinta-tenue"
                 >
                   {etiquetaHora(min)}
                 </span>
-              ))}
-            </div>
-
-            {/* Las lineas, de la etiqueta al borde derecho */}
-            <div
-              aria-hidden="true"
-              style={{ top: AIRE, left: ANCHO_HORAS_PX - 6, height: FILAS * altoHora }}
-              className="pointer-events-none absolute right-0"
-            >
-              {Array.from({ length: FILAS * 2 + 1 }, (_, i) => (
-                <span
-                  key={i}
-                  style={{ top: (i * altoHora) / 2 }}
-                  className={`absolute right-0 border-t border-[var(--horario-linea)] ${
-                    i % 2 ? 'left-1.5 border-dashed opacity-55' : 'left-0'
-                  }`}
-                />
               ))}
             </div>
 
@@ -202,16 +183,20 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
               onPointerMove={seguirPuntero}
               onPointerLeave={() => setFantasma(null)}
               onClick={pulsar}
-              style={{ marginTop: AIRE, height: FILAS * altoHora }}
               className="relative flex flex-1"
             >
               {DIAS.map((dia, i) => (
-                <div
-                  key={dia}
-                  className={`relative flex-1 border-l border-[var(--horario-linea)] ${
-                    ahora?.dia === i ? 'bg-tinta/[0.018]' : ''
-                  }`}
-                >
+                <div key={dia} className="relative flex-1">
+                  {FILAS_DEL_DIA.map((fila) => (
+                    <span
+                      key={fila}
+                      aria-hidden="true"
+                      data-hoy={ahora?.dia === i}
+                      style={{ top: fila * altoHora, height: altoHora - HUECO_CELDA }}
+                      className="celda-horario pointer-events-none absolute inset-x-0.5 rounded-xl"
+                    />
+                  ))}
+
                   {/* Donde caeria la clase que se esta arrastrando. Siempre
                       es una posicion legal, asi que se pinta en verde y no
                       hay caso de error que enseñar. */}
@@ -222,9 +207,9 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
                         top: aY(arrastrando.propuesta.inicio),
                         height:
                           (arrastrando.propuesta.fin - arrastrando.propuesta.inicio) * pxPorMinuto -
-                          4,
+                          HUECO_CELDA,
                       }}
-                      className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-medium tabular-nums text-aprobada"
+                      className="pointer-events-none absolute inset-x-0.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-medium tabular-nums text-aprobada"
                     >
                       {enDoceHoras(arrastrando.propuesta.inicio)} –{' '}
                       {enDoceHoras(arrastrando.propuesta.fin)}
@@ -239,6 +224,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
                       franja={fantasma}
                       pxPorMinuto={pxPorMinuto}
                       etiqueta="Agregar materia"
+                      sangria="inset-x-0.5"
                       clase="celda-fantasma"
                     />
                   )}

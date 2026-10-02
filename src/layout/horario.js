@@ -45,6 +45,10 @@ export const altoHoraPara = (altoDisponible) =>
 /** Ancho de la columna de las horas. Cabe "12 PM" con aire. */
 export const ANCHO_HORAS_PX = 64
 
+/* El hueco entre dos celdas de la semana, y entre dos clases seguidas: una
+   clase ocupa sus celdas enteras y acaba donde acabaria la celda. */
+export const HUECO_CELDA = 4
+
 /* Una clase no puede durar menos de media hora ni crearse mas corta que una:
    pulsar un hueco propone una hora, que es lo que dura casi todo. */
 export const MIN_DURACION = 30

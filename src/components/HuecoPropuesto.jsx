@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react'
-import { ABRE } from '../layout/horario'
+import { ABRE, HUECO_CELDA } from '../layout/horario'
 
 /**
  * El hueco que se propone: donde caeria una clase si se pulsa ahi.
@@ -30,7 +30,7 @@ function HuecoPropuesto({ franja, pxPorMinuto, etiqueta, sangria = 'inset-x-1.5'
       aria-hidden="true"
       style={{
         top: (franja.inicio - ABRE) * pxPorMinuto,
-        height: (franja.fin - franja.inicio) * pxPorMinuto - 5,
+        height: (franja.fin - franja.inicio) * pxPorMinuto - HUECO_CELDA,
       }}
       className={`hueco-propuesto pointer-events-none absolute ${sangria} flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--horario-linea)] ${clase}`}
     >

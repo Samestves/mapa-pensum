@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { MoreHorizontal } from 'lucide-react'
 import { colorClase } from '../theme/areas'
-import { ABRE, enDoceHoras } from '../layout/horario'
+import { ABRE, HUECO_CELDA, enDoceHoras } from '../layout/horario'
 
 /* A partir de que altura cabe cada cosa. En vez de encoger la letra hasta que
    no se lea, se deja de enseñar lo prescindible: una clase de media hora mide
@@ -46,9 +46,9 @@ function BloqueClase({
       title={`${nombre} · ${enDoceHoras(sesion.inicio)} a ${enDoceHoras(sesion.fin)}`}
       style={{
         top: (sesion.inicio - ABRE) * pxPorMinuto,
-        height: Math.max(alto - 4, 22),
-        left: `calc(${(sesion.carril / sesion.carriles) * 100}% + 4px)`,
-        width: `calc(${(1 / sesion.carriles) * 100}% - 8px)`,
+        height: Math.max(alto - HUECO_CELDA, 22),
+        left: `calc(${(sesion.carril / sesion.carriles) * 100}% + ${HUECO_CELDA / 2}px)`,
+        width: `calc(${(1 / sesion.carriles) * 100}% - ${HUECO_CELDA}px)`,
         backgroundColor: `color-mix(in oklab, ${color} 12%, var(--panel))`,
         borderColor: `color-mix(in oklab, ${color} 28%, transparent)`,
         '--sombra': `color-mix(in oklab, ${color} 30%, transparent)`,
