@@ -3,12 +3,10 @@ import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
-import { useAhora } from '../hooks/useAhora'
 import { leer } from '../data/almacen'
 import { descargarHorario } from '../data/exportarHorario'
 import { coloresDelHorario } from '../theme/areas'
 import RejillaHorario from './RejillaHorario'
-import ResumenSemana from './ResumenSemana'
 import HorarioMovil from './HorarioMovil'
 import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
@@ -58,9 +56,8 @@ function Horario({ carrera, estados }) {
   )
   const porCodigo = useMemo(() => new Map(todas.map((a) => [a.codigo, a])), [todas])
   /* El color de cada materia, uno distinto por materia (ver
-     coloresDelHorario): el mismo en la rejilla, el resumen y la ficha. */
+     coloresDelHorario): el mismo en la rejilla y en la ficha. */
   const colores = useMemo(() => coloresDelHorario(sesiones), [sesiones])
-  const fecha = useAhora()
 
   /* Las que el pensum ya desbloqueo: es lo que el estudiante puede inscribir
      de verdad este semestre, y por eso son las que el buscador ofrece antes
@@ -119,8 +116,8 @@ function Horario({ carrera, estados }) {
           deslizando. Los datos, el formulario y el menu son los mismos: lo
           unico que cambia es cuantos dias se ven a la vez.
           La rejilla de escritorio es su propio contenedor de desplazamiento
-          porque mide el ancho que le queda para sacar el lado de sus
-          cuadros (ver ladoCeldaPara). */}
+          porque mide el ancho que le queda para sacar el alto de sus horas
+          (ver altoHoraPara). */}
       {sesiones.length === 0 && !empezado ? (
         <HorarioVacio
           disponibles={disponibles}
@@ -137,43 +134,28 @@ function Horario({ carrera, estados }) {
           alAbrirMenu={abrirMenu}
         />
       ) : (
-        /* Escritorio: la semana y, al lado, lo que dice en palabras, juntas
-           y centradas: con la semana en su ancho maximo el sitio que sobra
-           queda a los lados y no entre las dos. El resumen solo cabe desde
-           lg; por debajo la semana se queda sola. */
-        <div className="flex min-h-0 flex-1 justify-center gap-6 bg-[var(--lienzo-mapa)] px-5 pt-[calc(var(--reserva-cabecera)+0.75rem)] pb-5">
-          <RejillaHorario
-            porDia={porDia}
-            porCodigo={porCodigo}
-            colores={colores}
-            fecha={fecha}
-            alPulsarHueco={abrirEnHueco}
-            idMenuAbierto={menu?.sesion.id}
-            alMoverClase={mover}
-            alAbrirMenu={abrirMenu}
-          />
-          <ResumenSemana
-            sesiones={sesiones}
-            porCodigo={porCodigo}
-            colores={colores}
-            fecha={fecha}
-            bajando={bajando}
-            alDescargar={bajar}
-          />
-        </div>
+        <RejillaHorario
+          porDia={porDia}
+          porCodigo={porCodigo}
+          colores={colores}
+          alPulsarHueco={abrirEnHueco}
+          idMenuAbierto={menu?.sesion.id}
+          alMoverClase={mover}
+          alAbrirMenu={abrirMenu}
+        />
       )}
 
-      {/* Descargar vive dentro del horario, no en la barra de la aplicacion:
-          es una accion de esta vista y solo de esta. Desde lg va al pie del
-          resumen de la semana; por debajo flota sobre la esquina, sin
-          quitarle alto a la jornada. Aparece solo si hay algo que bajar. */}
+      {/* Descargar vive dentro del horario y flotando sobre su esquina, no en
+          la barra de la aplicacion: es una accion de esta vista y solo de
+          esta. Flotando no le quita alto a la semana. Aparece solo si hay
+          algo que bajar. */}
       {sesiones.length > 0 && (
         <button
           type="button"
           onClick={bajar}
           disabled={bajando}
           title="Descargar el horario como imagen PNG"
-          className="barra-cristal absolute right-5 bottom-[calc(var(--reserva-barra)+1.25rem)] z-30 flex h-11 items-center gap-2 rounded-full pr-4.5 pl-4 text-[12.5px] font-medium text-tinta-suave transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60 md:right-9 md:bottom-9 lg:hidden"
+          className="barra-cristal absolute right-5 bottom-[calc(var(--reserva-barra)+1.25rem)] z-30 flex h-11 items-center gap-2 rounded-full pr-4.5 pl-4 text-[12.5px] font-medium text-tinta-suave transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60 md:right-9 md:bottom-9"
         >
           {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           Descargar Horario

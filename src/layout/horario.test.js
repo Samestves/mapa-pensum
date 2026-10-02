@@ -7,11 +7,8 @@ import {
   MIN_DURACION,
   aMinutos,
   aTexto,
-  ladoCeldaPara,
+  altoHoraPara,
   tramoCorto,
-  ANCHO_HORAS_PX,
-  fechasDeSemana,
-  momentoEnSemana,
   choqueCon,
   enDoceHoras,
   etiquetaHoraMovil,
@@ -69,13 +66,12 @@ describe('el tiempo como minutos', () => {
 })
 
 describe('la escala de la rejilla', () => {
-  test('cada hora es un cuadrado del ancho de un dia, entre un suelo y un techo', () => {
-    assert.equal(ladoCeldaPara(ANCHO_HORAS_PX + 5 * 120), 120)
-    assert.equal(ladoCeldaPara(ANCHO_HORAS_PX + 5 * 100.5), 100.5)
-    // Una ventana estrecha no aplasta la clase: se queda en el suelo
-    assert.equal(ladoCeldaPara(400), 96)
-    // Una muy ancha no estira la jornada: se queda en el techo
-    assert.equal(ladoCeldaPara(4000), 148)
+  test('el alto de la hora sube por tramos con el ancho, en los cortes de Tailwind', () => {
+    assert.equal(altoHoraPara(800), 100)
+    assert.equal(altoHoraPara(1023), 100)
+    assert.equal(altoHoraPara(1024), 124)
+    assert.equal(altoHoraPara(1280), 144)
+    assert.equal(altoHoraPara(3000), 144)
   })
 
   test('las lineas de hora pintan las de DENTRO y no la ultima', () => {
@@ -259,28 +255,5 @@ describe('huecoEn', () => {
 
   test('dentro de una clase no hay hueco', () => {
     assert.equal(huecoEn([clase(h(8), h(9), 'a')], h(8)), null)
-  })
-})
-
-describe('el momento de la semana', () => {
-  test('de lunes a viernes da el dia y el minuto', () => {
-    // 1 de octubre de 2026, jueves, 10:42
-    assert.deepEqual(momentoEnSemana(new Date(2026, 9, 1, 10, 42)), { dia: 3, minuto: 642 })
-    assert.deepEqual(momentoEnSemana(new Date(2026, 8, 28, 7, 0)), { dia: 0, minuto: 420 })
-  })
-
-  test('el fin de semana no cae en la rejilla', () => {
-    assert.equal(momentoEnSemana(new Date(2026, 9, 3, 12, 0)), null)
-    assert.equal(momentoEnSemana(new Date(2026, 9, 4, 12, 0)), null)
-  })
-
-  test('las fechas son las de la semana en curso, y en fin de semana las de la siguiente', () => {
-    const dias = (f) => fechasDeSemana(f).map((d) => d.getDate())
-    // Jueves 1 de octubre de 2026: del lunes 28 de septiembre al viernes 2
-    assert.deepEqual(dias(new Date(2026, 9, 1, 10, 0)), [28, 29, 30, 1, 2])
-    assert.deepEqual(dias(new Date(2026, 8, 28, 0, 0)), [28, 29, 30, 1, 2])
-    // Sabado 3 y domingo 4: ya la semana del lunes 5
-    assert.deepEqual(dias(new Date(2026, 9, 3, 12, 0)), [5, 6, 7, 8, 9])
-    assert.deepEqual(dias(new Date(2026, 9, 4, 23, 0)), [5, 6, 7, 8, 9])
   })
 })

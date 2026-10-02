@@ -21,34 +21,43 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 19 * 60
 
-/** Ancho de la columna de las horas. Cabe "12 PM" con aire. */
-export const ANCHO_HORAS_PX = 64
+/* Alto de una fila de hora en escritorio, por tramo de ancho.
 
-/* La semana de escritorio es una cuadricula de CUADRADOS: cada hora de cada
-   dia mide lo mismo de alto que de ancho. El lado sale del ancho que hay -lo
-   que mide un dia- y no del alto de la ventana: repartir la jornada en el
-   alto daba rectangulos aplastados, filas de sesenta pixeles contra columnas
-   de trescientos donde una clase de una hora no tiene sitio para nada.
+   Antes esto no era una medida sino un reparto: se cogia el alto de la
+   ventana y se dividia entre las doce horas para que la jornada entera
+   cupiese sin desplazarse. Cabia, si, pero a costa de todo lo demas. En una
+   ventana normal salian filas de 66 px contra columnas de 180: rectangulos
+   aplastados donde una clase de una hora no tiene sitio ni para su nombre y
+   su horario. Y encima el reparto dejaba un hueco muerto abajo, porque
+   floor(alto/12) tira hasta once pixeles que ya no los recuperaba nadie.
 
-   Con un suelo y un techo. Por debajo de LADO_MIN una clase de una hora no
-   cabe con su nombre y su horario; por encima de LADO_MAX la jornada se hace
-   tan larga que solo se ven tres horas a la vez, asi que la semana deja de
-   crecer y se centra. La jornada se desplaza dentro de su zona.
+   La regla se invierte: la fila mide lo que tiene que medir para respirar y
+   si la jornada no cabe, se desplaza. Meter doce horas en una pantalla no es
+   un requisito de nadie; verlas bien, si.
 
-   Sin redondear: el lado sale con decimales y las celdas se colocan con el
-   mismo numero que las clases, asi que no hay pixeles que se acumulen. */
-const LADO_MIN = 96
-const LADO_MAX = 148
+   Los cortes son los de Tailwind -md, lg, xl- para que la rejilla cambie de
+   escala en los mismos anchos que el resto de la app. Por debajo de md no
+   hay tramo porque ahi no llega esta vista: manda HorarioMovil, que tiene su
+   propio alto.
 
-/** Lo mas ancha que llega a ser la semana: con las celdas en su techo. */
-export const ANCHO_SEMANA_MAX = ANCHO_HORAS_PX + DIAS.length * LADO_MAX
+   Es una tabla y no tres constantes sueltas para que anadir un tramo sea
+   anadir una linea, y para que la funcion de abajo pueda probarse sola. */
+const ALTO_HORA_ESCRITORIO = [
+  { desde: 1280, alto: 144 }, // xl
+  { desde: 1024, alto: 124 }, // lg
+  { desde: 0, alto: 100 }, // md
+]
 
-/** El lado de una celda -una hora de un dia- para un ancho de semana. Funcion pura. */
-export const ladoCeldaPara = (anchoDisponible) =>
-  Math.min(LADO_MAX, Math.max(LADO_MIN, (anchoDisponible - ANCHO_HORAS_PX) / DIAS.length))
+/** El alto de fila que toca a un ancho de rejilla. Funcion pura. */
+export const altoHoraPara = (ancho) =>
+  ALTO_HORA_ESCRITORIO.find((tramo) => ancho >= tramo.desde).alto
 
-/* El hueco entre dos celdas de la semana, y entre dos clases seguidas: una
-   clase ocupa sus celdas enteras y acaba donde acabaria la celda. */
+/** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
+export const ANCHO_HORAS_PX = 88
+
+/* El hueco entre dos clases seguidas, y el que deja una clase con el borde
+   de su hora: una de 8 a 9 y otra de 9 a 10 se leen como dos, no como un
+   bloque doble. */
 export const HUECO_CELDA = 4
 
 /* Una clase no puede durar menos de media hora ni crearse mas corta que una:
@@ -99,15 +108,8 @@ export function tramoCorto(inicio, fin) {
     : `${hora(inicio)} ${meridiano(inicio)} – ${hora(fin)} ${meridiano(fin)}`
 }
 
-/**
- * La hora en punto para la columna de escritorio: "7 AM", "12 PM". Los ":00"
- * no dicen nada en una marca que por definicion cae en punto, y sin ellos la
- * columna mide lo que una palabra y no lo que una hora completa.
- */
-export const etiquetaHora = (min) => {
-  const h = Math.floor(min / 60)
-  return `${((h + 11) % 12) + 1} ${h < 12 ? 'AM' : 'PM'}`
-}
+/** La hora en punto, para la columna de la izquierda */
+export const etiquetaHora = (min) => enDoceHoras(min)
 
 /**
  * La hora para la marca del telefono: el meridiano solo cuando cambia.
@@ -153,9 +155,6 @@ export const FILAS = (CIERRA - ABRE) / 60
  * El area pintada se limita a once horas -no doce- justamente para que el
  * degradado no llegue a dibujar la ultima: si llegara, volveria a chocar con
  * ese borde de abajo y habriamos movido el problema en vez de resolverlo.
- *
- * Es la rejilla del telefono. La de escritorio no dibuja lineas: va en
- * cuadros (ver ladoCeldaPara).
  */
 export function lineasDeHora(altoHora) {
   return {
@@ -326,27 +325,4 @@ export function franjaPropuesta(sesionesDelDia, minuto) {
   const inicio = Math.max(libre.desde, Math.floor(minuto / 60) * 60)
   const fin = Math.min(inicio + DURACION_POR_DEFECTO, libre.hasta)
   return fin - inicio >= MIN_DURACION ? { inicio, fin } : null
-}
-
-/**
- * En que dia de la semana y en que minuto cae `fecha`, o null si cae en
- * sabado o domingo: la rejilla solo tiene de lunes a viernes. Es lo que
- * coloca la linea de "ahora" y enciende el dia de hoy.
- */
-export function momentoEnSemana(fecha) {
-  const dia = fecha.getDay() - 1
-  if (dia < 0 || dia >= DIAS.length) return null
-  return { dia, minuto: fecha.getHours() * 60 + fecha.getMinutes() }
-}
-
-/**
- * La fecha de cada dia de la rejilla, de lunes a viernes, para la semana que
- * se esta viviendo. En fin de semana, la que viene: el sabado ya se mira el
- * lunes, no el que paso.
- */
-export function fechasDeSemana(fecha) {
-  const lunes = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
-  const dia = fecha.getDay()
-  lunes.setDate(lunes.getDate() + (dia === 0 ? 1 : dia === 6 ? 2 : 1 - dia))
-  return DIAS.map((_, i) => new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i))
 }

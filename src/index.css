@@ -108,7 +108,6 @@
      deberia llevar color ahi. El blanco al once por ciento se apoya en el
      fondo que tenga debajo y se lee como una linea de lapiz. */
   --horario-linea: rgba(255, 255, 255, 0.11);
-  --ahora: #ff6b5e;
 
 }
 
@@ -192,7 +191,6 @@
   --clase-8: #56677e;
 
   --horario-linea: #cfd9e6;
-  --ahora: #e5484d;
 }
 
 /* @theme inline hace que las utilidades emitan var(--x) en vez del valor
@@ -2373,27 +2371,6 @@ button.casilla-semestre .tilde {
   color: var(--tinta);
 }
 
-/* Las celdas de la semana en escritorio (RejillaHorario). En oscuro, un
-   tono apenas por encima del lienzo; en claro, blancas sobre su gris con una
-   sombra de un pixel, como las teclas de un teclado. Las de hoy, un punto
-   mas presentes. */
-.celda-horario {
-  background: color-mix(in oklab, var(--tinta) 4.5%, var(--lienzo-mapa));
-}
-
-.celda-horario[data-hoy='true'] {
-  background: color-mix(in oklab, var(--tinta) 8%, var(--lienzo-mapa));
-}
-
-[data-tema='claro'] .celda-horario {
-  background: color-mix(in oklab, var(--panel) 72%, transparent);
-  box-shadow: 0 1px 2px rgb(16 32 64 / 0.06);
-}
-
-[data-tema='claro'] .celda-horario[data-hoy='true'] {
-  background: var(--panel);
-}
-
 /* Una clase del horario (BloqueClase), teñida del color de su materia
    (--c): el fondo apenas, el contorno algo mas y la hora del todo. En claro
    el tinte va sobre blanco y no sobre el lienzo, para que la tarjeta se
@@ -2412,37 +2389,8 @@ button.casilla-semestre .tilde {
   box-shadow: 0 8px 22px -12px color-mix(in oklab, var(--c) 55%, transparent);
 }
 
-/* Una clase de hoy en el resumen de la semana (ResumenSemana): gris quieta,
-   teñida de su color mientras esta en curso. */
-.clase-hoy {
-  background: color-mix(in oklab, var(--tinta) 4%, transparent);
-}
-
-.clase-hoy[data-en-curso='true'] {
-  background: color-mix(in oklab, var(--c) 14%, transparent);
-}
-
 .hora-clase {
   color: color-mix(in oklab, var(--c) 78%, var(--tinta));
-}
-
-/* La linea de "ahora" en el horario de escritorio: la hora que es, sobre el
-   dia de hoy, con un punto en su arranque. Del rojo de los calendarios, que
-   es el color que todo el mundo lee como "aqui estas". */
-.linea-ahora {
-  border-top: 2px solid var(--ahora);
-  margin-top: -1px;
-}
-
-.linea-ahora::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: -5px;
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  background: var(--ahora);
 }
 
 /* ---- La paleta de busqueda (PaletaComandos) -----------------------------
