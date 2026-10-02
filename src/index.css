@@ -439,6 +439,19 @@ body {
   inset: 0;
 }
 
+/* Cada plano se recorta a la capa. El SVG ya lo hacia, pero el texto HTML
+   de encima medía el mapa entero -3600 px de ancho contra los 650 de la
+   capa-, y Chrome no junta en una textura algo tan grande y tan vacio: lo
+   subia a una capa de GPU propia, y todo lo que se pinta encima de ella
+   tenia que subir tambien por solaparla. Siete capas a pantalla y pico
+   cada una, 107 MB de memoria grafica en un telefono, que el compositor
+   mezcla en cada cuadro. Recortadas, quedan dos y 48 MB, y a CPU x6 un
+   arrastre gasta un 28 % menos y tocar una materia un 22 % menos. Lo que
+   queda fuera de la capa no se veia nunca: es justo lo que no se pinto. */
+.plano {
+  overflow: clip;
+}
+
 .plano > svg > g {
   pointer-events: auto;
 }
