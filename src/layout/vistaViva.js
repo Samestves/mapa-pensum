@@ -1,5 +1,3 @@
-import { esModoLigero } from '../data/ligero.js'
-
 /**
  * El pellizco en vivo: mover la capa ya pintada en vez de volver a pintarla.
  *
@@ -33,12 +31,10 @@ export const AUMENTO_MAX = 1.8
    casi nunca. Esa era la diferencia entre alejar con tirones y acercar fluido.
 
    No mas: la capa vive en la memoria de la GPU, y a 1,8 por eje ya ocupa
-   3,2 veces la ventana. En modo ligero, 0,25 -2,25 ventanas-: un telefono
-   tiene poca memoria de GPU, y con varios planos de 3,2 ventanas cada uno se
-   quedaba sin ella, tiraba trozos ya pintados y los volvia a pintar -el mapa
-   parpadeando detras de lo que se abria encima-. Ahi se prefiere repintar
-   alguna vez mas a mitad de un gesto largo. Ver data/ligero.js. */
-export const MARGEN_CAPA = esModoLigero() ? 0.25 : 0.4
+   3,2 veces la ventana. Se probo con menos en los telefonos (0,25) para
+   ahorrar memoria de GPU, y medido a CPU x6 salio peor: un arrastre normal
+   ya se salia del margen y repintaba el mapa entero a mitad del gesto. */
+export const MARGEN_CAPA = 0.4
 
 /* Holgura alrededor del contenido, en unidades del mapa: el halo de las
    tarjetas y los puntos de llegada de los cables asoman unos pixeles fuera

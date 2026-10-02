@@ -689,6 +689,15 @@ button.casilla-semestre .tilde {
   animation-play-state: paused;
 }
 
+/* En modo ligero lo de dentro del mapa cambia siempre de golpe, viaje o no.
+   Es lo mismo que pone .capa-viajando, pero fijo: asi no hay clase que poner
+   y quitar en cada viaje, que en un telefono modesto costaba mas que las
+   transiciones que se ahorraban. Los planos si se funden (data-foco): eso
+   es opacidad de una capa entera y lo hace la GPU. */
+[data-ligero] .plano * {
+  transition: none !important;
+}
+
 /* Al mirar una materia, su cadena se dibuja de origen a destino */
 @keyframes trazar {
   from {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Activity, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, GraduationCap, Moon, Sun } from 'lucide-react'
 import { guardar, leer } from '../data/almacen'
 import { anotarMarca, anotarMateria, anotarVista } from '../data/latido'
@@ -138,6 +138,16 @@ function VistaCarrera({ carrera, alVolver }) {
   const [vista, setVista] = useState(
     () => leer(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
   )
+  /* La vista que se ve va un paso por detras de la elegida. El selector
+     responde en el acto; la vista nueva se prepara despues, por tramos que
+     dejan pasar cualquier toque, y se cambia cuando esta lista. La primera
+     visita al mapa son mil seiscientos elementos: preparados de un golpe en
+     el mismo toque, el telefono se quedaba medio segundo sin responder y sin
+     enseñar siquiera que el toque habia llegado. */
+  const vistaEnPantalla = useDeferredValue(vista)
+  /* Las vistas que ya se abrieron: siguen montadas, ocultas, al dejarlas */
+  const [visitadas, setVisitadas] = useState(() => new Set([vista]))
+  if (!visitadas.has(vistaEnPantalla)) setVisitadas(new Set(visitadas).add(vistaEnPantalla))
   /* Lo que acabas de aprobar, en la esquina y con Deshacer. Viven aqui y no
      en el mapa porque un semestre se aprueba tambien desde la lista. Cambiar
      de vista los quita sin animar: la vista nueva entra, y con ella no
@@ -455,55 +465,65 @@ function VistaCarrera({ carrera, alVolver }) {
         alCerrar={cerrarCasilla}
       />
 
-      {/* La key incluye la vista, no solo si el mapa ya monto: asi cambiar
-          entre mapa, lista y horario rearranca la animacion y la vista nueva
-          entra fundiendose en vez de aparecer de golpe. Antes la key solo
-          cambiaba una vez -cuando el mapa relevaba a la silueta- y los
-          cambios de vista posteriores eran un corte seco.
-          La silueta NO entra animada: es la misma que ya estaba en pantalla
+      {/* Las vistas no se desmontan al cambiar de una a otra: la que se deja
+          queda oculta con su estado -la camara del mapa, lo desplegado de la
+          lista- en un Activity, y volver a ella es enseñarla, no construirla.
+          Montar el mapa son mil seiscientos elementos: medido a CPU x6,
+          volver de la lista al mapa costaba una tarea de 430 ms. Oculta, React
+          la sigue poniendo al dia cuando le sobra tiempo -si marcas en la
+          lista, el mapa ya llega con la marca-, sin quitarselo a lo que se ve.
+          Cada vista se monta la primera vez que se visita, no antes.
+
+          Al enseñarse de nuevo, la vista vuelve a entrar fundiendose: un
+          elemento que pasa de display:none a verse reinicia su animacion. La
+          silueta NO entra animada: es la misma que ya estaba en pantalla
           mientras bajaba el codigo (el fallback de App), y fundirla desde
-          cero la hacia parpadear -visible, invisible, visible- justo al
-          llegar. */}
-      <div
-        key={mapaMontado ? vista : 'esqueleto'}
-        className={`relative flex flex-1 overflow-hidden ${mapaMontado ? 'entrada-panel' : ''}`}
-      >
+          cero la hacia parpadear justo al llegar. */}
+      <div className="relative flex flex-1 overflow-hidden">
         {!mapaMontado ? (
           <EsqueletoMapa slug={carrera.slug} />
-        ) : vista === 'horario' ? (
-          <Horario carrera={carrera} estados={estados} />
-        ) : vista === 'mapa' ? (
-          <GrafoPensum
-            clave={carrera.slug}
-            layout={layout}
-            porCodigo={porCodigo}
-            estados={estados}
-            descarga={descarga}
-            toque={toque}
-            areaFiltrada={areaFiltrada}
-            seleccionado={seleccionado}
-            alSeleccionar={alternarSeleccion}
-            alMarcar={marcarYContar}
-            alAvisar={avisar}
-            marcasSemestre={marcasSemestre}
-            alAlternarSemestre={alternarSemestre}
-            enCasilla={enCasilla}
-            alAbrirCasilla={abrirCasilla}
-            casillaDe={casillaDe}
-          />
         ) : (
-          <VistaLista
-            layout={layout}
-            estados={estados}
-            progreso={progreso}
-            avanceGrupos={avanceGrupos}
-            toque={toque}
-            descarga={descarga}
-            alMirar={mirar}
-            alMarcar={marcarYContar}
-            marcasSemestre={marcasSemestre}
-            alAlternarSemestre={alternarSemestre}
-          />
+          VISTAS.filter((v) => visitadas.has(v.id)).map(({ id }) => (
+            <Activity key={id} mode={id === vistaEnPantalla ? 'visible' : 'hidden'}>
+              <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
+                {id === 'horario' ? (
+                  <Horario carrera={carrera} estados={estados} />
+                ) : id === 'mapa' ? (
+                  <GrafoPensum
+                    clave={carrera.slug}
+                    layout={layout}
+                    porCodigo={porCodigo}
+                    estados={estados}
+                    descarga={descarga}
+                    toque={toque}
+                    areaFiltrada={areaFiltrada}
+                    seleccionado={seleccionado}
+                    alSeleccionar={alternarSeleccion}
+                    alMarcar={marcarYContar}
+                    alAvisar={avisar}
+                    marcasSemestre={marcasSemestre}
+                    alAlternarSemestre={alternarSemestre}
+                    enCasilla={enCasilla}
+                    alAbrirCasilla={abrirCasilla}
+                    casillaDe={casillaDe}
+                  />
+                ) : (
+                  <VistaLista
+                    layout={layout}
+                    estados={estados}
+                    progreso={progreso}
+                    avanceGrupos={avanceGrupos}
+                    toque={toque}
+                    descarga={descarga}
+                    alMirar={mirar}
+                    alMarcar={marcarYContar}
+                    marcasSemestre={marcasSemestre}
+                    alAlternarSemestre={alternarSemestre}
+                  />
+                )}
+              </div>
+            </Activity>
+          ))
         )}
 
         {/* Deshacer solo devuelve las marcas: el aviso se va solo, con su

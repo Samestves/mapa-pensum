@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Info, Repeat2, X } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
@@ -231,15 +231,25 @@ function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, filo, sal
   const [bajada, setBajada] = useState(0)
   const [arrastrando, setArrastrando] = useState(false)
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const tarjeta = ref.current
-    const lienzo = tarjeta?.offsetParent
-    if (!tarjeta || !lienzo) return
-    /* Con offsetTop y no con getBoundingClientRect: al montarse la tarjeta
+    if (!tarjeta) return
+    /* Se mide cuando el navegador ya maqueto la pagina por su cuenta: el
+       primer aviso de un ResizeObserver llega justo despues de esa maqueta,
+       y leer ahi no cuesta nada. Leerlo al montarse obligaba a maquetar la
+       pagina entera a destiempo, mapa incluido: 90 ms de un toque a CPU x6.
+
+       Con offsetTop y no con getBoundingClientRect: al montarse la tarjeta
        esta entrando desde abajo con un transform, y el rectangulo medido
-       ahora saldria mas bajo de donde se va a quedar. offsetTop no ve el
+       saldria mas bajo de donde se va a quedar. offsetTop no ve el
        transform: es el sitio final. */
-    alTapar?.(lienzo.clientHeight - tarjeta.offsetTop)
+    const observador = new ResizeObserver(() => {
+      observador.disconnect()
+      const lienzo = tarjeta.offsetParent
+      if (lienzo) alTapar?.(lienzo.clientHeight - tarjeta.offsetTop)
+    })
+    observador.observe(tarjeta)
+    return () => observador.disconnect()
     // Una vez por materia: lo que importa es donde queda al abrirse
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave])

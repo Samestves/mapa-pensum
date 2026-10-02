@@ -10,8 +10,18 @@ import {
   vistaParaViaje,
 } from '../layout/vistaViva'
 import { holguraDe } from '../layout/mantenerRuta'
+import { esModoLigero } from '../data/ligero'
 
 const MARGEN_ENCAJE = 28
+
+/* Congela lo de dentro del mapa mientras dura un viaje (ver .capa-viajando
+   en index.css). En modo ligero no hace falta: ahi el mapa no tiene
+   transiciones nunca, y poner y quitar la clase recalculaba el estilo de los
+   mil y pico elementos del mapa al salir y al llegar, unos 120 ms por viaje
+   en un telefono modesto. */
+function congelarCapa(capa, congelada) {
+  if (!esModoLigero()) capa?.classList.toggle('capa-viajando', congelada)
+}
 /* Lo que tarda el mapa en apartarse para enseñar algo, como lo que se
    desbloquea al aprobar: un viaje y no un salto, a una velocidad que el ojo
    pueda seguir. */
@@ -246,14 +256,20 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
 
   // El contenedor se re-mide solo: sirve para el encaje inicial y para
   // que cambiar el tamano de la ventana no rompa nada.
+  const yaMedido = useRef(false)
   useLayoutEffect(() => {
     const el = contenedorRef.current
     if (!el) return
 
-    // Se mide a mano una primera vez en vez de esperar el callback inicial
-    // de ResizeObserver, que no siempre llega. Devolver la medida previa
-    // cuando no cambia evita renders en bucle.
+    // Se mide a mano la primera vez en vez de esperar el callback inicial
+    // de ResizeObserver, que no siempre llega. Solo la primera: al volver al
+    // mapa desde otra vista (se queda montado, oculto; ver VistaCarrera) la
+    // medida ya esta, y medir a mano ahi obligaba a maquetar la pagina
+    // entera en el acto, 160 ms a CPU x6. El observador avisa igual si
+    // cambio algo mientras estaba oculto. Devolver la medida previa cuando
+    // no cambia evita renders en bucle.
     const medir = () => {
+      yaMedido.current = true
       const caja = el.getBoundingClientRect()
       cajaRef.current = caja
       const { width, height } = caja
@@ -268,7 +284,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
           : { ancho: width, alto: height, arriba },
       )
     }
-    medir()
+    if (!yaMedido.current) medir()
 
     const observador = new ResizeObserver(medir)
     observador.observe(el)
@@ -301,13 +317,22 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   /* Al llegar de golpe a una vista nueva -al abrir el mapa, o al saltar
      entre verlo todo y tu semestre- el mapa se asienta: sube unos pixeles y
      aparece, en vez de cambiar en seco. Es una animacion de la capa, que la
-     resuelve la GPU sin repintar el mapa. */
+     resuelve la GPU sin repintar el mapa. La clase se quita al acabar: el
+     mapa oculto al ir a otra vista se conserva, y una animacion que se
+     quedara puesta volveria a arrancar cada vez que se enseña. */
   const llegar = useCallback(() => {
     const capa = capaRef.current
     if (!capa) return
     capa.classList.remove('capa-llegando')
     void capa.offsetWidth
     capa.classList.add('capa-llegando')
+    // Solo la suya: las animaciones de las tarjetas de dentro tambien suben
+    const acabar = (e) => {
+      if (e.target !== capa) return
+      capa.classList.remove('capa-llegando')
+      capa.removeEventListener('animationend', acabar)
+    }
+    capa.addEventListener('animationend', acabar)
   }, [])
 
   /* Encaje automatico la primera vez que se conoce el tamaño del contenedor.
@@ -338,7 +363,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   const asentarViaje = useCallback(() => {
     if (!enViaje.current) return
     enViaje.current = false
-    capaRef.current?.classList.remove('capa-viajando')
+    congelarCapa(capaRef.current, false)
     if (mismaVista(vistaRef.current, pintadaRef.current)) estirarCapa()
     else setVista(vistaRef.current)
   }, [estirarCapa])
@@ -395,7 +420,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
 
       if (base) {
         enViaje.current = true
-        capaRef.current?.classList.add('capa-viajando')
+        congelarCapa(capaRef.current, true)
         // Se pinta una sola vez; el efecto de arriba estira la capa en el
         // mismo cuadro para que se siga viendo `desde` hasta que arranque
         if (!mismaVista(base, pintadaRef.current)) setVista(base)
@@ -708,7 +733,11 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       inicio.capturado = true
       huboMovimiento.current = true
       e.currentTarget.setPointerCapture(e.pointerId)
-      setArrastrando(true)
+      /* El cursor de agarre solo existe con raton. Con el dedo no se ve, y
+         cambiarlo no sale gratis: el cursor se hereda, asi que el cambio de
+         clase recalcula el estilo de los setecientos elementos del mapa justo
+         en el primer cuadro del arrastre. */
+      if (e.pointerType === 'mouse') setArrastrando(true)
     }
     if (!inicio.capturado) return
 

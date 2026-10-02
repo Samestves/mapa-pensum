@@ -11,10 +11,9 @@
  * los estudiantes, es la diferencia entre ir fluido e ir a tirones.
  *
  * Con modo ligero los cables de lo que puedes inscribir quedan encendidos
- * pero quietos, las islas son opacas, las hojas no llevan sombra y el mapa
- * se pinta con menos margen fuera de la pantalla (ver MARGEN_CAPA), que es
- * memoria de GPU. Se ve igual de claro que hay que hacer y donde; solo deja
- * de haber cosas moviendose solas.
+ * pero quietos, las islas son opacas y las hojas no llevan sombra. Se ve
+ * igual de claro que hay que hacer y donde; solo deja de haber cosas
+ * moviendose solas.
  *
  * Se decide una vez, al arrancar. Va ligero todo lo tactil: probado en
  * telefonos reales, la memoria que dice el navegador no separa los que van
@@ -34,10 +33,6 @@ export function esAparatoModesto({ tactil, memoria, nucleos, ahorroDatos, menosM
   )
 }
 
-/** Si la app arranco en modo ligero. Fuera del navegador -en las pruebas- no. */
-export const esModoLigero = () =>
-  typeof document !== 'undefined' && document.documentElement.hasAttribute('data-ligero')
-
 /** Marca <html data-ligero> si el aparato es modesto. Ver index.css. */
 export function aplicarModoLigero() {
   const modesto = esAparatoModesto({
@@ -48,4 +43,9 @@ export function aplicarModoLigero() {
     menosMovimiento: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   })
   document.documentElement.toggleAttribute('data-ligero', modesto)
+}
+
+/** Si este aparato va en modo ligero. Para lo poco que no se resuelve en CSS. */
+export function esModoLigero() {
+  return document.documentElement.hasAttribute('data-ligero')
 }
