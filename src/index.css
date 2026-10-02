@@ -2447,14 +2447,13 @@ body {
    mover la hoja con un transform en linea; la salida es una transicion,
    porque tiene que poder salir desde donde la dejo el dedo. */
 .hoja-inferior,
-.ventana-flotante,
 .panel-lateral {
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.04),
     0 24px 60px -12px rgb(0 0 0 / 0.6);
 }
 
-[data-tema='claro'] :is(.hoja-inferior, .ventana-flotante, .panel-lateral) {
+[data-tema='claro'] :is(.hoja-inferior, .panel-lateral) {
   box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
 }
 
@@ -2531,6 +2530,31 @@ body {
 
 .velo-hoja[data-saliendo='true'] {
   opacity: 0;
+}
+
+/* Una ficha del selector de electivas (ver FichaElectiva): un contorno
+   apenas marcado que se aclara al apuntarle; la elegida, teñida del verde
+   de aprobada. */
+.ficha-electiva {
+  border-color: var(--panel-borde);
+  background: color-mix(in oklab, var(--tinta) 2%, transparent);
+}
+
+.ficha-electiva[data-aqui='true'] {
+  border-color: color-mix(in oklab, var(--estado-aprobada) 45%, transparent);
+  background: color-mix(in oklab, var(--estado-aprobada) 10%, transparent);
+}
+
+.ficha-electiva:focus-visible {
+  outline: 2px solid var(--estado-aprobada);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .ficha-electiva[data-aqui='false']:hover {
+    background: color-mix(in oklab, var(--tinta) 5%, transparent);
+    border-color: color-mix(in oklab, var(--tinta) 16%, transparent);
+  }
 }
 
 /* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y

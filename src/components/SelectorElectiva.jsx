@@ -7,7 +7,7 @@ import { codigoVisible } from '../data/codigoVisible'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { tituloGrupo } from '../layout/franjaElectivas'
 import HojaInferior from './HojaInferior'
-import VentanaFlotante from './VentanaFlotante'
+import PanelLateral from './PanelLateral'
 import { CuotaGrupo } from './PiezasAvance'
 
 const TITULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'
@@ -16,14 +16,21 @@ const TITULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue upp
    telefono ademas levanta el teclado encima de lo que vienes a leer. */
 const BUSCADOR_DESDE = 10
 
-/* La lista va en tres bloques, en el orden en que sirven para decidir:
-   lo que ya aprobaste -ponerlo cierra la casilla de una vez-, lo que puedes
-   inscribir y, al final, lo que aun no. Alfabetico dentro de cada bloque. */
-const BLOQUES = [
-  { titulo: 'Ya aprobadas', entra: (e) => e === ESTADO.APROBADA },
-  { titulo: 'Puedes inscribirlas', entra: (e) => e !== ESTADO.APROBADA && e !== ESTADO.BLOQUEADA },
-  { titulo: 'Te faltan prelaciones', entra: (e) => e === ESTADO.BLOQUEADA },
+/* Las opciones en tres pestañas, en el orden en que sirven para decidir: lo
+   que puedes cursar ya -casi siempre es lo que se viene a buscar-, lo que ya
+   aprobaste -ponerlo cierra la casilla de una vez- y lo que aun no. Se abre
+   en la primera que tenga algo. */
+const PESTANAS = [
+  {
+    id: 'puedes',
+    titulo: 'Puedes cursar',
+    entra: (e) => e !== ESTADO.APROBADA && e !== ESTADO.BLOQUEADA,
+  },
+  { id: 'aprobadas', titulo: 'Aprobadas', entra: (e) => e === ESTADO.APROBADA },
+  { id: 'bloqueadas', titulo: 'Con prelaciones', entra: (e) => e === ESTADO.BLOQUEADA },
 ]
+
+const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es')
 
 /**
  * Elegir que electiva va en una casilla del pensum.
@@ -33,12 +40,14 @@ const BLOQUES = [
  * cuota aunque quepa en el hueco. Filtrar aqui evita tener que explicar
  * despues por que una eleccion no sumo.
  *
- * El marco es el de todo lo demas que se abre encima: en el telefono la hoja
- * que sube desde abajo (como el avance), en escritorio una tarjeta flotante
- * con la misma piel. Lo de dentro es igual en los dos.
+ * Abre donde se abre todo: en escritorio el panel lateral, con el mapa y la
+ * casilla a la vista; en el telefono la hoja que sube desde abajo. Dentro,
+ * un mosaico de fichas y no una lista larga: veinticinco filas iguales se
+ * leen como un formulario, y las pestañas dejan a la vista solo las que
+ * puedes cursar, que suelen ser un puñado.
  *
- * Recuerda la ultima casilla abierta: al cerrarse, la hoja del telefono baja
- * enseñando lo que tenia, no vacia.
+ * Recuerda la ultima casilla abierta: al cerrarse, el panel o la hoja salen
+ * enseñando lo que tenian, no vacios.
  */
 function SelectorElectiva({ codigo, porCodigo, grupos, alCerrar, ...resto }) {
   const telefono = useEsTelefono()
@@ -46,13 +55,14 @@ function SelectorElectiva({ codigo, porCodigo, grupos, alCerrar, ...resto }) {
   if (codigo && codigo !== ultima) setUltima(codigo)
 
   const casilla = porCodigo.get(codigo ?? ultima)
-  if (!casilla || (!telefono && !codigo)) return null
+  if (!casilla) return null
 
   const grupo = grupos.find((g) => g.clave === casilla.grupo)
   const opciones = grupo?.asignaturas ?? []
+  const abierta = codigo != null
   const etiqueta = `Elegir ${casilla.nombre}`
   const cabecera = (
-    <Cabecera casilla={casilla} grupo={grupo} opciones={opciones} alCerrar={alCerrar} telefono={telefono} />
+    <Cabecera casilla={casilla} grupo={grupo} alCerrar={alCerrar} telefono={telefono} />
   )
   const contenido = (
     <Contenido
@@ -66,27 +76,33 @@ function SelectorElectiva({ codigo, porCodigo, grupos, alCerrar, ...resto }) {
   )
 
   return telefono ? (
-    <HojaInferior abierta={codigo != null} alCerrar={alCerrar} etiqueta={etiqueta} cabecera={cabecera}>
+    <HojaInferior abierta={abierta} alCerrar={alCerrar} etiqueta={etiqueta} cabecera={cabecera}>
       {contenido}
     </HojaInferior>
   ) : (
-    <VentanaFlotante etiqueta={etiqueta} alCerrar={alCerrar} cabecera={cabecera}>
+    <PanelLateral
+      abierto={abierta}
+      alCerrar={alCerrar}
+      etiqueta={etiqueta}
+      cabecera={cabecera}
+      ancho={420}
+    >
       {contenido}
-    </VentanaFlotante>
+    </PanelLateral>
   )
 }
 
-function Cabecera({ casilla, grupo, opciones, alCerrar, telefono }) {
+function Cabecera({ casilla, grupo, alCerrar, telefono }) {
   /* Una casilla de la franja no tiene semestre: es de las carreras de las
      que la UDO no publica ruta de electivas. */
   const donde = casilla.semestre == null && grupo ? tituloGrupo(grupo) : `Semestre ${casilla.semestre}`
 
   return (
-    <header className={`flex items-start justify-between gap-3 px-5 pb-4 ${telefono ? 'pt-1' : 'pt-5'}`}>
+    <header
+      className={`flex items-start justify-between gap-3 pb-4 ${telefono ? 'px-5 pt-1' : 'px-6 pt-6'}`}
+    >
       <div className="min-w-0">
-        <p className={TITULO}>
-          {donde} · {opciones.length} opciones
-        </p>
+        <p className={TITULO}>{donde}</p>
         <h2 className="mt-1 text-[17px] leading-snug font-semibold tracking-[-0.01em] text-tinta">
           {casilla.nombre}
         </h2>
@@ -126,16 +142,25 @@ function Contenido({ casilla, grupo, opciones, estados, casillaDe, alColocar, al
     [opciones, casillaDe],
   )
 
-  const bloques = useMemo(() => {
-    const q = sinTildes(busqueda.trim())
-    const lista = (
-      q ? opciones.filter((o) => sinTildes(o.nombre).includes(q) || o.codigo.includes(q)) : [...opciones]
-    ).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-    return BLOQUES.map((b) => ({
-      titulo: b.titulo,
-      filas: lista.filter((o) => b.entra(estados[o.codigo])),
-    })).filter((b) => b.filas.length > 0)
-  }, [opciones, busqueda, estados])
+  const pestanas = useMemo(
+    () =>
+      PESTANAS.map((p) => ({
+        ...p,
+        opciones: opciones.filter((o) => p.entra(estados[o.codigo])).sort(porNombre),
+      })).filter((p) => p.opciones.length > 0),
+    [opciones, estados],
+  )
+  const [elegida, setElegida] = useState(pestanas[0]?.id)
+  const pestana = pestanas.find((p) => p.id === elegida) ?? pestanas[0]
+
+  /* Buscando, se busca en todas: quien escribe un nombre sabe lo que quiere
+     y no tiene por que saber en que pestaña cae. */
+  const q = sinTildes(busqueda.trim())
+  const visibles = q
+    ? opciones
+        .filter((o) => sinTildes(o.nombre).includes(q) || o.codigo.includes(q))
+        .sort(porNombre)
+    : (pestana?.opciones ?? [])
 
   const elegir = (o) => {
     const aqui = casillaDe[o.codigo] === casilla.codigo
@@ -146,7 +171,7 @@ function Contenido({ casilla, grupo, opciones, estados, casillaDe, alColocar, al
   }
 
   return (
-    <div className="flex flex-col gap-5 px-5 pb-5">
+    <div className="flex flex-col gap-4 px-5 pb-8 md:px-6">
       {grupo?.cuota != null && (
         <CuotaGrupo
           avance={{
@@ -180,35 +205,61 @@ function Contenido({ casilla, grupo, opciones, estados, casillaDe, alColocar, al
         </label>
       )}
 
-      {bloques.map((b) => (
-        <section key={b.titulo}>
-          <h3 className={`mb-1.5 px-1 ${TITULO}`}>{b.titulo}</h3>
-          <ul className="-mx-2 flex flex-col">
-            {b.filas.map((o) => (
-              <li key={o.codigo}>
-                <FilaElectiva
-                  materia={o}
-                  estado={estados[o.codigo]}
-                  aqui={casillaDe[o.codigo] === casilla.codigo}
-                  enOtra={casillaDe[o.codigo] != null && casillaDe[o.codigo] !== casilla.codigo}
-                  enFranja={enFranja}
-                  alElegir={elegir}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {!q && pestanas.length > 1 && (
+        <div role="tablist" aria-label="Filtrar electivas" className="flex gap-1.5">
+          {pestanas.map((p) => {
+            const activa = p.id === pestana.id
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-selected={activa}
+                onClick={() => setElegida(p.id)}
+                className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] transition-[background-color,color] duration-200 ${
+                  activa
+                    ? 'bg-tinta text-[var(--panel)]'
+                    : 'bg-tinta/[0.05] text-tinta-suave hover:bg-tinta/[0.09] hover:text-tinta'
+                }`}
+              >
+                {p.titulo}
+                <span className={`tabular-nums ${activa ? 'opacity-60' : 'text-tinta-tenue'}`}>
+                  {p.opciones.length}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
-      {bloques.length === 0 && (
-        <p className="py-6 text-center text-[13px] text-tinta-tenue">Ninguna coincide con «{busqueda}»</p>
+      {visibles.length > 0 ? (
+        <ul className="grid grid-cols-2 gap-2">
+          {visibles.map((o) => (
+            <li key={o.codigo} className="flex">
+              <FichaElectiva
+                materia={o}
+                estado={estados[o.codigo]}
+                aqui={casillaDe[o.codigo] === casilla.codigo}
+                enOtra={casillaDe[o.codigo] != null && casillaDe[o.codigo] !== casilla.codigo}
+                enFranja={enFranja}
+                alElegir={elegir}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        q && (
+          <p className="py-6 text-center text-[13px] text-tinta-tenue">
+            Ninguna coincide con «{busqueda}»
+          </p>
+        )
       )}
 
       {/* El semestre de la casilla es la ruta que sugiere la UDO, no un
           registro de cuando la cursaste. Sin esta nota, alguien que curso
           una tecnica en otro semestre pensaria que el mapa le dice que lo
           hizo mal. Va al pie: es contexto, no lo primero que hay que leer. */}
-      <p className="flex items-start gap-2 text-[12px] leading-snug text-tinta-tenue">
+      <p className="mt-1 flex items-start gap-2 text-[12px] leading-snug text-tinta-tenue">
         <Info size={13} className="mt-px shrink-0" />
         {enFranja
           ? 'La UDO no publica en qué semestre va cada electiva de esta carrera. Añade las que vayas a cursar y quedan en tu mapa, debajo de los semestres.'
@@ -261,12 +312,13 @@ function Puesta({ materia, enFranja, alQuitar }) {
 }
 
 /**
- * Una opcion. Dice lo que importa al decidir: sus UC, si ya la aprobaste o la
- * cursas, si esta en otra casilla -ponerla aqui la mueve, no la duplica- y
- * si le faltan prelaciones, que no impide ponerla -se puede planificar para
- * mas adelante- pero conviene saberlo antes.
+ * Una opcion, como ficha del mosaico. Dice lo que importa al decidir: sus
+ * UC, si ya la aprobaste o la cursas, si esta en otra casilla -ponerla aqui
+ * la mueve, no la duplica- y si le faltan prelaciones, que no impide
+ * ponerla -se puede planificar para mas adelante- pero conviene saberlo.
+ * La elegida se tiñe del verde de aprobada y lleva su check.
  */
-function FilaElectiva({ materia, estado, aqui, enOtra, enFranja, alElegir }) {
+function FichaElectiva({ materia, estado, aqui, enOtra, enFranja, alElegir }) {
   const bloqueada = estado === ESTADO.BLOQUEADA
   const nota =
     (estado === ESTADO.APROBADA && { texto: 'Aprobada', color: 'var(--estado-aprobada)' }) ||
@@ -279,37 +331,33 @@ function FilaElectiva({ materia, estado, aqui, enOtra, enFranja, alElegir }) {
       type="button"
       aria-pressed={aqui}
       onClick={() => alElegir(materia)}
-      className={`fila-electiva flex w-full cursor-pointer items-center gap-3 rounded-[16px] px-2 py-2 text-left transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--estado-aprobada)] ${
-        aqui ? 'bg-[color-mix(in_oklab,var(--estado-aprobada)_11%,transparent)]' : 'hover:bg-tinta/[0.05]'
-      }`}
+      data-aqui={aqui}
+      className="ficha-electiva flex w-full flex-col items-start gap-3 rounded-[18px] border p-3 text-left transition-[background-color,border-color,transform] duration-200 active:scale-[0.97]"
     >
-      <FichaUc materia={materia} apagada={bloqueada} />
-      <span className="min-w-0 flex-1">
+      <span className="flex w-full items-start justify-between gap-2">
+        <FichaUc materia={materia} apagada={bloqueada} />
         <span
-          className={`line-clamp-2 text-[14px] leading-snug font-medium ${bloqueada ? 'text-tinta-suave' : 'text-tinta'}`}
+          aria-hidden="true"
+          className={`grid size-[22px] place-items-center rounded-full border-2 transition-[background-color,border-color] duration-200 ${
+            aqui ? 'border-transparent bg-aprobada text-[var(--lienzo)]' : 'border-tinta/15'
+          }`}
         >
-          {materia.nombre}
-        </span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-[12px] text-tinta-tenue">
-          <span className="tabular-nums">{codigoVisible(materia)}</span>
-          {bloqueada && <Lock size={11} className="shrink-0" aria-hidden="true" />}
-          {nota && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span className="font-medium" style={{ color: nota.color }}>
-                {nota.texto}
-              </span>
-            </>
-          )}
+          {aqui && <Check size={13} strokeWidth={3} />}
         </span>
       </span>
       <span
-        aria-hidden="true"
-        className={`grid size-[22px] shrink-0 place-items-center rounded-full border-2 transition-[background-color,border-color] duration-200 ${
-          aqui ? 'border-transparent bg-aprobada text-[var(--lienzo)]' : 'border-tinta/15'
-        }`}
+        className={`line-clamp-3 text-[13.5px] leading-snug font-medium ${bloqueada ? 'text-tinta-suave' : 'text-tinta'}`}
       >
-        {aqui && <Check size={13} strokeWidth={3} />}
+        {materia.nombre}
+      </span>
+      <span className="mt-auto flex flex-wrap items-center gap-x-1.5 text-[11.5px] text-tinta-tenue">
+        <span className="tabular-nums">{codigoVisible(materia)}</span>
+        {bloqueada && <Lock size={11} className="shrink-0" aria-hidden="true" />}
+        {nota && (
+          <span className="font-medium" style={{ color: nota.color }}>
+            {nota.texto}
+          </span>
+        )}
       </span>
     </button>
   )

@@ -106,8 +106,6 @@ function VistaCarrera({ carrera, alVolver }) {
     },
     [elegidas, layout],
   )
-  const abrirCasilla = useCallback((codigo) => setCasillaAbierta(codigo), [])
-  const cerrarCasilla = useCallback(() => setCasillaAbierta(null), [])
 
   /* Una electiva colocada hereda las coordenadas de su casilla.
      El layout es geometria pura y se calcula una vez, asi que no sabe -ni
@@ -161,7 +159,10 @@ function VistaCarrera({ carrera, alVolver }) {
      que se abre si cambia: en escritorio el panel lateral, en el telefono
      una hoja desde abajo. */
   const esTelefono = useEsTelefono()
-  const alternarAvance = () => alternar('avance')
+  const alternarAvance = () => {
+    setCasillaAbierta(null)
+    alternar('avance')
+  }
   const [planAbierto, setPlanAbierto] = useState(false)
   const abrirPlan = () => {
     cerrar()
@@ -190,6 +191,19 @@ function VistaCarrera({ carrera, alVolver }) {
   useEffect(() => {
     if (seleccionado != null) retirarAvisos()
   }, [seleccionado, retirarAvisos])
+
+  /* Elegir la electiva de una casilla abre su panel, y en escritorio ese
+     panel sale donde el del avance: abrir uno cierra el otro. La ficha de la
+     materia tambien se cierra, que ya estas en otra cosa. */
+  const abrirCasilla = useCallback(
+    (codigo) => {
+      cerrar()
+      setSeleccionado(null)
+      setCasillaAbierta(codigo)
+    },
+    [cerrar],
+  )
+  const cerrarCasilla = useCallback(() => setCasillaAbierta(null), [])
 
   // El mapa se monta un fotograma DESPUES de que aparece la vista. Son mil
   // seiscientos elementos SVG: aqui cuestan unas decimas, en un telefono de
@@ -423,9 +437,9 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       )}
 
-      {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa porque
-          el mapa es un SVG: un modal ahi dentro heredaria su transform de
-          pan y zoom y saldria movido y a escala. */}
+      {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa, que
+          se remonta al cambiar de vista y lleva el transform del pan y el
+          zoom: el panel saldria movido, a escala o cortado a media salida. */}
       <SelectorElectiva
         codigo={casillaAbierta}
         porCodigo={layout.porCodigo}
