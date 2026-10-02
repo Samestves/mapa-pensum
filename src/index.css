@@ -2623,7 +2623,7 @@ button.casilla-semestre .tilde {
   position: fixed;
   top: 0;
   left: 0;
-  width: min(100vw, 28rem);
+  width: 100vw;
   transform: translateX(-200vw);
   visibility: hidden;
   pointer-events: none;

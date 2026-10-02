@@ -14,9 +14,12 @@ const UMBRAL_PX = 110
 const UMBRAL_VELOCIDAD = 0.5
 
 /**
- * Una hoja que sube desde abajo, flotando separada de los bordes como las de
- * iOS. Es la forma de abrir algo en el telefono: nace donde esta el pulgar y
- * se cierra tirando de ella hacia abajo, tocando fuera o con Escape.
+ * Una hoja que sube desde abajo, de borde a borde y pegada al fondo, con las
+ * esquinas de arriba redondeadas, como las de iOS. Es la forma de abrir algo
+ * en el telefono: nace donde esta el pulgar y se cierra tirando de ella hacia
+ * abajo, tocando fuera o con Escape. Todo el ancho es para el contenido, y
+ * el fondo de la hoja llega hasta el borde de la pantalla: lo que respeta la
+ * barra de gestos es el relleno de abajo, no un hueco.
  *
  * Solo se mueve con transform y opacity, que el navegador anima en la GPU sin
  * repintar nada. Sube y baja con la misma transicion: entra un par de
@@ -138,7 +141,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
         aria-label={etiqueta}
         tabIndex={-1}
         data-fase={fase}
-        className="hoja-inferior absolute inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-[30px] border border-panel-borde bg-panel outline-none"
+        className="hoja-inferior absolute inset-x-0 bottom-0 flex max-h-[calc(100dvh-4rem)] flex-col overflow-hidden rounded-t-[28px] border-t border-panel-borde bg-panel outline-none"
       >
         {/* La zona de la que se tira: el asa y la cabecera. Una franja entera
             y no solo la rayita, que a cinco pixeles de alto no hay dedo que la
@@ -156,7 +159,9 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
           {cabecera}
         </div>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
+          {children}
+        </div>
       </section>
     </div>,
     document.body,
