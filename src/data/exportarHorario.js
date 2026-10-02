@@ -229,13 +229,39 @@ async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   return new Promise((resolver) => lienzo.toBlob(resolver, 'image/png'))
 }
 
-/** Baja el horario como PNG */
+/**
+ * Saca el horario como PNG. Devuelve como acabo: 'guardado' o 'cancelado'.
+ *
+ * En el telefono abre la hoja de compartir del sistema y no una descarga. Una
+ * descarga ahi acaba en una carpeta que nadie abre, y en la app instalada
+ * algunos navegadores ni la hacen; desde la hoja se guarda en la galeria o se
+ * manda por WhatsApp de un toque, que es lo que se hace con un horario. En el
+ * ordenador, descarga normal: alli la hoja de compartir es una rareza.
+ */
 export async function descargarHorario(datos) {
   const blob = await dibujarHorario(datos)
+  const nombre = `horario-${datos.carrera.slug}.png`
+  const archivo = new File([blob], nombre, { type: 'image/png' })
+
+  const tactil = window.matchMedia('(pointer: coarse)').matches
+  if (tactil && navigator.canShare?.({ files: [archivo] })) {
+    try {
+      await navigator.share({ files: [archivo], title: 'Mi horario' })
+      return 'guardado'
+    } catch (e) {
+      // Cerrar la hoja sin elegir nada no es un error
+      if (e.name === 'AbortError') return 'cancelado'
+      // Cualquier otro fallo de la hoja: se baja como en el ordenador
+    }
+  }
+
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `horario-${datos.carrera.slug}.png`
+  a.download = nombre
   a.click()
-  URL.revokeObjectURL(url)
+  /* Se suelta despues y no en el acto: Safari y Firefox leen el enlace un
+     instante mas tarde, y soltado antes la descarga sale vacia o no sale. */
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  return 'guardado'
 }

@@ -172,12 +172,14 @@ function HorarioMovil({ porDia, porCodigo, colores, idMenuAbierto, alPulsarHueco
       </div>
 
       {/* pan-y reparte el gesto: lo vertical lo desplaza el navegador, que lo
-          hace mejor que nosotros, y lo horizontal lo recoge el deslizamiento. */}
+          hace mejor que nosotros, y lo horizontal lo recoge el deslizamiento.
+          Por abajo deja la barra y el boton de descargar, que flota encima de
+          ella: al final de la jornada la ultima hora queda a la vista. */}
       <div
         {...gestos}
         onClick={tocarHueco}
         style={{ touchAction: 'pan-y' }}
-        className="pb-[var(--reserva-barra)]"
+        className="pb-[calc(var(--reserva-barra)+4.5rem)]"
       >
         {/* La key rearranca la animacion en cada cambio de dia, y el sentido
             decide por que lado entra: sin eso, pasar de dia no diria si se

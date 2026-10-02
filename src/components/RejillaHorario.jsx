@@ -163,10 +163,12 @@ function RejillaHorario({
 
        Empieza debajo de las islas de la cabecera (--reserva-cabecera): ahi
        flotan sobre el fondo liso del horario, y la fila de los dias queda
-       justo debajo, entera, en vez de pasar por detras de los botones. */
+       justo debajo, entera, en vez de pasar por detras de los botones. Por
+       abajo deja sitio al boton de descargar, que flota en la esquina: al
+       final de la jornada no tapa la ultima hora. */
     <div
       ref={refVista}
-      className={`mt-[var(--reserva-cabecera)] min-h-0 min-w-[46rem] flex-1 overflow-auto border-t ${LINEA}`}
+      className={`mt-[var(--reserva-cabecera)] min-h-0 min-w-[46rem] flex-1 overflow-auto border-t ${LINEA} pb-24`}
     >
       {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
           las clases pasen por debajo sin transparentarse. */}

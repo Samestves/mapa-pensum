@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { Copy, Download, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
@@ -12,6 +12,7 @@ import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 import HorarioVacio from './HorarioVacio'
 import ImportarHorario from './ImportarHorario'
+import BotonDescargar from './BotonDescargar'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
    para firmar la imagen en vez de volver a preguntarlo. */
@@ -37,7 +38,6 @@ function Horario({ carrera, estados }) {
      que no exista el estado imposible de tener el menu y la ficha a la vez. */
   const [enEdicion, setEnEdicion] = useState(null)
   const [menu, setMenu] = useState(null)
-  const [bajando, setBajando] = useState(false)
 
   /* La imagen que se esta leyendo, si hay alguna. */
   const [aLeer, setALeer] = useState(null)
@@ -98,15 +98,9 @@ function Horario({ carrera, estados }) {
      que aqui solo se persiste: el hueco legal se resolvio mientras se movia. */
   const mover = useCallback((sesion) => guardar(sesion), [guardar])
 
-  const bajar = async () => {
-    setBajando(true)
-    try {
-      // Sin nombre guardado la imagen sale igual, solo que sin firmar
-      await descargarHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
-    } finally {
-      setBajando(false)
-    }
-  }
+  // Sin nombre guardado la imagen sale igual, solo que sin firmar
+  const bajar = () =>
+    descargarHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
@@ -149,18 +143,7 @@ function Horario({ carrera, estados }) {
           la barra de la aplicacion: es una accion de esta vista y solo de
           esta. Flotando no le quita alto a la semana. Aparece solo si hay
           algo que bajar. */}
-      {sesiones.length > 0 && (
-        <button
-          type="button"
-          onClick={bajar}
-          disabled={bajando}
-          title="Descargar el horario como imagen PNG"
-          className="barra-cristal absolute right-5 bottom-[calc(var(--reserva-barra)+1.25rem)] z-30 flex h-11 items-center gap-2 rounded-full pr-4.5 pl-4 text-[12.5px] font-medium text-tinta-suave transition-[color,transform] duration-200 hover:-translate-y-0.5 hover:text-tinta disabled:opacity-60 md:right-9 md:bottom-9"
-        >
-          {bajando ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-          Descargar Horario
-        </button>
-      )}
+      {sesiones.length > 0 && <BotonDescargar alDescargar={bajar} />}
 
       {menu && (
         <MenuClase
