@@ -4,7 +4,7 @@ import { CAJA, NODOS, ROSA, TRANSFORMA } from './logoTrazos'
    CSS: colores, letra, texto partido en lineas, iconos de Lucide y la rosa
    del logotipo. Lo usa la imagen del horario (exportarHorario). */
 
-export const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
+const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
 
 export const css = ({ r, g, b }, alfa = 1) =>
   `rgb(${Math.round(r)} ${Math.round(g)} ${Math.round(b)} / ${alfa})`
