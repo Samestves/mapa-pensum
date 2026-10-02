@@ -17,7 +17,7 @@ import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 import HorarioVacio from './HorarioVacio'
 import ImportarHorario from './ImportarHorario'
-import AccionesHorario from './AccionesHorario'
+import BotonDescargar from './BotonDescargar'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
    para firmar la imagen en vez de volver a preguntarlo. */
@@ -106,8 +106,14 @@ function Horario({ carrera, estados }) {
   // Sin nombre guardado la imagen sale igual, solo que sin firmar
   const imagen = () =>
     imagenDelHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
-  const descargar = async () => descargarArchivo(await imagen())
-  const compartir = async () => compartirArchivo(await imagen())
+  /* Baja el archivo y, donde se puede, abre ademas la hoja de compartir con
+     la misma imagen: guardarlo y mandarlo por WhatsApp en un solo toque.
+     Cerrar la hoja no deshace nada, el archivo ya esta bajado. */
+  const descargar = async () => {
+    const archivo = await imagen()
+    descargarArchivo(archivo)
+    if (puedeCompartir()) await compartirArchivo(archivo)
+  }
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
@@ -150,12 +156,7 @@ function Horario({ carrera, estados }) {
           la barra de la aplicacion: es una accion de esta vista y solo de
           esta. Flotando no le quita alto a la semana. Aparece solo si hay
           algo que bajar. */}
-      {sesiones.length > 0 && (
-        <AccionesHorario
-          alDescargar={descargar}
-          alCompartir={puedeCompartir() ? compartir : null}
-        />
-      )}
+      {sesiones.length > 0 && <BotonDescargar alDescargar={descargar} />}
 
       {menu && (
         <MenuClase

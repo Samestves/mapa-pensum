@@ -331,10 +331,9 @@ async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   return new Promise((resolver) => lienzo.toBlob(resolver, 'image/png'))
 }
 
-/* La ultima imagen hecha, por horario. Descargar y luego compartir la misma
-   no la vuelve a dibujar: compartir tiene que llamarse enseguida despues del
-   toque, y un dibujo de por medio puede hacer que el navegador ya no lo deje.
-   Cambiar una clase cambia el array de sesiones, y con el la imagen. */
+/* La ultima imagen hecha, por horario: volver a descargar sin haber cambiado
+   nada no la vuelve a dibujar. Cambiar una clase cambia el array de
+   sesiones, y con el la imagen. */
 const hechas = new WeakMap()
 
 /** La imagen del horario como archivo PNG, lista para bajar o compartir */
@@ -374,14 +373,15 @@ export const puedeCompartir = () =>
   window.matchMedia('(pointer: coarse)').matches &&
   Boolean(navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }))
 
-/** Abre la hoja de compartir con la imagen. Devuelve 'guardado' o 'cancelado'. */
+/**
+ * Abre la hoja de compartir con la imagen. Nunca falla: cerrar la hoja sin
+ * elegir nada, o un navegador que la niega, no son errores de nadie -quien
+ * la abre ya tiene el archivo descargado-.
+ */
 export async function compartirArchivo(archivo) {
   try {
     await navigator.share({ files: [archivo], title: 'Mi horario', text: MENSAJE })
-    return 'guardado'
-  } catch (e) {
-    // Cerrar la hoja sin elegir nada no es un error
-    if (e.name === 'AbortError') return 'cancelado'
-    throw e
+  } catch {
+    // Cerrada o negada: no hay nada que hacer
   }
 }

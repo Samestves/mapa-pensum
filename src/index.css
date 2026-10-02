@@ -2977,19 +2977,19 @@ button.casilla-semestre .tilde {
   stroke-opacity: 0.8;
 }
 
-/* Los botones de la imagen del horario (AccionesHorario). En el telefono van justo
-   encima de la isla del avance, en su misma columna: alineados con su borde
-   derecho y separados de ella lo mismo que la barra lo esta del borde de
+/* El boton de descargar el horario (BotonDescargar). En el telefono va justo
+   encima de la isla del avance, en su misma columna: alineado con su borde
+   derecho y separado de ella lo mismo que la barra lo esta del borde de
    abajo. La barra de abajo mide como mucho 352 px -inicio 52, la capsula 232,
    el avance 52 y dos huecos de 8- y va centrada; en pantallas mas estrechas
    llega al margen de 12 px. */
-.acciones-horario {
+.boton-descargar {
   right: max(0.75rem, calc((100% - 352px) / 2));
   bottom: var(--reserva-barra);
 }
 
 @media (min-width: 768px) {
-  .acciones-horario {
+  .boton-descargar {
     right: 2.25rem;
     bottom: 2.25rem;
   }
