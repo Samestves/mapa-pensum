@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { empezarLatido } from './data/latido'
 import { aplicarModoLigero } from './data/ligero'
+import { recargarSiHayVersionNueva } from './data/versionNueva'
 import './index.css'
 import App from './App.jsx'
 import LimiteDeError from './components/LimiteDeError'
@@ -12,6 +13,10 @@ import LimiteDeError from './components/LimiteDeError'
    produccion: en desarrollo se quedaria con una copia del servidor de Vite y
    dejarias de ver tus propios cambios. Se registra despues de load para no
    competir por el ancho de banda con el primer pintado. */
+/* Un trozo de la aplicacion de un despliegue anterior que ya no existe: se
+   recarga con la version publicada. Ver data/versionNueva.js. */
+window.addEventListener('vite:preloadError', recargarSiHayVersionNueva)
+
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {

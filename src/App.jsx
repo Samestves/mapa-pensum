@@ -8,12 +8,13 @@ import EsqueletoMapa from './components/EsqueletoMapa'
 import LimiteDeError from './components/LimiteDeError'
 import SelectorCarrera from './components/SelectorCarrera'
 
+import { conRecarga } from './data/versionNueva'
 import { VistaCarreraDiferida } from './components/vistaDiferida'
 
 /* El panel de uso, en su propio trozo de codigo: es una pantalla para una
    sola persona -la que mantiene esto- y nadie mas tiene por que descargarla.
    Aqui y no en vistaDiferida porque no lo precarga nadie: se entra a mano. */
-const PanelDiferido = lazy(() => import('./components/PanelUso'))
+const PanelDiferido = lazy(conRecarga(() => import('./components/PanelUso')))
 
 /**
  * Raiz: decide entre el selector y el mapa de una carrera.

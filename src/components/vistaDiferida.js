@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+import { conRecarga } from '../data/versionNueva'
 
 /* Un solo sitio sabe donde se parte el codigo, y por eso existe este archivo
    en vez de dos lineas sueltas dentro de App.
@@ -13,7 +14,7 @@ import { lazy } from 'react'
    La misma funcion sirve para las dos cosas porque import() ya cachea: la
    primera llamada baja el chunk y las siguientes devuelven la promesa que ya
    existe. Precargar mil veces baja una. */
-const importar = () => import('./VistaCarrera')
+const importar = conRecarga(() => import('./VistaCarrera'))
 
 /**
  * La vista de una carrera, bajada aparte.

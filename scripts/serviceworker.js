@@ -168,12 +168,17 @@ self.addEventListener('fetch', (e) => {
 
   // Todo lo demas lleva hash en el nombre, o sea que un nombre concreto no
   // cambia nunca de contenido: la cache va primero sin riesgo.
+  //
+  // Pero nunca se guarda HTML bajo el nombre de un archivo: si un archivo ya
+  // no existe -de un despliegue anterior-, el servidor puede contestar con
+  // la pagina, y guardarla haria que ese nombre devolviera HTML para siempre.
   e.respondWith(
     caches.match(e.request).then(
       (guardado) =>
         guardado ??
         fetch(e.request).then((res) => {
-          if (res.ok && res.type === 'basic') {
+          const esPagina = (res.headers.get('content-type') ?? '').includes('text/html')
+          if (res.ok && res.type === 'basic' && !esPagina) {
             const copia = res.clone()
             caches.open(CACHE).then((c) => c.put(e.request, copia)).catch(() => {})
           }
