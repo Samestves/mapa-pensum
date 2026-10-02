@@ -3028,3 +3028,14 @@ button.casilla-semestre .tilde {
 .grupo-casilla:hover rect[stroke-dasharray] {
   stroke-opacity: 0.8;
 }
+
+/* El filo que aparta Inicio de las vistas en la capsula del telefono:
+   fino y desvanecido en las puntas, para que separe sin cortar el cristal. */
+.separador-inicio {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--tinta) 18%, transparent),
+    transparent
+  );
+}
