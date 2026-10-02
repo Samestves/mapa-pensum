@@ -10,23 +10,24 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * agarre para tocar el borde superior; y lo que se quita de arriba se le da a
  * la vista, que llega hasta el borde.
  *
- * Dos piezas, cada una para lo que es:
- * - Una capsula con Inicio a la izquierda -salir a todas las carreras-,
- *   apartado por un filo fino, y las vistas: son SITIOS -cambian lo que
- *   llena la pantalla-. La elegida va encendida sobre su gota de cristal;
- *   las otras quedan apagadas, sin caja ni fondo propio. Los nombres van en
- *   minusculas, como las pestañas de iOS.
+ * Tres piezas, cada una para lo que es:
+ * - Inicio, un circulo con la casa a la izquierda: salir a todas las
+ *   carreras.
+ * - Las vistas, juntas en una capsula: son SITIOS -cambian lo que llena la
+ *   pantalla-. La elegida va encendida sobre su gota de cristal; las otras
+ *   quedan apagadas, sin caja ni fondo propio. Los nombres van en minusculas,
+ *   como las pestañas de iOS.
  * - El avance, una isla redonda (IslaAvance) cuyo borde es la barra de
  *   progreso: es una CONSULTA -abre una hoja encima y te deja donde estabas-,
  *   y desde esa hoja se llega a Planificar.
  *
- * Sobre el coste: el desenfoque de fondo es lo caro del cristal, y estas dos
+ * Sobre el coste: el desenfoque de fondo es lo caro del cristal, y estas tres
  * superficies suman poco area. Nada se anima en bucle; la lente solo se mueve
  * al cambiar de vista.
  *
- * El area de toque de cada pestaña es su tercio de la capsula, unos 70 px de
- * ancho por 46 de alto, e Inicio 46 x 46: por encima de los 44 que se
- * consideran el minimo.
+ * El area de toque de cada pestaña es su tercio entero de la capsula, de 70 a
+ * 75 px de ancho segun la pantalla por 46 de alto: por encima de los 44 que
+ * se consideran el minimo.
  */
 function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance, alVolver }) {
   const indice = indiceDeVista(vista)
@@ -60,34 +61,32 @@ function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAva
       aria-label="Vistas de la carrera"
       className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center gap-2 px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] md:hidden"
     >
-      {/* Una sola capsula: Inicio a la izquierda, separado por un filo, y
-          las tres vistas. Inicio no es un sitio mas -sales de la carrera-,
-          asi que no lleva lente: solo la linea lo aparta de las vistas. Crece
-          hasta 288 px y encoge en pantallas estrechas. */}
-      <div className="barra-cristal pointer-events-auto flex h-[52px] max-w-[288px] min-w-0 flex-1 items-center rounded-full p-[3px]">
-        <button
-          type="button"
-          onClick={alVolver}
-          title="Ver todas las carreras"
-          aria-label="Ver todas las carreras"
-          className="grid h-full w-[46px] shrink-0 place-items-center rounded-full text-tinta-suave transition-transform duration-200 ease-out active:scale-[0.92]"
-        >
-          <IconoInicio size={20} />
-        </button>
+      {/* Inicio, abajo a la izquierda: el pulgar llega sin recolocar la mano
+          y la parte de arriba queda libre para la vista. */}
+      <button
+        type="button"
+        onClick={alVolver}
+        title="Ver todas las carreras"
+        aria-label="Ver todas las carreras"
+        className="barra-cristal pointer-events-auto relative grid size-[52px] shrink-0 place-items-center rounded-full text-tinta-suave transition-transform duration-200 ease-out active:scale-[0.92]"
+      >
+        <IconoInicio size={20} />
+      </button>
 
-        <span aria-hidden="true" className="separador-inicio mx-1 h-6 w-px shrink-0" />
-
-        <div className="relative grid h-full min-w-0 flex-1 grid-cols-3">
-          {/* La lente: una gota de cristal detras de la vista elegida. Se
-              desliza hasta la nueva y es lo unico de la barra que se mueve. */}
-          <span
-            aria-hidden="true"
-            className="lente-cristal pointer-events-none absolute inset-y-0 left-0 rounded-full"
-            style={{
-              width: 'calc(100% / 3)',
-              transform: `translateX(${indice * 100}%)`,
-            }}
-          />
+      {/* Crece hasta 232 px y encoge en pantallas estrechas. Las tres piezas
+          miden lo mismo de alto: la fila se lee como una linea, no como tres
+          tamaños compitiendo. */}
+      <div className="barra-cristal pointer-events-auto relative grid h-[52px] max-w-[232px] min-w-0 flex-1 grid-cols-3 rounded-full p-[3px]">
+        {/* La lente: una gota de cristal detras de la vista elegida. Se
+            desliza hasta la nueva y es lo unico de la barra que se mueve. */}
+        <span
+          aria-hidden="true"
+          className="lente-cristal pointer-events-none absolute inset-y-[3px] left-[3px] rounded-full"
+          style={{
+            width: 'calc((100% - 6px) / 3)',
+            transform: `translateX(${indice * 100}%)`,
+          }}
+        />
 
         {VISTAS.map(({ id, icono: Ico, etiqueta, titulo }) => {
           const activo = id === vista
@@ -119,7 +118,6 @@ function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAva
             </button>
           )
         })}
-        </div>
       </div>
 
       <IslaAvance resumen={resumen} abierta={avanceAbierto} alPulsar={alAlternarAvance} />
