@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { avanceDe, cuantoLlevas, describirAvance } from '../data/avance'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import AroAvance from './AroAvance'
+import AroAvance, { CifraAro } from './AroAvance'
 
 /* El aro pequeño cabe dentro de la capsula con 4 px de aire arriba y abajo:
    36 de 44, el alto de la fila. */
@@ -18,8 +18,8 @@ const GROSOR_ARO = 2.4
  * para decir las UC sin abrir nada. Y hace de espejo a la capsula del nombre
  * de la carrera, al otro lado de la cabecera: la fila queda simetrica.
  *
- * El numero del aro va sin "%": a 11 px el signo no se leeria, y el texto de
- * al lado ya dice de que es.
+ * El aro lleva el porcentaje con su "%", igual que la isla del telefono (ver
+ * CifraAro), del 0 al 100 sin salirse.
  */
 function CapsulaAvance({ resumen, abierta, alPulsar, className = '' }) {
   const avance = Math.max(0, Math.min(100, avanceDe(resumen)))
@@ -37,9 +37,7 @@ function CapsulaAvance({ resumen, abierta, alPulsar, className = '' }) {
     >
       <span className="relative grid size-9 shrink-0 place-items-center">
         <AroAvance lado={LADO_ARO} grosor={GROSOR_ARO} avance={avance} />
-        <span className="relative text-[11.5px] leading-none font-semibold tracking-[-0.03em] text-tinta tabular-nums">
-          {numero}
-        </span>
+        <CifraAro numero={numero} cuerpo={11} />
       </span>
 
       <span className="flex flex-col items-start leading-none">

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { avanceDe, describirAvance } from '../data/avance'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import AroAvance from './AroAvance'
+import AroAvance, { CifraAro } from './AroAvance'
 
 /* El aro va centrado en el canto: su borde de fuera coincide con el de la
    isla, asi que el progreso no es un anillo dentro de un boton sino el
@@ -20,9 +20,7 @@ const GROSOR = 2.75
  * milisegundos y se para. En reposo no hay nada animandose.
  *
  * El numero va en HTML y no en un <text> del SVG: asi hereda la fuente y el
- * suavizado del resto de la interfaz, y el "%" pequeño se alinea por la linea
- * de base, que es como lo pone iOS ("14 %" con el signo a media altura se lee
- * como una unidad pegada, no como parte del numero).
+ * suavizado del resto de la interfaz (ver CifraAro).
  */
 function IslaAvance({ resumen, abierta, alPulsar }) {
   const avance = Math.max(0, Math.min(100, avanceDe(resumen)))
@@ -41,10 +39,7 @@ function IslaAvance({ resumen, abierta, alPulsar }) {
     >
       <AroAvance lado={LADO} grosor={GROSOR} avance={avance} />
 
-      <span className="relative flex items-baseline leading-none text-tinta tabular-nums">
-        <span className="text-[16px] font-semibold tracking-[-0.04em]">{numero}</span>
-        <span className="ml-[1px] text-[9.5px] font-semibold text-tinta-tenue">%</span>
-      </span>
+      <CifraAro numero={numero} cuerpo={16} />
     </button>
   )
 }
