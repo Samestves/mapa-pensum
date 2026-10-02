@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { empezarLatido } from './data/latido'
+import { aplicarModoLigero } from './data/ligero'
 import './index.css'
 import App from './App.jsx'
 import LimiteDeError from './components/LimiteDeError'
@@ -32,6 +33,10 @@ window.addEventListener('load', () => {
   if ('requestIdleCallback' in window) requestIdleCallback(calentar, { timeout: 4000 })
   else setTimeout(calentar, 1500)
 })
+
+/* Antes de pintar nada: el modo ligero cambia el aspecto de las islas, y
+   decidirlo despues se veria como un salto. Ver data/ligero.js. */
+aplicarModoLigero()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

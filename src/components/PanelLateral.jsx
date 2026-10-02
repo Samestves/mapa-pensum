@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { useEntrada } from '../hooks/useEntrada'
 
 /* Lo que tarda en irse. Tiene que coincidir con la transicion de
    .panel-lateral en index.css: el tiempo que sigue montado despues de pedir
@@ -26,13 +27,15 @@ const SALIDA_MS = 320
  * mide la cabecera (--reserva-cabecera) para empezar justo debajo.
  *
  * Solo se mueve con transform y opacity. El montaje es el de HojaInferior:
- * si llega abierto se monta en el mismo render, y al cerrarse se queda
- * SALIDA_MS mas, con data-saliendo, para la animacion de salida.
+ * si llega abierto se monta en el mismo render, entra un par de fotogramas
+ * despues (ver useEntrada) y al cerrarse se queda SALIDA_MS mas, para que se
+ * le vea salir.
  */
 function PanelLateral({ abierto, alCerrar, etiqueta, ancho = 380, cabecera, children }) {
   const [montado, setMontado] = useState(abierto)
   if (abierto && !montado) setMontado(true)
   const saliendo = montado && !abierto
+  const fase = useEntrada(montado) && !saliendo ? 'dentro' : 'fuera'
   const ref = useRef(null)
 
   useCerrarConEscape(alCerrar, abierto)
@@ -43,14 +46,18 @@ function PanelLateral({ abierto, alCerrar, etiqueta, ancho = 380, cabecera, chil
     return () => clearTimeout(t)
   }, [saliendo])
 
-  /* El foco entra al abrirse, para que Tab y el lector de pantalla empiecen
-     por aqui, y vuelve a lo que lo abrio al cerrarse. */
+  /* El foco entra cuando empieza a entrar, para que Tab y el lector de
+     pantalla empiecen por aqui, y vuelve a lo que lo abrio al cerrarse. No
+     al montarse: enfocar ahi obliga a maquetarlo entero antes de pintar. */
   useEffect(() => {
     if (!montado) return
     const previo = document.activeElement
-    ref.current?.focus({ preventScroll: true })
     return () => previo?.focus?.({ preventScroll: true })
   }, [montado])
+
+  useEffect(() => {
+    if (fase === 'dentro') ref.current?.focus({ preventScroll: true })
+  }, [fase])
 
   if (!montado) return null
 
@@ -60,7 +67,7 @@ function PanelLateral({ abierto, alCerrar, etiqueta, ancho = 380, cabecera, chil
       role="dialog"
       aria-label={etiqueta}
       tabIndex={-1}
-      data-saliendo={saliendo}
+      data-fase={fase}
       style={{ width: ancho }}
       className="panel-lateral absolute top-[calc(var(--reserva-cabecera)+0.5rem)] right-5 bottom-5 z-30 flex max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-[28px] border border-panel-borde bg-panel outline-none"
     >

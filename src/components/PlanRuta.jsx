@@ -173,7 +173,7 @@ function PlanRuta({ carrera, marcas, estados, progreso, relaciones, elegidas, al
           type="button"
           aria-label="Cerrar"
           onClick={alCerrar}
-          className="no-imprimir absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm"
+          className="no-imprimir absolute inset-0 cursor-default bg-black/60"
         />
 
         {/* A pantalla completa en movil y como tarjeta a partir de md: en un

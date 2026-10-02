@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Check, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { ASPECTO } from '../theme/situacion'
@@ -385,6 +385,26 @@ function CasillaLista({ semestre, marca, alAlternar }) {
   )
 }
 
+/* Las secciones que se pintan al entrar: las que caben en la primera
+   pantalla, y alguna de sobra. */
+const PRIMERAS_SECCIONES = 3
+
+/**
+ * Si ya toca pintar la lista entera. Entrar a la lista eran dos mil y pico
+ * nodos de una vez, y en un telefono modesto el toque en "Lista" se quedaba
+ * colgado hasta que estaban todos. Asi se pinta primero lo que se ve, y el
+ * resto en el fotograma siguiente, como transicion: si entretanto llega un
+ * toque, el toque va primero. Para cuando alguien baja, ya esta.
+ */
+function useListaCompleta() {
+  const [completa, setCompleta] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => startTransition(() => setCompleta(true)))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  return completa
+}
+
 /**
  * Vista de lista por semestres. Es la que se ve por defecto en movil: el
  * grafo completo mide 3200 px de ancho y en un telefono solo cabe a escala
@@ -418,6 +438,7 @@ function VistaLista({
 }) {
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
   const [filtro, setFiltro] = useState('todo')
+  const completa = useListaCompleta()
   /* La materia abierta. Una sola a la vez: es la que ordena la lista a su
      alrededor, y dos cadenas encendidas a la vez no se leerian. */
   const [foco, setFoco] = useState(null)
@@ -625,14 +646,14 @@ function VistaLista({
 
         {/* La key del filtro rearranca la entrada: al cambiar de filtro la
             lista nueva sube fundiendose en vez de cambiar de golpe. */}
-        <div key={filtro} className="flex flex-col gap-7 pt-4">
+        <div key={filtro} className="flex flex-col pt-4">
           {visibles.length === 0 && (
             <p className="lista-entrar py-16 text-center text-[13px] text-tinta-tenue">
               Nada por aquí
             </p>
           )}
 
-          {visibles.map((s, i) => {
+          {(completa ? visibles : visibles.slice(0, PRIMERAS_SECCIONES)).map((s, i) => {
             const id = `semestre-${s.numero}`
             const completo = s.total > 0 && s.hechas === s.total
             const plegado = filtro === 'todo' && (plegados[id] ?? completo)
@@ -648,7 +669,7 @@ function VistaLista({
               <section
                 key={id}
                 id={`lista-${id}`}
-                className="lista-entrar relative scroll-mt-[var(--margen-seccion)] pl-7"
+                className="seccion-lista lista-entrar relative scroll-mt-[var(--margen-seccion)] pb-7 pl-7"
                 style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
               >
                 {/* El recorrido: una linea que baja de este semestre al
@@ -656,7 +677,7 @@ function VistaLista({
                 {!ultimo && (
                   <span
                     aria-hidden="true"
-                    className="absolute top-[22px] -bottom-7 left-[6.5px] w-px bg-[color-mix(in_oklab,var(--tinta)_10%,transparent)]"
+                    className="absolute top-[22px] bottom-0 left-[6.5px] w-px bg-[color-mix(in_oklab,var(--tinta)_10%,transparent)]"
                   />
                 )}
                 <span
@@ -737,7 +758,7 @@ function VistaLista({
             )
           })}
 
-          {secciones.map((g) => {
+          {completa && secciones.map((g) => {
             const id = `grupo-${g.clave}`
             /* Con un filtro solo salen las electivas que ya son tuyas: las
                veintitantas opciones del catalogo enterrarian las
@@ -753,7 +774,7 @@ function VistaLista({
             const avance = g.avance
 
             return (
-              <section key={id} id={`lista-${id}`} className="lista-entrar scroll-mt-[var(--margen-seccion)] pl-7">
+              <section key={id} id={`lista-${id}`} className="seccion-lista lista-entrar scroll-mt-[var(--margen-seccion)] pb-7 pl-7">
                 <div className="flex items-center gap-4 pb-3">
                   <h2 className="min-w-0 flex-1 truncate text-[17px] leading-tight font-light tracking-[-0.02em] text-tinta">
                     {tituloGrupo(g)

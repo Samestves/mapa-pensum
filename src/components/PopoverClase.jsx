@@ -368,7 +368,7 @@ function PopoverClase({
         type="button"
         aria-label="Cerrar"
         onClick={alCerrar}
-        className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-black/50"
       />
       <div
         role="dialog"

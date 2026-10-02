@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
+import { useEntrada } from '../hooks/useEntrada'
 
 /* Lo que tarda en irse. Tiene que coincidir con la transicion de
    .hoja-inferior en index.css: es el tiempo que la hoja sigue montada despues
    de pedir cerrarse, para que se la vea bajar. */
-const SALIDA_MS = 380
+const SALIDA_MS = 400
 
 /* Cuanto hay que arrastrarla hacia abajo para que se cierre, o a que
    velocidad (px/ms) si el gesto es un tiron corto. */
@@ -18,13 +19,15 @@ const UMBRAL_VELOCIDAD = 0.5
  * se cierra tirando de ella hacia abajo, tocando fuera o con Escape.
  *
  * Solo se mueve con transform y opacity, que el navegador anima en la GPU sin
- * repintar nada. La superficie es opaca, sin desenfoque de fondo: un cristal
+ * repintar nada. Sube y baja con la misma transicion: entra un par de
+ * fotogramas despues de montarse (ver useEntrada) y sale con data-fase de
+ * vuelta a "fuera". La superficie es opaca, sin desenfoque de fondo: un cristal
  * del tamaño de media pantalla habria que recalcularlo en cada fotograma de la
  * subida, y en un telefono modesto eso se nota.
  *
  * El montaje se resuelve sin efectos para abrir: si llega abierta y no estaba
  * montada, se monta en el mismo render. Al cerrarse se queda montada
- * SALIDA_MS mas, con data-saliendo, para que la animacion de bajada se vea.
+ * SALIDA_MS mas, para que la bajada se vea.
  *
  * El arrastre escribe el transform directamente en el elemento, sin pasar por
  * React: son decenas de movimientos por segundo y ninguno cambia nada mas que
@@ -35,6 +38,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
   const [montada, setMontada] = useState(abierta)
   if (abierta && !montada) setMontada(true)
   const saliendo = montada && !abierta
+  const fase = useEntrada(montada) && !saliendo ? 'dentro' : 'fuera'
 
   const refHoja = useRef(null)
   const arrastre = useRef(null)
@@ -64,14 +68,19 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
     return () => delete raiz.dataset.hoja
   }, [montada])
 
-  /* El foco entra en la hoja al abrirse y vuelve a lo que la abrio al
-     cerrarse: con teclado o lector de pantalla no se pierde el sitio. */
+  /* El foco entra en la hoja cuando empieza a subir y vuelve a lo que la
+     abrio al cerrarse: con teclado o lector de pantalla no se pierde el
+     sitio. No al montarse: ahi enfocar obligaba a maquetar la hoja entera en
+     ese instante, antes de poder pintar nada. */
   useEffect(() => {
     if (!montada) return
     const previo = document.activeElement
-    refHoja.current?.focus({ preventScroll: true })
     return () => previo?.focus?.({ preventScroll: true })
   }, [montada])
+
+  useEffect(() => {
+    if (fase === 'dentro') refHoja.current?.focus({ preventScroll: true })
+  }, [fase])
 
   if (!montada) return null
 
@@ -118,7 +127,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
         aria-label="Cerrar"
         tabIndex={-1}
         onClick={alCerrar}
-        data-saliendo={saliendo}
+        data-fase={fase}
         className="velo-hoja absolute inset-0 cursor-default"
       />
 
@@ -128,7 +137,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
         aria-modal="true"
         aria-label={etiqueta}
         tabIndex={-1}
-        data-saliendo={saliendo}
+        data-fase={fase}
         className="hoja-inferior absolute inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden rounded-[30px] border border-panel-borde bg-panel outline-none"
       >
         {/* La zona de la que se tira: el asa y la cabecera. Una franja entera

@@ -396,6 +396,15 @@ body {
   }
 }
 
+/* En modo ligero (ver data/ligero.js) la luz no corre: el cable de lo que
+   puedes inscribir queda encendido entero, quieto y mas tenue. Dice lo
+   mismo -por aqui se abre algo- sin repintar su plano en cada fotograma. */
+[data-ligero] .flujo {
+  animation: none;
+  stroke-dasharray: none;
+  opacity: 0.4;
+}
+
 /* Y con una hoja abierta encima (HojaInferior), en cualquier pantalla: el
    mapa queda detras del velo y la luz solo le robaria cuadros a la hoja. */
 [data-hoja] .flujo {
@@ -1313,6 +1322,12 @@ button.casilla-semestre .tilde {
   transition: background 200ms ease;
 }
 
+[data-ligero] .panel-cristal {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--panel);
+}
+
 [data-tema='claro'] .panel-cristal {
   background: color-mix(in oklab, var(--panel) 78%, transparent);
   box-shadow: 0 20px 48px -24px rgb(12 23 37 / 0.34);
@@ -1888,6 +1903,15 @@ button.casilla-semestre .tilde {
   animation: chip-entrar 420ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+/* En modo ligero la lista entra entera con la vista, sin la cascada de
+   secciones y pastillas: cada pieza que se anima es una capa mas que el
+   telefono tiene que crear al entrar, y eran casi cuarenta (ver
+   data/ligero.js). */
+[data-ligero] .lista-entrar,
+[data-ligero] .chip-entrar {
+  animation: none;
+}
+
 /* El punto de cada semestre en el recorrido. Lleno y con check si esta
    completo; con un halo de luz fija si es el que te toca; un anillo si ya
    empezaste; apenas un contorno si queda por delante. */
@@ -2288,6 +2312,15 @@ button.casilla-semestre .tilde {
   }
 }
 
+/* En modo ligero, islas opacas: el desenfoque de lo de detras se recalcula
+   en cada fotograma en que el mapa se mueve, y en un telefono modesto es lo
+   que mas pesa al arrastrar. Ver data/ligero.js. */
+[data-ligero] .barra-cristal {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: color-mix(in oklab, var(--panel) 96%, transparent);
+}
+
 /* Sin cristal: quien pide menos transparencia en su sistema, o un navegador
    que no sabe desenfocar lo de detras, recibe islas casi opacas. Se lee igual
    -el contenido no queda ilegible bajo un cristal que no desenfoca- y no hay
@@ -2412,6 +2445,12 @@ button.casilla-semestre .tilde {
   backdrop-filter: blur(6px);
 }
 
+[data-ligero] .paleta-velo {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: color-mix(in oklab, var(--lienzo) 80%, transparent);
+}
+
 .paleta-cristal {
   background: color-mix(in oklab, var(--panel) 86%, transparent);
   box-shadow:
@@ -2488,10 +2527,10 @@ button.casilla-semestre .tilde {
 }
 
 /* ---- Hoja inferior (telefono) ------------------------------------------
-   Sube con la curva de hoja de iOS y baja igual. La entrada es una animacion
-   sin relleno -no se queda aplicada al terminar- para que el arrastre pueda
-   mover la hoja con un transform en linea; la salida es una transicion,
-   porque tiene que poder salir desde donde la dejo el dedo. */
+   Sube con la curva de hoja de iOS y baja igual, con una sola transicion: se
+   monta "fuera" y pasa a "dentro" un par de fotogramas despues (ver
+   useEntrada), y al cerrarse vuelve a "fuera" desde donde la dejo el dedo.
+   El arrastre la mueve con un transform en linea, que manda sobre este. */
 .hoja-inferior,
 .panel-lateral {
   box-shadow:
@@ -2504,41 +2543,27 @@ button.casilla-semestre .tilde {
 }
 
 .hoja-inferior {
-  animation: hoja-entra 420ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
-  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.hoja-inferior[data-saliendo='true'] {
+.hoja-inferior[data-fase='fuera'] {
   transform: translateY(calc(100% + 24px));
-}
-
-@keyframes hoja-entra {
-  from {
-    transform: translateY(calc(100% + 24px));
-  }
 }
 
 /* ---- Panel lateral (escritorio) ----------------------------------------
    Entra desde la derecha con la misma curva que la hoja del telefono, un
    paso corto y no todo su ancho: viene de su sitio, no de fuera de la
-   pantalla. Entrada por animacion y salida por transicion, como la hoja. */
+   pantalla. Una sola transicion para entrar y salir, como la hoja (ver
+   useEntrada). */
 .panel-lateral {
-  animation: panel-entra 380ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
   transition:
-    transform 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
     opacity 240ms ease;
 }
 
-.panel-lateral[data-saliendo='true'] {
+.panel-lateral[data-fase='fuera'] {
   transform: translateX(28px);
   opacity: 0;
-}
-
-@keyframes panel-entra {
-  from {
-    transform: translateX(28px);
-    opacity: 0;
-  }
 }
 
 /* El pie se desvanece en vez de cortarse en seco: dice que hay mas abajo
@@ -2566,7 +2591,6 @@ button.casilla-semestre .tilde {
    estas, no algo que haya desaparecido. */
 .velo-hoja {
   background: rgb(0 0 0 / 0.45);
-  animation: velo-entra 300ms ease backwards;
   transition: opacity 300ms ease;
 }
 
@@ -2574,7 +2598,7 @@ button.casilla-semestre .tilde {
   background: rgb(16 32 64 / 0.22);
 }
 
-.velo-hoja[data-saliendo='true'] {
+.velo-hoja[data-fase='fuera'] {
   opacity: 0;
 }
 
@@ -2601,6 +2625,19 @@ button.casilla-semestre .tilde {
     background: color-mix(in oklab, var(--tinta) 5%, transparent);
     border-color: color-mix(in oklab, var(--tinta) 16%, transparent);
   }
+}
+
+/* Cada seccion de la lista -un semestre, un grupo de electivas- solo se
+   maqueta y se pinta cuando esta cerca de la pantalla. Son mas de dos mil
+   nodos, y entrar a la lista los maquetaba todos de una vez: medio segundo
+   con el telefono congelado (CPU x4). El alto que se reserva mientras no se
+   ha pintado es una estimacion; despues se recuerda el de verdad. Por eso el
+   aire entre secciones va dentro de cada una y no entre ellas: la linea del
+   recorrido tiene que llegar hasta la siguiente, y lo que se sale de una
+   seccion contenida no se pinta. */
+.seccion-lista {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
 }
 
 /* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y

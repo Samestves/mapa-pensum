@@ -293,7 +293,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
         type="button"
         aria-label="Cerrar"
         onClick={alCerrar}
-        className="fixed inset-0 cursor-default bg-black/55 backdrop-blur-[2px]"
+        className="fixed inset-0 cursor-default bg-black/55"
       />
 
       <div
