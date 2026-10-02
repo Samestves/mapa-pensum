@@ -108,6 +108,7 @@
      deberia llevar color ahi. El blanco al once por ciento se apoya en el
      fondo que tenga debajo y se lee como una linea de lapiz. */
   --horario-linea: rgba(255, 255, 255, 0.11);
+  --ahora: #ff6b5e;
 
 }
 
@@ -191,6 +192,7 @@
   --clase-8: #56677e;
 
   --horario-linea: #cfd9e6;
+  --ahora: #e5484d;
 }
 
 /* @theme inline hace que las utilidades emitan var(--x) en vez del valor
@@ -2216,6 +2218,48 @@ body {
    carrera. */
 .vista-activa {
   color: var(--tinta);
+}
+
+/* La hoja de la semana en escritorio (RejillaHorario). En oscuro se separa
+   del lienzo por su tono; en claro el blanco sobre el gris del lienzo no
+   basta, y lleva la misma sombra baja que las islas. */
+.hoja-semana {
+  background: var(--panel-suave);
+}
+
+[data-tema='claro'] .hoja-semana {
+  background: var(--panel);
+  box-shadow: 0 14px 34px -20px rgb(16 32 64 / 0.28);
+}
+
+/* El canto de color de una clase: una barra a la izquierda, como los eventos
+   de un calendario. El bloque ya va teñido; la barra es lo que lo ancla a su
+   materia de un vistazo. Un pseudo-elemento y no un nodo mas por clase. */
+.bloque-clase::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--acento-clase);
+}
+
+/* La linea de "ahora" en el horario de escritorio: la hora que es, sobre el
+   dia de hoy, con un punto en su arranque. Del rojo de los calendarios, que
+   es el color que todo el mundo lee como "aqui estas". */
+.linea-ahora {
+  border-top: 2px solid var(--ahora);
+  margin-top: -1px;
+}
+
+.linea-ahora::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--ahora);
 }
 
 /* ---- La paleta de busqueda (PaletaComandos) -----------------------------

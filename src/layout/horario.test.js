@@ -8,6 +8,7 @@ import {
   aMinutos,
   aTexto,
   altoHoraPara,
+  momentoEnSemana,
   choqueCon,
   enDoceHoras,
   etiquetaHoraMovil,
@@ -57,12 +58,13 @@ describe('el tiempo como minutos', () => {
 })
 
 describe('la escala de la rejilla', () => {
-  test('cada tramo de ancho da su alto de fila', () => {
-    assert.equal(altoHoraPara(1440), 144)
-    assert.equal(altoHoraPara(1280), 144)
-    assert.equal(altoHoraPara(1100), 124)
-    assert.equal(altoHoraPara(1024), 124)
-    assert.equal(altoHoraPara(900), 100)
+  test('la jornada entera se reparte en el alto que hay, entre un suelo y un techo', () => {
+    assert.equal(altoHoraPara(FILAS * 70), 70)
+    assert.equal(altoHoraPara(FILAS * 62.5), 62.5)
+    // Una ventana baja no aplasta las filas: se queda en el minimo y desplaza
+    assert.equal(altoHoraPara(300), 56)
+    // Una pantalla muy alta no las estira como carteles
+    assert.equal(altoHoraPara(4000), 104)
   })
 
   test('las lineas de hora pintan las de DENTRO y no la ultima', () => {
@@ -246,5 +248,18 @@ describe('huecoEn', () => {
 
   test('dentro de una clase no hay hueco', () => {
     assert.equal(huecoEn([clase(h(8), h(9), 'a')], h(8)), null)
+  })
+})
+
+describe('el momento de la semana', () => {
+  test('de lunes a viernes da el dia y el minuto', () => {
+    // 1 de octubre de 2026, jueves, 10:42
+    assert.deepEqual(momentoEnSemana(new Date(2026, 9, 1, 10, 42)), { dia: 3, minuto: 642 })
+    assert.deepEqual(momentoEnSemana(new Date(2026, 8, 28, 7, 0)), { dia: 0, minuto: 420 })
+  })
+
+  test('el fin de semana no cae en la rejilla', () => {
+    assert.equal(momentoEnSemana(new Date(2026, 9, 3, 12, 0)), null)
+    assert.equal(momentoEnSemana(new Date(2026, 9, 4, 12, 0)), null)
   })
 })

@@ -21,39 +21,29 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 19 * 60
 
-/* Alto de una fila de hora en escritorio, por tramo de ancho.
+/* Alto de una fila de hora en escritorio.
 
-   Antes esto no era una medida sino un reparto: se cogia el alto de la
-   ventana y se dividia entre las doce horas para que la jornada entera
-   cupiese sin desplazarse. Cabia, si, pero a costa de todo lo demas. En una
-   ventana normal salian filas de 66 px contra columnas de 180: rectangulos
-   aplastados donde una clase de una hora no tiene sitio ni para su nombre y
-   su horario. Y encima el reparto dejaba un hueco muerto abajo, porque
-   floor(alto/12) tira hasta once pixeles que ya no los recuperaba nadie.
+   La semana se ve entera, como en el calendario de un Mac: las doce horas
+   repartidas en el alto que le toca a la rejilla, sin tener que bajar para
+   ver la tarde. Pero con un suelo. Repartido sin limite, en una ventana baja
+   salian filas de 40 px donde una clase de una hora no tiene sitio ni para
+   su nombre y su horario; por debajo de ALTO_HORA_MIN la fila se queda en el
+   minimo y la jornada se desplaza. Y con un techo: en una pantalla muy alta,
+   filas de 150 px dejan cada clase como un cartel con dos palabras arriba y
+   un hueco debajo, asi que la rejilla deja de crecer y se queda mas baja.
 
-   La regla se invierte: la fila mide lo que tiene que medir para respirar y
-   si la jornada no cabe, se desplaza. Meter doce horas en una pantalla no es
-   un requisito de nadie; verlas bien, si.
+   Sin redondear: el alto sale con decimales y las lineas se colocan con el
+   mismo numero que las clases, asi que no hay pixeles sobrantes que se
+   acumulen en un hueco bajo la ultima hora. */
+const ALTO_HORA_MIN = 56
+const ALTO_HORA_MAX = 104
 
-   Los cortes son los de Tailwind -md, lg, xl- para que la rejilla cambie de
-   escala en los mismos anchos que el resto de la app. Por debajo de md no
-   hay tramo porque ahi no llega esta vista: manda HorarioMovil, que tiene su
-   propio alto.
+/** El alto de fila que toca a un alto disponible de rejilla. Funcion pura. */
+export const altoHoraPara = (altoDisponible) =>
+  Math.min(ALTO_HORA_MAX, Math.max(ALTO_HORA_MIN, altoDisponible / FILAS))
 
-   Es una tabla y no tres constantes sueltas para que anadir un tramo sea
-   anadir una linea, y para que la funcion de abajo pueda probarse sola. */
-const ALTO_HORA_ESCRITORIO = [
-  { desde: 1280, alto: 144 }, // xl
-  { desde: 1024, alto: 124 }, // lg
-  { desde: 0, alto: 100 }, // md
-]
-
-/** El alto de fila que toca a un ancho de rejilla. Funcion pura. */
-export const altoHoraPara = (ancho) =>
-  ALTO_HORA_ESCRITORIO.find((tramo) => ancho >= tramo.desde).alto
-
-/** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
-export const ANCHO_HORAS_PX = 88
+/** Ancho de la columna de las horas. Cabe "12 PM" con aire. */
+export const ANCHO_HORAS_PX = 64
 
 /* Una clase no puede durar menos de media hora ni crearse mas corta que una:
    pulsar un hueco propone una hora, que es lo que dura casi todo. */
@@ -85,8 +75,15 @@ export const enDoceHoras = (min) => {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${sufijo}`
 }
 
-/** La hora en punto, para la columna de la izquierda */
-export const etiquetaHora = (min) => enDoceHoras(min)
+/**
+ * La hora en punto para la columna de escritorio: "7 AM", "12 PM". Los ":00"
+ * no dicen nada en una marca que por definicion cae en punto, y sin ellos la
+ * columna mide lo que una palabra y no lo que una hora completa.
+ */
+export const etiquetaHora = (min) => {
+  const h = Math.floor(min / 60)
+  return `${((h + 11) % 12) + 1} ${h < 12 ? 'AM' : 'PM'}`
+}
 
 /**
  * La hora para la marca del telefono: el meridiano solo cuando cambia.
@@ -306,4 +303,15 @@ export function franjaPropuesta(sesionesDelDia, minuto) {
   const inicio = Math.max(libre.desde, Math.floor(minuto / 60) * 60)
   const fin = Math.min(inicio + DURACION_POR_DEFECTO, libre.hasta)
   return fin - inicio >= MIN_DURACION ? { inicio, fin } : null
+}
+
+/**
+ * En que dia de la semana y en que minuto cae `fecha`, o null si cae en
+ * sabado o domingo: la rejilla solo tiene de lunes a viernes. Es lo que
+ * coloca la linea de "ahora" y enciende el dia de hoy.
+ */
+export function momentoEnSemana(fecha) {
+  const dia = fecha.getDay() - 1
+  if (dia < 0 || dia >= DIAS.length) return null
+  return { dia, minuto: fecha.getHours() * 60 + fecha.getMinutes() }
 }

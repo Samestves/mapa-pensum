@@ -11,41 +11,31 @@ import {
   etiquetaHora,
   franjaPropuesta,
   horasEnPunto,
-  lineasDeHora,
 } from '../layout/horario'
 import { useArrastreClase } from '../hooks/useArrastreClase'
+import { useAhora } from '../hooks/useAhora'
 import BloqueClase from './BloqueClase'
 import HuecoPropuesto from './HuecoPropuesto'
 
-const LINEA = 'border-[var(--horario-linea)]'
+/* Aire arriba y abajo de la jornada, dentro de la hoja: la etiqueta de las
+   7 AM va centrada en su linea, que es el borde de arriba, y sin este aire
+   saldria cortada por la mitad. */
+const AIRE = 14
 
 /**
- * Cuanto mide de alto una fila de hora.
- *
- * Depende del ANCHO, no del alto. Antes era al reves: se repartia la altura
- * de la ventana entre las doce horas para que la jornada cupiera entera, y
- * eso hacia dos danos a la vez. Las filas salian de 66 px contra columnas de
- * 180 -rectangulos aplastados donde una clase de una hora no tiene sitio ni
- * para su nombre y su horario-, y el floor de la division dejaba hasta once
- * pixeles muertos al final, que es el hueco raro que se veia bajo la ultima
- * hora. Los dos problemas eran la misma cuenta.
- *
- * Ahora la fila mide lo que necesita para respirar y la jornada se desplaza
- * si no cabe. La tabla de tramos vive en layout/horario, que es donde estan
- * las medidas; aqui solo se observa el ancho.
- *
- * Se mide el elemento y no la ventana porque lo que le toca a la rejilla no
- * es la pantalla: es lo que le dejan la barra lateral y los margenes. Y
- * cuando el ancho cambia sin cruzar un tramo, altoHoraPara devuelve el mismo
- * numero y React no vuelve a pintar.
+ * Cuanto mide de alto una fila de hora: lo que da repartir entre las doce
+ * horas el alto que tiene la hoja (ver altoHoraPara). Se mide la zona que se
+ * desplaza y no la ventana, porque lo que le toca a la semana es lo que dejan
+ * las islas y los margenes. Cuando el alto cambia sin que cambie la fila
+ * -ya en el minimo o en el maximo-, React no vuelve a pintar.
  */
 function useAltoHora(refVista) {
-  const [alto, setAlto] = useState(() => altoHoraPara(window.innerWidth))
+  const [alto, setAlto] = useState(() => altoHoraPara(window.innerHeight - 160))
 
   useLayoutEffect(() => {
     const el = refVista.current
     if (!el) return
-    const ro = new ResizeObserver(([e]) => setAlto(altoHoraPara(e.contentRect.width)))
+    const ro = new ResizeObserver(([e]) => setAlto(altoHoraPara(e.contentRect.height - AIRE * 2)))
     ro.observe(el)
     return () => ro.disconnect()
   }, [refVista])
@@ -56,18 +46,20 @@ function useAltoHora(refVista) {
 /**
  * La cuadricula de la semana, con sus clases.
  *
- * Ocupa todo el ancho: los cinco dias se reparten en columnas de flex-1, que
- * miden exactamente lo mismo y llegan a los dos bordes. La semana es lo que
- * se viene a mirar, y una rejilla centrada con doscientos pixeles de margen a
- * cada lado desperdicia justo el sitio donde iba a leerse.
+ * Va en una hoja flotante, con el mismo canto redondeado y el mismo aire que
+ * las islas de arriba: la semana es una pieza mas de la interfaz, no un
+ * papel cuadriculado que se sale por los bordes de la ventana. Dentro, los
+ * cinco dias se reparten en columnas de flex-1 que miden exactamente lo mismo.
  *
  * Las clases NO viven en celdas. Se colocan en posicion absoluta a partir de
  * sus minutos, que es lo unico que permite dibujar una clase de 08:15 a 09:50
  * en su sitio exacto y que dos seguidas -una acaba a las nueve, la otra
  * empieza a las nueve- queden pegadas sin hueco.
  *
- * Las lineas de hora son un degradado repetido y no un div por hora: cinco
- * columnas por catorce horas serian setenta nodos que no aportan nada.
+ * Las lineas cruzan la semana entera de una vez, una por hora y otra mas
+ * tenue por media hora, y no se repiten columna por columna: veinticinco
+ * nodos en total. Asoman un poco hacia la columna de horas, hasta la
+ * etiqueta que las nombra, como en el calendario de un Mac.
  */
 function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMoverClase, alAbrirMenu }) {
   const refVista = useRef(null)
@@ -75,6 +67,7 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
   const [fantasma, setFantasma] = useState(null)
 
   const altoHora = useAltoHora(refVista)
+  const ahora = useAhora()
   const pxPorMinuto = altoHora / 60
   const aY = (min) => (min - ABRE) * pxPorMinuto
 
@@ -147,110 +140,138 @@ function RejillaHorario({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alMov
   }
 
   return (
-    /* La jornada es mas alta que la ventana a proposito, asi que aqui SIEMPRE
-       hay desplazamiento vertical. Eso es justo lo que hace innecesario
-       reservar sitio para la barra: no aparece y desaparece segun el
-       contenido, esta puesta desde el primer momento y no hay salto que
-       amortiguar. La cabecera de dias se queda pegada arriba mientras se baja. */
-    <div ref={refVista} className="min-h-0 min-w-[46rem] flex-1 overflow-auto">
-      {/* Cabecera de dias. Se queda arriba al desplazar y va opaca para que
-          las clases pasen por debajo sin transparentarse. Llega hasta el
-          borde de arriba: su franja superior es el sitio de las islas, que
-          flotan sobre ella, y asi ninguna clase asoma entre las islas y los
-          dias al bajar. */}
-      <div
-        className={`sticky top-0 z-20 flex border-r border-b ${LINEA} bg-panel-suave pt-[var(--reserva-cabecera)]`}
-      >
-        <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
-        {DIAS.map((dia) => (
-          <span
-            key={dia}
-            className={`flex flex-1 items-center justify-center border-l ${LINEA} py-4 text-[11.5px] font-medium tracking-[0.24em] text-tinta-suave uppercase`}
-          >
-            {dia}
-          </span>
-        ))}
-      </div>
-
-      {/* El borde derecho cierra el viernes: las columnas solo llevan borde a
-          la izquierda, asi que sin el la rejilla se quedaba abierta por ese
-          lado y las lineas parecian cortarse antes de tiempo. */}
-      <div
-        className={`flex border-r border-b ${LINEA}`}
-        style={{ height: FILAS * altoHora }}
-      >
-        {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
-            en ella: centrada, la primera quedaria partida por la cabecera. */}
-        <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
-          {horasEnPunto().map((min) => (
-            <span
-              key={min}
-              style={{ top: aY(min) }}
-              className="absolute right-4 translate-y-1.5 text-[11.5px] font-light tabular-nums text-tinta-tenue"
-            >
-              {etiquetaHora(min)}
+    <div className="flex min-h-0 flex-1 flex-col overflow-x-auto bg-[var(--lienzo-mapa)] px-5 pt-[calc(var(--reserva-cabecera)+0.25rem)] pb-5">
+      <div className="hoja-semana flex min-h-0 min-w-[46rem] flex-1 flex-col overflow-hidden rounded-[26px] border border-panel-borde">
+        {/* Los dias. Hoy se enciende: es el que se viene a mirar. */}
+        <div className="flex shrink-0 border-b border-[var(--horario-linea)]">
+          <span style={{ width: ANCHO_HORAS_PX }} className="shrink-0" />
+          {DIAS.map((dia, i) => (
+            <span key={dia} className="flex flex-1 justify-center py-3">
+              <span
+                aria-current={ahora?.dia === i ? 'date' : undefined}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.22em] uppercase ${
+                  ahora?.dia === i ? 'bg-tinta/[0.08] text-tinta' : 'text-tinta-tenue'
+                }`}
+              >
+                {dia}
+              </span>
             </span>
           ))}
         </div>
 
-        {/* Los cinco dias. El puntero se sigue aqui y no columna por columna:
-            el dia sale de una division, no de cinco manejadores iguales. */}
-        <div
-          ref={refDias}
-          onPointerMove={seguirPuntero}
-          onPointerLeave={() => setFantasma(null)}
-          onClick={pulsar}
-          className="relative flex flex-1"
-        >
-          {DIAS.map((dia, i) => (
-            <div
-              key={dia}
-              style={lineasDeHora(altoHora)}
-              className={`relative flex-1 border-l ${LINEA}`}
-            >
-              {/* Donde caeria la clase que se esta arrastrando. Siempre es
-                  una posicion legal, asi que se pinta en verde y no hay caso
-                  de error que enseñar. */}
-              {arrastrando?.propuesta.dia === i && (
+        {/* La jornada. Cabe entera casi siempre; en una ventana baja se
+            desplaza aqui dentro, con los dias quietos arriba. */}
+        <div ref={refVista} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="relative flex" style={{ height: FILAS * altoHora + AIRE * 2 }}>
+            {/* Las etiquetas, centradas en su linea. La del cierre -7 PM- no
+                se rotula: no abre ninguna fila (ver ABRE y CIERRA). */}
+            <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">
+              {horasEnPunto().map((min) => (
                 <span
-                  aria-hidden="true"
-                  style={{
-                    top: aY(arrastrando.propuesta.inicio),
-                    height:
-                      (arrastrando.propuesta.fin - arrastrando.propuesta.inicio) * pxPorMinuto - 4,
-                  }}
-                  className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-medium tabular-nums text-aprobada"
+                  key={min}
+                  style={{ top: AIRE + aY(min) }}
+                  className="absolute right-3 -translate-y-1/2 text-[11px] font-medium tabular-nums text-tinta-tenue"
                 >
-                  {enDoceHoras(arrastrando.propuesta.inicio)} –{' '}
-                  {enDoceHoras(arrastrando.propuesta.fin)}
+                  {etiquetaHora(min)}
                 </span>
-              )}
+              ))}
+            </div>
 
-              {/* celda-fantasma solo aqui: es la animacion de aparecer al
-                  pasar el raton, y en el telefono la pista no aparece, esta. */}
-              {fantasma?.dia === i && !arrastrando && (
-                <HuecoPropuesto
-                  franja={fantasma}
-                  pxPorMinuto={pxPorMinuto}
-                  etiqueta="Agregar materia"
-                  clase="celda-fantasma"
-                />
-              )}
-
-              {porDia[i].map((sesion) => (
-                <BloqueClase
-                  key={sesion.id}
-                  sesion={sesion}
-                  asignatura={porCodigo.get(sesion.codigo)}
-                  pxPorMinuto={pxPorMinuto}
-                  arrastrando={arrastrando?.sesion.id === sesion.id}
-                  menuAbierto={idMenuAbierto === sesion.id}
-                  alAgarrar={agarrar}
-                  alAbrirMenu={alAbrirMenu}
+            {/* Las lineas, de la etiqueta al borde derecho */}
+            <div
+              aria-hidden="true"
+              style={{ top: AIRE, left: ANCHO_HORAS_PX - 6, height: FILAS * altoHora }}
+              className="pointer-events-none absolute right-0"
+            >
+              {Array.from({ length: FILAS * 2 + 1 }, (_, i) => (
+                <span
+                  key={i}
+                  style={{ top: (i * altoHora) / 2 }}
+                  className={`absolute right-0 border-t border-[var(--horario-linea)] ${
+                    i % 2 ? 'left-1.5 border-dashed opacity-55' : 'left-0'
+                  }`}
                 />
               ))}
             </div>
-          ))}
+
+            {/* Los cinco dias. El puntero se sigue aqui y no columna por
+                columna: el dia sale de una division, no de cinco manejadores
+                iguales. */}
+            <div
+              ref={refDias}
+              onPointerMove={seguirPuntero}
+              onPointerLeave={() => setFantasma(null)}
+              onClick={pulsar}
+              style={{ marginTop: AIRE, height: FILAS * altoHora }}
+              className="relative flex flex-1"
+            >
+              {DIAS.map((dia, i) => (
+                <div
+                  key={dia}
+                  className={`relative flex-1 border-l border-[var(--horario-linea)] ${
+                    ahora?.dia === i ? 'bg-tinta/[0.018]' : ''
+                  }`}
+                >
+                  {/* Donde caeria la clase que se esta arrastrando. Siempre
+                      es una posicion legal, asi que se pinta en verde y no
+                      hay caso de error que enseñar. */}
+                  {arrastrando?.propuesta.dia === i && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        top: aY(arrastrando.propuesta.inicio),
+                        height:
+                          (arrastrando.propuesta.fin - arrastrando.propuesta.inicio) * pxPorMinuto -
+                          4,
+                      }}
+                      className="pointer-events-none absolute inset-x-1.5 z-10 flex items-start rounded-xl border-2 border-dashed border-aprobada/70 bg-aprobada/10 px-2.5 py-1.5 text-[11.5px] font-medium tabular-nums text-aprobada"
+                    >
+                      {enDoceHoras(arrastrando.propuesta.inicio)} –{' '}
+                      {enDoceHoras(arrastrando.propuesta.fin)}
+                    </span>
+                  )}
+
+                  {/* celda-fantasma solo aqui: es la animacion de aparecer al
+                      pasar el raton, y en el telefono la pista no aparece,
+                      esta. */}
+                  {fantasma?.dia === i && !arrastrando && (
+                    <HuecoPropuesto
+                      franja={fantasma}
+                      pxPorMinuto={pxPorMinuto}
+                      etiqueta="Agregar materia"
+                      clase="celda-fantasma"
+                    />
+                  )}
+
+                  {porDia[i].map((sesion) => (
+                    <BloqueClase
+                      key={sesion.id}
+                      sesion={sesion}
+                      asignatura={porCodigo.get(sesion.codigo)}
+                      pxPorMinuto={pxPorMinuto}
+                      arrastrando={arrastrando?.sesion.id === sesion.id}
+                      menuAbierto={idMenuAbierto === sesion.id}
+                      alAgarrar={agarrar}
+                      alAbrirMenu={alAbrirMenu}
+                    />
+                  ))}
+                </div>
+              ))}
+
+              {/* Ahora: una linea sobre el dia de hoy, a la hora que es */}
+              {ahora && ahora.minuto >= ABRE && ahora.minuto <= CIERRA && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    top: aY(ahora.minuto),
+                    left: `${(ahora.dia / DIAS.length) * 100}%`,
+                    width: `${100 / DIAS.length}%`,
+                  }}
+                  className="linea-ahora pointer-events-none absolute z-20"
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

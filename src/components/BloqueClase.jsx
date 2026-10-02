@@ -52,11 +52,12 @@ function BloqueClase({
         backgroundColor: `color-mix(in oklab, ${color} 12%, var(--panel))`,
         borderColor: `color-mix(in oklab, ${color} 28%, transparent)`,
         '--sombra': `color-mix(in oklab, ${color} 30%, transparent)`,
+        '--acento-clase': `color-mix(in oklab, ${color} 80%, var(--tinta))`,
         // Mientras viaja se queda su hueco marcado, tenue: sin el, la semana
         // parece tener un agujero justo donde estaba la clase.
         opacity: arrastrando ? 0.3 : undefined,
       }}
-      className={`bloque-clase group absolute flex flex-col overflow-hidden rounded-xl border px-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] ${arrastrable ? 'touch-none cursor-grab active:cursor-grabbing' : ''} ${
+      className={`bloque-clase group absolute flex flex-col overflow-hidden rounded-xl border pr-3 pl-3.5 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[0_6px_18px_-8px_var(--sombra)] ${arrastrable ? 'touch-none cursor-grab active:cursor-grabbing' : ''} ${
         alto < CABE_HORA ? 'justify-center py-1' : 'py-2'
       }`}
     >
