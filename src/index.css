@@ -2358,16 +2358,20 @@ body {
    sin relleno -no se queda aplicada al terminar- para que el arrastre pueda
    mover la hoja con un transform en linea; la salida es una transicion,
    porque tiene que poder salir desde donde la dejo el dedo. */
-.hoja-inferior {
+.hoja-inferior,
+.ventana-flotante {
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.04),
     0 24px 60px -12px rgb(0 0 0 / 0.6);
-  animation: hoja-entra 420ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
-  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-[data-tema='claro'] .hoja-inferior {
+[data-tema='claro'] :is(.hoja-inferior, .ventana-flotante) {
   box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
+}
+
+.hoja-inferior {
+  animation: hoja-entra 420ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .hoja-inferior[data-saliendo='true'] {
@@ -2396,10 +2400,11 @@ body {
   opacity: 0;
 }
 
-/* Reiniciar, al pasar por encima: el rojo solo aparece cuando se apunta a
-   el (ver BotonReinicio). */
+/* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y
+   solo enseña el rojo cuando se apunta a ello: si no, el boton mas peligroso
+   seria el mas llamativo. */
 @media (hover: hover) {
-  .boton-reinicio:not(:disabled):hover {
+  .boton-peligro:not(:disabled):hover {
     background: color-mix(in oklab, var(--estado-rojo) 10%, transparent);
     color: var(--estado-rojo);
   }

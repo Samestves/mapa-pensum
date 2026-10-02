@@ -102,6 +102,7 @@ function VistaCarrera({ carrera, alVolver }) {
     [elegidas, layout],
   )
   const abrirCasilla = useCallback((codigo) => setCasillaAbierta(codigo), [])
+  const cerrarCasilla = useCallback(() => setCasillaAbierta(null), [])
 
   /* Una electiva colocada hereda las coordenadas de su casilla.
      El layout es geometria pura y se calcula una vez, asi que no sabe -ni
@@ -351,23 +352,18 @@ function VistaCarrera({ carrera, alVolver }) {
       {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa porque
           el mapa es un SVG: un modal ahi dentro heredaria su transform de
           pan y zoom y saldria movido y a escala. */}
-      {casillaAbierta && (
-        <SelectorElectiva
-          casilla={layout.porCodigo.get(casillaAbierta)}
-          grupo={grupos.find((g) => g.clave === layout.porCodigo.get(casillaAbierta)?.grupo)}
-          opciones={
-            grupos.find((g) => g.clave === layout.porCodigo.get(casillaAbierta)?.grupo)
-              ?.asignaturas ?? []
-          }
-          estados={estados}
-          casillaDe={casillaDe}
-          alColocar={(casilla, codigo) => {
-            colocar(casilla, codigo)
-            setCasillaAbierta(null)
-          }}
-          alCerrar={() => setCasillaAbierta(null)}
-        />
-      )}
+      <SelectorElectiva
+        codigo={casillaAbierta}
+        porCodigo={layout.porCodigo}
+        grupos={grupos}
+        estados={estados}
+        casillaDe={casillaDe}
+        alColocar={(casilla, codigo) => {
+          colocar(casilla, codigo)
+          setCasillaAbierta(null)
+        }}
+        alCerrar={cerrarCasilla}
+      />
 
       {/* La key incluye la vista, no solo si el mapa ya monto: asi cambiar
           entre mapa, lista y horario rearranca la animacion y la vista nueva

@@ -67,7 +67,7 @@ export function BotonReinicio({ reiniciar, cuantas }) {
         type="button"
         onClick={() => setConfirmando(true)}
         disabled={!cuantas}
-        className="boton-reinicio flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-tinta/[0.04] text-[13.5px] font-medium text-tinta-suave transition-[background-color,color] duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+        className="boton-peligro flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-tinta/[0.04] text-[13.5px] font-medium text-tinta-suave transition-[background-color,color] duration-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <RotateCcw size={15} strokeWidth={2} />
         {cuantas ? 'Reiniciar mi avance' : 'Nada que reiniciar todavía'}
