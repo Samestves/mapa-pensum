@@ -6,7 +6,6 @@ import {
   dibujarIcono,
   dibujarLogo,
   letra,
-  mezclar,
   partirEnLineas,
   redondeado,
   resolverColores,
@@ -18,33 +17,34 @@ import {
    descrito en minutos y columnas, y dibujarlo deja decidir que sale, que no
    es lo que hay en pantalla -ni hover, ni desplazamiento, ni botones-.
 
-   La semana es la imagen. En horizontal, como una semana de calendario: la
-   columna de las horas y los cinco dias, con lineas finas, y encima solo lo
-   que dice de quien es -el logo, "Mi horario", el nombre y la carrera- y
-   dos cifras. Nada mas compite con las clases.
+   La semana es la imagen. En horizontal, como una semana de calendario:
+   arriba el logo en su baldosa, "Mi horario", de quien es y dos cifras; en
+   medio la rejilla, en una tarjeta blanca con sus lineas bien marcadas y cada
+   clase como una tarjeta blanca con el filo de su color; abajo, la firma.
 
-   A triple densidad: sale de casi cuatro mil pixeles de ancho, y se puede
-   ampliar en el telefono hasta leer el aula de cualquier clase.
-
-   Siempre en claro, sea cual sea el tema de la app: se imprime y se manda
-   por WhatsApp, y las dos cosas asumen papel blanco. */
+   A triple densidad: sale de unos cuatro mil pixeles de ancho, y se puede
+   ampliar en el telefono hasta leer el aula de cualquier clase. Siempre en
+   claro, sea cual sea el tema de la app: se imprime y se manda por WhatsApp,
+   y las dos cosas asumen papel blanco. */
 
 const ESCALA = 3
-const MARGEN = 52
-const ANCHO_HORAS = 70
-const ANCHO_COL = 226
-const ALTO_HORA = 84
-const ALTO_TITULO = 100
-const ALTO_DIAS = 46
-const ALTO_PIE = 56
-
+const MARGEN = 56
+const ANCHO_HORAS = 64
+const ANCHO_COL = 232
+const ALTO_HORA = 96
+const ALTO_TITULO = 108
+const ALTO_DIAS = 50
+const ALTO_PIE = 104
 const ANCHO = MARGEN * 2 + ANCHO_HORAS + ANCHO_COL * DIAS.length
 
-const PAPEL = { r: 255, g: 255, b: 255 }
-const TINTA = { r: 16, g: 22, b: 34 }
-const SUAVE = { r: 86, g: 98, b: 118 }
-const TENUE = { r: 148, g: 158, b: 174 }
-const LINEA = { r: 226, g: 230, b: 237 }
+const FONDO = '#f6f7f9'
+const PAPEL = '#ffffff'
+const TINTA = '#0f1522'
+const SUAVE = '#566074'
+const TENUE = '#8f98a8'
+const LINEA = '#dfe3ea'
+const MARCO = '#d6dbe3'
+const FILO = '#e3e6ec'
 
 /* Los iconos, con los nodos de Lucide tal cual: los mismos que la app. */
 const ICONO = {
@@ -99,143 +99,211 @@ function franjaUtil(sesiones) {
   return { desde, horas: Math.max(3, (hasta - desde) / 60) }
 }
 
-/** Una pieza de icono y texto, en linea. Devuelve hasta donde llego. */
-function conIcono(ctx, icono, texto, x, y, tam, color) {
-  dibujarIcono(ctx, icono, x, y - tam + 1, tam, color)
-  ctx.fillStyle = color
-  ctx.fillText(texto, x + tam + 7, y)
-  return x + tam + 7 + ctx.measureText(texto).width
+/** El logo de la UDO en blanco sobre una baldosa oscura, como un icono de app */
+function baldosa(ctx, x, y, lado, sombra = false) {
+  ctx.save()
+  redondeado(ctx, x, y, lado, lado, lado * 0.28)
+  const brillo = ctx.createLinearGradient(x, y, x + lado, y + lado)
+  brillo.addColorStop(0, '#1c2740')
+  brillo.addColorStop(1, '#0b101b')
+  ctx.fillStyle = brillo
+  if (sombra) {
+    ctx.shadowColor = 'rgb(15 21 34 / 0.25)'
+    ctx.shadowBlur = 16 * ESCALA
+    ctx.shadowOffsetY = 6 * ESCALA
+  }
+  ctx.fill()
+  ctx.restore()
+  dibujarLogo(ctx, x + lado / 6, y + lado / 7.5, lado * (2 / 3), PAPEL)
+}
+
+/** Una pastilla blanca con borde fino, como las de la app */
+function pastilla(ctx, x, y, ancho, alto) {
+  redondeado(ctx, x, y, ancho, alto, alto / 2)
+  ctx.fillStyle = PAPEL
+  ctx.fill()
+  ctx.strokeStyle = FILO
+  ctx.lineWidth = 1
+  ctx.stroke()
 }
 
 function dibujarCabecera(ctx, { carrera, nombre, clases }) {
-  dibujarLogo(ctx, MARGEN, MARGEN + 4, 44, css(TINTA))
+  baldosa(ctx, MARGEN, MARGEN - 2, 60, true)
 
-  const izq = MARGEN + 60
-  ctx.fillStyle = css(TINTA)
-  letra(ctx, 700, 30, -0.9)
+  const izq = MARGEN + 78
+  ctx.fillStyle = TINTA
+  letra(ctx, 700, 38, -1.4)
   ctx.fillText('Mi horario', izq, MARGEN + 30)
-  ctx.fillStyle = css(SUAVE)
-  letra(ctx, 450, 15, 0)
-  ctx.fillText([nombre, carrera.nombre].filter(Boolean).join('  ·  '), izq, MARGEN + 54)
+  ctx.fillStyle = SUAVE
+  letra(ctx, 450, 15.5)
+  ctx.fillText([nombre, carrera.nombre, 'UDO Monagas'].filter(Boolean).join('  ·  '), izq + 1, MARGEN + 54)
 
-  // A la derecha, dos cifras con su icono: cuantas materias y cuantas horas
+  // A la derecha, dos cifras en pastillas: cuantas materias y cuantas horas
   const materias = new Set(clases.map((c) => c.codigo)).size
   const minutos = clases.reduce((suma, c) => suma + c.fin - c.inicio, 0)
-  const piezas = [
-    { icono: ICONO.libro, texto: `${materias} ${materias === 1 ? 'materia' : 'materias'}` },
+  const cifras = [
     { icono: ICONO.reloj, texto: `${enHoras(minutos)} a la semana` },
+    { icono: ICONO.libro, texto: `${materias} ${materias === 1 ? 'materia' : 'materias'}` },
   ]
-  letra(ctx, 500, 14, 0)
-  const anchoDe = (p) => 15 + 7 + ctx.measureText(p.texto).width
-  const total = piezas.reduce((s, p) => s + anchoDe(p), 0) + 26 * (piezas.length - 1)
-  let x = ANCHO - MARGEN - total
-  for (const p of piezas) x = conIcono(ctx, p.icono, p.texto, x, MARGEN + 42, 15, css(SUAVE)) + 26
+  letra(ctx, 550, 14)
+  let x = ANCHO - MARGEN
+  for (const { icono, texto } of cifras) {
+    const ancho = 15 + 16 + 8 + ctx.measureText(texto).width + 15
+    x -= ancho
+    pastilla(ctx, x, MARGEN + 8, ancho, 36)
+    dibujarIcono(ctx, icono, x + 15, MARGEN + 18, 16, SUAVE)
+    ctx.fillStyle = TINTA
+    ctx.fillText(texto, x + 15 + 16 + 8, MARGEN + 31)
+    x -= 10
+  }
 }
 
+/** La semana. Devuelve donde acaba. */
 function dibujarSemana(ctx, { clases, desde, horas }) {
   const cima = MARGEN + ALTO_TITULO
   const izq = MARGEN + ANCHO_HORAS
+  const der = ANCHO - MARGEN
   const rejilla = cima + ALTO_DIAS
   const fondo = rejilla + horas * ALTO_HORA
-  const derecha = ANCHO - MARGEN
   const pxPorMinuto = ALTO_HORA / 60
 
-  ctx.fillStyle = css(TENUE)
-  letra(ctx, 600, 12, 2.2)
+  // La tarjeta de la rejilla: blanca, con sombra suave y un borde visible
+  ctx.save()
+  ctx.shadowColor = 'rgb(16 24 40 / 0.05)'
+  ctx.shadowBlur = 30 * ESCALA
+  ctx.shadowOffsetY = 8 * ESCALA
+  redondeado(ctx, izq, cima, der - izq, fondo - cima, 18)
+  ctx.fillStyle = PAPEL
+  ctx.fill()
+  ctx.restore()
+  redondeado(ctx, izq + 0.5, cima + 0.5, der - izq - 1, fondo - cima - 1, 18)
+  ctx.strokeStyle = MARCO
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.fillStyle = SUAVE
+  letra(ctx, 650, 12, 2.2)
   ctx.textAlign = 'center'
-  DIAS.forEach((d, i) => {
-    ctx.fillText(d.toUpperCase(), izq + ANCHO_COL * i + ANCHO_COL / 2, cima + 26)
-  })
+  DIAS.forEach((d, i) => ctx.fillText(d.toUpperCase(), izq + ANCHO_COL * (i + 0.5), cima + 33))
   ctx.textAlign = 'left'
 
-  /* Las lineas, finas como un pelo: medio pixel del dibujo, que a triple
-     densidad es pixel y medio de la imagen. Las de las horas cruzan tambien
-     la columna de las horas, que se lee pegada a su linea. */
-  ctx.strokeStyle = css(LINEA)
-  ctx.lineWidth = 0.6
-  for (let h = 0; h <= horas; h++) {
+  // Las lineas por dentro: la de bajo los dias, una por hora y una por dia
+  ctx.strokeStyle = LINEA
+  ctx.lineWidth = 1
+  for (let h = 0; h < horas; h++) {
     const y = rejilla + h * ALTO_HORA
     ctx.beginPath()
-    ctx.moveTo(MARGEN, y)
-    ctx.lineTo(derecha, y)
+    ctx.moveTo(izq, y)
+    ctx.lineTo(der, y)
     ctx.stroke()
   }
-  for (let i = 0; i <= DIAS.length; i++) {
+  for (let i = 1; i < DIAS.length; i++) {
     const x = izq + i * ANCHO_COL
     ctx.beginPath()
-    ctx.moveTo(x, rejilla)
+    ctx.moveTo(x, cima)
     ctx.lineTo(x, fondo)
     ctx.stroke()
   }
 
-  ctx.fillStyle = css(TENUE)
-  letra(ctx, 500, 12, 0.3)
+  ctx.fillStyle = TENUE
+  letra(ctx, 500, 12, 0.2)
+  ctx.textAlign = 'right'
   for (let h = 0; h < horas; h++) {
-    ctx.fillText(horaCorta(desde + h * 60), MARGEN, rejilla + h * ALTO_HORA + 18)
+    ctx.fillText(horaCorta(desde + h * 60), izq - 14, rejilla + h * ALTO_HORA + 5)
   }
+  ctx.textAlign = 'left'
 
-  for (const s of clases) {
-    const x = izq + s.dia * ANCHO_COL + 5
-    const y = rejilla + (s.inicio - desde) * pxPorMinuto + 4
-    const w = ANCHO_COL - 10
-    const h = (s.fin - s.inicio) * pxPorMinuto - 8
-    const interior = w - 30
-
-    ctx.save()
-    redondeado(ctx, x, y, w, h, 12)
-    ctx.fillStyle = css(mezclar(PAPEL, s.rgb, 0.11))
-    ctx.fill()
-    ctx.strokeStyle = css(s.rgb, 0.22)
-    ctx.lineWidth = 0.6
-    ctx.stroke()
-    ctx.clip()
-    // El filo de color a la izquierda: de que materia es, de un vistazo
-    ctx.fillStyle = css(s.rgb)
-    ctx.fillRect(x, y, 3, h)
-
-    const tx = x + 16
-    ctx.fillStyle = css(mezclar(s.rgb, TINTA, 0.3))
-    letra(ctx, 600, 12, 0.2)
-    ctx.fillText(tramoCorto(s.inicio, s.fin), tx, y + 23)
-
-    // Abajo lo que quepa, de lo mas a lo menos necesario: aula y profesor
-    const pie = [
-      s.aula && { icono: ICONO.lugar, texto: [s.aula, s.seccion && `Sec. ${s.seccion}`].filter(Boolean).join(' · ') },
-      s.profesor && { icono: ICONO.persona, texto: s.profesor },
-    ].filter(Boolean)
-    const sitio = Math.max(0, Math.floor((h - 72) / 20))
-    const abajo = pie.slice(0, Math.min(pie.length, sitio))
-
-    ctx.fillStyle = css(TINTA)
-    letra(ctx, 600, 15, -0.2)
-    const caben = Math.max(1, Math.floor((h - 38 - abajo.length * 20 - 10) / 19))
-    partirEnLineas(ctx, s.nombre, interior, Math.min(3, caben)).forEach((l, i) => {
-      ctx.fillText(l, tx, y + 45 + i * 19)
-    })
-
-    letra(ctx, 500, 11.5, 0)
-    abajo.forEach(({ icono, texto }, i) => {
-      const ly = y + h - 14 - (abajo.length - 1 - i) * 20
-      conIcono(ctx, icono, partirEnLineas(ctx, texto, interior - 20, 1)[0], tx, ly, 12, css(SUAVE))
-    })
-    ctx.restore()
-  }
+  for (const s of clases) dibujarClase(ctx, s, izq, rejilla, desde, pxPorMinuto)
   return fondo
 }
 
+/** Una clase: tarjeta blanca con el filo de su color y un punto junto a la hora */
+function dibujarClase(ctx, s, izq, rejilla, desde, pxPorMinuto) {
+  const x = izq + s.dia * ANCHO_COL + 6
+  const y = rejilla + (s.inicio - desde) * pxPorMinuto + 3
+  const ancho = ANCHO_COL - 12
+  const alto = (s.fin - s.inicio) * pxPorMinuto - 6
+  const tx = x + 16
+  const interior = ancho - 32
+
+  ctx.save()
+  redondeado(ctx, x, y, ancho, alto, 12)
+  ctx.fillStyle = PAPEL
+  ctx.fill()
+  ctx.strokeStyle = css(s.rgb, 0.45)
+  ctx.lineWidth = 1
+  ctx.stroke()
+  ctx.clip()
+
+  ctx.fillStyle = css(s.rgb)
+  ctx.beginPath()
+  ctx.arc(x + 18, y + 19, 4, 0, Math.PI * 2)
+  ctx.fill()
+  letra(ctx, 600, 12.5, 0.1)
+  ctx.fillText(tramoCorto(s.inicio, s.fin), tx + 12, y + 24)
+
+  // Abajo lo que quepa, de lo mas a lo menos necesario: aula y profesor
+  const pie = [
+    s.aula && {
+      icono: ICONO.lugar,
+      texto: [s.aula, s.seccion && `Sec. ${s.seccion}`].filter(Boolean).join(' · '),
+    },
+    s.profesor && { icono: ICONO.persona, texto: s.profesor },
+  ]
+    .filter(Boolean)
+    .slice(0, Math.max(0, Math.floor((alto - 76) / 21)))
+
+  ctx.fillStyle = TINTA
+  letra(ctx, 600, 16, -0.3)
+  const caben = Math.max(1, Math.min(3, Math.floor((alto - 40 - pie.length * 21 - 8) / 20)))
+  partirEnLineas(ctx, s.nombre, interior, caben).forEach((linea, i) => {
+    ctx.fillText(linea, tx, y + 48 + i * 20)
+  })
+
+  letra(ctx, 500, 12)
+  pie.forEach(({ icono, texto }, i) => {
+    const ly = y + alto - 14 - (pie.length - 1 - i) * 21
+    dibujarIcono(ctx, icono, tx, ly - 11, 12.5, SUAVE)
+    ctx.fillStyle = SUAVE
+    ctx.fillText(partirEnLineas(ctx, texto, interior - 19, 1)[0], tx + 19, ly)
+  })
+  ctx.restore()
+}
+
+/** La firma: una pastilla centrada con la baldosa en pequeño, y el aviso debajo */
 function dibujarPie(ctx, y) {
-  letra(ctx, 500, 12, 0)
-  dibujarLogo(ctx, MARGEN, y - 12, 15, css(TENUE))
-  ctx.fillStyle = css(TENUE)
-  ctx.fillText('Hecho con Mapa de Pensum  ·  mapa-pensum.vercel.app', MARGEN + 22, y)
-  ctx.textAlign = 'right'
-  ctx.fillText('Confirma horas, sección y aula con tu coordinación.', ANCHO - MARGEN, y)
+  const partes = [
+    { texto: 'Hecho con ', peso: 450, espaciado: 0, color: SUAVE },
+    { texto: 'Mapa de Pensum', peso: 700, espaciado: -0.1, color: TINTA },
+    { texto: '   mapa-pensum.vercel.app', peso: 450, espaciado: 0, color: TENUE },
+  ]
+  const anchos = partes.map((p) => {
+    letra(ctx, p.peso, 13.5, p.espaciado)
+    return ctx.measureText(p.texto).width
+  })
+  const ancho = 7 + 26 + 10 + anchos.reduce((a, b) => a + b, 0) + 18
+  const x = ANCHO / 2 - ancho / 2
+  pastilla(ctx, x, y - 4, ancho, 38)
+  baldosa(ctx, x + 7, y + 2, 26)
+
+  let tx = x + 7 + 26 + 10
+  partes.forEach((p, i) => {
+    letra(ctx, p.peso, 13.5, p.espaciado)
+    ctx.fillStyle = p.color
+    ctx.fillText(p.texto, tx, y + 20)
+    tx += anchos[i]
+  })
+
+  ctx.fillStyle = TENUE
+  letra(ctx, 450, 12)
+  ctx.textAlign = 'center'
+  ctx.fillText('Confirma horas, sección y aula con tu coordinación.', ANCHO / 2, y + 56)
   ctx.textAlign = 'left'
 }
 
 /** Dibuja el horario y devuelve el PNG como Blob */
 async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
-  await cargarLetra([450, 500, 600, 700])
+  await cargarLetra([450, 500, 550, 600, 650, 700])
   const deLaSemana = sesiones.filter((s) => s.dia < DIAS.length)
   const indices = coloresDelHorario(deLaSemana)
   const colores = resolverColores(deLaSemana.map((s) => colorClase(s, indices)))
@@ -253,52 +321,67 @@ async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   const ctx = lienzo.getContext('2d')
   ctx.scale(ESCALA, ESCALA)
   ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = css(PAPEL)
+  ctx.fillStyle = FONDO
   ctx.fillRect(0, 0, ANCHO, alto)
 
   dibujarCabecera(ctx, { carrera, nombre, clases })
-  const fondo = dibujarSemana(ctx, { clases, desde, horas })
-  dibujarPie(ctx, fondo + ALTO_PIE - 14)
+  dibujarSemana(ctx, { clases, desde, horas })
+  dibujarPie(ctx, alto - MARGEN - 22 - 34)
 
   return new Promise((resolver) => lienzo.toBlob(resolver, 'image/png'))
+}
+
+/* La ultima imagen hecha, por horario. Descargar y luego compartir la misma
+   no la vuelve a dibujar: compartir tiene que llamarse enseguida despues del
+   toque, y un dibujo de por medio puede hacer que el navegador ya no lo deje.
+   Cambiar una clase cambia el array de sesiones, y con el la imagen. */
+const hechas = new WeakMap()
+
+/** La imagen del horario como archivo PNG, lista para bajar o compartir */
+export function imagenDelHorario(datos) {
+  const clave = `${datos.carrera.slug}|${datos.nombre}`
+  const previa = hechas.get(datos.sesiones)
+  if (previa?.clave === clave) return previa.archivo
+
+  const archivo = dibujarHorario(datos).then(
+    (blob) => new File([blob], `horario-${datos.carrera.slug}.png`, { type: 'image/png' }),
+  )
+  hechas.set(datos.sesiones, { clave, archivo })
+  return archivo
+}
+
+/** Baja el archivo, en el ordenador y en el telefono */
+export function descargarArchivo(archivo) {
+  const url = URL.createObjectURL(archivo)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = archivo.name
+  a.click()
+  /* Se suelta despues y no en el acto: Safari y Firefox leen el enlace un
+     instante mas tarde, y soltado antes la descarga sale vacia o no sale. */
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
 /* Lo que acompaña a la imagen al compartirla: lo que diria uno al mandarla */
 const MENSAJE = 'Mira, te comparto mi horario 📅 Arma el tuyo en https://mapa-pensum.vercel.app'
 
 /**
- * Saca el horario como PNG. Devuelve como acabo: 'guardado' o 'cancelado'.
- *
- * En el telefono abre la hoja de compartir del sistema y no una descarga. Una
- * descarga ahi acaba en una carpeta que nadie abre, y en la app instalada
- * algunos navegadores ni la hacen; desde la hoja se guarda en la galeria o se
- * manda por WhatsApp de un toque, que es lo que se hace con un horario. En el
- * ordenador, descarga normal: alli la hoja de compartir es una rareza.
+ * Si este aparato sabe compartir imagenes con la hoja del sistema. Solo en
+ * los tactiles: en el ordenador la hoja de compartir es una rareza y basta
+ * con descargar.
  */
-export async function descargarHorario(datos) {
-  const blob = await dibujarHorario(datos)
-  const nombre = `horario-${datos.carrera.slug}.png`
-  const archivo = new File([blob], nombre, { type: 'image/png' })
+export const puedeCompartir = () =>
+  window.matchMedia('(pointer: coarse)').matches &&
+  Boolean(navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }))
 
-  const tactil = window.matchMedia('(pointer: coarse)').matches
-  if (tactil && navigator.canShare?.({ files: [archivo] })) {
-    try {
-      await navigator.share({ files: [archivo], title: 'Mi horario', text: MENSAJE })
-      return 'guardado'
-    } catch (e) {
-      // Cerrar la hoja sin elegir nada no es un error
-      if (e.name === 'AbortError') return 'cancelado'
-      // Cualquier otro fallo de la hoja: se baja como en el ordenador
-    }
+/** Abre la hoja de compartir con la imagen. Devuelve 'guardado' o 'cancelado'. */
+export async function compartirArchivo(archivo) {
+  try {
+    await navigator.share({ files: [archivo], title: 'Mi horario', text: MENSAJE })
+    return 'guardado'
+  } catch (e) {
+    // Cerrar la hoja sin elegir nada no es un error
+    if (e.name === 'AbortError') return 'cancelado'
+    throw e
   }
-
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = nombre
-  a.click()
-  /* Se suelta despues y no en el acto: Safari y Firefox leen el enlace un
-     instante mas tarde, y soltado antes la descarga sale vacia o no sale. */
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
-  return 'guardado'
 }

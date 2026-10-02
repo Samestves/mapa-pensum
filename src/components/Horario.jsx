@@ -4,7 +4,12 @@ import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
 import { leer } from '../data/almacen'
-import { descargarHorario } from '../data/exportarHorario'
+import {
+  compartirArchivo,
+  descargarArchivo,
+  imagenDelHorario,
+  puedeCompartir,
+} from '../data/exportarHorario'
 import { coloresDelHorario } from '../theme/areas'
 import RejillaHorario from './RejillaHorario'
 import HorarioMovil from './HorarioMovil'
@@ -12,7 +17,7 @@ import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 import HorarioVacio from './HorarioVacio'
 import ImportarHorario from './ImportarHorario'
-import BotonDescargar from './BotonDescargar'
+import AccionesHorario from './AccionesHorario'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
    para firmar la imagen en vez de volver a preguntarlo. */
@@ -99,8 +104,10 @@ function Horario({ carrera, estados }) {
   const mover = useCallback((sesion) => guardar(sesion), [guardar])
 
   // Sin nombre guardado la imagen sale igual, solo que sin firmar
-  const bajar = () =>
-    descargarHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
+  const imagen = () =>
+    imagenDelHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
+  const descargar = async () => descargarArchivo(await imagen())
+  const compartir = async () => compartirArchivo(await imagen())
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
@@ -143,7 +150,12 @@ function Horario({ carrera, estados }) {
           la barra de la aplicacion: es una accion de esta vista y solo de
           esta. Flotando no le quita alto a la semana. Aparece solo si hay
           algo que bajar. */}
-      {sesiones.length > 0 && <BotonDescargar alDescargar={bajar} />}
+      {sesiones.length > 0 && (
+        <AccionesHorario
+          alDescargar={descargar}
+          alCompartir={puedeCompartir() ? compartir : null}
+        />
+      )}
 
       {menu && (
         <MenuClase

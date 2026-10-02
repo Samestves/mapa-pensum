@@ -9,12 +9,6 @@ const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, 
 export const css = ({ r, g, b }, alfa = 1) =>
   `rgb(${Math.round(r)} ${Math.round(g)} ${Math.round(b)} / ${alfa})`
 
-export const mezclar = (a, b, t) => ({
-  r: a.r + (b.r - a.r) * t,
-  g: a.g + (b.g - a.g) * t,
-  b: a.b + (b.b - a.b) * t,
-})
-
 /**
  * Resuelve colores CSS -hexadecimales, var(--lo-que-sea), color-mix- a canal
  * RGB, tal como son en el tema CLARO, sea cual sea el que tiene la app. Se
