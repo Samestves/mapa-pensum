@@ -11,11 +11,16 @@ const SALIDA = 260
 const SALIDA_TELEFONO = 820
 /* Cuantas materias se nombran; el resto se cuenta */
 const TOPE_FILAS = 3
-/* Cuando ya se ve: la espera hasta que llega la luz del cable (ver
-   .aviso-recogida) mas lo que tarda en asomar. Retirado antes de eso se
-   quita sin animar nada. */
-const ENTRADA = 1150 + 520
-const ENTRADA_TELEFONO = 1150 + 400
+/* Cuando empieza a entrar: al llegar la luz del cable a lo que se abre, o
+   casi enseguida si no hay luz que esperar -un semestre entero, que no
+   enciende ningun cable-. Todo lo demas cuenta desde aqui (--espera en
+   index.css). */
+const LUZ = 1150
+const SIN_LUZ = 120
+/* Lo que tarda en asomar del todo despues de la espera. Retirado antes de
+   eso se quita sin animar nada. */
+const ASOMAR = 520
+const ASOMAR_TELEFONO = 400
 
 const reducido = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
 
@@ -77,7 +82,7 @@ const QUITAR = 64
  * se para. Va por debajo de la ficha y de los botones de zoom: si alguna vez
  * coinciden, gana lo que se pulsa.
  */
-function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
+function AvisoTelefono({ aviso, espera, saliendo, alDeshacer, alIrse }) {
   const inicio = useRef(null)
   const [dx, setDx] = useState(0)
   const [tocando, setTocando] = useState(false)
@@ -120,6 +125,7 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
       <div
         aria-hidden="true"
         className={`recogida-velo ${saliendo ? 'recogida-velo-saliendo' : ''}`}
+        style={{ '--espera': `${espera}ms` }}
       />
       <div
         role="status"
@@ -127,6 +133,7 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
           tocando ? 'tocando' : ''
         }`}
         style={{
+          '--espera': `${espera}ms`,
           touchAction: 'none',
           translate: huido ? '-120% 0' : dx ? `${dx}px 0` : undefined,
           opacity: huido ? 0 : dx ? Math.max(0.3, 1 + dx / 200) : undefined,
@@ -145,7 +152,7 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
         >
           <CheckQueSeDibuja tam={15} />
           <span className="font-ui text-[9.5px] font-medium tracking-[0.32em] uppercase">
-            Aprobada
+            {aviso.etiqueta}
           </span>
         </p>
         <p
@@ -173,7 +180,7 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
               >
                 <span className="w-2.5 shrink-0 font-dato text-[13px] text-tinta-suave">+</span>
                 <span className="shrink-0 text-[var(--sit-inscribible-luz)]">
-                  <CandadoQueSeAbre retraso={1150 + 750 + i * 140} tam={12} />
+                  <CandadoQueSeAbre retraso={espera + 750 + i * 140} tam={12} />
                 </span>
                 <span className="min-w-0 truncate" style={{ fontWeight: 'var(--peso-nombre)' }}>
                   {nombre}
@@ -212,7 +219,8 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
 }
 
 /**
- * El aviso de lo que acabas de conseguir al aprobar una materia.
+ * El aviso de lo que acabas de conseguir al aprobar una materia o un
+ * semestre entero (ver useAvisos).
  *
  * Es el gesto del juego al recoger algo: una tira discreta en la esquina que
  * entra, se lee y se va sola. Arriba, lo que aprobaste; debajo, una fila por
@@ -226,8 +234,13 @@ function AvisoTelefono({ aviso, saliendo, alDeshacer, alIrse }) {
  * Entra con retraso a proposito, cuando la luz del cable ya llego a su
  * destino: primero se ve lo que paso y despues se lee.
  */
-function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
-  const esTelefono = useEsTelefono()
+function AvisoRecogida({ aviso, conCaja = false, retirar = false, alDeshacer, alCerrar }) {
+  const telefono = useEsTelefono()
+  /* Sin caja solo en el telefono y sobre un hueco despejado del mapa: el
+     velo que lo hace legible oscurece rejilla y cables, pero sobre texto se
+     leerian los dos a la vez. Ahi va en su tarjeta, como en escritorio. */
+  const esTelefono = telefono && !conCaja
+  const espera = aviso.inmediato ? SIN_LUZ : LUZ
   const [saliendo, setSaliendo] = useState(false)
   const salida = useRef(null)
   const montado = useRef(performance.now())
@@ -245,7 +258,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
      salida animada lo enseñaria un instante solo para irse. */
   useEffect(() => {
     if (!retirar) return
-    if (performance.now() - montado.current < (esTelefono ? ENTRADA_TELEFONO : ENTRADA)) alCerrar()
+    if (performance.now() - montado.current < espera + (esTelefono ? ASOMAR_TELEFONO : ASOMAR)) alCerrar()
     else irse()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retirar])
@@ -265,7 +278,15 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
   }
 
   if (esTelefono) {
-    return <AvisoTelefono aviso={aviso} saliendo={saliendo} alDeshacer={deshacer} alIrse={irse} />
+    return (
+      <AvisoTelefono
+        aviso={aviso}
+        espera={espera}
+        saliendo={saliendo}
+        alDeshacer={deshacer}
+        alIrse={irse}
+      />
+    )
   }
 
   const abiertas = aviso.desbloqueadas
@@ -279,6 +300,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
       className={`aviso-recogida absolute z-30 overflow-hidden rounded-[12px] border border-panel-borde bg-panel shadow-2xl ${
         saliendo ? 'recogida-saliendo pointer-events-none' : ''
       }`}
+      style={{ '--espera': `${espera}ms` }}
     >
       {/* El filo de luz del borde de arriba, en el verde de aprobada */}
       <span
@@ -291,7 +313,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
           <CheckQueSeDibuja />
         </span>
         <span className="shrink-0 font-ui text-[9.5px] font-medium tracking-[0.26em] text-[var(--estado-aprobada)] uppercase">
-          Aprobada
+          {aviso.etiqueta}
         </span>
         <span
           className="min-w-0 truncate text-[13px] text-tinta"
@@ -307,10 +329,10 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
             <li
               key={nombre}
               className="recogida-fila flex items-center gap-2.5 py-[5px]"
-              style={{ '--retraso': `${1350 + i * 110}ms` }}
+              style={{ '--retraso': `${espera + 200 + i * 110}ms` }}
             >
               <span className="shrink-0 text-[var(--sit-inscribible-luz)]">
-                <CandadoQueSeAbre retraso={1600 + i * 110} />
+                <CandadoQueSeAbre retraso={espera + 450 + i * 110} />
               </span>
               <span
                 className="min-w-0 flex-1 truncate text-[13px] text-tinta"
@@ -323,7 +345,7 @@ function AvisoRecogida({ aviso, retirar = false, alDeshacer, alCerrar }) {
           {resto > 0 && (
             <li
               className="recogida-fila py-[5px] pl-[25px] text-[12px] text-tinta-tenue"
-              style={{ '--retraso': `${1350 + nombradas.length * 110}ms` }}
+              style={{ '--retraso': `${espera + 200 + nombradas.length * 110}ms` }}
             >
               y {resto} más
             </li>

@@ -436,6 +436,72 @@ body {
   pointer-events: auto;
 }
 
+/* El aro de aprobar un semestre entero (ver AroSemestre en RotulosGrafo).
+   Quieto es un contorno tenue; al apuntarle se enciende con su check, que es
+   lo que va a pasar; aprobado queda lleno. Solo con transiciones de color:
+   nada que repinte mas que el propio aro. */
+.aro-semestre {
+  pointer-events: none;
+}
+
+.aro-semestre[role='button'] {
+  pointer-events: auto;
+  cursor: pointer;
+  outline: none;
+}
+
+.aro-semestre .aro {
+  fill: transparent;
+  stroke: color-mix(in oklab, var(--tinta) 34%, transparent);
+  stroke-width: 1.3;
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease;
+}
+
+.aro-semestre .tilde {
+  fill: none;
+  stroke: var(--estado-aprobada);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition:
+    opacity 200ms ease,
+    stroke 200ms ease;
+}
+
+.aro-semestre[data-estado='vacio'] .aro {
+  stroke-dasharray: 2 2.2;
+  stroke: color-mix(in oklab, var(--tinta) 18%, transparent);
+}
+
+.aro-semestre[data-estado='hecho'] .aro {
+  fill: var(--estado-aprobada);
+  stroke: var(--estado-aprobada);
+}
+
+.aro-semestre[data-estado='hecho'] .tilde {
+  stroke: var(--lienzo);
+  opacity: 1;
+}
+
+.aro-semestre[role='button']:focus-visible .aro {
+  stroke: var(--estado-aprobada);
+  stroke-width: 2;
+}
+
+@media (hover: hover) {
+  .aro-semestre[role='button']:hover .aro {
+    fill: color-mix(in oklab, var(--estado-aprobada) 16%, transparent);
+    stroke: var(--estado-aprobada);
+  }
+
+  .aro-semestre[role='button']:hover .tilde {
+    opacity: 1;
+  }
+}
+
 /* Las luces no se pulsan: el click pasa a la tarjeta o al cable de debajo */
 .plano-luces > svg > g {
   pointer-events: none;
@@ -698,16 +764,18 @@ body {
 /* ---- El aviso de lo que se desbloqueo (AvisoRecogida) -------------------
 
    Todo va encadenado a la luz del cable, que sale a los 380 ms y llega hacia
-   los 1100: el aviso entra cuando la luz ya llego (1150), el check se dibuja
-   sobre la marcha (1300), las filas entran una detras de otra (1350 + 110
-   cada una) y cada candado se abre un cuarto de segundo despues de su fila.
-   La linea de tiempo empieza a vaciarse cuando todo eso ya se vio. */
+   los 1100: el aviso entra cuando la luz ya llego (--espera, 1150), el check
+   se dibuja sobre la marcha (+150), las filas entran una detras de otra
+   (+200 y 110 mas cada una) y cada candado se abre un cuarto de segundo
+   despues de su fila. La linea de tiempo empieza a vaciarse cuando todo eso
+   ya se vio. Sin luz que esperar -un semestre entero- --espera es corta y la
+   cadena entera se adelanta (ver AvisoRecogida). */
 .aviso-recogida {
   left: 1rem;
   bottom: 1rem;
   width: 21.5rem;
   max-width: calc(100% - 2rem);
-  animation: recoger 480ms cubic-bezier(0.22, 0.61, 0.2, 1) 1150ms both;
+  animation: recoger 480ms cubic-bezier(0.22, 0.61, 0.2, 1) var(--espera, 1150ms) both;
 }
 
 /* En el telefono ocupa el mismo sitio que la ficha que se acaba de apartar:
@@ -771,12 +839,14 @@ body {
 }
 
 .recogida-aro {
-  animation: trazar-recogida 560ms cubic-bezier(0.65, 0, 0.35, 1) 1300ms forwards;
+  animation: trazar-recogida 560ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--espera, 1150ms) + 150ms)
+    forwards;
 }
 
 .recogida-tilde {
   stroke-width: 1.7;
-  animation: trazar-recogida 320ms cubic-bezier(0.65, 0, 0.35, 1) 1760ms forwards;
+  animation: trazar-recogida 320ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--espera, 1150ms) + 610ms)
+    forwards;
 }
 
 @keyframes trazar-recogida {
@@ -832,7 +902,7 @@ body {
 .recogida-tiempo {
   background: color-mix(in oklab, var(--estado-aprobada) 60%, transparent);
   transform-origin: left;
-  animation: vaciar-tiempo var(--duracion, 5600ms) linear 1900ms both;
+  animation: vaciar-tiempo var(--duracion, 5600ms) linear calc(var(--espera, 1150ms) + 750ms) both;
 }
 
 .aviso-recogida:hover .recogida-tiempo {
@@ -865,7 +935,7 @@ body {
 /* ---- El aviso en el telefono (AvisoTelefono) ---------------------------
 
    El de recoger algo en The Last of Us Parte II: abajo a la izquierda, sin
-   caja, texto sobre un velo. Todo cuenta desde los 1150 ms, cuando la luz
+   caja, texto sobre un velo. Todo cuenta desde --espera, cuando la luz
    del cable llega a lo que se abre, igual que el de escritorio. Entra sin
    rebote -un fundido y un paso corto desde la izquierda- y sale igual, pieza
    a pieza. */
@@ -889,7 +959,7 @@ body {
   );
   -webkit-mask: linear-gradient(0deg, transparent 0, #000 1.5rem);
   mask: linear-gradient(0deg, transparent 0, #000 1.5rem);
-  animation: velo-entra 1000ms ease 1000ms both;
+  animation: velo-entra 1000ms ease calc(var(--espera, 1150ms) - 150ms) both;
 }
 
 .recogida-velo-saliendo {
@@ -926,7 +996,8 @@ body {
 }
 
 .movil-pieza {
-  animation: pieza-entra 700ms cubic-bezier(0.22, 0.61, 0.2, 1) calc(1150ms + var(--e, 0ms)) both;
+  animation: pieza-entra 700ms cubic-bezier(0.22, 0.61, 0.2, 1) calc(var(--espera, 1150ms) + var(--e, 0ms))
+    both;
 }
 
 .recogida-movil-saliendo .movil-pieza {
@@ -962,8 +1033,8 @@ body {
   background: color-mix(in oklab, var(--tinta) 35%, transparent);
   transform-origin: left;
   animation:
-    velo-entra 700ms ease 1450ms both,
-    vaciar-raya var(--duracion, 5600ms) linear 2150ms both;
+    velo-entra 700ms ease calc(var(--espera, 1150ms) + 300ms) both,
+    vaciar-raya var(--duracion, 5600ms) linear calc(var(--espera, 1150ms) + 1000ms) both;
 }
 
 .recogida-movil.tocando .movil-tiempo {
@@ -2398,6 +2469,15 @@ body {
 
 .velo-hoja[data-saliendo='true'] {
   opacity: 0;
+}
+
+/* Aprobar un semestre desde la lista: gris quieto, verde al apuntarle,
+   como el aro de la cabecera del mapa. */
+@media (hover: hover) {
+  .aprobar-todo:hover {
+    background: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
+    color: var(--estado-aprobada);
+  }
 }
 
 /* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y

@@ -31,6 +31,14 @@ const CABECERA = {
 const espaciado = (em) => ({ letterSpacing: `${em}em` })
 
 const Y = MARGEN.top
+
+/* El aro de aprobar el semestre, a la izquierda del titulo: centrado en la
+   altura de sus mayusculas, y el titulo corrido lo que ocupa. La zona que se
+   pulsa abarca aro y titulo: a la escala del mapa entero un aro de trece
+   pixeles no lo acierta nadie. */
+const ARO = { r: 6.5, cy: 9.8 }
+const SANGRIA_TITULO = 19
+const PULSABLE = { izq: -12, arr: -16, ancho: 150, alto: 30 }
 const CRECER = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier(0.32, 0.72, 0, 1)'
 
 /**
@@ -41,7 +49,7 @@ const CRECER = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier
  * es -arriba- y como vas en el -abajo-: aprobado y, a continuacion, lo que
  * cursas. Crece con transicion al aprobar en vez de saltar.
  */
-function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho }) {
+function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, alAprobar }) {
   return (
     <>
       {cabeceras.map((c) => (
@@ -74,6 +82,7 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho }) {
               <FormaSituacion situacion={e.situacion} color={ASPECTO[e.situacion].marca.color} />
             </g>
           ))}
+          <AroSemestre cabecera={c} alAprobar={alAprobar} />
         </g>
       ))}
 
@@ -96,9 +105,63 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho }) {
 }
 
 /**
+ * Aprobar el semestre entero de un toque: un aro, como la casilla de una
+ * lista de tareas, delante de su nombre.
+ *
+ * Tres caras. Con algo por aprobar es un boton: al pasar por encima se
+ * enciende del verde de aprobada con su check, que es lo que va a pasar. Con
+ * todo aprobado queda lleno, y ya no se pulsa: desmarcar un semestre entero
+ * de un toque es demasiado facil de hacer sin querer, y una por una sigue
+ * pudiendose. Si solo le quedan casillas sin elegir, nada que marcar: el aro
+ * queda tenue.
+ *
+ * Lo que aprueba lo dice el aviso de despues, con Deshacer (ver
+ * aprobarSemestre en VistaCarrera).
+ */
+function AroSemestre({ cabecera: c, alAprobar }) {
+  const accion = c.pendientes > 0
+  const estado = c.completo ? 'hecho' : accion ? 'pendiente' : 'vacio'
+  const etiqueta = `Aprobar el semestre ${c.semestre} entero`
+
+  return (
+    <g
+      className="aro-semestre"
+      data-estado={estado}
+      transform={`translate(${c.x + ARO.r}, ${Y + ARO.cy})`}
+      {...(accion && {
+        role: 'button',
+        tabIndex: 0,
+        'aria-label': etiqueta,
+        onClick: () => alAprobar(c.semestre),
+        onKeyDown: (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          e.preventDefault()
+          alAprobar(c.semestre)
+        },
+      })}
+    >
+      {accion && (
+        <>
+          <title>{etiqueta}</title>
+          <rect
+            x={PULSABLE.izq}
+            y={PULSABLE.arr}
+            width={PULSABLE.ancho}
+            height={PULSABLE.alto}
+            fill="transparent"
+          />
+        </>
+      )}
+      <circle r={ARO.r} className="aro" />
+      <path d="M-3 0.1 -0.9 2.2 3.1 -2.1" className="tilde" />
+    </g>
+  )
+}
+
+/**
  * El texto de los rotulos.
  *
- *   SEMESTRE 04                        71%
+ *   ○ SEMESTRE 04                      71%
  *   18 UC · 7 MATERIAS
  *   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────
  *   5/7 APROBADAS                   ◐ 1  ◉ 1
@@ -120,7 +183,7 @@ function RotulosTextosSinMemo({ cabeceras, filasFranja }) {
       {cabeceras.map((c) => (
         <GrupoTexto key={c.semestre} x={c.x} y={Y}>
           <Texto
-            x={0}
+            x={SANGRIA_TITULO}
             y={CABECERA.titulo}
             className="tabular-nums"
             style={{ fontSize: 11.5, color: 'var(--tinta)', fontWeight: 500, ...espaciado(0.3) }}

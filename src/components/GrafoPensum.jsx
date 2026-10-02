@@ -7,10 +7,10 @@ import { RotulosFormas, RotulosTextos } from './RotulosGrafo'
 import DefsGrafo from './DefsGrafo'
 import DetalleAsignatura from './DetalleAsignatura'
 import ContornoCarga from './ContornoCarga'
-import AvisoRecogida from './AvisoRecogida'
 import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
+import { desbloqueadasPor } from '../data/semestre'
 import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
 import { cabecerasDe } from '../layout/cabeceras'
 import { MARGEN_CAPA } from '../layout/vistaViva'
@@ -35,9 +35,6 @@ function ambos(a, b) {
   return juntos
 }
 
-/* Marca para salir todos los avisos que haya en pantalla */
-const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retirar: true }))
-
 /* La capa pintada con margen: se sale de la ventana MARGEN_CAPA (fraccion
    de la ventana) por cada lado, y su origen de transformacion es la esquina
    de la ventana dentro de ella. Asi el estiramiento usa las mismas cuentas
@@ -59,6 +56,8 @@ function GrafoPensum({
   seleccionado,
   alSeleccionar,
   alMarcar,
+  alAvisar,
+  alAprobarSemestre,
   enCasilla,
   alAbrirCasilla,
   casillaDe,
@@ -311,22 +310,6 @@ function GrafoPensum({
     [nodoFicha, seguir],
   )
 
-  /* Los avisos de lo que acabas de conseguir al aprobar.
-
-     Una lista y no uno solo, aunque en pantalla nunca haya mas de uno: si
-     apruebas otra materia con un aviso todavia puesto, el viejo tiene que
-     salir con su animacion mientras el nuevo espera a que llegue la luz de
-     su cable. Con uno solo, el nuevo reemplazaba al viejo de golpe y durante
-     un segundo no habia ninguno. Todos menos el ultimo van con `retirar`. */
-  const [avisos, setAvisos] = useState([])
-  const cerrarAviso = useCallback((n) => setAvisos((lista) => lista.filter((a) => a.n !== n)), [])
-
-  /* Abrir otra ficha retira el aviso: ya estas en otra cosa, y en el
-     telefono la ficha abre justo debajo de donde el aviso se ve. */
-  useEffect(() => {
-    if (seleccionado != null) setAvisos((lista) => (lista.length ? retirarTodos(lista) : lista))
-  }, [seleccionado])
-
   /**
    * Marcar desde la ficha. Cursando y sin cursar se quedan con la ficha
    * abierta: son cambios de estado y ya. Aprobar es otra cosa, es el momento
@@ -338,7 +321,7 @@ function GrafoPensum({
    * Asi que al aprobar la ficha se aparta, el mapa se corre lo justo para
    * que quepan la materia y todo lo que desbloquea, la luz sale cuando el
    * mapa ya llego (ver .descarga en index.css) y en la esquina queda el
-   * aviso de lo que se abrio, con Deshacer.
+   * aviso de lo que se abrio, con Deshacer (ver useAvisos).
    */
   const marcarDesdeFicha = useCallback(
     (codigo, marca) => {
@@ -350,16 +333,6 @@ function GrafoPensum({
       }
 
       const siguientes = relaciones.adelante.get(codigo) ?? []
-      const despues = { ...estados, [codigo]: ESTADO.APROBADA }
-      const abiertas = siguientes
-        .map((c) => porCodigo.get(c))
-        .filter(
-          (a) =>
-            a &&
-            despues[a.codigo] !== ESTADO.APROBADA &&
-            despues[a.codigo] !== ESTADO.CURSANDO &&
-            (a.prerrequisitos ?? []).every((p) => despues[p] === ESTADO.APROBADA),
-        )
 
       // La caja que tiene que verse: la materia y todo lo que sale de ella
       const cajas = [codigo, ...siguientes]
@@ -385,18 +358,25 @@ function GrafoPensum({
 
       alSeleccionar(null)
       alMarcar(codigo, marca)
-      setAvisos((lista) => [
-        ...retirarTodos(lista),
-        {
-          codigo,
-          marcaAntes,
-          nombre: porCodigo.get(codigo)?.nombre ?? '',
-          desbloqueadas: abiertas.map((a) => a.nombre),
-          n: Date.now(),
-        },
-      ])
+      alAvisar({
+        antes: { [codigo]: marcaAntes },
+        etiqueta: 'Aprobada',
+        nombre: porCodigo.get(codigo)?.nombre ?? '',
+        desbloqueadas: desbloqueadasPor([codigo], estados, relaciones, porCodigo).map((a) => a.nombre),
+      })
     },
-    [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
+    [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar, alAvisar],
+  )
+
+  /* Aprobar un semestre desde su cabecera. Como un click en una tarjeta: si
+     el puntero se movio fue un arrastre del lienzo, no un click. */
+  const aprobarSemestre = useCallback(
+    (semestre) => {
+      if (huboMovimiento.current) return
+      alSeleccionar(null)
+      alAprobarSemestre(semestre)
+    },
+    [huboMovimiento, alSeleccionar, alAprobarSemestre],
   )
 
   const verFicha = useCallback(
@@ -496,7 +476,14 @@ function GrafoPensum({
           <Plano
             vista={vistaPlanos}
             className="plano-rotulos"
-            formas={<RotulosFormas cabeceras={cabeceras} filasFranja={filasFranja} ancho={ancho} />}
+            formas={
+              <RotulosFormas
+                cabeceras={cabeceras}
+                filasFranja={filasFranja}
+                ancho={ancho}
+                alAprobar={aprobarSemestre}
+              />
+            }
             textos={<RotulosTextos cabeceras={cabeceras} filasFranja={filasFranja} />}
           />
 
@@ -556,18 +543,6 @@ function GrafoPensum({
           alTapar={taparAbajo}
         />
       )}
-
-      {/* Deshacer solo devuelve la marca: el aviso se va solo, con su salida,
-          y al acabar se quita de la lista. */}
-      {avisos.map((a) => (
-        <AvisoRecogida
-          key={a.n}
-          aviso={a}
-          retirar={a.retirar}
-          alDeshacer={() => alMarcar(a.codigo, a.marcaAntes)}
-          alCerrar={() => cerrarAviso(a.n)}
-        />
-      ))}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { ArrowRight, Check, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
+import { ArrowRight, Check, CheckCheck, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { ASPECTO } from '../theme/situacion'
 import { SITUACION, situacionDe } from '../layout/situacion'
@@ -382,7 +382,17 @@ function Resumen({ progreso, semestres, actual, alIr }) {
  *
  * Asi "si paso esta, se me abre aquella" se ve, no se lee.
  */
-function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, alMirar, alMarcar }) {
+function VistaLista({
+  layout,
+  estados,
+  progreso,
+  avanceGrupos,
+  toque,
+  descarga,
+  alMirar,
+  alMarcar,
+  alAprobarSemestre,
+}) {
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
   const [filtro, setFiltro] = useState('todo')
   /* La materia abierta. Una sola a la vez: es la que ordena la lista a su
@@ -634,28 +644,43 @@ function VistaLista({ layout, estados, progreso, avanceGrupos, toque, descarga, 
                   {completo && <Check size={9} strokeWidth={3} className="text-[var(--lienzo)]" />}
                 </span>
 
-                <button
-                  type="button"
-                  onClick={() => setPlegados((p) => ({ ...p, [id]: !plegado }))}
-                  aria-expanded={!plegado}
-                  aria-label={`Semestre ${s.numero}`}
-                  className="flex w-full flex-col gap-2.5 pb-3 text-left"
-                >
-                  <span className="flex w-full items-baseline gap-2.5">
-                    <span className="text-[24px] leading-none font-extralight tracking-[-0.03em] text-tinta tabular-nums">
-                      {String(s.numero).padStart(2, '0')}
+                <div className="flex items-start gap-3 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setPlegados((p) => ({ ...p, [id]: !plegado }))}
+                    aria-expanded={!plegado}
+                    aria-label={`Semestre ${s.numero}`}
+                    className="flex min-w-0 flex-1 flex-col gap-2.5 text-left"
+                  >
+                    <span className="flex w-full items-baseline gap-2.5">
+                      <span className="text-[24px] leading-none font-extralight tracking-[-0.03em] text-tinta tabular-nums">
+                        {String(s.numero).padStart(2, '0')}
+                      </span>
+                      <span className="text-[10.5px] font-medium tracking-[0.22em] text-tinta-tenue uppercase">
+                        Semestre
+                      </span>
+                      <span
+                        className={`ml-auto text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
+                      >
+                        {completo ? 'Completo' : `${s.hechas} de ${s.total} aprobadas`}
+                      </span>
                     </span>
-                    <span className="text-[10.5px] font-medium tracking-[0.22em] text-tinta-tenue uppercase">
-                      Semestre
-                    </span>
-                    <span
-                      className={`ml-auto text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
+                    <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
+                  </button>
+                  {/* Aprobar el semestre entero, como el aro de su cabecera en
+                      el mapa. Lo que se marco lo dice el aviso, con Deshacer. */}
+                  {!completo && (
+                    <button
+                      type="button"
+                      onClick={() => alAprobarSemestre(s.numero)}
+                      aria-label={`Aprobar el semestre ${s.numero} entero`}
+                      title="Aprobar el semestre entero"
+                      className="aprobar-todo -mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-tinta/[0.06] text-tinta-suave transition-[background-color,color,transform] duration-200 active:scale-90"
                     >
-                      {completo ? 'Completo' : `${s.hechas} de ${s.total} aprobadas`}
-                    </span>
-                  </span>
-                  <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
-                </button>
+                      <CheckCheck size={15} strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
 
                 <div className="plegable" data-abierto={!plegado}>
                   <div>

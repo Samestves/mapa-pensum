@@ -226,14 +226,22 @@ export function usePensum(carrera) {
     }
   }, [asignaturas, estados, creditos, avanceGrupos])
 
-  // Fija una marca concreta. marca === null desmarca.
-  const marcar = useCallback((codigo, marca) => {
+  /* Fija varias marcas de una vez -{ codigo: marca }-, en un solo cambio de
+     estado: aprobar un semestre entero, o deshacerlo. marca null desmarca. */
+  const marcarVarias = useCallback((cambios) => {
     setMarcas((previas) => {
       const copia = { ...previas }
-      if (marca) copia[codigo] = marca
-      else delete copia[codigo]
+      for (const [codigo, marca] of Object.entries(cambios)) {
+        if (marca) copia[codigo] = marca
+        else delete copia[codigo]
+      }
       return copia
     })
+  }, [])
+
+  // Fija una marca concreta, con su anillo y su descarga. null desmarca.
+  const marcar = useCallback((codigo, marca) => {
+    marcarVarias({ [codigo]: marca })
 
     contador.current += 1
     // Solo la tarjeta que se toco lleva el anillo de confirmacion
@@ -242,7 +250,7 @@ export function usePensum(carrera) {
     // La descarga solo tiene sentido al aprobar: es el momento en que algo
     // se desbloquea. Pasar a cursando o desmarcar no enciende nada.
     if (marca === ESTADO.APROBADA) setDescarga({ codigo, n: contador.current })
-  }, [])
+  }, [marcarVarias])
 
   // Click en la tarjeta: marcado tipo checklist, marcada o sin marcar.
   // Los tres estados completos siguen estando en la ficha.
@@ -270,6 +278,7 @@ export function usePensum(carrera) {
     descarga,
     toque,
     marcar,
+    marcarVarias,
     alternar,
     alternarAprobada,
     reiniciar,

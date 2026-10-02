@@ -6,7 +6,10 @@ import { calcularLayout } from '../layout/calcularLayout'
 import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
+import { ESTADO } from '../data/estados'
+import { desbloqueadasPor, pendientesDeSemestre } from '../data/semestre'
 import { VISTAS } from '../data/vistas'
+import { useAvisos } from '../hooks/useAvisos'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
 import { useEsTelefono } from '../hooks/useEsTelefono'
@@ -14,6 +17,7 @@ import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import PanelAvisos from './AvisosCarrera'
+import AvisoRecogida from './AvisoRecogida'
 import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
 import EsqueletoMapa from './EsqueletoMapa'
@@ -50,6 +54,7 @@ function VistaCarrera({ carrera, alVolver }) {
     descarga,
     toque,
     marcar,
+    marcarVarias,
     reiniciar,
   } = usePensum(carrera)
   /* Que electiva has puesto en cada casilla del pensum. Es una decision de
@@ -133,6 +138,16 @@ function VistaCarrera({ carrera, alVolver }) {
   const [vista, setVista] = useState(
     () => leer(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
   )
+  /* Lo que acabas de aprobar, en la esquina y con Deshacer. Viven aqui y no
+     en el mapa porque un semestre se aprueba tambien desde la lista. Cambiar
+     de vista los quita sin animar: la vista nueva entra, y con ella no
+     vienen los avisos de la otra. */
+  const { avisos, avisar, cerrarAviso, retirarAvisos, vaciarAvisos } = useAvisos()
+  const [vistaAvisos, setVistaAvisos] = useState(vista)
+  if (vistaAvisos !== vista) {
+    setVistaAvisos(vista)
+    vaciarAvisos()
+  }
   useEffect(() => {
     guardar(CLAVE_VISTA, vista)
     anotarVista(vista)
@@ -178,6 +193,11 @@ function VistaCarrera({ carrera, alVolver }) {
   }, [])
   const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
+  /* Abrir otra ficha retira el aviso: ya estas en otra cosa, y en el
+     telefono la ficha abre justo debajo de donde el aviso se ve. */
+  useEffect(() => {
+    if (seleccionado != null) retirarAvisos()
+  }, [seleccionado, retirarAvisos])
 
   // El mapa se monta un fotograma DESPUES de que aparece la vista. Son mil
   // seiscientos elementos SVG: aqui cuestan unas decimas, en un telefono de
@@ -269,6 +289,38 @@ function VistaCarrera({ carrera, alVolver }) {
       marcar(codigo, estado)
     },
     [marcar, carrera.slug],
+  )
+  const marcarVariasYContar = useCallback(
+    (cambios) => {
+      anotarMarca(carrera.slug)
+      marcarVarias(cambios)
+    },
+    [marcarVarias, carrera.slug],
+  )
+
+  /* Aprobar un semestre entero, desde su cabecera en el mapa o en la lista:
+     sus obligatorias y la electiva de cada casilla, en un solo cambio. Despues
+     sale el aviso con lo que se abrio y Deshacer, que devuelve cada materia
+     a la marca que tenia -cursando o ninguna-. Sin confirmar antes: se
+     deshace de un toque, y preguntar seria pedir dos toques para lo que
+     casi siempre se quiere a la primera. */
+  const aprobarSemestre = useCallback(
+    (semestre) => {
+      const codigos = pendientesDeSemestre(layout.nodos, semestre, enCasilla, estados)
+      if (!codigos.length) return
+      const antes = Object.fromEntries(codigos.map((c) => [c, marcas[c] ?? null]))
+      marcarVariasYContar(Object.fromEntries(codigos.map((c) => [c, ESTADO.APROBADA])))
+      avisar({
+        antes,
+        etiqueta: 'Aprobado',
+        inmediato: true,
+        nombre: `Semestre ${semestre} · ${codigos.length} ${codigos.length === 1 ? 'materia' : 'materias'}`,
+        desbloqueadas: desbloqueadasPor(codigos, estados, layout.relaciones, layout.porCodigo).map(
+          (a) => a.nombre,
+        ),
+      })
+    },
+    [layout, enCasilla, estados, marcas, marcarVariasYContar, avisar],
   )
 
   const alternarSeleccion = useCallback(
@@ -394,6 +446,8 @@ function VistaCarrera({ carrera, alVolver }) {
             seleccionado={seleccionado}
             alSeleccionar={alternarSeleccion}
             alMarcar={marcarYContar}
+            alAvisar={avisar}
+            alAprobarSemestre={aprobarSemestre}
             enCasilla={enCasilla}
             alAbrirCasilla={abrirCasilla}
             casillaDe={casillaDe}
@@ -408,8 +462,25 @@ function VistaCarrera({ carrera, alVolver }) {
             descarga={descarga}
             alMirar={mirar}
             alMarcar={marcarYContar}
+            alAprobarSemestre={aprobarSemestre}
           />
         )}
+
+        {/* Deshacer solo devuelve las marcas: el aviso se va solo, con su
+            salida, y al acabar se quita de la lista. Sin caja solo cuando el
+            mapa se corrio para dejarle la esquina libre, que es al aprobar
+            una materia desde su ficha; en la lista, o tras un semestre
+            entero, cae sobre texto y va en su tarjeta. */}
+        {avisos.map((a) => (
+          <AvisoRecogida
+            key={a.n}
+            aviso={a}
+            conCaja={vista !== 'mapa' || a.inmediato}
+            retirar={a.retirar}
+            alDeshacer={() => marcarVariasYContar(a.antes)}
+            alCerrar={() => cerrarAviso(a.n)}
+          />
+        ))}
 
         {/* Los dos paneles cuelgan de aqui y no de la cabecera: sus hijos
             llevan overflow:hidden para la animacion de plegado y recortarian
