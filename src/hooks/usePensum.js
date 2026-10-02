@@ -273,6 +273,5 @@ export function usePensum(carrera) {
     alternar,
     alternarAprobada,
     reiniciar,
-    hayMarcas: Object.keys(marcas).length > 0,
   }
 }

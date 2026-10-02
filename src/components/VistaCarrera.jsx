@@ -51,7 +51,6 @@ function VistaCarrera({ carrera, alVolver }) {
     toque,
     marcar,
     reiniciar,
-    hayMarcas,
   } = usePensum(carrera)
   /* Que electiva has puesto en cada casilla del pensum. Es una decision de
      planificacion, no de avance: aprobarla la sigue llevando usePensum. */
@@ -283,6 +282,22 @@ function VistaCarrera({ carrera, alVolver }) {
     [mirar],
   )
 
+  /* Lo que enseña el avance, igual en el panel de escritorio y en la hoja del
+     telefono (ver ContenidoAvance). */
+  const avance = {
+    carrera,
+    progreso,
+    avanceGrupos,
+    marcas,
+    estados,
+    relaciones: layout.relaciones,
+    elegidas,
+    reiniciar,
+    alPlanificar: abrirPlan,
+    tema,
+    alternarTema,
+  }
+
   return (
     <div
       className="vista-carrera relative flex h-full flex-col overflow-hidden"
@@ -411,18 +426,12 @@ function VistaCarrera({ carrera, alVolver }) {
             la ventana, o quedan por debajo de ella. */}
         {!esTelefono && (
           <PanelProgreso
-            progreso={progreso}
-            avanceGrupos={avanceGrupos}
-            reiniciar={reiniciar}
-            hayMarcas={hayMarcas}
+            {...avance}
             abierto={abierto === 'avance'}
             ancla={anclaAvance}
             alCerrar={cerrar}
             areaFiltrada={areaFiltrada}
             alFiltrarArea={filtrarArea}
-            alPlanificar={abrirPlan}
-            tema={tema}
-            alternarTema={alternarTema}
           />
         )}
       </div>
@@ -443,22 +452,7 @@ function VistaCarrera({ carrera, alVolver }) {
       {/* Fuera del contenedor de la vista, que se remonta al cambiar de vista:
           la hoja tiene animacion de salida y no puede desmontarse a medias. */}
       {esTelefono && (
-        <HojaAvance
-          abierta={abierto === 'avance'}
-          alCerrar={cerrar}
-          carrera={carrera}
-          progreso={progreso}
-          avanceGrupos={avanceGrupos}
-          marcas={marcas}
-          estados={estados}
-          relaciones={layout.relaciones}
-          elegidas={elegidas}
-          reiniciar={reiniciar}
-          hayMarcas={hayMarcas}
-          alPlanificar={abrirPlan}
-          tema={tema}
-          alternarTema={alternarTema}
-        />
+        <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
       )}
     </div>
   )

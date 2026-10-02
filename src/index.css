@@ -2396,6 +2396,15 @@ body {
   opacity: 0;
 }
 
+/* Reiniciar, al pasar por encima: el rojo solo aparece cuando se apunta a
+   el (ver BotonReinicio). */
+@media (hover: hover) {
+  .boton-reinicio:not(:disabled):hover {
+    background: color-mix(in oklab, var(--estado-rojo) 10%, transparent);
+    color: var(--estado-rojo);
+  }
+}
+
 /* La tarjeta del plan: un tinte del verde de aprobada sobre el panel, con su
    propio contorno. Es lo unico de color en la hoja, porque es lo unico que
    lleva a otro sitio. */

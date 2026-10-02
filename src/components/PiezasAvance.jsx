@@ -2,10 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { RotateCcw, TriangleAlert } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 
-/* Piezas del avance que comparten el panel de escritorio (PanelProgreso) y la
-   hoja del telefono (HojaAvance). Son el mismo dato en los dos sitios, asi que
-   se dibujan con el mismo codigo: si la cuota de electivas o el reinicio
-   cambian, cambian en los dos a la vez. */
+/* Piezas del avance (ver ContenidoAvance), aparte porque tienen estado o
+   reglas propias: la cuota de un grupo de electivas y el reinicio con su
+   confirmacion. */
 
 /** Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado. */
 export function CuotaGrupo({ avance }) {
@@ -14,16 +13,16 @@ export function CuotaGrupo({ avance }) {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="min-w-0 truncate text-[11px] font-semibold text-tinta">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="min-w-0 truncate text-[13.5px] font-medium text-tinta">
           {avance.titulo}
         </span>
-        <span className="shrink-0 font-mono text-[10px] font-bold" style={{ color }}>
+        <span className="shrink-0 text-[12.5px] font-semibold tabular-nums" style={{ color }}>
           {avance.meta != null ? `${avance.uc}/${avance.meta} UC` : `${avance.uc} UC`}
         </span>
       </div>
       {avance.meta != null && (
-        <div className="mt-1 h-1 overflow-hidden rounded-full bg-lienzo">
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-tinta/[0.08]">
           <div
             className="h-full rounded-full transition-[width] duration-500 ease-out"
             style={{ width: `${pct}%`, backgroundColor: color }}
@@ -34,7 +33,19 @@ export function CuotaGrupo({ avance }) {
   )
 }
 
-export function BotonReinicio({ reiniciar, hayMarcas }) {
+const ROJO_TENUE = 'color-mix(in oklab, var(--estado-rojo) 9%, transparent)'
+
+/**
+ * Reiniciar el avance de la carrera: la unica accion del avance que no se
+ * puede deshacer, y por eso la mas callada hasta que se pide.
+ *
+ * Quieta es una fila ancha y apagada al pie, que solo enseña el rojo al
+ * pasar por encima: si no, el boton mas peligroso seria el mas llamativo del
+ * panel. Pulsarla no borra nada; la convierte en una confirmacion que dice
+ * cuanto se va a perder -"tus 8 materias marcadas"- y deja Cancelar del lado
+ * del pulgar. Se cierra sola con Escape o pulsando fuera.
+ */
+export function BotonReinicio({ reiniciar, cuantas }) {
   const [confirmando, setConfirmando] = useState(false)
   const caja = useRef(null)
 
@@ -50,46 +61,67 @@ export function BotonReinicio({ reiniciar, hayMarcas }) {
     return () => document.removeEventListener('pointerdown', fuera)
   }, [confirmando])
 
+  if (!confirmando) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirmando(true)}
+        disabled={!cuantas}
+        className="boton-reinicio flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-tinta/[0.04] text-[13.5px] font-medium text-tinta-suave transition-[background-color,color] duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <RotateCcw size={15} strokeWidth={2} />
+        {cuantas ? 'Reiniciar mi avance' : 'Nada que reiniciar todavía'}
+      </button>
+    )
+  }
+
   return (
-    <div ref={caja}>
-      {confirmando ? (
-        <div className="surgir rounded-lg border border-panel-borde bg-panel-suave p-3">
-          <p className="flex items-start gap-2 text-[11px] leading-snug text-tinta">
-            <TriangleAlert size={14} className="mt-0.5 shrink-0 text-cursando" />
-            Se borrarán todas tus marcas. No se puede deshacer.
+    <div
+      ref={caja}
+      role="alertdialog"
+      aria-label="Reiniciar mi avance"
+      className="surgir rounded-[18px] border p-4"
+      style={{
+        backgroundColor: ROJO_TENUE,
+        borderColor: 'color-mix(in oklab, var(--estado-rojo) 24%, transparent)',
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-full"
+          style={{ backgroundColor: ROJO_TENUE, color: 'var(--estado-rojo)' }}
+        >
+          <TriangleAlert size={17} strokeWidth={2} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold text-tinta">¿Reiniciar tu avance?</p>
+          <p className="mt-0.5 text-[12.5px] leading-snug text-tinta-suave">
+            Se borrarán {cuantas === 1 ? 'tu materia marcada' : `tus ${cuantas} materias marcadas`}{' '}
+            en esta carrera. No se puede deshacer.
           </p>
-          <div className="mt-2.5 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="flex-1 rounded-lg border border-panel-borde px-2 py-1.5 text-[11px] font-semibold text-tinta-suave hover:text-tinta"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                reiniciar()
-                setConfirmando(false)
-              }}
-              className="flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold text-white"
-              style={{ backgroundColor: 'var(--estado-rojo)' }}
-            >
-              Sí, borrar
-            </button>
-          </div>
         </div>
-      ) : (
+      </div>
+      <div className="mt-4 flex gap-2">
         <button
           type="button"
-          onClick={() => setConfirmando(true)}
-          disabled={!hayMarcas}
-          className="flex w-full items-center justify-center gap-2 rounded-lg py-1.5 text-[11px] font-semibold text-tinta-tenue transition-colors hover:text-tinta disabled:cursor-not-allowed disabled:opacity-35"
+          autoFocus
+          onClick={cancelar}
+          className="h-10 flex-1 rounded-xl bg-tinta/[0.07] text-[13px] font-semibold text-tinta transition-colors hover:bg-tinta/[0.11]"
         >
-          <RotateCcw size={13} />
-          Reiniciar mi avance
+          Cancelar
         </button>
-      )}
+        <button
+          type="button"
+          onClick={() => {
+            reiniciar()
+            setConfirmando(false)
+          }}
+          className="h-10 flex-1 rounded-xl text-[13px] font-semibold text-white transition-[filter] hover:brightness-110"
+          style={{ backgroundColor: 'var(--estado-rojo)' }}
+        >
+          Borrar todo
+        </button>
+      </div>
     </div>
   )
 }
