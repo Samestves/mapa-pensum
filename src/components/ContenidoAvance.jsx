@@ -1,6 +1,6 @@
 import { ChevronRight, Route } from 'lucide-react'
 import { avanceDe } from '../data/avance'
-import { leerUcPorSemestre } from '../data/cargaPlan'
+import { textoCarga } from '../data/cargaPlan'
 import { MES } from '../data/exportarPlan'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
@@ -95,13 +95,11 @@ function Reparto({ progreso }) {
  * Vive en su propio componente porque es el unico que calcula algo -el plan
  * entero-, y asi solo lo calcula mientras el avance esta abierto.
  */
-function TarjetaPlan({ carrera, marcas, estados, relaciones, elegidas, alPlanificar }) {
-  const { semestres, materias, fecha } = useGradoEstimado({
+function TarjetaPlan({ carrera, marcas, elegidas, alPlanificar }) {
+  const { semestres, materias, fecha, carga } = useGradoEstimado({
     asignaturas: carrera.asignaturas,
     grupos: carrera.grupos,
     marcas,
-    estados,
-    relaciones,
     elegidas,
   })
   const terminado = semestres === 0
@@ -122,7 +120,7 @@ function TarjetaPlan({ carrera, marcas, estados, relaciones, elegidas, alPlanifi
           </p>
           {!terminado && (
             <p className="mt-1 text-[12.5px] text-tinta-suave">
-              {semestres} {semestres === 1 ? 'semestre' : 'semestres'} a {leerUcPorSemestre()} UC
+              {semestres} {semestres === 1 ? 'semestre' : 'semestres'} con {textoCarga(carga)}
               · {materias} {materias === 1 ? 'materia' : 'materias'}
             </p>
           )}
@@ -204,8 +202,6 @@ export default function ContenidoAvance({
   progreso,
   avanceGrupos,
   marcas,
-  estados,
-  relaciones,
   elegidas,
   reiniciar,
   alPlanificar,
@@ -226,8 +222,6 @@ export default function ContenidoAvance({
       <TarjetaPlan
         carrera={carrera}
         marcas={marcas}
-        estados={estados}
-        relaciones={relaciones}
         elegidas={elegidas}
         alPlanificar={alPlanificar}
       />

@@ -50,9 +50,9 @@ export function cadenaDe(codigo, relaciones) {
 }
 
 /**
- * Cuantas asignaturas depende de cada una, directa o indirectamente.
- * Es la medida de "cuanto te traba" dejarla para despues, y con eso el
- * planificador decide que conviene adelantar.
+ * Cuantas asignaturas dependen de cada una, directa o indirectamente. El
+ * planificador lo usa para desempatar y para decir cuantas abre cada
+ * materia; la prioridad la marca la cadena mas larga, no esta cuenta.
  */
 export function pesoDesbloqueo(relaciones) {
   const peso = new Map()

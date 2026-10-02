@@ -345,8 +345,6 @@ function VistaCarrera({ carrera, alVolver }) {
     progreso,
     avanceGrupos,
     marcas,
-    estados,
-    relaciones: layout.relaciones,
     elegidas,
     reiniciar,
     alPlanificar: abrirPlan,
@@ -392,17 +390,14 @@ function VistaCarrera({ carrera, alVolver }) {
         alIrACarrera={alVolver}
       />
 
-      {planAbierto && (
-        <PlanRuta
-          carrera={carrera}
-          marcas={marcas}
-          estados={estados}
-          progreso={progreso}
-          relaciones={layout.relaciones}
-          elegidas={elegidas}
-          alCerrar={() => setPlanAbierto(false)}
-        />
-      )}
+      <PlanRuta
+        abierto={planAbierto}
+        carrera={carrera}
+        marcas={marcas}
+        progreso={progreso}
+        elegidas={elegidas}
+        alCerrar={() => setPlanAbierto(false)}
+      />
 
       {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa, que
           se remonta al cambiar de vista y lleva el transform del pan y el

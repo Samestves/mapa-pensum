@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { leerUcPorSemestre } from '../data/cargaPlan'
+import { leerCarga } from '../data/cargaPlan'
 import { mesEstimadoGrado, planificar } from '../layout/planificador'
-import { pesoDesbloqueo } from '../layout/relaciones'
 
 /**
  * Cuando te gradúas, con el mismo calculo que el plan de ruta.
@@ -17,18 +16,16 @@ import { pesoDesbloqueo } from '../layout/relaciones'
  * Solo se calcula mientras el componente que lo llama esta montado. La hoja
  * lo monta al abrirse, asi que con la hoja cerrada no cuesta nada.
  */
-export function useGradoEstimado({ asignaturas, grupos, marcas, estados, relaciones, elegidas }) {
+export function useGradoEstimado({ asignaturas, grupos, marcas, elegidas }) {
   return useMemo(() => {
-    const plan = planificar(
-      asignaturas,
-      marcas,
-      estados,
-      pesoDesbloqueo(relaciones),
-      leerUcPorSemestre(),
-      grupos,
-      elegidas,
-    )
+    const carga = leerCarga()
+    const plan = planificar({ asignaturas, grupos, marcas, elegidas, carga })
     const semestres = plan.semestres.length
-    return { semestres, materias: plan.materiasRestantes, fecha: mesEstimadoGrado(semestres) }
-  }, [asignaturas, grupos, marcas, estados, relaciones, elegidas])
+    return {
+      semestres,
+      materias: plan.materiasRestantes,
+      fecha: mesEstimadoGrado(semestres),
+      carga,
+    }
+  }, [asignaturas, grupos, marcas, elegidas])
 }

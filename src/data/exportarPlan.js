@@ -1,5 +1,6 @@
 import { codigoVisible } from './codigoVisible'
 import { etiquetaSemestre } from '../layout/planificador'
+import { textoCarga } from './cargaPlan'
 
 const MES = (fecha) => {
   const texto = fecha?.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
@@ -10,7 +11,7 @@ const MES = (fecha) => {
  * Genera el contenido Markdown del plan de ruta y dispara la descarga
  * como archivo .md en el navegador.
  */
-export function descargarMarkdown({ carrera, nombre, progreso, plan, ucPorSemestre, grado }) {
+export function descargarMarkdown({ carrera, nombre, progreso, plan, carga, grado }) {
   const totalSemestres = plan.semestres.length
 
   const lineas = [
@@ -21,16 +22,20 @@ export function descargarMarkdown({ carrera, nombre, progreso, plan, ucPorSemest
     `Generado el ${new Date().toLocaleDateString('es-VE')}`,
     ``,
     progreso.porcentaje != null
-      ? `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas}/${progreso.ucTotales} UC)`
+      ? `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas + progreso.ucElectivas}/${progreso.ucTitulo} UC)`
       : `- Avance: ${progreso.aprobadas}/${progreso.total} materias (${progreso.ucAprobadas} UC)`,
     `- Materias pendientes: ${plan.materiasRestantes}`,
-    `- Semestres estimados: ${totalSemestres} con ${ucPorSemestre} UC por semestre`,
+    `- Semestres estimados: ${totalSemestres} con ${textoCarga(carga)} por semestre`,
     grado ? `- Grado aproximado: ${MES(grado)}` : null,
+    `- Clave: van en la cadena más larga de prelaciones; atrasarlas es lo que más alarga la carrera.`,
     ``,
     ...plan.semestres.flatMap((s) => [
       `## ${etiquetaSemestre(s.numero)} — ${s.materias.length} materias · ${s.uc} UC`,
       ``,
-      ...s.materias.map((a) => `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc} UC)`),
+      ...s.materias.map(
+        (a) =>
+          `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc ?? 'a elegir'}${a.uc != null ? ' UC' : ''})${a.clave ? ' · clave' : ''}`,
+      ),
       ``,
     ]),
     `---`,

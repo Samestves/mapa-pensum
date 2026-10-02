@@ -2528,29 +2528,393 @@ button.casilla-semestre .tilde {
 }
 
 /* ------------------------------------------------------------------
+   El mando de carga del plan de ruta.
+
+   Una barra ancha que se llena de verde hasta el valor, con un asa fina
+   dentro del relleno, como el limite de carga de un coche electrico. Por
+   debajo es un <input type="range"> de verdad, transparente y a toda la
+   barra: el teclado, el lector de pantalla y el arrastre los pone el
+   navegador. Su pulgar es invisible y de 28 px, y --lleno lleva el centro de
+   ese pulgar, asi que el relleno nunca se despega del dedo.
+   ------------------------------------------------------------------ */
+.mando-carga {
+  position: relative;
+  height: 46px;
+  border-radius: 15px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+}
+
+.mando-carga::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--lleno);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--estado-aprobada) 55%, var(--panel)),
+    var(--estado-aprobada)
+  );
+}
+
+/* El asa: una raya oscura dentro del relleno, justo antes de su borde */
+.mando-carga::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: calc(var(--lleno) - 9px);
+  width: 4px;
+  border-radius: 4px;
+  background: var(--lienzo);
+  opacity: 0.7;
+}
+
+.mando-marca {
+  position: absolute;
+  top: 17px;
+  bottom: 17px;
+  width: 1px;
+  background: color-mix(in oklab, var(--tinta) 18%, transparent);
+}
+
+.mando-marca[data-dentro='true'] {
+  background: rgb(255 255 255 / 0.35);
+}
+
+.mando-carga input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.mando-carga input::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 46px;
+  background: transparent;
+}
+
+.mando-carga input::-moz-range-thumb {
+  width: 28px;
+  height: 46px;
+  border: 0;
+  background: transparent;
+}
+
+.mando-carga input::-moz-range-track {
+  background: transparent;
+}
+
+.mando-carga:has(input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 4px var(--estado-aprobada);
+}
+
+/* ------------------------------------------------------------------
+   La hoja del plan de ruta, la que se imprime.
+
+   Papel claro siempre, con sus propios colores y no los del tema: es tinta
+   sobre blanco aunque la app este en oscuro, y la previa de escritorio la
+   enseña igual que saldra. Todo lo que mide va multiplicado por --escala, y
+   las columnas son --columnas: HojaPlan los ajusta hasta que la ruta cabe en
+   una sola pagina.
+   ------------------------------------------------------------------ */
+.hoja-ruta {
+  --escala: 1;
+  --columnas: 2;
+  --papel-tinta: #0f1522;
+  --papel-suave: #4f5a6e;
+  --papel-tenue: #8a93a3;
+  --papel-linea: #e3e6ec;
+  --papel-acento: #0a9781;
+
+  display: flex;
+  flex-direction: column;
+  width: 210mm;
+  height: 279mm;
+  padding: 12mm 13mm 9mm;
+  overflow: hidden;
+  background: #fff;
+  color: var(--papel-tinta);
+  font-family: var(--font-sans);
+}
+
+.hoja-ruta .hr-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hoja-ruta .hr-marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* La baldosa del logo, la misma de la imagen del horario */
+.hoja-ruta .hr-baldosa {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #1c2740, #0b101b);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.hoja-ruta .hr-baldosa.mini {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.hoja-ruta h1 {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.hoja-ruta .hr-marca p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--papel-suave);
+}
+
+.hoja-ruta .hr-fecha {
+  flex: none;
+  text-align: right;
+}
+
+.hoja-ruta .hr-fecha p {
+  font-size: 11px;
+  color: var(--papel-tenue);
+}
+
+.hoja-ruta .hr-fecha .hr-mes {
+  margin-top: 2px;
+  font-size: 30px;
+  font-weight: 200;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--papel-tinta);
+}
+
+.hoja-ruta .hr-avance {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--papel-linea);
+  font-size: 11px;
+  color: var(--papel-suave);
+}
+
+.hoja-ruta .hr-avance b {
+  font-weight: 600;
+  color: var(--papel-tinta);
+}
+
+.hoja-ruta .hr-barra {
+  flex: none;
+  width: 34mm;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--papel-linea);
+}
+
+.hoja-ruta .hr-barra i {
+  display: block;
+  height: 100%;
+  border-radius: 9px;
+  background: var(--papel-acento);
+}
+
+.hoja-ruta .hr-nota {
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.55;
+  color: var(--papel-tenue);
+}
+
+.hoja-ruta .hr-nota .hr-check {
+  display: inline-block;
+  margin: 0 3px -1px;
+}
+
+/* El hueco entre la cabecera y el pie. Si lo que lleva dentro se sale, el
+   formato no vale y HojaPlan prueba el siguiente. */
+.hoja-ruta .hr-cuerpo {
+  flex: 1;
+  min-height: 0;
+  margin-top: calc(18px * var(--escala));
+  overflow: hidden;
+}
+
+.hoja-ruta .hr-columnas {
+  columns: var(--columnas);
+  column-gap: 9mm;
+}
+
+.hoja-ruta .hr-semestre {
+  break-inside: avoid;
+  margin-bottom: calc(15px * var(--escala));
+}
+
+.hoja-ruta .hr-semestre header {
+  display: flex;
+  align-items: baseline;
+  gap: calc(9px * var(--escala));
+  padding-bottom: calc(5px * var(--escala));
+  border-bottom: 1.5px solid var(--papel-tinta);
+}
+
+.hoja-ruta .hr-numero {
+  font-size: calc(23px * var(--escala));
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hoja-ruta .hr-titulo {
+  flex: 1;
+  font-size: calc(11.5px * var(--escala));
+  font-weight: 600;
+}
+
+.hoja-ruta .hr-meta {
+  font-size: calc(9.5px * var(--escala));
+  color: var(--papel-tenue);
+}
+
+.hoja-ruta li {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(8px * var(--escala));
+  padding: calc(4.5px * var(--escala)) 0;
+  border-bottom: 1px solid var(--papel-linea);
+  font-size: calc(10.6px * var(--escala));
+  line-height: 1.3;
+}
+
+/* La casilla para tachar. Las clave, con aro verde y mas grueso */
+.hoja-ruta .hr-check {
+  flex: none;
+  width: calc(11px * var(--escala));
+  height: calc(11px * var(--escala));
+  margin-top: 1px;
+  border: 1.2px solid #a3abb8;
+  border-radius: 99px;
+}
+
+.hoja-ruta .hr-check.clave {
+  border: 2px solid var(--papel-acento);
+}
+
+.hoja-ruta .hr-nombre {
+  flex: 1;
+  min-width: 0;
+}
+
+.hoja-ruta li.clave .hr-nombre {
+  font-weight: 600;
+}
+
+.hoja-ruta .hr-nombre.hueco {
+  font-style: italic;
+  color: var(--papel-suave);
+}
+
+.hoja-ruta .hr-nombre em {
+  font-style: normal;
+  color: var(--papel-tenue);
+}
+
+.hoja-ruta .hr-uc {
+  flex: none;
+  font-size: calc(9.6px * var(--escala));
+  color: var(--papel-tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja-ruta .hr-terminado {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font-size: 12px;
+  color: var(--papel-suave);
+}
+
+.hoja-ruta .hr-terminado p {
+  font-size: 34px;
+  font-weight: 200;
+  letter-spacing: -0.04em;
+  color: var(--papel-acento);
+}
+
+.hoja-ruta .hr-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--papel-linea);
+  font-size: 9.5px;
+  color: var(--papel-tenue);
+}
+
+.hoja-ruta .hr-firma {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hoja-ruta .hr-firma b {
+  font-weight: 600;
+  color: var(--papel-tinta);
+}
+
+/* ------------------------------------------------------------------
    Impresion.
 
-   La hoja se imprime desde una copia aparte colgada de <body> por un
-   portal, no desde la que se ve en el modal. Antes se ocultaba la app
-   con visibility y se sacaba la hoja con position:absolute, y eso fallaba
-   por dos motivos a la vez:
+   Lo unico que se imprime es la copia de la hoja que PlanRuta cuelga de
+   <body> mientras dura la impresion. Cuelga ahi y no dentro de la ventana
+   porque la ventana tiene overflow:hidden y alto maximo, y un hijo suyo
+   salia recortado en el PDF.
 
-   1. La hoja vive dentro de un modal con overflow:hidden y max-height.
-      Un hijo absolute se sigue recortando por ese padre, asi que al PDF
-      solo llegaba lo que cabia en la primera pantalla.
-   2. La hoja hereda las variables del tema. En tema oscuro --tinta es
-      casi blanco, o sea texto blanco sobre papel blanco.
-
-   La copia cuelga directa de <body>, sin padres que recorten, y lleva
-   data-tema="claro" para renderizar con la paleta de tinta sobre papel.
+   En pantalla esa copia existe pero fuera de la vista y sin verse: tiene
+   que poder medirse para elegir su formato antes de que el navegador tome
+   la foto, y con display:none no mediria nada.
    ------------------------------------------------------------------ */
 .solo-impresion {
-  display: none;
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media print {
+  /* Sin margenes del navegador: la hoja ya trae los suyos y mide lo justo
+     para caber en A4 y en carta */
   @page {
-    margin: 12mm;
+    margin: 0;
   }
 
   html,
@@ -2560,41 +2924,27 @@ button.casilla-semestre .tilde {
     background: #fff;
   }
 
-  /* La app no se imprime; se imprime la copia de la hoja */
-  #root {
+  /* Fuera todo lo demas: la app y las hojas que se abren en portales */
+  body > :not(.solo-impresion) {
     display: none !important;
   }
 
   .solo-impresion {
-    display: block !important;
+    position: static;
+    visibility: visible;
   }
 
-  .no-imprimir {
-    display: none !important;
-  }
-
-  /* La hoja mide siempre lo mismo -680 px, ver HojaPlan- y aqui solo se
-     centra en el papel, que segun sea A4 o carta le deja mas o menos sitio.
-     Antes esta seccion deshacia a mano cada compactacion de movil, o sea que
-     la maqueta de papel vivia en dos archivos y habia que acordarse de
-     tocar los dos. */
-  .hoja {
+  .hoja-ruta {
     margin: 0 auto;
   }
 
-  /* El acento, la barra de avance y los puntos de la linea de tiempo son
-     fondos, y el navegador los descarta al imprimir salvo que se le diga que
-     forman parte del contenido. Sin esto la hoja sale en blanco y negro y se
-     pierde justo lo que la hace bonita. */
-  .hoja,
-  .hoja * {
+  /* El verde de las clave y la barra de avance son fondos y bordes de
+     color, y el navegador los descarta al imprimir salvo que se le diga que
+     son contenido. */
+  .hoja-ruta,
+  .hoja-ruta * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-  }
-
-  /* Que un semestre no se parta a la mitad entre dos hojas */
-  .break-inside-avoid {
-    break-inside: avoid;
   }
 }
 
