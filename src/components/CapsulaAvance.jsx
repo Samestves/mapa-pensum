@@ -29,7 +29,7 @@ function CapsulaAvance({ resumen, abierta, alPulsar, className = '' }) {
   return (
     <button
       type="button"
-      onClick={(e) => alPulsar(e.currentTarget)}
+      onClick={() => alPulsar()}
       aria-label={detalle}
       aria-expanded={abierta}
       aria-haspopup="dialog"

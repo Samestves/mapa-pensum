@@ -30,7 +30,7 @@ function IslaAvance({ resumen, abierta, alPulsar }) {
   return (
     <button
       type="button"
-      onClick={(e) => alPulsar(e.currentTarget)}
+      onClick={() => alPulsar()}
       title={detalle}
       aria-label={detalle}
       aria-expanded={abierta}

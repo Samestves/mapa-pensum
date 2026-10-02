@@ -156,20 +156,12 @@ function VistaCarrera({ carrera, alVolver }) {
   // Avance y avisos se abren desde la cabecera y se solapan en pantalla:
   // un solo valor en vez de un booleano por panel, y no hay que apagar nada.
   const { abierto, alternar, cerrar } = usePaneles()
-  /* De que boton cuelga el avance. Se guarda su caja al abrirlo y no una ref
-     al elemento: el popover solo necesita saber donde estaba en ese momento,
-     y una caja es un valor muerto que no puede quedarse apuntando a un nodo
-     que ya no existe. */
-  const [anclaAvance, setAnclaAvance] = useState(null)
   /* Lo abren dos botones, el de la cabecera en escritorio y la isla de abajo
      en el telefono: uno solo se ve a la vez, y los dos hacen lo mismo. Lo
-     que se abre si cambia: en escritorio la nubecita colgada del boton, en el
-     telefono una hoja desde abajo. */
+     que se abre si cambia: en escritorio el panel lateral, en el telefono
+     una hoja desde abajo. */
   const esTelefono = useEsTelefono()
-  const alternarAvance = (boton) => {
-    setAnclaAvance(boton.getBoundingClientRect())
-    alternar('avance')
-  }
+  const alternarAvance = () => alternar('avance')
   const [planAbierto, setPlanAbierto] = useState(false)
   const abrirPlan = () => {
     cerrar()
@@ -514,25 +506,10 @@ function VistaCarrera({ carrera, alVolver }) {
           />
         ))}
 
-        {/* Los dos paneles cuelgan de aqui y no de la cabecera: sus hijos
-            llevan overflow:hidden para la animacion de plegado y recortarian
+        {/* Cuelga de aqui y no de la cabecera: sus hijos llevan
+            overflow:hidden para la animacion de plegado y recortarian
             cualquier cosa que asomara por debajo. */}
         <PanelAvisos avisos={carrera.avisos} abierto={abierto === 'avisos'} alCerrar={cerrar} />
-
-        {/* Dentro del mismo contenedor que la vista y no fuera: los paneles
-            que se apoyan en el borde de abajo -la ficha del horario en
-            telefono- tienen que apoyarse en el borde de la barra, no en el de
-            la ventana, o quedan por debajo de ella. */}
-        {!esTelefono && (
-          <PanelProgreso
-            {...avance}
-            abierto={abierto === 'avance'}
-            ancla={anclaAvance}
-            alCerrar={cerrar}
-            areaFiltrada={areaFiltrada}
-            alFiltrarArea={filtrarArea}
-          />
-        )}
       </div>
 
       {/* La navegacion del telefono va al final del arbol y fuera del
@@ -549,9 +526,18 @@ function VistaCarrera({ carrera, alVolver }) {
       />
 
       {/* Fuera del contenedor de la vista, que se remonta al cambiar de vista:
-          la hoja tiene animacion de salida y no puede desmontarse a medias. */}
-      {esTelefono && (
+          la hoja y el panel tienen animacion de salida y no pueden
+          desmontarse a medias. */}
+      {esTelefono ? (
         <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
+      ) : (
+        <PanelProgreso
+          {...avance}
+          abierto={abierto === 'avance'}
+          alCerrar={cerrar}
+          areaFiltrada={areaFiltrada}
+          alFiltrarArea={filtrarArea}
+        />
       )}
     </div>
   )

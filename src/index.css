@@ -2447,13 +2447,14 @@ body {
    mover la hoja con un transform en linea; la salida es una transicion,
    porque tiene que poder salir desde donde la dejo el dedo. */
 .hoja-inferior,
-.ventana-flotante {
+.ventana-flotante,
+.panel-lateral {
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.04),
     0 24px 60px -12px rgb(0 0 0 / 0.6);
 }
 
-[data-tema='claro'] :is(.hoja-inferior, .ventana-flotante) {
+[data-tema='claro'] :is(.hoja-inferior, .ventana-flotante, .panel-lateral) {
   box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
 }
 
@@ -2470,6 +2471,50 @@ body {
   from {
     transform: translateY(calc(100% + 24px));
   }
+}
+
+/* ---- Panel lateral (escritorio) ----------------------------------------
+   Entra desde la derecha con la misma curva que la hoja del telefono, un
+   paso corto y no todo su ancho: viene de su sitio, no de fuera de la
+   pantalla. Entrada por animacion y salida por transicion, como la hoja. */
+.panel-lateral {
+  animation: panel-entra 380ms cubic-bezier(0.32, 0.72, 0, 1) backwards;
+  transition:
+    transform 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 240ms ease;
+}
+
+.panel-lateral[data-saliendo='true'] {
+  transform: translateX(28px);
+  opacity: 0;
+}
+
+@keyframes panel-entra {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+}
+
+/* El pie se desvanece en vez de cortarse en seco: dice que hay mas abajo
+   sin una barra de desplazamiento a la vista. Encima del contenido y sin
+   atrapar el puntero. */
+.panel-lateral::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 28px;
+  background: linear-gradient(to bottom, transparent, var(--panel));
+  pointer-events: none;
+}
+
+/* Se desplaza con la rueda, el trackpad o el dedo, sin barra pintada */
+.desplazable-limpio {
+  scrollbar-width: none;
+}
+
+.desplazable-limpio::-webkit-scrollbar {
+  display: none;
 }
 
 /* El velo oscurece poco: lo de detras sigue siendo la pantalla en la que
@@ -2769,6 +2814,7 @@ body {
   .clase-muestra,
   .hoja-inferior,
   .velo-hoja,
+  .panel-lateral,
   .semana-muestra[data-foco='foto'] .escaneo-muestra {
     animation: none;
   }
@@ -2784,6 +2830,7 @@ body {
   .arco-avance,
   .hoja-inferior,
   .velo-hoja,
+  .panel-lateral,
   .tarjeta-carrera,
   .tarjeta-carrera > *,
   .plegable,
