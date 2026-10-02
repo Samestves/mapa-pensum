@@ -24,10 +24,12 @@ import EsqueletoMapa from './EsqueletoMapa'
 import GrafoPensum from './GrafoPensum'
 import HojaAvance from './HojaAvance'
 import PanelProgreso from './PanelProgreso'
+import Precalentar from './Precalentar'
+import ContenidoAvance from './ContenidoAvance'
 import Horario from './Horario'
 import PlanRuta from './PlanRuta'
 import PaletaComandos from './PaletaComandos'
-import SelectorElectiva from './SelectorElectiva'
+import SelectorElectiva, { PrecalentarSelector } from './SelectorElectiva'
 import VistaLista from './VistaLista'
 
 const CLAVE_VISTA = 'mapa-pensum:vista'
@@ -543,7 +545,24 @@ function VistaCarrera({ carrera, alVolver }) {
           la hoja y el panel tienen animacion de salida y no pueden
           desmontarse a medias. */}
       {esTelefono ? (
-        <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
+        <>
+          <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
+          {/* La primera vez que se abren el avance y una electiva, antes de
+              que nadie los abra: ver Precalentar. */}
+          <Precalentar>
+            <div className="px-5">
+              <ContenidoAvance {...avance} />
+            </div>
+          </Precalentar>
+          <PrecalentarSelector
+            nodos={layout.nodos}
+            grupos={grupos}
+            estados={estados}
+            casillaDe={casillaDe}
+            alColocar={colocar}
+            alCerrar={cerrarCasilla}
+          />
+        </>
       ) : (
         <PanelProgreso
           {...avance}

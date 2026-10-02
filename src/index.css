@@ -604,6 +604,13 @@ button.casilla-semestre .tilde {
   will-change: transform;
 }
 
+/* En modo ligero la luz no se mueve (ver .flujo): su plano no cambia por su
+   cuenta y no merece una capa propia, que es memoria de GPU que en esos
+   telefonos falta. */
+[data-ligero] .plano-luces {
+  will-change: auto;
+}
+
 .plano-base,
 .plano-luces {
   transition:
@@ -2527,10 +2534,14 @@ button.casilla-semestre .tilde {
 }
 
 /* ---- Hoja inferior (telefono) ------------------------------------------
-   Sube con la curva de hoja de iOS y baja igual, con una sola transicion: se
-   monta "fuera" y pasa a "dentro" un par de fotogramas despues (ver
-   useEntrada), y al cerrarse vuelve a "fuera" desde donde la dejo el dedo.
-   El arrastre la mueve con un transform en linea, que manda sobre este. */
+   Aparece subiendo un paso corto mientras se funde, con una sola transicion:
+   se monta "fuera" y pasa a "dentro" un par de fotogramas despues (ver
+   useEntrada), y al cerrarse vuelve a "fuera". Subia desde fuera de la
+   pantalla, y en un telefono modesto el primer cuadro de esa subida salia a
+   destiempo: la hoja aparecia arriba y volvia a bajar, y por el hueco se
+   veia el mapa. Con un paso corto y fundiendose no hay hueco que ver.
+   El arrastre la baja entera con un transform en linea, que manda sobre
+   este. */
 .hoja-inferior,
 .panel-lateral {
   box-shadow:
@@ -2543,11 +2554,20 @@ button.casilla-semestre .tilde {
 }
 
 .hoja-inferior {
-  transition: transform 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition:
+    transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 180ms ease;
 }
 
 .hoja-inferior[data-fase='fuera'] {
-  transform: translateY(calc(100% + 24px));
+  transform: translateY(48px);
+  opacity: 0;
+}
+
+/* En modo ligero sin sombra: el velo ya la separa del mapa, y una sombra de
+   sesenta pixeles de desenfoque es lo mas caro de pintar de toda la hoja. */
+[data-ligero] .hoja-inferior {
+  box-shadow: none;
 }
 
 /* ---- Panel lateral (escritorio) ----------------------------------------
@@ -2638,6 +2658,18 @@ button.casilla-semestre .tilde {
 .seccion-lista {
   content-visibility: auto;
   contain-intrinsic-size: auto 520px;
+}
+
+/* Lo que se pinta de antemano, invisible (ver Precalentar): maquetado a su
+   ancho de verdad pero fuera de la pantalla y sin pintar nada. */
+.precalentar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: min(100vw, 28rem);
+  transform: translateX(-200vw);
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y

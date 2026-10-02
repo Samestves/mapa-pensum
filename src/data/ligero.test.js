@@ -2,7 +2,11 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { esAparatoModesto } from './ligero.js'
 
-test('un telefono de 4 GB o menos va ligero', () => {
+test('todo lo tactil va ligero, tenga la memoria que tenga', () => {
+  assert.equal(esAparatoModesto({ tactil: true, memoria: 8, nucleos: 8 }), true)
+})
+
+test('un equipo de 4 GB o menos va ligero', () => {
   assert.equal(esAparatoModesto({ memoria: 4, nucleos: 8 }), true)
   assert.equal(esAparatoModesto({ memoria: 2, nucleos: 8 }), true)
 })

@@ -8,6 +8,7 @@ import { useEsTelefono } from '../hooks/useEsTelefono'
 import { tituloGrupo } from '../layout/franjaElectivas'
 import HojaInferior from './HojaInferior'
 import PanelLateral from './PanelLateral'
+import Precalentar from './Precalentar'
 import { CuotaGrupo } from './PiezasAvance'
 
 const TITULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'
@@ -360,6 +361,22 @@ function FichaElectiva({ materia, estado, aqui, enOtra, enFranja, alElegir }) {
         )}
       </span>
     </button>
+  )
+}
+
+/**
+ * El selector de la primera casilla del mapa, pintado de antemano e
+ * invisible (ver Precalentar): asi la primera electiva que se abre no paga
+ * la primera vez del mosaico.
+ */
+export function PrecalentarSelector({ nodos, grupos, ...resto }) {
+  const casilla = nodos.find((n) => n.esHueco)
+  const grupo = casilla && grupos.find((g) => g.clave === casilla.grupo)
+  if (!grupo) return null
+  return (
+    <Precalentar>
+      <Contenido casilla={casilla} grupo={grupo} opciones={grupo.asignaturas} {...resto} />
+    </Precalentar>
   )
 }
 
