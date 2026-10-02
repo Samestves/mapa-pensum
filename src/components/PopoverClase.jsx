@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Trash2 } from 'lucide-react'
 import { sinTildes } from '../data/texto'
-import { COLORES_CLASE, colorIndice, colorNodo } from '../theme/areas'
+import { COLORES_CLASE, colorAutomatico, colorIndice, colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
 import Popover from './Popover'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
@@ -43,7 +43,18 @@ const ROTULO = 'text-[9.5px] font-medium tracking-[0.14em] text-tinta-tenue uppe
  * pixeles dentro de una pantalla de trescientos setenta y cinco ya es un
  * modal, solo que peor colocado y mas lejos del pulgar.
  */
-function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones, alGuardar, alQuitar, alCerrar }) {
+function PopoverClase({
+  inicial,
+  ancla,
+  materias,
+  sugeridas,
+  porCodigo,
+  sesiones,
+  colores,
+  alGuardar,
+  alQuitar,
+  alCerrar,
+}) {
   const esTelefono = useEsTelefono()
 
   const [codigo, setCodigo] = useState(inicial.codigo ?? '')
@@ -137,7 +148,7 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
         >
           <span
             className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: color ? colorIndice(color) : colorNodo(elegida) }}
+            style={{ backgroundColor: colorIndice(color ?? colorAutomatico(colores, elegida.codigo)) }}
           />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[12.5px] font-medium text-tinta">{elegida.nombre}</span>
@@ -296,15 +307,15 @@ function PopoverClase({ inicial, ancla, materias, sugeridas, porCodigo, sesiones
         </label>
       </div>
 
-      {/* Color. Por defecto el del area, que es el que la materia ya tiene en
-          el mapa: asi el horario y el mapa hablan el mismo idioma sin que
-          nadie elija nada. */}
+      {/* Color. Por defecto el que le toca a la materia en el horario, uno
+          distinto para cada una (ver coloresDelHorario): asi la semana se lee
+          de un vistazo sin que nadie elija nada. */}
       <div className="mt-2.5">
         <span className={ROTULO}>Color</span>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           <button
             type="button"
-            aria-label="Color de su área"
+            aria-label="Color automático"
             onClick={() => setColor(null)}
             className={`size-4 rounded-full border border-dashed border-tinta-tenue ${
               color ? '' : 'ring-2 ring-tinta ring-offset-1 ring-offset-panel'

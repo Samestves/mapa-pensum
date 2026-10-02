@@ -1,5 +1,5 @@
 import { ABRE, CIERRA, DIAS, enDoceHoras } from '../layout/horario'
-import { colorClase } from '../theme/areas'
+import { colorClase, coloresDelHorario } from '../theme/areas'
 
 /* El PNG se dibuja a mano en un canvas, sin libreria.
    La alternativa era html2canvas: doscientos kilobytes para reproducir mal un
@@ -91,6 +91,7 @@ function franjaUtil(sesiones) {
 /** Dibuja el horario y devuelve el PNG como Blob */
 async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   await document.fonts.ready
+  const colores = coloresDelHorario(sesiones)
 
   const { desde, hasta } = franjaUtil(sesiones)
   const horas = Math.max(1, Math.round((hasta - desde) / 60))
@@ -166,7 +167,7 @@ async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   for (const s of sesiones) {
     if (s.dia >= DIAS.length) continue
     const asignatura = porCodigo.get(s.codigo)
-    const color = aRGB(colorClase(s, asignatura))
+    const color = aRGB(colorClase(s, colores))
 
     const x = izquierda + s.dia * ANCHO_COL + 5
     const y = rejilla + (s.inicio - desde) * pxPorMinuto + 3

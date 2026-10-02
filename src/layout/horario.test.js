@@ -7,7 +7,10 @@ import {
   MIN_DURACION,
   aMinutos,
   aTexto,
-  altoHoraPara,
+  ladoCeldaPara,
+  tramoCorto,
+  ANCHO_HORAS_PX,
+  fechasDeSemana,
   momentoEnSemana,
   choqueCon,
   enDoceHoras,
@@ -48,6 +51,14 @@ describe('el tiempo como minutos', () => {
     assert.equal(enDoceHoras(h(7)), '7:00 AM')
   })
 
+  test('el tramo corto quita los :00 y dice el meridiano una vez', () => {
+    assert.equal(tramoCorto(7 * 60, 9 * 60), '7 – 9 AM')
+    assert.equal(tramoCorto(8 * 60 + 15, 9 * 60 + 50), '8:15 – 9:50 AM')
+    assert.equal(tramoCorto(11 * 60, 13 * 60), '11 AM – 1 PM')
+    assert.equal(tramoCorto(10 * 60, 12 * 60), '10 AM – 12 PM')
+    assert.equal(tramoCorto(13 * 60, 15 * 60 + 30), '1 – 3:30 PM')
+  })
+
   test('la marca del telefono solo repite el meridiano cuando cambia', () => {
     // La regla entera: doce marcas al dia y solo dos con AM/PM.
     assert.equal(etiquetaHoraMovil(h(7), null), '7 AM')
@@ -58,13 +69,13 @@ describe('el tiempo como minutos', () => {
 })
 
 describe('la escala de la rejilla', () => {
-  test('la jornada entera se reparte en el alto que hay, entre un suelo y un techo', () => {
-    assert.equal(altoHoraPara(FILAS * 70), 70)
-    assert.equal(altoHoraPara(FILAS * 62.5), 62.5)
-    // Una ventana baja no aplasta las filas: se queda en el minimo y desplaza
-    assert.equal(altoHoraPara(300), 56)
-    // Una pantalla muy alta no las estira como carteles
-    assert.equal(altoHoraPara(4000), 104)
+  test('cada hora es un cuadrado del ancho de un dia, entre un suelo y un techo', () => {
+    assert.equal(ladoCeldaPara(ANCHO_HORAS_PX + 5 * 120), 120)
+    assert.equal(ladoCeldaPara(ANCHO_HORAS_PX + 5 * 100.5), 100.5)
+    // Una ventana estrecha no aplasta la clase: se queda en el suelo
+    assert.equal(ladoCeldaPara(400), 96)
+    // Una muy ancha no estira la jornada: se queda en el techo
+    assert.equal(ladoCeldaPara(4000), 148)
   })
 
   test('las lineas de hora pintan las de DENTRO y no la ultima', () => {
@@ -261,5 +272,15 @@ describe('el momento de la semana', () => {
   test('el fin de semana no cae en la rejilla', () => {
     assert.equal(momentoEnSemana(new Date(2026, 9, 3, 12, 0)), null)
     assert.equal(momentoEnSemana(new Date(2026, 9, 4, 12, 0)), null)
+  })
+
+  test('las fechas son las de la semana en curso, y en fin de semana las de la siguiente', () => {
+    const dias = (f) => fechasDeSemana(f).map((d) => d.getDate())
+    // Jueves 1 de octubre de 2026: del lunes 28 de septiembre al viernes 2
+    assert.deepEqual(dias(new Date(2026, 9, 1, 10, 0)), [28, 29, 30, 1, 2])
+    assert.deepEqual(dias(new Date(2026, 8, 28, 0, 0)), [28, 29, 30, 1, 2])
+    // Sabado 3 y domingo 4: ya la semana del lunes 5
+    assert.deepEqual(dias(new Date(2026, 9, 3, 12, 0)), [5, 6, 7, 8, 9])
+    assert.deepEqual(dias(new Date(2026, 9, 4, 23, 0)), [5, 6, 7, 8, 9])
   })
 })

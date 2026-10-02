@@ -2345,15 +2345,36 @@ button.casilla-semestre .tilde {
   background: var(--panel);
 }
 
-/* El canto de color de una clase: una barra a la izquierda, como los eventos
-   de un calendario. El bloque ya va teñido; la barra es lo que lo ancla a su
-   materia de un vistazo. Un pseudo-elemento y no un nodo mas por clase. */
-.bloque-clase::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--acento-clase);
+/* Una clase del horario (BloqueClase), teñida del color de su materia
+   (--c): el fondo apenas, el contorno algo mas y la hora del todo. En claro
+   el tinte va sobre blanco y no sobre el lienzo, para que la tarjeta se
+   despegue de las celdas igual que en oscuro. */
+.bloque-clase {
+  background: color-mix(in oklab, var(--c) 17%, var(--lienzo-mapa));
+  border-color: color-mix(in oklab, var(--c) 34%, transparent);
+}
+
+[data-tema='claro'] .bloque-clase {
+  background: color-mix(in oklab, var(--c) 12%, var(--panel));
+  border-color: color-mix(in oklab, var(--c) 30%, transparent);
+}
+
+.bloque-clase:hover {
+  box-shadow: 0 8px 22px -12px color-mix(in oklab, var(--c) 55%, transparent);
+}
+
+/* Una clase de hoy en el resumen de la semana (ResumenSemana): gris quieta,
+   teñida de su color mientras esta en curso. */
+.clase-hoy {
+  background: color-mix(in oklab, var(--tinta) 4%, transparent);
+}
+
+.clase-hoy[data-en-curso='true'] {
+  background: color-mix(in oklab, var(--c) 14%, transparent);
+}
+
+.hora-clase {
+  color: color-mix(in oklab, var(--c) 78%, var(--tinta));
 }
 
 /* La linea de "ahora" en el horario de escritorio: la hora que es, sobre el

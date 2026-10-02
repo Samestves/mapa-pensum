@@ -55,7 +55,7 @@ const diaDeHoy = () => {
  * ver los dos dias, y aqui solo hay uno; con el dia a la vista, el gesto seria
  * adivinar. Cambiar de dia se hace desde la ficha, que es explicito.
  */
-function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrirMenu }) {
+function HorarioMovil({ porDia, porCodigo, colores, idMenuAbierto, alPulsarHueco, alAbrirMenu }) {
   const [dia, setDia] = useState(diaDeHoy)
   /* Hacia donde se va, solo para que la animacion entre por el lado correcto */
   const [sentido, setSentido] = useState(1)
@@ -227,6 +227,7 @@ function HorarioMovil({ porDia, porCodigo, idMenuAbierto, alPulsarHueco, alAbrir
                   key={sesion.id}
                   sesion={sesion}
                   asignatura={porCodigo.get(sesion.codigo)}
+                  colores={colores}
                   pxPorMinuto={pxPorMinuto}
                   arrastrable={false}
                   menuAbierto={idMenuAbierto === sesion.id}

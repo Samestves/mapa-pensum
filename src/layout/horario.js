@@ -21,29 +21,31 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 19 * 60
 
-/* Alto de una fila de hora en escritorio.
-
-   La semana se ve entera, como en el calendario de un Mac: las doce horas
-   repartidas en el alto que le toca a la rejilla, sin tener que bajar para
-   ver la tarde. Pero con un suelo. Repartido sin limite, en una ventana baja
-   salian filas de 40 px donde una clase de una hora no tiene sitio ni para
-   su nombre y su horario; por debajo de ALTO_HORA_MIN la fila se queda en el
-   minimo y la jornada se desplaza. Y con un techo: en una pantalla muy alta,
-   filas de 150 px dejan cada clase como un cartel con dos palabras arriba y
-   un hueco debajo, asi que la rejilla deja de crecer y se queda mas baja.
-
-   Sin redondear: el alto sale con decimales y las lineas se colocan con el
-   mismo numero que las clases, asi que no hay pixeles sobrantes que se
-   acumulen en un hueco bajo la ultima hora. */
-const ALTO_HORA_MIN = 56
-const ALTO_HORA_MAX = 104
-
-/** El alto de fila que toca a un alto disponible de rejilla. Funcion pura. */
-export const altoHoraPara = (altoDisponible) =>
-  Math.min(ALTO_HORA_MAX, Math.max(ALTO_HORA_MIN, altoDisponible / FILAS))
-
 /** Ancho de la columna de las horas. Cabe "12 PM" con aire. */
 export const ANCHO_HORAS_PX = 64
+
+/* La semana de escritorio es una cuadricula de CUADRADOS: cada hora de cada
+   dia mide lo mismo de alto que de ancho. El lado sale del ancho que hay -lo
+   que mide un dia- y no del alto de la ventana: repartir la jornada en el
+   alto daba rectangulos aplastados, filas de sesenta pixeles contra columnas
+   de trescientos donde una clase de una hora no tiene sitio para nada.
+
+   Con un suelo y un techo. Por debajo de LADO_MIN una clase de una hora no
+   cabe con su nombre y su horario; por encima de LADO_MAX la jornada se hace
+   tan larga que solo se ven tres horas a la vez, asi que la semana deja de
+   crecer y se centra. La jornada se desplaza dentro de su zona.
+
+   Sin redondear: el lado sale con decimales y las celdas se colocan con el
+   mismo numero que las clases, asi que no hay pixeles que se acumulen. */
+const LADO_MIN = 96
+const LADO_MAX = 148
+
+/** Lo mas ancha que llega a ser la semana: con las celdas en su techo. */
+export const ANCHO_SEMANA_MAX = ANCHO_HORAS_PX + DIAS.length * LADO_MAX
+
+/** El lado de una celda -una hora de un dia- para un ancho de semana. Funcion pura. */
+export const ladoCeldaPara = (anchoDisponible) =>
+  Math.min(LADO_MAX, Math.max(LADO_MIN, (anchoDisponible - ANCHO_HORAS_PX) / DIAS.length))
 
 /* El hueco entre dos celdas de la semana, y entre dos clases seguidas: una
    clase ocupa sus celdas enteras y acaba donde acabaria la celda. */
@@ -77,6 +79,24 @@ export const enDoceHoras = (min) => {
   const m = min % 60
   const sufijo = h < 12 ? 'AM' : 'PM'
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${sufijo}`
+}
+
+/**
+ * Un tramo de horas en corto, para una tarjeta donde el largo no cabe: sin
+ * los ":00" y con el meridiano una sola vez si es el mismo. "7 – 9 AM",
+ * "8:15 – 9:50 AM", "11 AM – 1 PM". Es lo que hace un calendario de Apple, y
+ * deja sitio al nombre de la materia, que es lo que se lee.
+ */
+export function tramoCorto(inicio, fin) {
+  const meridiano = (min) => (min < 12 * 60 ? 'AM' : 'PM')
+  const hora = (min) => {
+    const h = ((Math.floor(min / 60) + 11) % 12) + 1
+    const m = min % 60
+    return m ? `${h}:${String(m).padStart(2, '0')}` : String(h)
+  }
+  return meridiano(inicio) === meridiano(fin)
+    ? `${hora(inicio)} – ${hora(fin)} ${meridiano(fin)}`
+    : `${hora(inicio)} ${meridiano(inicio)} – ${hora(fin)} ${meridiano(fin)}`
 }
 
 /**
@@ -134,9 +154,8 @@ export const FILAS = (CIERRA - ABRE) / 60
  * degradado no llegue a dibujar la ultima: si llegara, volveria a chocar con
  * ese borde de abajo y habriamos movido el problema en vez de resolverlo.
  *
- * Vive aqui y no en cada vista porque la rejilla de escritorio y la del
- * telefono dibujan las mismas lineas con distinto alto de fila, y dos copias
- * de esta cuenta es como una de las dos se queda con el error.
+ * Es la rejilla del telefono. La de escritorio no dibuja lineas: va en
+ * cuadros (ver ladoCeldaPara).
  */
 export function lineasDeHora(altoHora) {
   return {
@@ -318,4 +337,16 @@ export function momentoEnSemana(fecha) {
   const dia = fecha.getDay() - 1
   if (dia < 0 || dia >= DIAS.length) return null
   return { dia, minuto: fecha.getHours() * 60 + fecha.getMinutes() }
+}
+
+/**
+ * La fecha de cada dia de la rejilla, de lunes a viernes, para la semana que
+ * se esta viviendo. En fin de semana, la que viene: el sabado ya se mira el
+ * lunes, no el que paso.
+ */
+export function fechasDeSemana(fecha) {
+  const lunes = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+  const dia = fecha.getDay()
+  lunes.setDate(lunes.getDate() + (dia === 0 ? 1 : dia === 6 ? 2 : 1 - dia))
+  return DIAS.map((_, i) => new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i))
 }

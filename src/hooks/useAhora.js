@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { momentoEnSemana } from '../layout/horario'
 
 /**
- * El dia y el minuto de ahora dentro de la semana del horario, o null en fin
- * de semana (ver momentoEnSemana).
+ * La fecha de ahora, al minuto. De ella salen el dia de hoy, la linea de
+ * "ahora" y las fechas de la semana del horario (ver momentoEnSemana y
+ * fechasDeSemana).
  *
  * Se despierta una vez por minuto y justo al cambiar de minuto, no cada
  * sesenta segundos desde que se monto: asi la linea de "ahora" avanza a la
@@ -11,7 +11,7 @@ import { momentoEnSemana } from '../layout/horario'
  * oculta el navegador retrasa el temporizador, y al volver se recoloca sola.
  */
 export function useAhora() {
-  const [ahora, setAhora] = useState(() => momentoEnSemana(new Date()))
+  const [ahora, setAhora] = useState(() => new Date())
 
   useEffect(() => {
     let reloj
@@ -19,7 +19,7 @@ export function useAhora() {
       const fecha = new Date()
       reloj = setTimeout(
         () => {
-          setAhora(momentoEnSemana(new Date()))
+          setAhora(new Date())
           programar()
         },
         60_000 - fecha.getSeconds() * 1000 - fecha.getMilliseconds(),

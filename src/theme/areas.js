@@ -64,6 +64,32 @@ export const colorNodo = (nodo) => {
 export const COLORES_CLASE = [1, 2, 3, 4, 5, 6, 7, 8]
 export const colorIndice = (n) => `var(--clase-${n}, var(--tinta-suave))`
 
-/** El color de una clase: el que eligio el estudiante, o el de su area */
-export const colorClase = (sesion, asignatura) =>
-  sesion?.color ? colorIndice(sesion.color) : colorNodo(asignatura)
+/* Los que se reparten solos. El ultimo de la paleta, el gris, no entra:
+   es el color de "sin color", y solo sale si alguien lo elige. */
+const AUTOMATICOS = COLORES_CLASE.length - 1
+
+/**
+ * El color de cada materia del horario que no lo tiene elegido: uno
+ * distinto por materia, en el orden en que entraron al horario.
+ *
+ * Antes salia el de su area, y en una carrera como Sistemas medio semestre
+ * es del mismo area: la semana entera quedaba de un solo azul y no se
+ * distinguia una materia de la de al lado. Por orden de llegada, y no por
+ * un hash del codigo, para que no se repita un color mientras haya libres;
+ * y añadir una materia nueva no le cambia el color a las que ya estaban.
+ */
+export function coloresDelHorario(sesiones) {
+  const colores = new Map()
+  for (const s of sesiones) {
+    if (!colores.has(s.codigo)) colores.set(s.codigo, (colores.size % AUTOMATICOS) + 1)
+  }
+  return colores
+}
+
+/** El numero que le toca a una materia: el suyo, o el siguiente libre si aun no esta. */
+export const colorAutomatico = (colores, codigo) =>
+  colores.get(codigo) ?? (colores.size % AUTOMATICOS) + 1
+
+/** El color de una clase: el que eligio el estudiante, o el que le toca a su materia */
+export const colorClase = (sesion, colores) =>
+  colorIndice(sesion.color ?? colorAutomatico(colores, sesion.codigo))
