@@ -57,7 +57,8 @@ function GrafoPensum({
   alSeleccionar,
   alMarcar,
   alAvisar,
-  alAprobarSemestre,
+  marcasSemestre,
+  alAlternarSemestre,
   enCasilla,
   alAbrirCasilla,
   casillaDe,
@@ -368,15 +369,15 @@ function GrafoPensum({
     [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar, alAvisar],
   )
 
-  /* Aprobar un semestre desde su cabecera. Como un click en una tarjeta: si
-     el puntero se movio fue un arrastre del lienzo, no un click. */
-  const aprobarSemestre = useCallback(
+  /* Marcar o desmarcar un semestre desde su casilla. Como un click en una
+     tarjeta: si el puntero se movio fue un arrastre del lienzo, no un click. */
+  const alternarSemestre = useCallback(
     (semestre) => {
       if (huboMovimiento.current) return
       alSeleccionar(null)
-      alAprobarSemestre(semestre)
+      alAlternarSemestre(semestre)
     },
-    [huboMovimiento, alSeleccionar, alAprobarSemestre],
+    [huboMovimiento, alSeleccionar, alAlternarSemestre],
   )
 
   const verFicha = useCallback(
@@ -481,7 +482,8 @@ function GrafoPensum({
                 cabeceras={cabeceras}
                 filasFranja={filasFranja}
                 ancho={ancho}
-                alAprobar={aprobarSemestre}
+                marcas={marcasSemestre}
+                alAlternar={alternarSemestre}
               />
             }
             textos={<RotulosTextos cabeceras={cabeceras} filasFranja={filasFranja} />}

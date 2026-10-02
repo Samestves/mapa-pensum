@@ -16,7 +16,9 @@ const retirarTodos = (lista) => lista.map((a) => (a.retirar ? a : { ...a, retira
  * Cada aviso lleva `antes`, la marca que tenia cada materia que cambio, que
  * es justo lo que hay que volver a poner para deshacerlo; `etiqueta` y
  * `nombre`, lo que se aprobo; `desbloqueadas`, los nombres de lo que se
- * abrio, e `inmediato` si no hay luz de cable que esperar para entrar.
+ * abrio, e `inmediato` si no hay luz de cable que esperar para entrar. Uno
+ * `neutro` -desmarcar- va en gris y cuenta su `detalle` en vez de lo que se
+ * abrio.
  */
 export function useAvisos() {
   const [avisos, setAvisos] = useState([])

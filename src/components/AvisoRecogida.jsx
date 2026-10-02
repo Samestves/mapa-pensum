@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Undo2 } from 'lucide-react'
+import { CircleDashed, Undo2 } from 'lucide-react'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 
 /* Lo que se queda en pantalla despues de entrar. Lo mide la linea de tiempo
@@ -298,21 +298,24 @@ function AvisoRecogida({ aviso, conCaja = false, retirar = false, alDeshacer, al
     <div
       role="status"
       className={`aviso-recogida absolute z-30 overflow-hidden rounded-[12px] border border-panel-borde bg-panel shadow-2xl ${
-        saliendo ? 'recogida-saliendo pointer-events-none' : ''
-      }`}
+        aviso.neutro ? 'recogida-neutra' : ''
+      } ${saliendo ? 'recogida-saliendo pointer-events-none' : ''}`}
       style={{ '--espera': `${espera}ms` }}
     >
-      {/* El filo de luz del borde de arriba, en el verde de aprobada */}
+      {/* El filo de luz del borde de arriba, en el verde de aprobada. Gris en
+          un aviso neutro -desmarcar-, que no es un logro. */}
       <span
         aria-hidden="true"
         className="recogida-filo pointer-events-none absolute inset-x-6 top-0 h-px"
       />
 
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-3">
-        <span className="shrink-0 text-[var(--estado-aprobada)]">
-          <CheckQueSeDibuja />
-        </span>
-        <span className="shrink-0 font-ui text-[9.5px] font-medium tracking-[0.26em] text-[var(--estado-aprobada)] uppercase">
+        <span
+          className={`flex shrink-0 items-center gap-2.5 font-ui text-[9.5px] font-medium tracking-[0.26em] uppercase ${
+            aviso.neutro ? 'text-tinta-suave' : 'text-[var(--estado-aprobada)]'
+          }`}
+        >
+          {aviso.neutro ? <CircleDashed size={20} strokeWidth={1.5} /> : <CheckQueSeDibuja />}
           {aviso.etiqueta}
         </span>
         <span
@@ -353,26 +356,28 @@ function AvisoRecogida({ aviso, conCaja = false, retirar = false, alDeshacer, al
         </ul>
       ) : (
         <p className="border-t border-panel-borde px-4 py-2.5 text-[12.5px] text-tinta-suave">
-          No abre nada nuevo todavía.
+          {aviso.detalle ?? 'No abre nada nuevo todavía.'}
         </p>
       )}
 
       <div className="flex items-center justify-between gap-3 border-t border-panel-borde py-1.5 pr-1.5 pl-4">
-        <p className="flex items-baseline gap-2 text-tinta-tenue">
-          <span
-            className="font-dato text-[12px] text-tinta"
-            style={{ fontWeight: 'var(--peso-dato)' }}
-          >
-            +{cuantas}
-          </span>
-          <span className="font-ui text-[9.5px] font-medium tracking-[0.24em] uppercase">
-            {cuantas === 1 ? 'Desbloqueada' : 'Desbloqueadas'}
-          </span>
-        </p>
+        {!aviso.neutro && (
+          <p className="flex items-baseline gap-2 text-tinta-tenue">
+            <span
+              className="font-dato text-[12px] text-tinta"
+              style={{ fontWeight: 'var(--peso-dato)' }}
+            >
+              +{cuantas}
+            </span>
+            <span className="font-ui text-[9.5px] font-medium tracking-[0.24em] uppercase">
+              {cuantas === 1 ? 'Desbloqueada' : 'Desbloqueadas'}
+            </span>
+          </p>
+        )}
         <button
           type="button"
           onClick={deshacer}
-          className="flex items-center gap-2 rounded-full px-3 py-2 font-ui text-[9.5px] font-medium tracking-[0.22em] text-tinta-suave uppercase transition-colors hover:bg-panel-suave hover:text-tinta"
+          className="ml-auto flex items-center gap-2 rounded-full px-3 py-2 font-ui text-[9.5px] font-medium tracking-[0.22em] text-tinta-suave uppercase transition-colors hover:bg-panel-suave hover:text-tinta"
         >
           <Undo2 size={13} strokeWidth={1.6} />
           Deshacer

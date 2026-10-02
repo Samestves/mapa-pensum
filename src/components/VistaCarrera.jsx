@@ -7,7 +7,7 @@ import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { ESTADO } from '../data/estados'
-import { desbloqueadasPor, pendientesDeSemestre } from '../data/semestre'
+import { desbloqueadasPor, marcasDeSemestres, materiasDeSemestre } from '../data/semestre'
 import { VISTAS } from '../data/vistas'
 import { useAvisos } from '../hooks/useAvisos'
 import { usePaneles } from '../hooks/usePaneles'
@@ -298,27 +298,57 @@ function VistaCarrera({ carrera, alVolver }) {
     [marcarVarias, carrera.slug],
   )
 
-  /* Aprobar un semestre entero, desde su cabecera en el mapa o en la lista:
-     sus obligatorias y la electiva de cada casilla, en un solo cambio. Despues
-     sale el aviso con lo que se abrio y Deshacer, que devuelve cada materia
-     a la marca que tenia -cursando o ninguna-. Sin confirmar antes: se
-     deshace de un toque, y preguntar seria pedir dos toques para lo que
-     casi siempre se quiere a la primera. */
-  const aprobarSemestre = useCallback(
+  /* La casilla de cada semestre -marcada, mixta o vacia-, la misma en la
+     cabecera del mapa y en la de la lista. */
+  const marcasSemestre = useMemo(
+    () => marcasDeSemestres(layout.nodos, enCasilla, estados),
+    [layout.nodos, enCasilla, estados],
+  )
+
+  /* Marcar o desmarcar un semestre entero desde su casilla, en el mapa o en
+     la lista: sus obligatorias y la electiva de cada casilla, en un solo
+     cambio. Si le falta algo, aprueba lo que falta; si ya esta todo, lo
+     desmarca todo. Despues sale el aviso -con lo que se abrio, si se
+     aprobo- y Deshacer, que devuelve cada materia a la marca que tenia.
+     Sin confirmar antes: se deshace de un toque, y preguntar seria pedir
+     dos toques para lo que casi siempre se quiere a la primera. */
+  const alternarSemestre = useCallback(
     (semestre) => {
-      const codigos = pendientesDeSemestre(layout.nodos, semestre, enCasilla, estados)
-      if (!codigos.length) return
-      const antes = Object.fromEntries(codigos.map((c) => [c, marcas[c] ?? null]))
-      marcarVariasYContar(Object.fromEntries(codigos.map((c) => [c, ESTADO.APROBADA])))
-      avisar({
-        antes,
-        etiqueta: 'Aprobado',
-        inmediato: true,
-        nombre: `Semestre ${semestre} · ${codigos.length} ${codigos.length === 1 ? 'materia' : 'materias'}`,
-        desbloqueadas: desbloqueadasPor(codigos, estados, layout.relaciones, layout.porCodigo).map(
-          (a) => a.nombre,
-        ),
-      })
+      const codigos = materiasDeSemestre(layout.nodos, semestre, enCasilla)
+      const pendientes = codigos.filter((c) => estados[c] !== ESTADO.APROBADA)
+      const aprobar = pendientes.length > 0
+      const cambian = aprobar ? pendientes : codigos
+      if (!cambian.length) return
+
+      const antes = Object.fromEntries(cambian.map((c) => [c, marcas[c] ?? null]))
+      const marca = aprobar ? ESTADO.APROBADA : null
+      marcarVariasYContar(Object.fromEntries(cambian.map((c) => [c, marca])))
+
+      const nombre = `Semestre ${semestre} · ${cambian.length} ${cambian.length === 1 ? 'materia' : 'materias'}`
+      avisar(
+        aprobar
+          ? {
+              antes,
+              nombre,
+              etiqueta: 'Aprobado',
+              inmediato: true,
+              desbloqueadas: desbloqueadasPor(
+                cambian,
+                estados,
+                layout.relaciones,
+                layout.porCodigo,
+              ).map((a) => a.nombre),
+            }
+          : {
+              antes,
+              nombre,
+              etiqueta: 'Desmarcado',
+              inmediato: true,
+              neutro: true,
+              detalle: 'Vuelven a quedar sin cursar.',
+              desbloqueadas: [],
+            },
+      )
     },
     [layout, enCasilla, estados, marcas, marcarVariasYContar, avisar],
   )
@@ -447,7 +477,8 @@ function VistaCarrera({ carrera, alVolver }) {
             alSeleccionar={alternarSeleccion}
             alMarcar={marcarYContar}
             alAvisar={avisar}
-            alAprobarSemestre={aprobarSemestre}
+            marcasSemestre={marcasSemestre}
+            alAlternarSemestre={alternarSemestre}
             enCasilla={enCasilla}
             alAbrirCasilla={abrirCasilla}
             casillaDe={casillaDe}
@@ -462,7 +493,8 @@ function VistaCarrera({ carrera, alVolver }) {
             descarga={descarga}
             alMirar={mirar}
             alMarcar={marcarYContar}
-            alAprobarSemestre={aprobarSemestre}
+            marcasSemestre={marcasSemestre}
+            alAlternarSemestre={alternarSemestre}
           />
         )}
 

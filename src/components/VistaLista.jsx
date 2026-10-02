@@ -1,11 +1,13 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { ArrowRight, Check, CheckCheck, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
+import { ArrowRight, Check, Lock, LockOpen, Plus, RotateCcw } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { ASPECTO } from '../theme/situacion'
 import { SITUACION, situacionDe } from '../layout/situacion'
 import { tituloGrupo } from '../layout/franjaElectivas'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { IconoSituacion } from './IconoSituacion'
+import GlifoCasilla from './GlifoCasilla'
+import { MARCA_SEMESTRE } from '../data/semestre'
 
 /* Los filtros son las preguntas que se le hacen a una lista de materias: que
    puedo inscribir, que llevo, que me falta y que ya pase. Cada uno con el
@@ -363,6 +365,26 @@ function Resumen({ progreso, semestres, actual, alIr }) {
   )
 }
 
+/** La casilla de marcar un semestre entero en su cabecera de la lista. */
+function CasillaLista({ semestre, marca, alAlternar }) {
+  const marcada = marca === MARCA_SEMESTRE.MARCADO
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={marcada ? 'true' : marca === MARCA_SEMESTRE.MIXTO ? 'mixed' : 'false'}
+      aria-label={`${marcada ? 'Desmarcar' : 'Aprobar'} el semestre ${semestre} entero`}
+      data-marca={marca}
+      onClick={() => alAlternar(semestre)}
+      className="casilla-semestre -mt-1.5 -mr-1.5 grid size-10 shrink-0 place-items-center rounded-xl transition-transform duration-150 active:scale-90"
+    >
+      <svg viewBox="-1 -1 16 16" width={22} height={22} aria-hidden="true">
+        <GlifoCasilla />
+      </svg>
+    </button>
+  )
+}
+
 /**
  * Vista de lista por semestres. Es la que se ve por defecto en movil: el
  * grafo completo mide 3200 px de ancho y en un telefono solo cabe a escala
@@ -391,7 +413,8 @@ function VistaLista({
   descarga,
   alMirar,
   alMarcar,
-  alAprobarSemestre,
+  marcasSemestre,
+  alAlternarSemestre,
 }) {
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
   const [filtro, setFiltro] = useState('todo')
@@ -667,18 +690,14 @@ function VistaLista({
                     </span>
                     <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
                   </button>
-                  {/* Aprobar el semestre entero, como el aro de su cabecera en
-                      el mapa. Lo que se marco lo dice el aviso, con Deshacer. */}
-                  {!completo && (
-                    <button
-                      type="button"
-                      onClick={() => alAprobarSemestre(s.numero)}
-                      aria-label={`Aprobar el semestre ${s.numero} entero`}
-                      title="Aprobar el semestre entero"
-                      className="aprobar-todo -mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-tinta/[0.06] text-tinta-suave transition-[background-color,color,transform] duration-200 active:scale-90"
-                    >
-                      <CheckCheck size={15} strokeWidth={2} />
-                    </button>
+                  {/* La casilla de marcar el semestre entero, la misma de su
+                      cabecera en el mapa (ver CasillaSemestre). */}
+                  {marcasSemestre.has(s.numero) && (
+                    <CasillaLista
+                      semestre={s.numero}
+                      marca={marcasSemestre.get(s.numero)}
+                      alAlternar={alAlternarSemestre}
+                    />
                   )}
                 </div>
 

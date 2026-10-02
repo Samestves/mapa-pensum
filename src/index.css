@@ -436,33 +436,29 @@ body {
   pointer-events: auto;
 }
 
-/* El aro de aprobar un semestre entero (ver AroSemestre en RotulosGrafo).
-   Quieto es un contorno tenue; al apuntarle se enciende con su check, que es
-   lo que va a pasar; aprobado queda lleno. Solo con transiciones de color:
-   nada que repinte mas que el propio aro. */
-.aro-semestre {
-  pointer-events: none;
-}
-
-.aro-semestre[role='button'] {
-  pointer-events: auto;
+/* La casilla de marcar un semestre entero, en la cabecera del mapa y en la
+   de la lista (ver GlifoCasilla). Vacia es un contorno; a medias lleva una
+   raya verde; marcada se llena con su check. Al apuntarle anticipa lo que
+   hara el click: la vacia se enciende, la llena se apaga. Solo transiciones
+   de color: nada que repinte mas que la propia casilla. */
+.casilla-semestre {
   cursor: pointer;
   outline: none;
 }
 
-.aro-semestre .aro {
+.casilla-semestre .caja {
   fill: transparent;
-  stroke: color-mix(in oklab, var(--tinta) 34%, transparent);
-  stroke-width: 1.3;
+  stroke: color-mix(in oklab, var(--tinta) 40%, transparent);
+  stroke-width: 1.4;
   transition:
     fill 200ms ease,
     stroke 200ms ease;
 }
 
-.aro-semestre .tilde {
+.casilla-semestre :is(.raya, .tilde) {
   fill: none;
   stroke: var(--estado-aprobada);
-  stroke-width: 1.6;
+  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0;
@@ -471,34 +467,51 @@ body {
     stroke 200ms ease;
 }
 
-.aro-semestre[data-estado='vacio'] .aro {
-  stroke-dasharray: 2 2.2;
-  stroke: color-mix(in oklab, var(--tinta) 18%, transparent);
+.casilla-semestre[data-marca='mixto'] .caja {
+  fill: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
+  stroke: var(--estado-aprobada);
 }
 
-.aro-semestre[data-estado='hecho'] .aro {
+.casilla-semestre[data-marca='mixto'] .raya {
+  opacity: 1;
+}
+
+.casilla-semestre[data-marca='marcado'] .caja {
   fill: var(--estado-aprobada);
   stroke: var(--estado-aprobada);
 }
 
-.aro-semestre[data-estado='hecho'] .tilde {
+.casilla-semestre[data-marca='marcado'] .tilde {
   stroke: var(--lienzo);
   opacity: 1;
 }
 
-.aro-semestre[role='button']:focus-visible .aro {
+.casilla-semestre:focus-visible .caja {
   stroke: var(--estado-aprobada);
-  stroke-width: 2;
+  stroke-width: 2.2;
 }
 
 @media (hover: hover) {
-  .aro-semestre[role='button']:hover .aro {
-    fill: color-mix(in oklab, var(--estado-aprobada) 16%, transparent);
+  .casilla-semestre:not([data-marca='marcado']):hover .caja {
+    fill: color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
     stroke: var(--estado-aprobada);
   }
 
-  .aro-semestre[role='button']:hover .tilde {
+  .casilla-semestre:not([data-marca='marcado']):hover .raya {
+    opacity: 0;
+  }
+
+  .casilla-semestre:not([data-marca='marcado']):hover .tilde {
     opacity: 1;
+  }
+
+  .casilla-semestre[data-marca='marcado']:hover .caja {
+    fill: transparent;
+  }
+
+  .casilla-semestre[data-marca='marcado']:hover .tilde {
+    stroke: var(--estado-aprobada);
+    opacity: 0.45;
   }
 }
 
@@ -825,6 +838,10 @@ body {
     color-mix(in oklab, var(--estado-aprobada) 75%, transparent),
     transparent
   );
+}
+
+.recogida-neutra :is(.recogida-filo, .recogida-tiempo) {
+  background: color-mix(in oklab, var(--tinta) 30%, transparent);
 }
 
 .recogida-aro,
@@ -2469,15 +2486,6 @@ body {
 
 .velo-hoja[data-saliendo='true'] {
   opacity: 0;
-}
-
-/* Aprobar un semestre desde la lista: gris quieto, verde al apuntarle,
-   como el aro de la cabecera del mapa. */
-@media (hover: hover) {
-  .aprobar-todo:hover {
-    background: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
-    color: var(--estado-aprobada);
-  }
 }
 
 /* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y

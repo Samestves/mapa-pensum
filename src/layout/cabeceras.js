@@ -20,22 +20,17 @@ const anchoTexto = (texto, tamano) => texto.length * tamano * 0.6
 export function cabecerasDe(columnas, nodos, enCasilla, situaciones) {
   const porSemestre = new Map()
   for (const nodo of nodos) {
-    if (!porSemestre.has(nodo.semestre)) {
-      porSemestre.set(nodo.semestre, { uc: 0, cuenta: {}, total: 0, pendientes: 0 })
-    }
+    if (!porSemestre.has(nodo.semestre)) porSemestre.set(nodo.semestre, { uc: 0, cuenta: {}, total: 0 })
     const datos = porSemestre.get(nodo.semestre)
     const materia = nodo.esHueco ? enCasilla(nodo.codigo) : nodo
     const situacion = materia ? situaciones.get(materia.codigo) : SITUACION.LEJANA
     datos.cuenta[situacion] = (datos.cuenta[situacion] ?? 0) + 1
     datos.total += 1
-    if (materia) {
-      datos.uc += materia.uc ?? 0
-      if (situacion !== SITUACION.HECHA) datos.pendientes += 1
-    }
+    if (materia) datos.uc += materia.uc ?? 0
   }
 
   return columnas.map(({ x, semestre }) => {
-    const { uc = 0, cuenta = {}, total = 0, pendientes = 0 } = porSemestre.get(semestre) ?? {}
+    const { uc = 0, cuenta = {}, total = 0 } = porSemestre.get(semestre) ?? {}
     const hechas = cuenta[SITUACION.HECHA] ?? 0
     const cursando = cuenta[SITUACION.CURSANDO] ?? 0
     const der = x + NODO.ancho
@@ -59,8 +54,6 @@ export function cabecerasDe(columnas, nodos, enCasilla, situaciones) {
       total,
       hechas,
       completo: total > 0 && hechas === total,
-      // Las materias que aprobar el semestre marcaria: sin las casillas vacias
-      pendientes,
       porcentaje: total ? Math.round((hechas / total) * 100) : 0,
       anchoHechas: total ? (NODO.ancho * hechas) / total : 0,
       anchoCursando: total ? (NODO.ancho * cursando) / total : 0,

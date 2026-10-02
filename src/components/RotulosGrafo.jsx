@@ -3,6 +3,8 @@ import { NODO, MARGEN, FRANJA } from '../layout/constantes'
 import { FormaSituacion } from './IconoSituacion'
 import { ASPECTO } from '../theme/situacion'
 import Texto, { GrupoTexto } from './Texto'
+import { MARCA_SEMESTRE } from '../data/semestre'
+import GlifoCasilla from './GlifoCasilla'
 
 /**
  * Los rotulos del mapa: la cabecera de cada semestre, la de cada grupo de la
@@ -32,13 +34,13 @@ const espaciado = (em) => ({ letterSpacing: `${em}em` })
 
 const Y = MARGEN.top
 
-/* El aro de aprobar el semestre, a la izquierda del titulo: centrado en la
-   altura de sus mayusculas, y el titulo corrido lo que ocupa. La zona que se
-   pulsa abarca aro y titulo: a la escala del mapa entero un aro de trece
-   pixeles no lo acierta nadie. */
-const ARO = { r: 6.5, cy: 9.8 }
-const SANGRIA_TITULO = 19
-const PULSABLE = { izq: -12, arr: -16, ancho: 150, alto: 30 }
+/* La casilla de marcar el semestre, a la izquierda del titulo: centrada en
+   la altura de sus mayusculas, y el titulo corrido lo que ocupa. La zona que
+   se pulsa abarca casilla y titulo: a la escala del mapa entero un cuadrito
+   de catorce pixeles no lo acierta nadie. */
+const CASILLA_ARRIBA = 2.8
+const SANGRIA_TITULO = 21
+const PULSABLE = { izq: -6, arr: -10, ancho: 150, alto: 32 }
 const CRECER = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier(0.32, 0.72, 0, 1)'
 
 /**
@@ -49,7 +51,7 @@ const CRECER = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier
  * es -arriba- y como vas en el -abajo-: aprobado y, a continuacion, lo que
  * cursas. Crece con transicion al aprobar en vez de saltar.
  */
-function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, alAprobar }) {
+function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlternar }) {
   return (
     <>
       {cabeceras.map((c) => (
@@ -82,7 +84,14 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, alAprobar }) {
               <FormaSituacion situacion={e.situacion} color={ASPECTO[e.situacion].marca.color} />
             </g>
           ))}
-          <AroSemestre cabecera={c} alAprobar={alAprobar} />
+          {marcas.has(c.semestre) && (
+            <CasillaSemestre
+              semestre={c.semestre}
+              x={c.x}
+              marca={marcas.get(c.semestre)}
+              alAlternar={alAlternar}
+            />
+          )}
         </g>
       ))}
 
@@ -105,55 +114,47 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, alAprobar }) {
 }
 
 /**
- * Aprobar el semestre entero de un toque: un aro, como la casilla de una
- * lista de tareas, delante de su nombre.
+ * La casilla de marcar el semestre entero, delante de su nombre: la de una
+ * lista de tareas, que todo el mundo sabe leer y pulsar.
  *
- * Tres caras. Con algo por aprobar es un boton: al pasar por encima se
- * enciende del verde de aprobada con su check, que es lo que va a pasar. Con
- * todo aprobado queda lleno, y ya no se pulsa: desmarcar un semestre entero
- * de un toque es demasiado facil de hacer sin querer, y una por una sigue
- * pudiendose. Si solo le quedan casillas sin elegir, nada que marcar: el aro
- * queda tenue.
- *
- * Lo que aprueba lo dice el aviso de despues, con Deshacer (ver
- * aprobarSemestre en VistaCarrera).
+ * Vacia si no llevas nada aprobado, con una raya si llevas una parte y llena
+ * con su check si esta todo. Pulsarla vacia o con raya aprueba lo que falta;
+ * llena, lo desmarca todo. Al apuntarle anticipa lo que va a pasar: la
+ * vacia se enciende con su check, la llena se apaga. Lo que cambio lo dice
+ * el aviso de despues, con Deshacer (ver alternarSemestre en VistaCarrera).
  */
-function AroSemestre({ cabecera: c, alAprobar }) {
-  const accion = c.pendientes > 0
-  const estado = c.completo ? 'hecho' : accion ? 'pendiente' : 'vacio'
-  const etiqueta = `Aprobar el semestre ${c.semestre} entero`
+function CasillaSemestre({ semestre, x, marca, alAlternar }) {
+  const marcada = marca === MARCA_SEMESTRE.MARCADO
+  const etiqueta = marcada
+    ? `Desmarcar el semestre ${semestre} entero`
+    : `Aprobar el semestre ${semestre} entero`
+  const alternar = () => alAlternar(semestre)
 
   return (
     <g
-      className="aro-semestre"
-      data-estado={estado}
-      transform={`translate(${c.x + ARO.r}, ${Y + ARO.cy})`}
-      {...(accion && {
-        role: 'button',
-        tabIndex: 0,
-        'aria-label': etiqueta,
-        onClick: () => alAprobar(c.semestre),
-        onKeyDown: (e) => {
-          if (e.key !== 'Enter' && e.key !== ' ') return
-          e.preventDefault()
-          alAprobar(c.semestre)
-        },
-      })}
+      role="checkbox"
+      aria-checked={marcada ? 'true' : marca === MARCA_SEMESTRE.MIXTO ? 'mixed' : 'false'}
+      aria-label={etiqueta}
+      tabIndex={0}
+      className="casilla-semestre"
+      data-marca={marca}
+      transform={`translate(${x}, ${Y + CASILLA_ARRIBA})`}
+      onClick={alternar}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        alternar()
+      }}
     >
-      {accion && (
-        <>
-          <title>{etiqueta}</title>
-          <rect
-            x={PULSABLE.izq}
-            y={PULSABLE.arr}
-            width={PULSABLE.ancho}
-            height={PULSABLE.alto}
-            fill="transparent"
-          />
-        </>
-      )}
-      <circle r={ARO.r} className="aro" />
-      <path d="M-3 0.1 -0.9 2.2 3.1 -2.1" className="tilde" />
+      <title>{etiqueta}</title>
+      <rect
+        x={PULSABLE.izq}
+        y={PULSABLE.arr}
+        width={PULSABLE.ancho}
+        height={PULSABLE.alto}
+        fill="transparent"
+      />
+      <GlifoCasilla />
     </g>
   )
 }
@@ -161,7 +162,7 @@ function AroSemestre({ cabecera: c, alAprobar }) {
 /**
  * El texto de los rotulos.
  *
- *   ○ SEMESTRE 04                      71%
+ *   ☐ SEMESTRE 04                      71%
  *   18 UC · 7 MATERIAS
  *   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────
  *   5/7 APROBADAS                   ◐ 1  ◉ 1
