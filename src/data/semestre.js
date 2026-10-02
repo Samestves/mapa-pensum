@@ -54,35 +54,3 @@ export function marcasDeSemestres(nodos, enCasilla, estados) {
   }
   return marcas
 }
-
-/**
- * Las materias que se abren al aprobar `codigos`: las que salen de alguna de
- * ellas y, contando todas como aprobadas, ya tienen todas sus prelaciones.
- * Las que llevas -aprobadas o cursando- no cuentan: no se abre lo que ya
- * estaba abierto. Cada una sale una vez aunque dependa de varias.
- *
- * `relaciones.adelante` va de un codigo a los de las materias que prela.
- */
-export function desbloqueadasPor(codigos, estados, relaciones, porCodigo) {
-  const despues = { ...estados }
-  for (const c of codigos) despues[c] = ESTADO.APROBADA
-  const llevas = (c) => despues[c] === ESTADO.APROBADA || despues[c] === ESTADO.CURSANDO
-
-  const vistas = new Set()
-  const abiertas = []
-  for (const c of codigos) {
-    for (const siguiente of relaciones.adelante.get(c) ?? []) {
-      if (vistas.has(siguiente)) continue
-      vistas.add(siguiente)
-      const materia = porCodigo.get(siguiente)
-      if (
-        materia &&
-        !llevas(siguiente) &&
-        (materia.prerrequisitos ?? []).every((p) => despues[p] === ESTADO.APROBADA)
-      ) {
-        abiertas.push(materia)
-      }
-    }
-  }
-  return abiertas
-}

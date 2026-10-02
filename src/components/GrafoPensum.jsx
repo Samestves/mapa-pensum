@@ -10,7 +10,6 @@ import ContornoCarga from './ContornoCarga'
 import { situacionDe } from '../layout/situacion'
 import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
-import { desbloqueadasPor } from '../data/semestre'
 import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
 import { cabecerasDe } from '../layout/cabeceras'
 import { MARGEN_CAPA } from '../layout/vistaViva'
@@ -56,7 +55,6 @@ function GrafoPensum({
   seleccionado,
   alSeleccionar,
   alMarcar,
-  alAvisar,
   marcasSemestre,
   alAlternarSemestre,
   enCasilla,
@@ -320,9 +318,8 @@ function GrafoPensum({
    * no se veia.
    *
    * Asi que al aprobar la ficha se aparta, el mapa se corre lo justo para
-   * que quepan la materia y todo lo que desbloquea, la luz sale cuando el
-   * mapa ya llego (ver .descarga en index.css) y en la esquina queda el
-   * aviso de lo que se abrio, con Deshacer (ver useAvisos).
+   * que quepan la materia y todo lo que desbloquea, y la luz sale cuando el
+   * mapa ya llego (ver .descarga en index.css).
    */
   const marcarDesdeFicha = useCallback(
     (codigo, marca) => {
@@ -348,25 +345,17 @@ function GrafoPensum({
             x1: Math.max(...cajas.map((a) => a.x + NODO.ancho)),
             y1: Math.max(...cajas.map((a) => a.y + NODO.alto)),
           },
-          // Abajo quedan la barra y el aviso. En el telefono el aviso sube
-          // unos 280 px desde el borde (ver .recogida-movil); en escritorio es
-          // la tarjeta de la esquina
+          // En el telefono, abajo queda la barra de las vistas
           telefono
-            ? { arriba: 32, abajo: 290, izq: 24, der: 24 }
-            : { arriba: 48, abajo: 104, izq: 48, der: 48 },
+            ? { arriba: 32, abajo: 112, izq: 24, der: 24 }
+            : { arriba: 48, abajo: 48, izq: 48, der: 48 },
         )
       }
 
       alSeleccionar(null)
       alMarcar(codigo, marca)
-      alAvisar({
-        antes: { [codigo]: marcaAntes },
-        etiqueta: 'Aprobada',
-        nombre: porCodigo.get(codigo)?.nombre ?? '',
-        desbloqueadas: desbloqueadasPor([codigo], estados, relaciones, porCodigo).map((a) => a.nombre),
-      })
     },
-    [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar, alAvisar],
+    [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
   )
 
   /* Marcar o desmarcar un semestre desde su casilla. Como un click en una

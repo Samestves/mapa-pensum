@@ -2,13 +2,12 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   MARCA_SEMESTRE,
-  desbloqueadasPor,
   marcasDeSemestres,
   materiasDeSemestre,
 } from './semestre.js'
 import { ESTADO } from './estados.js'
 
-const { APROBADA, CURSANDO, DISPONIBLE, BLOQUEADA } = ESTADO
+const { APROBADA, CURSANDO } = ESTADO
 
 describe('semestre entero', () => {
   const nodos = [
@@ -33,37 +32,5 @@ describe('semestre entero', () => {
     assert.equal(marcas.has(3), false)
     const todo = marcasDeSemestres(nodos, enCasilla, { A: APROBADA, B: APROBADA, E: APROBADA })
     assert.equal(todo.get(1), MARCA_SEMESTRE.MARCADO)
-  })
-})
-
-describe('desbloqueadasPor', () => {
-  const materias = [
-    { codigo: 'A' },
-    { codigo: 'B' },
-    { codigo: 'X', prerrequisitos: ['A', 'B'] },
-    { codigo: 'Y', prerrequisitos: ['A', 'Z'] },
-    { codigo: 'W', prerrequisitos: ['B'] },
-    { codigo: 'Z' },
-  ]
-  const porCodigo = new Map(materias.map((m) => [m.codigo, m]))
-  const relaciones = {
-    adelante: new Map([
-      ['A', ['X', 'Y']],
-      ['B', ['X', 'W']],
-    ]),
-  }
-
-  it('abre lo que queda con todas sus prelaciones, una sola vez', () => {
-    const estados = { A: DISPONIBLE, B: DISPONIBLE, X: BLOQUEADA, Y: BLOQUEADA, W: BLOQUEADA, Z: DISPONIBLE }
-    const abiertas = desbloqueadasPor(['A', 'B'], estados, relaciones, porCodigo)
-    assert.deepEqual(
-      abiertas.map((m) => m.codigo),
-      ['X', 'W'],
-    )
-  })
-
-  it('no cuenta lo que ya llevas', () => {
-    const estados = { A: DISPONIBLE, B: APROBADA, X: CURSANDO, W: APROBADA }
-    assert.deepEqual(desbloqueadasPor(['A'], estados, relaciones, porCodigo), [])
   })
 })

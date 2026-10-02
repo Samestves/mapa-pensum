@@ -120,8 +120,8 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
  * Vacia si no llevas nada aprobado, con una raya si llevas una parte y llena
  * con su check si esta todo. Pulsarla vacia o con raya aprueba lo que falta;
  * llena, lo desmarca todo. Al apuntarle anticipa lo que va a pasar: la
- * vacia se enciende con su check, la llena se apaga. Lo que cambio lo dice
- * el aviso de despues, con Deshacer (ver alternarSemestre en VistaCarrera).
+ * vacia se enciende con su check, la llena se apaga (ver alternarSemestre
+ * en VistaCarrera).
  */
 function CasillaSemestre({ semestre, x, marca, alAlternar }) {
   const marcada = marca === MARCA_SEMESTRE.MARCADO
