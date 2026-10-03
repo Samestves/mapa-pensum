@@ -371,7 +371,7 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
                 "se acabo la cuota" de "ese modelo ya no existe". Sin el,
                 arreglarlo seria adivinar. */}
             {fallo?.detalle && (
-              <p className="max-w-full overflow-x-auto font-mono text-[9.5px] break-all text-tinta-tenue">
+              <p className="max-w-full overflow-x-auto font-dato text-[9.5px] break-all text-tinta-tenue">
                 {String(fallo.detalle).slice(0, 220)}
               </p>
             )}

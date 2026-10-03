@@ -156,7 +156,7 @@ function PopoverClase({
             <span className="block truncate text-[12.5px] font-medium text-tinta">
               {elegida.nombre}
             </span>
-            <span className="block font-mono text-[9px] text-tinta-tenue">
+            <span className="block font-dato text-[9px] text-tinta-tenue">
               {codigoVisible(elegida)} · {elegida.uc} UC
             </span>
           </span>
@@ -210,7 +210,7 @@ function PopoverClase({
                   <span className="min-w-0 flex-1 truncate text-[12px] font-normal text-tinta">
                     {a.nombre}
                   </span>
-                  <span className="shrink-0 font-mono text-[9px] text-tinta-tenue">{a.uc} UC</span>
+                  <span className="shrink-0 font-dato text-[9px] text-tinta-tenue">{a.uc} UC</span>
                 </button>
               ))
             )}

@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 /* Inter con el eje de tamaño optico: ver --font-sans */
 @import '@fontsource-variable/inter/opsz.css';
-@import '@fontsource-variable/jetbrains-mono';
 /* Las dos del mapa: Jost, geometrica y fina, para nombres y rotulos, e IBM
    Plex Mono, de maquina, para codigos y cifras. Ver --font-ui. */
 @import '@fontsource-variable/jost';

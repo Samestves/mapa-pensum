@@ -127,7 +127,7 @@ function AvisoInstalar() {
               que es lo unico que se puede hacer cuando el aparato donde falla
               es el telefono de otro y no hay consola donde mirar. */}
           {forzado && porque && (
-            <p className="mt-3 border-t border-panel-borde pt-2 font-mono text-[9.5px] leading-relaxed text-tinta-tenue">
+            <p className="mt-3 border-t border-panel-borde pt-2 font-dato text-[9.5px] leading-relaxed text-tinta-tenue">
               {[
                 `evento ${porque.hayEvento ? 'sí' : 'NO'}`,
                 `instalada ${porque.instalada ? 'sí' : 'no'}`,

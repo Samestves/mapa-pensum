@@ -25,20 +25,6 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   })
 }
 
-/* JetBrains Mono no sale en la primera pantalla -la llevan las cifras del
-   avance, el plan y el horario-, asi que no se precarga con las otras. Pero
-   tampoco puede esperar a que alguien la pida: el navegador solo baja una
-   fuente cuando un texto la necesita, y entonces ese texto ya se pinto con la
-   de respaldo. Al abrir el avance se veia el cambio de letra, y el texto
-   recolocado obligaba a rehacer toda la hoja a mitad de la subida.
-   Se baja cuando la pagina ya cargo y el telefono no tiene nada mejor que
-   hacer: llega antes de que nadie abra nada y no compite con el mapa. */
-window.addEventListener('load', () => {
-  const calentar = () => document.fonts.load('1em "JetBrains Mono Variable"').catch(() => {})
-  if ('requestIdleCallback' in window) requestIdleCallback(calentar, { timeout: 4000 })
-  else setTimeout(calentar, 1500)
-})
-
 /* Antes de pintar nada: el modo ligero cambia el aspecto de las islas, y
    decidirlo despues se veria como un salto. Ver data/ligero.js. */
 aplicarModoLigero()

@@ -213,7 +213,6 @@
      una prueba, y con dos sans casi iguales en la misma pantalla no se veia
      un contraste sino un descuido. Una sola familia. */
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
   --font-display: var(--font-sans);
 
