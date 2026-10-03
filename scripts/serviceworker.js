@@ -48,37 +48,33 @@ function aUrl(ruta) {
    que sale al compartir el enlace por WhatsApp o Twitter: la piden sus
    servidores desde la URL absoluta, nunca el navegador de quien usa la app,
    porque no se dibuja en ninguna pantalla -solo vive en una etiqueta meta-.
-   Precachearla eran 59 kB por usuario para una imagen que no va a ver. */
-const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png'])
+   Precachearla eran 59 kB por usuario para una imagen que no va a ver.
+   Y sw.js, el propio service worker: si este script corre sobre un dist que
+   ya lo tiene, se precacheaba a si mismo. */
+const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png', '/sw.js'])
 
 /**
  * De las fuentes solo se precachea el subconjunto que esta aplicacion usa.
  *
- * Las dos fuentes vienen partidas en subconjuntos -latin, latin-ext,
- * cirilico, griego y vietnamita- y cada @font-face declara con unicode-range
- * que caracteres cubre. El navegador solo pide el subconjunto cuando la
- * pagina usa una letra de ese rango, asi que en una aplicacion en español
- * NUNCA descarga los otros: comprobado en el navegador, de los diez archivos
- * solo pide los dos latinos.
+ * Inter, Jost e IBM Plex Mono vienen partidas en subconjuntos -latin,
+ * latin-ext, cirilico, griego y vietnamita- y cada @font-face declara con
+ * unicode-range que caracteres cubre. El navegador solo pide un subconjunto
+ * cuando la pagina usa una letra de ese rango, asi que en una aplicacion en
+ * español nunca descarga mas que los latinos.
  *
- * El service worker no es tan listo: precachea la lista que se le da, y se
- * estaba llevando los diez. Eso son 172 kB de fuentes en vez de 64, y los
- * 108 de mas son alfabetos que no se van a dibujar. En un telefono con datos
- * caros es descarga pagada por nada.
+ * El service worker no es tan listo: precachea la lista que se le da. Sin
+ * este filtro se llevaba todos los subconjuntos, casi cuatro veces lo que hace
+ * falta, en alfabetos que no se van a dibujar. En un telefono con datos caros
+ * es descarga pagada por nada.
  *
- * Y no solo sobran los otros alfabetos: tampoco hace falta latin-ext, que
- * cubre la Europa del este. Comprobado sobre los nueve pensums enteros: cero
- * caracteres fuera del subconjunto latin en las 481 materias.
+ * Tampoco hace falta latin-ext, que cubre la Europa del este: comprobado sobre
+ * los nueve pensums enteros, cero caracteres fuera del subconjunto latin en
+ * las 481 materias.
  *
- * Se quedan en el build a proposito, y por eso esto es un filtro de precache
- * y no un cambio en el CSS. El @font-face de cada subconjunto declara con
- * unicode-range que caracteres cubre, asi que si algun dia aparece un
- * caracter raro -alguien escribiendo su nombre en el planificador, una
- * materia nueva- el navegador pedira ese archivo y funcionara igual. Lo que
- * se quita es traerselos por adelantado por si acaso.
- *
- * De 172 kB de fuentes a 64. En un telefono con datos caros, 108 kB de
- * alfabetos que no se van a dibujar es descarga pagada por nada.
+ * Los demas se quedan en el build a proposito, y por eso esto es un filtro de
+ * precache y no un cambio en el CSS: si algun dia aparece un caracter raro
+ * -un nombre en el planificador, una materia nueva- el navegador pedira ese
+ * archivo y funcionara igual. Lo que se quita es traerselos por adelantado.
  */
 /* wght es Jost. opsz es Inter, que se carga con el eje de
    tamaño optico y por eso su archivo se llama distinto: filtrando solo por
