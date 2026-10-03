@@ -1,4 +1,4 @@
-import { ESTADO } from '../data/estados'
+import { ESTADO } from '../data/estados.js'
 
 /**
  * Como se llama cada estado de cara al usuario. Vivia dentro de la ficha

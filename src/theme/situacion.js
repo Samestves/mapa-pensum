@@ -1,4 +1,4 @@
-import { SITUACION } from '../layout/situacion'
+import { SITUACION } from '../layout/situacion.js'
 
 /**
  * Como se ve cada situacion. Una sola tabla para las tarjetas, las casillas y
