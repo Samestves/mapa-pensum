@@ -32,6 +32,19 @@ describe('los rangos de fechas', () => {
   })
 })
 
+/* En Vercel el build lleva puestas las variables del almacen, y con ellas la
+   prueba que pasa la puerta leia el Redis de produccion en cada despliegue.
+   Aqui lo que se prueba es la puerta: sin almacen contesta que no lo hay, que
+   tampoco es un 401. */
+for (const variable of [
+  'KV_REST_API_URL',
+  'KV_REST_API_TOKEN',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+]) {
+  delete process.env[variable]
+}
+
 describe('la puerta del panel', () => {
   test('sin clave configurada no se puede entrar ni acertando', async () => {
     delete process.env.PANEL_CLAVE

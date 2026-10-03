@@ -7,6 +7,26 @@ import { TOPE_POR_HORA } from './_turno.js'
    produccion. Aqui se provocan a proposito y solo ensuciarian la salida. */
 mock.method(console, 'warn', () => {})
 
+/* Estas pruebas no pueden depender de donde corran. En Vercel el build lleva
+   puestas las variables del proyecto -el almacen, la lista de modelos-, y con
+   ellas la funcion hablaba con el almacen a traves del fetch de mentira: las
+   cuentas de llamadas salian con una o dos de mas y "lo ultimo que se pidio"
+   era un comando de Redis, no la peticion a Google. En local, sin variables,
+   pasaban todas.
+
+   Se quitan aqui, antes de nada. Cada archivo de pruebas corre en su propio
+   proceso, asi que no se le quitan a nadie mas. La suite que prueba la
+   memoria pone su propio almacen, de mentira. */
+for (const variable of [
+  'KV_REST_API_URL',
+  'KV_REST_API_TOKEN',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+  'GOOGLE_AI_MODELO',
+]) {
+  delete process.env[variable]
+}
+
 /* Pruebas de la funcion sin clave y sin red: se le pone un fetch de mentira y
    se mira QUE le pide a Google y que hace con lo que vuelve.
 
@@ -190,15 +210,18 @@ test('la peticion que se le manda a Google', async (t) => {
     assert.equal(cfg.responseSchema.properties.clases.type, 'array')
   })
 
-  await t.test('el modelo sale de la variable de entorno', async () => {
+  await t.test('el modelo sale de la variable de entorno', async (t) => {
     process.env.GOOGLE_AI_MODELO = 'modelo-inventado'
+    /* Con after y no con un delete al final: si la prueba falla, el delete
+       no llega a correr y la variable se les queda puesta a las siguientes,
+       que fallan por algo que no es suyo. */
+    t.after(() => delete process.env.GOOGLE_AI_MODELO)
     const visto = conFetch(respuestaDeGoogle('{"clases":[]}'))
     const { req, res } = llamar(cuerpoValido())
     // Sin reimportar el modulo: la lista se lee en cada llamada
     await handler(req, res)
 
     assert.ok(String(visto.url).includes('modelo-inventado'))
-    delete process.env.GOOGLE_AI_MODELO
   })
 })
 
@@ -367,8 +390,9 @@ test('cuando Google esta lleno', async (t) => {
     assert.equal(res.cuerpo.error, 'modelo')
   })
 
-  await t.test('el detalle dice QUE modelos se probaron', async () => {
+  await t.test('el detalle dice QUE modelos se probaron', async (t) => {
     process.env.GOOGLE_AI_MODELO = 'uno-que-no-existe,otro-tampoco'
+    t.after(() => delete process.env.GOOGLE_AI_MODELO)
     tras(99, 404)
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
@@ -376,7 +400,6 @@ test('cuando Google esta lleno', async (t) => {
     // Sin esto, "no existe" no dice cual, que es lo unico que hace falta saber
     assert.ok(res.cuerpo.detalle.includes('uno-que-no-existe'))
     assert.ok(res.cuerpo.detalle.includes('otro-tampoco'))
-    delete process.env.GOOGLE_AI_MODELO
   })
 
   await t.test('una clave sin permiso para ese modelo se distingue', async () => {
