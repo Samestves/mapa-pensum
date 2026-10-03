@@ -72,10 +72,6 @@ export const ASPECTO = {
   },
 }
 
-/* El id del <symbol> del icono de cada situacion en el SVG del mapa: lo
-   define DefsGrafo y lo usa cada tarjeta con un <use>. */
-export const idIcono = (situacion) => `icono-${situacion}`
-
 export const ETIQUETA_SITUACION = {
   [SITUACION.HECHA]: 'Aprobada',
   [SITUACION.CURSANDO]: 'Cursando',

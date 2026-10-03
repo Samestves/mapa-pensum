@@ -1,15 +1,17 @@
 import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
-import { ASPECTO, idIcono } from '../theme/situacion'
+import { ASPECTO } from '../theme/situacion'
+import { FormaSituacion } from './IconoSituacion'
 import Texto, { GrupoTexto } from './Texto'
 
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
 
 /* El icono de estado, arriba a la derecha: su borde derecho cae en el margen
-   de la tarjeta y su centro a la altura del codigo. */
-const LADO_ICONO = 17.5
-const X_ICONO = NODO.ancho - NODO.padDer - LADO_ICONO
+   de la tarjeta y su centro a la altura del codigo. Dibujado en una rejilla
+   de 20, aqui mide 17,5. */
+const ESCALA_ICONO = 0.875
+const X_ICONO = NODO.ancho - NODO.padDer - 20 * ESCALA_ICONO
 const Y_ICONO = 10.5
 
 /**
@@ -68,16 +70,18 @@ export function FormaTarjeta({ situacion, acento, seleccionado, resaltado }) {
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
       />
 
-      {/* Un <use> y no las formas del icono: el dibujo vive una vez en el
-          SVG del mapa (ver DefsGrafo) y cada tarjeta solo lo señala. Lo
-          calado del icono toma el color del relleno de la tarjeta. */}
-      <use
-        href={`#${idIcono(situacion)}`}
+      {/* Sus trazos, ya colocados en las coordenadas de la tarjeta: sin
+          transform ni recorte propios. Con un <use> de un <symbol>, cada
+          tarjeta abria un recorte y una transformacion, y repartir el mapa en
+          capas costaba el doble en cada cuadro de un arrastre. Lo calado del
+          icono toma el color del relleno de la tarjeta. */}
+      <FormaSituacion
+        situacion={situacion}
         x={X_ICONO}
         y={Y_ICONO}
-        width={LADO_ICONO}
-        height={LADO_ICONO}
-        style={{ color: a.icono, '--sobre': a.fondo }}
+        escala={ESCALA_ICONO}
+        color={a.icono}
+        sobre={a.fondo}
       />
 
       <circle cx={padIzq + 3} cy={alto - 16} r={3} fill={acento} />
