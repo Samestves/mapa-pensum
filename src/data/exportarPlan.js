@@ -1,55 +1,57 @@
-import { codigoVisible } from './codigoVisible'
 import { etiquetaSemestre } from '../layout/planificador'
 import { textoCarga } from './cargaPlan'
 
-const MES = (fecha) => {
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+/** "Octubre de 2030" */
+export const MES = (fecha) => {
   const texto = fecha?.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
   return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : ''
 }
 
+/** "Oct 2030": la fecha de grado cuando va en grande y tiene que caber */
+export const mesCorto = (fecha) => `${MESES_CORTOS[fecha.getMonth()]} ${fecha.getFullYear()}`
+
 /**
- * Genera el contenido Markdown del plan de ruta y dispara la descarga
- * como archivo .md en el navegador.
+ * La ruta en un mensaje, para mandarla por WhatsApp o donde sea: la fecha y,
+ * una linea por semestre, que materias van. Sin codigos ni UC sueltas: quien
+ * lo lee en un chat quiere el orden, no la ficha de cada materia.
  */
-export function descargarMarkdown({ carrera, nombre, progreso, plan, carga, grado }) {
-  const totalSemestres = plan.semestres.length
-
-  const lineas = [
-    `# Mi ruta hasta el grado`,
-    ``,
-    `${carrera.nombre} — ${carrera.nucleo}`,
-    nombre ? `Estudiante: ${nombre}` : null,
-    `Generado el ${new Date().toLocaleDateString('es-VE')}`,
-    ``,
-    progreso.porcentaje != null
-      ? `- Avance: ${progreso.porcentaje.toFixed(1)}% (${progreso.ucAprobadas + progreso.ucElectivas}/${progreso.ucTitulo} UC)`
-      : `- Avance: ${progreso.aprobadas}/${progreso.total} materias (${progreso.ucAprobadas} UC)`,
-    `- Materias pendientes: ${plan.materiasRestantes}`,
-    `- Semestres estimados: ${totalSemestres} con ${textoCarga(carga)} por semestre`,
-    grado ? `- Grado aproximado: ${MES(grado)}` : null,
-    `- Clave: van en la cadena más larga de prelaciones; atrasarlas es lo que más alarga la carrera.`,
-    ``,
-    ...plan.semestres.flatMap((s) => [
-      `## ${etiquetaSemestre(s.numero)} — ${s.materias.length} materias · ${s.uc} UC`,
-      ``,
-      ...s.materias.map(
-        (a) =>
-          `- [ ] \`${codigoVisible(a)}\` ${a.nombre} (${a.uc ?? 'a elegir'}${a.uc != null ? ' UC' : ''})${a.clave ? ' · clave' : ''}`,
-      ),
-      ``,
-    ]),
-    `---`,
-    `Generado con Mapa de Pensum · https://mapa-pensum.vercel.app`,
-    `Las unidades crédito no están verificadas contra el pensum oficial.`,
-  ].filter((l) => l !== null)
-
-  const blob = new Blob([lineas.join('\n')], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'mi-ruta-pensum.md'
-  a.click()
-  URL.revokeObjectURL(url)
+export function textoDeLaRuta({ carrera, plan, carga, grado }) {
+  const semestres = plan.semestres.length
+  return [
+    `Mi ruta al grado · ${carrera.nombre}`,
+    `Me gradúo hacia ${MES(grado).toLowerCase()}: ${semestres} ${
+      semestres === 1 ? 'semestre' : 'semestres'
+    } con ${textoCarga(carga)}.`,
+    '',
+    ...plan.semestres.map(
+      (s) => `${etiquetaSemestre(s.numero)}: ${s.materias.map((a) => a.nombre).join(', ')}`,
+    ),
+    '',
+    'Arma la tuya en https://mapa-pensum.vercel.app',
+  ].join('\n')
 }
 
-export { MES }
+/**
+ * Comparte la ruta con la hoja de compartir del sistema y, donde no la hay
+ * -casi todos los navegadores de escritorio-, la copia al portapapeles.
+ * Devuelve lo que hizo para que el boton lo diga, o null si no hizo nada:
+ * cerrar la hoja de compartir no es un error.
+ */
+export async function compartirTexto(texto) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Mi ruta al grado', text: texto })
+      return 'compartido'
+    } catch (error) {
+      if (error.name === 'AbortError') return null
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(texto)
+    return 'copiado'
+  } catch {
+    return null
+  }
+}

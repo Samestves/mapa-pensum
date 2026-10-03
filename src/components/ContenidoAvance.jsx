@@ -1,7 +1,7 @@
-import { ChevronRight, Route } from 'lucide-react'
+import { ChevronRight, GraduationCap } from 'lucide-react'
 import { avanceDe } from '../data/avance'
 import { textoCarga } from '../data/cargaPlan'
-import { MES } from '../data/exportarPlan'
+import { mesCorto } from '../data/exportarPlan'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { colorArea, etiquetaArea } from '../theme/areas'
@@ -110,26 +110,37 @@ function TarjetaPlan({ carrera, marcas, elegidas, alPlanificar }) {
       onClick={alPlanificar}
       className="tarjeta-plan group w-full overflow-hidden rounded-[22px] text-left transition-transform duration-200 active:scale-[0.98]"
     >
-      <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3.5">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-aprobada uppercase">
-            {terminado ? 'Pensum completo' : 'Grado estimado'}
+      <div className="px-4 pt-4 pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[13px] text-tinta-suave">
+            {terminado ? 'Pensum completo' : 'Te gradúas hacia'}
           </p>
-          <p className="mt-1 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-tinta">
-            {terminado ? 'No te queda nada' : MES(fecha)}
-          </p>
-          {!terminado && (
-            <p className="mt-1 text-[12.5px] text-tinta-suave">
-              {semestres} {semestres === 1 ? 'semestre' : 'semestres'} con {textoCarga(carga)}
-              · {materias} {materias === 1 ? 'materia' : 'materias'}
-            </p>
-          )}
+          <GraduationCap size={18} strokeWidth={1.8} className="shrink-0 text-aprobada" />
         </div>
-        <span className="grid size-10 shrink-0 place-items-center rounded-[13px] bg-aprobada text-[var(--lienzo)]">
-          <Route size={19} strokeWidth={2.2} />
-        </span>
+        {/* La misma fecha grande y fina con la que abre la ruta: esta tarjeta
+            es su portada */}
+        <p className="mt-2 text-[44px] leading-[0.9] font-extralight tracking-[-0.045em] text-tinta tabular-nums">
+          {terminado ? 'Terminaste' : mesCorto(fecha)}
+        </p>
+        {!terminado && (
+          <>
+            {/* Un tramo por semestre que falta; el verde es el que viene */}
+            <div className="mt-4 flex gap-[3px]" aria-hidden="true">
+              {Array.from({ length: semestres }, (_, i) => (
+                <i
+                  key={i}
+                  className={`h-1 flex-1 rounded-full ${i === 0 ? 'bg-aprobada' : 'bg-tinta/[0.12]'}`}
+                />
+              ))}
+            </div>
+            <p className="mt-2.5 text-[12.5px] text-tinta-tenue">
+              {semestres} {semestres === 1 ? 'semestre' : 'semestres'} con {textoCarga(carga)} ·{' '}
+              {materias} {materias === 1 ? 'materia' : 'materias'}
+            </p>
+          </>
+        )}
       </div>
-      <div className="flex items-center justify-between border-t border-[var(--tarjeta-plan-linea)] px-4 py-3 text-[14px] font-semibold text-aprobada">
+      <div className="flex items-center justify-between border-t border-panel-borde px-4 py-3 text-[14px] font-semibold text-aprobada">
         Planificar mi ruta
         <ChevronRight
           size={18}

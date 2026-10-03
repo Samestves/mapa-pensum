@@ -2378,13 +2378,12 @@ button.casilla-semestre .tilde {
   }
 }
 
-/* La tarjeta del plan: un tinte del verde de aprobada sobre el panel, con su
-   propio contorno. Es lo unico de color en la hoja, porque es lo unico que
-   lleva a otro sitio. */
+/* La tarjeta del plan: la misma superficie que los semestres de la ruta, que
+   es a donde lleva. El verde queda para lo que se toca y para el semestre
+   que viene; un tinte de color en toda la tarjeta se veia a plantilla. */
 .tarjeta-plan {
-  --tarjeta-plan-linea: color-mix(in oklab, var(--estado-aprobada) 18%, transparent);
-  background: color-mix(in oklab, var(--estado-aprobada) 9%, var(--panel));
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
+  background: var(--panel-suave);
+  box-shadow: inset 0 0 0 1px var(--panel-borde);
 }
 
 /* La pieza que marca el tema elegido en la hoja de avance. */
@@ -2534,8 +2533,8 @@ button.casilla-semestre .tilde {
    dentro del relleno, como el limite de carga de un coche electrico. Por
    debajo es un <input type="range"> de verdad, transparente y a toda la
    barra: el teclado, el lector de pantalla y el arrastre los pone el
-   navegador. Su pulgar es invisible y de 28 px, y --lleno lleva el centro de
-   ese pulgar, asi que el relleno nunca se despega del dedo.
+   navegador. Su pulgar es invisible y de 28 px; --lleno es el borde del
+   relleno, que va de 28 px en el minimo a la barra entera en el maximo.
    ------------------------------------------------------------------ */
 .mando-carga {
   position: relative;
@@ -2557,13 +2556,14 @@ button.casilla-semestre .tilde {
   );
 }
 
-/* El asa: una raya oscura dentro del relleno, justo antes de su borde */
+/* El asa: una raya oscura dentro del relleno, centrada 10 px antes de su
+   borde, que es donde PlanRuta pone las marcas y la escala */
 .mando-carga::after {
   content: '';
   position: absolute;
   top: 9px;
   bottom: 9px;
-  left: calc(var(--lleno) - 9px);
+  left: calc(var(--lleno) - 12px);
   width: 4px;
   border-radius: 4px;
   background: var(--lienzo);

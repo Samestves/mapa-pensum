@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RotateCcw, TriangleAlert } from 'lucide-react'
+import { Check, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 
 /* Piezas del avance (ver ContenidoAvance), aparte porque tienen estado o
    reglas propias: la cuota de un grupo de electivas y el reinicio con su
    confirmacion. */
 
-/** Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado. */
+/**
+ * Cuota de un grupo. Sin meta oficial no hay barra: solo lo acumulado.
+ *
+ * Las cifras van en tinta, como todas las del avance, y el verde se lo lleva
+ * la barra: es avance como cualquier otro. El naranja que tenian por estar
+ * incompletas hablaba de un aviso que no hay -empezar en cero es lo normal-
+ * y lo confundia con el naranja de "cursando".
+ */
 export function CuotaGrupo({ avance }) {
-  const color = avance.completa ? 'var(--estado-aprobada)' : 'var(--estado-cursando)'
   const pct = avance.meta ? Math.min(100, (avance.uc / avance.meta) * 100) : 0
 
   return (
@@ -17,15 +23,17 @@ export function CuotaGrupo({ avance }) {
         <span className="min-w-0 truncate text-[13.5px] font-medium text-tinta">
           {avance.titulo}
         </span>
-        <span className="shrink-0 text-[12.5px] font-semibold tabular-nums" style={{ color }}>
-          {avance.meta != null ? `${avance.uc}/${avance.meta} UC` : `${avance.uc} UC`}
+        <span className="flex shrink-0 items-center gap-1 text-[12.5px] text-tinta-tenue tabular-nums">
+          {avance.completa && <Check size={13} strokeWidth={2.6} className="text-aprobada" />}
+          <span className="font-semibold text-tinta">{avance.uc}</span>
+          {avance.meta != null && ` de ${avance.meta}`} UC
         </span>
       </div>
       {avance.meta != null && (
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-tinta/[0.08]">
           <div
-            className="h-full rounded-full transition-[width] duration-500 ease-out"
-            style={{ width: `${pct}%`, backgroundColor: color }}
+            className="h-full rounded-full bg-aprobada transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%` }}
           />
         </div>
       )}

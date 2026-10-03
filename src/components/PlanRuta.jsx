@@ -1,18 +1,17 @@
 import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
-import { ChevronRight, Download, FileText, GraduationCap, TriangleAlert, X } from 'lucide-react'
+import { Check, ChevronDown, Download, GraduationCap, Share, TriangleAlert, X } from 'lucide-react'
 import { etiquetaSemestre, horasDe, mesEstimadoGrado, planificar } from '../layout/planificador'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { guardar, leer } from '../data/almacen'
 import { LIMITES_CARGA, guardarCarga, leerCarga, textoCarga } from '../data/cargaPlan'
-import { descargarMarkdown, MES } from '../data/exportarPlan'
+import { compartirTexto, MES, mesCorto, textoDeLaRuta } from '../data/exportarPlan'
 import { colorArea } from '../theme/areas'
 import HojaInferior from './HojaInferior'
 import HojaPlan, { ALTO_HOJA, ANCHO_HOJA } from './HojaPlan'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
-const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const ROTULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'
 
 /**
@@ -126,8 +125,8 @@ function Ruta({ carrera, marcas, progreso, elegidas, telefono = false, alCerrar 
   const acciones = (
     <Acciones
       alImprimir={imprimir}
-      alDescargar={() =>
-        descargarMarkdown({ carrera, nombre, progreso, plan, carga: cargaDelPlan, grado })
+      alCompartir={() =>
+        compartirTexto(textoDeLaRuta({ carrera, plan, carga: cargaDelPlan, grado }))
       }
       deshabilitado={terminado}
     />
@@ -215,7 +214,7 @@ function Fecha({ plan, grado }) {
           de semestres. */}
       <p className="text-[13.5px] text-tinta-suave">Te gradúas hacia</p>
       <p className="mt-3 text-[64px] leading-[0.86] font-extralight tracking-[-0.05em] text-tinta tabular-nums">
-        {MESES_CORTOS[grado.getMonth()]} {grado.getFullYear()}
+        {mesCorto(grado)}
       </p>
       <p className="mt-3 text-[13px] text-tinta-tenue">
         {semestres} {semestres === 1 ? 'semestre' : 'semestres'} · {plan.materiasRestantes}{' '}
@@ -225,10 +224,14 @@ function Fecha({ plan, grado }) {
   )
 }
 
-/* Donde cae cada valor sobre el mando. El pulgar es invisible y mide 28 px:
-   su centro recorre la pista desde 14 px hasta 14 px antes del final, y el
-   relleno, las marcas y la escala usan la misma cuenta para no despegarse. */
-const POSICION = (fraccion) => `calc(14px + (100% - 28px) * ${fraccion})`
+/* Hasta donde llega el relleno: 28 px en el minimo -para que el asa quepa
+   dentro- y la barra entera en el maximo. El pulgar del input, invisible y
+   de 28 px, se mueve a la par: su centro va siempre 14 px por detras del
+   borde, debajo del asa, asi que el relleno no se despega del dedo. */
+const RELLENO = (fraccion) => `calc(28px + (100% - 28px) * ${fraccion})`
+/* Donde cae el asa para cada valor, 10 px antes del borde del relleno. Las
+   marcas y los numeros de la escala van ahi: el asa se posa justo encima. */
+const POSICION = (fraccion) => `calc(18px + (100% - 28px) * ${fraccion})`
 
 /**
  * La carga por semestre, en un solo mando ancho como el limite de carga de
@@ -255,7 +258,7 @@ function MandoCarga({ carga, alCambiar, plan }) {
         </span>
       </div>
 
-      <div className="mando-carga mt-2.5" style={{ '--lleno': POSICION(fraccion(carga.valor)) }}>
+      <div className="mando-carga mt-2.5" style={{ '--lleno': RELLENO(fraccion(carga.valor)) }}>
         {marcas.slice(1, -1).map((v) => (
           <i
             key={v}
@@ -359,16 +362,18 @@ function ListaSemestres({ plan, grado }) {
         </p>
       )}
 
-      {plan.semestres.map((s) => (
-        <GrupoSemestre
-          key={s.numero}
-          semestre={s}
-          abierto={abiertos.has(s.numero)}
-          alAlternar={() => alternar(s.numero)}
-        />
-      ))}
+      <div className="mt-4 flex flex-col gap-2.5">
+        {plan.semestres.map((s) => (
+          <GrupoSemestre
+            key={s.numero}
+            semestre={s}
+            abierto={abiertos.has(s.numero)}
+            alAlternar={() => alternar(s.numero)}
+          />
+        ))}
+      </div>
 
-      <p className="mt-6 flex items-center gap-2.5 rounded-2xl border border-panel-borde bg-panel-suave px-4 py-3.5 text-[14.5px] font-semibold text-aprobada">
+      <p className="mt-2.5 flex items-center gap-2.5 rounded-2xl border border-panel-borde bg-panel-suave px-4 py-3.5 text-[14.5px] font-semibold text-aprobada">
         <GraduationCap size={18} strokeWidth={1.8} />
         Grado hacia {MES(grado).toLowerCase()}
       </p>
@@ -376,35 +381,47 @@ function ListaSemestres({ plan, grado }) {
   )
 }
 
+/**
+ * Un semestre de la ruta, como una fila de ajustes de iOS que se despliega:
+ * el titulo con su chevron, que apunta a la derecha plegado y hacia abajo
+ * abierto. Plegado enseña de un vistazo que lleva -el color de cada materia
+ * y sus nombres-; abierto, la lista entera.
+ */
 function GrupoSemestre({ semestre, abierto, alAlternar }) {
   const { numero, materias, uc } = semestre
   return (
-    <div className="mt-6">
+    <div className="overflow-hidden rounded-2xl border border-panel-borde bg-panel-suave">
       <button
         type="button"
         onClick={alAlternar}
         aria-expanded={abierto}
-        className="flex w-full items-baseline justify-between px-1.5 pb-2 text-left"
+        className="flex w-full items-center gap-3 px-4 pt-3.5 pb-3 text-left"
       >
-        <span className={ROTULO}>{etiquetaSemestre(numero)}</span>
-        <span className="text-[12px] text-tinta-tenue tabular-nums">{uc} UC</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-tinta">
+            {etiquetaSemestre(numero)}
+          </span>
+          <span className="mt-0.5 block text-[12.5px] text-tinta-tenue tabular-nums">
+            {materias.length} {materias.length === 1 ? 'materia' : 'materias'} · {uc} UC
+          </span>
+        </span>
+        <ChevronDown
+          size={18}
+          strokeWidth={2}
+          aria-hidden="true"
+          className={`shrink-0 text-tinta-tenue transition-transform duration-300 ${abierto ? '' : '-rotate-90'}`}
+        />
       </button>
 
       {abierto ? (
-        <ul className="rounded-2xl border border-panel-borde bg-panel-suave px-4">
+        <ul className="mx-4 border-t border-panel-borde">
           {materias.map((a) => (
             <FilaMateria key={a.codigo} materia={a} />
           ))}
         </ul>
       ) : (
-        <button
-          type="button"
-          onClick={alAlternar}
-          aria-expanded={false}
-          aria-label={`${etiquetaSemestre(numero)}: ${materias.length} materias`}
-          className="flex w-full items-center gap-3 rounded-2xl border border-panel-borde bg-panel-suave px-4 py-3.5 text-left"
-        >
-          <span className="flex shrink-0 gap-[3px]" aria-hidden="true">
+        <p className="-mt-0.5 flex items-center gap-2.5 px-4 pb-3.5" aria-hidden="true">
+          <span className="flex shrink-0 gap-[3px]">
             {materias.map((a) => (
               <i
                 key={a.codigo}
@@ -413,14 +430,10 @@ function GrupoSemestre({ semestre, abierto, alAlternar }) {
               />
             ))}
           </span>
-          <span className="min-w-0 flex-1 truncate text-[14.5px] text-tinta">
+          <span className="min-w-0 flex-1 truncate text-[13.5px] text-tinta-suave">
             {materias.map((a) => a.nombre).join(', ')}
           </span>
-          <span className="flex shrink-0 items-center text-[13px] text-tinta-tenue tabular-nums">
-            {materias.length}
-            <ChevronRight size={15} />
-          </span>
-        </button>
+        </p>
       )}
     </div>
   )
@@ -453,20 +466,30 @@ function FilaMateria({ materia: a }) {
   )
 }
 
-function Acciones({ alImprimir, alDescargar, deshabilitado }) {
+function Acciones({ alImprimir, alCompartir, deshabilitado }) {
+  // Donde no hay hoja de compartir se copia: el boton lo confirma un momento
+  const [copiado, setCopiado] = useState(false)
+  useEffect(() => {
+    if (!copiado) return
+    const t = setTimeout(() => setCopiado(false), 1800)
+    return () => clearTimeout(t)
+  }, [copiado])
+
   return (
     <div className="flex gap-2">
-      {/* El .md va de boton secundario y sin etiqueta: util para quien sabe
-          lo que es, y sin quitarle sitio a lo que busca casi todo el mundo. */}
       <button
         type="button"
-        onClick={alDescargar}
+        onClick={async () => setCopiado((await alCompartir()) === 'copiado')}
         disabled={deshabilitado}
-        title="Descargar el plan en texto (.md)"
-        aria-label="Descargar el plan en texto (.md)"
+        title={copiado ? 'Ruta copiada' : 'Compartir mi ruta'}
+        aria-label={copiado ? 'Ruta copiada' : 'Compartir mi ruta'}
         className="barra-cristal relative grid size-[52px] shrink-0 place-items-center rounded-full text-tinta-suave transition-transform active:scale-95 disabled:opacity-40"
       >
-        <FileText size={18} strokeWidth={1.8} />
+        {copiado ? (
+          <Check size={19} strokeWidth={2.2} className="text-aprobada" />
+        ) : (
+          <Share size={18} strokeWidth={1.9} />
+        )}
       </button>
       <button
         type="button"
