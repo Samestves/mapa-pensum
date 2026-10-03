@@ -215,10 +215,9 @@ function Horario({ carrera, estados }) {
 
       {aLeer && (
         <ImportarHorario
-          /* La key hace que elegir otra imagen sin cerrar el modal vuelva a
-             empezar de cero. Sin ella se reaprovecharia el estado de la
-             lectura anterior y se veria la lista vieja bajo la foto nueva. */
-          key={`${aLeer.name}-${aLeer.lastModified}`}
+          /* Sin key: elegir otra imagen cambia el archivo y la lectura
+             empieza de cero ella sola (ver useLecturaHorario). Con una key
+             la hoja se desmontaba y volvia a subir entre una foto y otra. */
           archivo={aLeer}
           materias={todas}
           sesiones={sesiones}

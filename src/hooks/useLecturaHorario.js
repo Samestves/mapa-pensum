@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { comoFallo, leerHorarioDeImagen, prepararImagen } from '../data/leerHorario.js'
+import {
+  FalloLectura,
+  comoFallo,
+  leerHorarioDeImagen,
+  prepararImagen,
+} from '../data/leerHorario.js'
 import { revisar } from '../layout/importarHorario.js'
 
 export const FASE = {
@@ -45,10 +50,11 @@ const dormir = (ms, senal) =>
  * volvia a decodificar y comprimir una foto de varios megas.
  *
  * @returns {{
- *   fase: string, fallo: Error|undefined, hasta: number|undefined,
+ *   fase: string, fallo: Error|undefined,
+ *   espera: { hasta: number, plazo: number }|undefined,
  *   imagen: object|null, candidatas: object[], setCandidatas: Function,
  *   reintentar: Function,
- * }}  `hasta` es el instante en que termina la espera, cuando la hay
+ * }}  `espera` es la cola: el instante en que termina y los milisegundos que dura
  */
 export function useLecturaHorario({ archivo, materias, sesiones }) {
   const [imagen, setImagen] = useState(null)
@@ -103,6 +109,9 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
             senal: control.signal,
           })
           if (cortado()) return
+          /* Sin ninguna clase no hay nada que revisar: es un fallo de la
+             foto, y se cuenta como los demas. */
+          if (!filas.length) throw new FalloLectura('sin-clases')
           setCandidatas(revisar(filas, materias, sesiones))
           setEstado({ fase: FASE.REVISAR })
           return
@@ -111,14 +120,14 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
           const fallo = comoFallo(error)
           /* Lo que dijo el servidor no se le enseña al estudiante, pero quien
              venga a arreglarlo lo necesita. */
-          if (fallo.detalle) console.warn(`[lector] ${fallo.codigo} · ${fallo.detalle}`)
+          if (fallo.tecnico) console.warn(`[lector] ${fallo.codigo} · ${fallo.tecnico}`)
 
           if (fallo.espera == null || vuelta >= VUELTAS_SOLAS) {
             setEstado({ fase: FASE.ERROR, fallo })
             return
           }
           const plazo = fallo.espera * 1000 + Math.random() * MARGEN_MS
-          setEstado({ fase: FASE.ESPERANDO, hasta: Date.now() + plazo })
+          setEstado({ fase: FASE.ESPERANDO, espera: { hasta: Date.now() + plazo, plazo } })
           await dormir(plazo, control.signal)
           if (cortado()) return
           setEstado({ fase: FASE.LEYENDO })

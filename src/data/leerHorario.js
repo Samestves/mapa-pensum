@@ -40,85 +40,131 @@ export const SALIDA = {
 
 /* Las averias del lector -un modelo jubilado, una clave sin permiso- se dicen
    igual todas. A quien quiere su horario le da lo mismo cual sea, y lo unico
-   que tiene que saber es que no es por su foto. El detalle de cual fue queda
-   en la consola y en el registro del servidor, para quien lo arregla. */
+   que tiene que saber es que no es por su foto. Cual fue queda en la consola
+   y en el registro del servidor, para quien lo arregla. */
 const AVERIA = {
-  mensaje: 'El lector está fuera de servicio. No es por tu imagen.',
+  titulo: 'El lector está fuera de servicio',
+  consejo: 'No es por tu imagen. Mientras vuelve, puedes armar el horario a mano.',
   salida: SALIDA.A_MANO,
 }
 
-/** Cada fallo, en cristiano y con su salida. La vista los enseña tal cual. */
+/**
+ * Cada fallo, en cristiano: que paso, que hacer y con que salida. La vista
+ * los enseña tal cual.
+ *
+ * `aplazado` marca los que no son un error sino un "todavia no": el lector
+ * vuelve solo, mañana o dentro de una hora. Se dibujan con el reloj de arena
+ * y no con el aviso.
+ */
 const FALLOS = {
   /* Cola y cuota son cosas distintas y hay que decirlo: la primera se pasa
      en segundos -el lector atiende unas veinte lecturas por minuto, o Google
      esta lleno un momento- y la segunda mañana. Con el mismo mensaje nadie
      sabe si quedarse mirando la pantalla. */
-  cola: { mensaje: 'Hay mucha gente leyendo su horario ahora mismo.', salida: SALIDA.REINTENTAR },
+  cola: {
+    titulo: 'Sigue habiendo cola',
+    consejo: 'Lo intenté varias veces y no hubo sitio. Tu imagen sigue aquí.',
+    salida: SALIDA.REINTENTAR,
+  },
   cuota: {
-    mensaje: 'Hoy ya se leyeron todos los horarios que el lector permite. Mañana vuelve.',
+    titulo: 'El lector vuelve mañana',
+    consejo: 'Hoy ya se leyeron todos los horarios que permite. Tu horario no se ha tocado.',
     salida: SALIDA.A_MANO,
+    aplazado: true,
   },
   muchas: {
-    mensaje: 'Has leído muchas imágenes seguidas. El lector te deja volver en una hora.',
+    titulo: 'Muchas lecturas seguidas',
+    consejo: 'El lector te deja volver dentro de una hora. Mientras, puedes armarlo a mano.',
     salida: SALIDA.A_MANO,
+    aplazado: true,
   },
   red: {
-    mensaje: 'No se pudo conectar con el lector. Revisa tu conexión.',
+    titulo: 'Sin conexión con el lector',
+    consejo: 'Revisa tu conexión y vuelve a intentarlo. Tu imagen sigue aquí.',
     salida: SALIDA.REINTENTAR,
   },
-  ia: { mensaje: 'El lector no pudo con esta imagen.', salida: SALIDA.REINTENTAR },
+  ia: {
+    titulo: 'No pude con esta imagen',
+    consejo: 'A veces sale a la segunda. Si no, prueba con una captura de pantalla.',
+    salida: SALIDA.REINTENTAR,
+  },
   vacia: {
-    mensaje: 'El lector no encontró nada que leer. Prueba con una foto más nítida.',
+    titulo: 'No encontré nada que leer',
+    consejo: 'Vuelve a intentarlo, o prueba con una foto más nítida.',
     salida: SALIDA.REINTENTAR,
   },
-  json: { mensaje: 'La lectura llegó a medias.', salida: SALIDA.REINTENTAR },
+  json: {
+    titulo: 'La lectura llegó a medias',
+    consejo: 'Vuelve a intentarlo: suele salir a la segunda.',
+    salida: SALIDA.REINTENTAR,
+  },
 
-  'sin-imagen': { mensaje: 'No llegó ninguna imagen.', salida: SALIDA.OTRA_IMAGEN },
+  /* Se leyo bien y no habia clases: casi siempre es la foto */
+  'sin-clases': {
+    titulo: 'No encontré clases ahí',
+    consejo: 'Prueba con una captura de pantalla, o con una foto más recta y con buena luz.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+  'sin-imagen': {
+    titulo: 'No llegó ninguna imagen',
+    consejo: 'Elige la foto o la captura de tu horario.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
   'imagen-grande': {
-    mensaje: 'La imagen pesa demasiado. Prueba con una captura de pantalla.',
+    titulo: 'La imagen pesa demasiado',
+    consejo: 'Prueba con una captura de pantalla.',
     salida: SALIDA.OTRA_IMAGEN,
   },
   tipo: {
-    mensaje: 'Ese formato de imagen no se puede leer. Usa JPG, PNG o una captura.',
+    titulo: 'Ese formato no se puede leer',
+    consejo: 'Usa JPG, PNG o una captura de pantalla.',
     salida: SALIDA.OTRA_IMAGEN,
   },
-  'no-es-imagen': { mensaje: 'Eso no es una imagen.', salida: SALIDA.OTRA_IMAGEN },
+  'no-es-imagen': {
+    titulo: 'Eso no es una imagen',
+    consejo: 'Elige la foto o la captura de tu horario.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
   pesada: {
-    mensaje: 'Esa imagen pesa más de 12 MB. Prueba con una captura de pantalla.',
+    titulo: 'La imagen pesa más de 12 MB',
+    consejo: 'Prueba con una captura de pantalla.',
     salida: SALIDA.OTRA_IMAGEN,
   },
   'no-se-abre': {
-    mensaje:
-      'No se pudo abrir esa imagen. Si viene de un iPhone, prueba con una captura de pantalla.',
+    titulo: 'No se pudo abrir la imagen',
+    consejo: 'Si viene de un iPhone, prueba con una captura de pantalla.',
     salida: SALIDA.OTRA_IMAGEN,
   },
 
   fuera: {
-    mensaje: 'Algo se quedó viejo en esta página. Recárgala y vuelve a subir la imagen.',
+    titulo: 'Esta página se quedó vieja',
+    consejo: 'Recárgala y vuelve a subir la imagen.',
     salida: SALIDA.A_MANO,
   },
   'sin-servidor': {
-    mensaje:
-      'El lector no está disponible aquí. En desarrollo local hace falta arrancar con "vercel dev".',
+    titulo: 'El lector no está aquí',
+    consejo: 'En desarrollo local hace falta arrancar con "vercel dev".',
     salida: SALIDA.A_MANO,
   },
-  desconocido: AVERIA,
 }
 
 /** Un error con codigo, para que la vista decida sin leer mensajes. */
-class FalloLectura extends Error {
+export class FalloLectura extends Error {
   /**
    * @param {string} codigo
    * @param {object} [extra]
-   * @param {string} [extra.detalle]  lo que dijo el servidor, para quien lo arregla
+   * @param {string} [extra.tecnico]  lo que dijo el servidor, para quien lo arregla
    * @param {number} [extra.espera]   segundos tras los que merece la pena volver
    */
-  constructor(codigo, { detalle, espera } = {}) {
-    const { mensaje, salida } = FALLOS[codigo] ?? AVERIA
-    super(mensaje)
+  constructor(codigo, { tecnico, espera } = {}) {
+    const { titulo, consejo, salida, aplazado = false } = FALLOS[codigo] ?? AVERIA
+    super(titulo)
     this.codigo = codigo
+    this.titulo = titulo
+    this.consejo = consejo
     this.salida = salida
-    this.detalle = detalle
+    this.aplazado = aplazado
+    this.tecnico = tecnico
     this.espera = espera
   }
 }
@@ -129,7 +175,7 @@ class FalloLectura extends Error {
 export const comoFallo = (error) =>
   error instanceof FalloLectura
     ? error
-    : new FalloLectura('desconocido', { detalle: String(error?.message ?? error) })
+    : new FalloLectura('desconocido', { tecnico: String(error?.message ?? error) })
 
 const leerComo = (blob, metodo) =>
   new Promise((cumplir, fallar) => {
@@ -214,7 +260,7 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
     })
   } catch (e) {
     if (e?.name === 'AbortError') throw e
-    throw new FalloLectura('red', { detalle: String(e?.message ?? e) })
+    throw new FalloLectura('red', { tecnico: String(e?.message ?? e) })
   }
 
   /* En `npm run dev` no hay funciones: Vite devuelve el index.html para
@@ -230,7 +276,7 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
        -hay cola- y cuanto tarda. Es lo que le permite a
        la pantalla esperar y volver sin que nadie pulse nada. */
     throw new FalloLectura(datos?.error ?? 'desconocido', {
-      detalle: datos?.detalle,
+      tecnico: datos?.detalle,
       espera: Number.isFinite(datos?.espera) ? datos.espera : undefined,
     })
   }

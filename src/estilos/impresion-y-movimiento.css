@@ -97,7 +97,11 @@
   .hoja-inferior,
   .velo-hoja,
   .panel-lateral,
-  .semana-muestra[data-foco='foto'] .escaneo-muestra {
+  .semana-muestra[data-foco='foto'] .escaneo-muestra,
+  .lector-barrido,
+  .lector-lineas > *,
+  .lector-cara,
+  .lector-arco {
     animation: none;
   }
 

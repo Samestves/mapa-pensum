@@ -36,8 +36,12 @@ const UMBRAL_VELOCIDAD = 0.5
  * React: son decenas de movimientos por segundo y ninguno cambia nada mas que
  * la posicion. Se tira del asa y de la `cabecera`, no del contenido: el
  * contenido se desplaza, y un mismo gesto no puede significar las dos cosas.
+ *
+ * `pie` es lo que se queda abajo, a la vista, mientras el contenido se
+ * desplaza: los botones de una lista larga. `alIrse` avisa cuando la hoja ha
+ * terminado de bajar, para quien tiene que esperar a eso antes de desmontarla.
  */
-function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
+function HojaInferior({ abierta, alCerrar, alIrse, etiqueta, cabecera, pie, children }) {
   const [montada, setMontada] = useState(abierta)
   if (abierta && !montada) setMontada(true)
   const saliendo = montada && !abierta
@@ -50,9 +54,12 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
 
   useEffect(() => {
     if (!saliendo) return
-    const t = setTimeout(() => setMontada(false), SALIDA_MS)
+    const t = setTimeout(() => {
+      setMontada(false)
+      alIrse?.()
+    }, SALIDA_MS)
     return () => clearTimeout(t)
-  }, [saliendo])
+  }, [saliendo, alIrse])
 
   /* Si se vuelve a abrir mientras bajaba, la posicion que dejo el arrastre ya
      no vale: la hoja vuelve a su sitio con su transicion. */
@@ -159,9 +166,16 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
           {cabecera}
         </div>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
+        {/* Lo que respeta la barra de gestos es lo ultimo de la hoja: el
+            contenido, o el pie si lo hay. */}
+        <div
+          className={`min-h-0 overflow-y-auto overscroll-contain ${
+            pie ? '' : 'pb-[env(safe-area-inset-bottom)]'
+          }`}
+        >
           {children}
         </div>
+        {pie && <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">{pie}</div>}
       </section>
     </div>,
     document.body,

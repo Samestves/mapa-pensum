@@ -1,0 +1,171 @@
+/* ---- El lector de horarios ------------------------------------------------
+   La hoja que se abre al subir la foto del horario. Tiene dos caras:
+
+   Leyendo, la imagen ES la hoja: va de borde a borde, una linea la recorre
+   de arriba abajo y el texto queda debajo a la izquierda, sobre un velo que
+   la funde con el panel. Es lo unico que pasa en ese rato y se enseña entero.
+
+   Todo lo demas -la cola, lo que no se pudo- va centrado alrededor de un
+   anillo fino que cuenta o que avisa, con una sola accion llena.
+   ------------------------------------------------------------------------ */
+
+/* La foto de un horario casi siempre es una captura blanca. En oscuro, a toda
+   luz, deslumbra y se come el texto de debajo: se apaga un poco. Con un velo
+   y no con filter, que obligaria a recalcular la imagen entera. */
+.lector-foto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+
+[data-tema='claro'] .lector-foto::after {
+  background: none;
+}
+
+/* El velo sobre el que se lee el texto. Es el fondo del propio bloque de
+   texto, que se monta sobre el borde de abajo de la foto: nada arriba, el
+   panel entero un poco mas abajo. Asi la foto se funde con la hoja mida lo
+   que mida, y sirve igual en los dos temas porque sale del panel. */
+.lector-velo {
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    color-mix(in oklab, var(--panel) 70%, transparent) 52px,
+    var(--panel) 96px
+  );
+}
+
+/* La linea de lectura. Mide lo que la foto y lleva la luz en su borde de
+   abajo: asi recorrerla entera es un transform de -100% a 0, que el navegador
+   mueve sin repintar nada. La cola es una sombra y la linea, clara con un filo
+   oscuro debajo: se ve sobre una captura blanca y sobre una foto oscura. */
+.lector-barrido {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent calc(100% - 84px),
+    rgb(0 0 0 / 0.14) calc(100% - 2px),
+    rgb(255 255 255 / 0.92) calc(100% - 2px),
+    rgb(255 255 255 / 0.92) calc(100% - 1px),
+    rgb(0 0 0 / 0.4) calc(100% - 1px)
+  );
+  animation: lector-barrer 3200ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes lector-barrer {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Las lineas del texto entran una tras otra, despacio y sin rebote. */
+.lector-lineas > * {
+  animation: lector-entrar 700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.lector-lineas > :nth-child(2) {
+  animation-delay: 130ms;
+}
+
+.lector-lineas > :nth-child(3) {
+  animation-delay: 260ms;
+}
+
+.lector-lineas > :nth-child(4) {
+  animation-delay: 390ms;
+}
+
+@keyframes lector-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Al cambiar de cara, la nueva se funde en vez de aparecer de golpe. */
+.lector-cara {
+  animation: lector-fundir 320ms ease both;
+}
+
+@keyframes lector-fundir {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* En modo ligero, ni la cascada ni el fundido: cada pieza que se anima al
+   entrar es una capa mas que el telefono tiene que crear (ver data/ligero.js).
+   La linea de lectura se queda: es lo unico que dice que se esta leyendo. */
+[data-ligero] .lector-lineas > *,
+[data-ligero] .lector-cara {
+  animation: none;
+}
+
+/* ---- El anillo ----
+   La circunferencia mide 100 (ver pathLength en LectorAviso.jsx), asi que el
+   arco se vacia llevando el desfase de 0 a 100. La duracion la pone quien lo
+   dibuja: es lo que falta para volver a intentarlo. */
+.lector-anillo circle {
+  fill: none;
+}
+
+.lector-riel {
+  stroke: color-mix(in oklab, var(--tinta) 13%, transparent);
+}
+
+.lector-arco {
+  stroke: var(--tinta);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  animation: lector-vaciar linear both;
+}
+
+@keyframes lector-vaciar {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+
+/* La accion llena. Tinta sobre lienzo: blanca en oscuro y negra en claro, sin
+   color. El color de esta hoja se guarda para lo que significa algo. */
+.boton-lector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--tinta);
+  color: var(--lienzo);
+  font-size: 14.5px;
+  font-weight: 600;
+  transition:
+    transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 200ms ease;
+}
+
+.boton-lector:active {
+  transform: scale(0.985);
+}
+
+.boton-lector:disabled {
+  opacity: 0.4;
+}
