@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto'
+import { hayAlmacen, pedir } from './_almacen.js'
 import { PREFIJO, fechaDe } from './latido.js'
 
 /**
@@ -12,9 +13,6 @@ import { PREFIJO, fechaDe } from './latido.js'
  * Lee y no escribe nunca. Se pide por secciones -general, una carrera, los
  * aparatos- para que mirar una carrera no vuelva a cargar todo lo demas.
  */
-
-const URL_REDIS = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
-const TOKEN_REDIS = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
 
 const k = (...partes) => [PREFIJO, ...partes].join(':')
 
@@ -45,17 +43,6 @@ export function ultimosMeses(n, hoy) {
     meses.push(mes.toISOString().slice(0, 7))
   }
   return meses
-}
-
-async function pedir(comandos) {
-  const respuesta = await fetch(`${URL_REDIS}/pipeline`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN_REDIS}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(comandos),
-  })
-  if (!respuesta.ok) throw new Error(`Redis respondio ${respuesta.status}`)
-  const datos = await respuesta.json()
-  return datos.map((d) => d.result)
 }
 
 const numero = (v) => Number(v ?? 0) || 0
@@ -313,7 +300,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'metodo' })
   if (!process.env.PANEL_CLAVE) return res.status(503).json({ error: 'sin-clave' })
   if (!claveCorrecta(req.query?.clave)) return res.status(401).json({ error: 'clave' })
-  if (!URL_REDIS || !TOKEN_REDIS) return res.status(503).json({ error: 'sin-almacen' })
+  if (!hayAlmacen()) return res.status(503).json({ error: 'sin-almacen' })
 
   const hoy = fechaDe()
   const cuantos = Math.min(Math.max(Number(req.query?.dias) || 30, 7), 120)

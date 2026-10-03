@@ -1,3 +1,15 @@
+import { createHmac } from 'node:crypto'
+import { leerCuota } from './_cuota.js'
+import {
+  MOTIVO,
+  TOPE_POR_HORA,
+  abrirTurno,
+  cerrarTurno,
+  descansoPor,
+  esperaDe,
+  pausar,
+} from './_turno.js'
+
 /**
  * Lee un horario de una imagen. Funcion de Vercel, no del navegador.
  *
@@ -14,6 +26,9 @@
  * choques ocurre en el navegador -en layout/importarHorario.js, que se prueba
  * sin red-, porque son las reglas de esta aplicacion y no tienen por que
  * depender de que un servicio de terceros este de buenas.
+ *
+ * El cupo es gratuito y es poco: unas veinte peticiones por minuto y por
+ * modelo. Casi todo lo que hay aqui debajo existe para no gastarlo en balde.
  */
 
 /* Una foto de un horario tarda entre cinco y veinte segundos en leerse. El
@@ -21,78 +36,70 @@
    las lecturas buenas se cortarian a mitad. */
 export const config = { maxDuration: 60 }
 
-/* Los modelos a probar, EN ORDEN. Una lista y no uno solo, y aqui las dos
-   razones son distintas:
+const GOOGLE = 'https://generativelanguage.googleapis.com/v1beta/models'
+
+/* Los modelos a probar, EN ORDEN. Una lista y no uno solo, por tres razones:
 
    Que sea configurable es porque Google renombra y jubila modelos mas rapido
    de lo que se despliega esto; quedarse clavado en uno es garantizarse un 404
    dentro de unos meses.
 
-   Que sean VARIOS lo enseño el primer dia de uso real: un alias '-latest'
-   apunta siempre al modelo mas nuevo, y el mas nuevo es justo el que todo el
-   mundo esta probando a la vez, o sea el que devuelve 503 "high demand". El
-   segundo de la lista es una version anterior, mas aburrida y menos llena. Se
-   pasa a ella solo cuando la primera no da senales de vida.
+   Que sean VARIOS es, primero, porque el mas nuevo es el que todo el mundo
+   esta probando a la vez, o sea el que devuelve 503 "high demand". Y segundo,
+   porque el cupo gratuito se cuenta POR MODELO: dos modelos son el doble de
+   lecturas por minuto y por dia, y un tercero, el triple.
 
-   Nombres FIJADOS y no alias. El alias parecia lo prudente -no se queda
-   obsoleto- y resulto ser lo contrario: te pone justo en el modelo mas nuevo,
-   que es el mas lleno, y ademas no se sabe cual te toco cuando falla. Con un
-   nombre fijo se sabe siempre contra que se hablo. El precio es que hay que
-   actualizarlos de vez en cuando, y para eso estan en una variable de
-   entorno: se cambian en el panel de Vercel sin desplegar.
-
-   Ninguno de los dos es el ultimo que existe, y es a proposito. */
+   Nombres FIJADOS y no alias. El alias '-latest' parecia lo prudente -no se
+   queda obsoleto- y resulto ser lo contrario: te pone justo en el modelo mas
+   nuevo, que es el mas lleno, y ademas no se sabe cual te toco cuando falla.
+   El precio es que hay que actualizarlos de vez en cuando, y para eso estan
+   en una variable de entorno. Ojo: en Vercel una variable cambiada no llega a
+   lo ya desplegado; hay que pulsar Redeploy. */
 const MODELOS_POR_DEFECTO = 'gemini-3.6-flash,gemini-3.5-flash'
 
-/* Un 503 es, por definicion, temporal: no es que la peticion este mal, es que
-   ahora mismo no hay sitio. Rendirse al primero convierte un tropiezo de dos
-   segundos en "no se pudo leer tu horario", y quien lo lee cierra la pantalla
-   y no vuelve. Estas son las esperas entre intentos, crecientes: insistir al
-   mismo ritmo contra un servicio lleno es parte del problema. */
-const ESPERAS_POR_DEFECTO = '800,2400'
-
-/* Las dos listas se leen en CADA llamada y no al cargar el modulo. En una
-   funcion sin servidor el entorno esta igual de disponible en los dos
-   momentos, asi que no se pierde nada, y se gana lo unico que importaba: que
-   cambiar la variable en el panel de Vercel surta efecto en la siguiente
-   peticion, sin esperar a que caduque la instancia que estaba caliente. */
-const listaDe = (variable, porDefecto) =>
-  (process.env[variable] || porDefecto)
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean)
+/* La lista se lee en cada llamada y no al cargar el modulo: asi las pruebas
+   la cambian sin reimportar nada. */
+const listaDe = (variable, porDefecto) => {
+  const partir = (texto) =>
+    texto
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean)
+  const lista = partir(process.env[variable] ?? '')
+  return lista.length ? lista : partir(porDefecto)
+}
 
 /* Cuanto se puede tardar en total antes de devolver algo. La funcion se corta
-   a los 60 s y una respuesta cortada por la plataforma no dice nada; a los 45
+   a los 60 s y una respuesta cortada por la plataforma no dice nada; a los 50
    se para por las buenas y se explica que pasa. */
-const PRESUPUESTO = 45_000
+const PRESUPUESTO = 50_000
 
-/* Los que merecen otro intento: el servicio esta lleno o se atraganto. Un 400
-   o un 404 no mejoran esperando -la peticion esta mal o el modelo no existe-
-   y reintentarlos solo gasta el tiempo que le queda a la funcion. */
-const REINTENTABLES = new Set([429, 500, 502, 503, 504])
+/* Lo que se espera a un modelo. Una lectura tarda entre cinco y veinte
+   segundos; uno que a los veinticinco no ha contestado esta atascado, y
+   seguir esperandolo es quitarle al otro el tiempo para leer. */
+const PLAZO_POR_MODELO = 25_000
 
-/* De que se queja Google, traducido a algo que se pueda ENSEÑAR y sobre lo
-   que se pueda actuar. En una tabla y no en ternarios encadenados porque ya
-   eran cuatro y el proximo error nuevo lo habria convertido en cinco.
+const SIN_CUPO = 429
+
+/* Los que dicen "ahora no puedo" sin que la peticion este mal: el servicio
+   esta lleno, se atraganto o no se llego a el (0). */
+const SATURADO = new Set([0, 500, 502, 503, 504])
+
+/* Los que no mejoran esperando, traducidos a algo sobre lo que se pueda
+   actuar: la peticion esta mal, la clave no alcanza, o el modelo no existe.
 
    Que el 404 tenga su propio codigo no es cosmetico: un modelo jubilado
-   contestaba lo mismo que un modelo saturado -"intentalo de nuevo en un
-   minuto"- y ese consejo es falso, porque un modelo que ya no existe no va a
-   existir dentro de un minuto. Se arregla cambiando GOOGLE_AI_MODELO, y para
-   eso primero hay que saber que es lo que pasa. */
+   contestaba lo mismo que uno saturado -"intentalo de nuevo en un minuto"- y
+   ese consejo es falso, porque un modelo que ya no existe no va a existir
+   dentro de un minuto. Se arregla cambiando GOOGLE_AI_MODELO, y para eso
+   primero hay que saber que es lo que pasa. */
 const CODIGO_POR_ESTADO = {
-  0: 'red',
   400: 'peticion',
   403: 'permiso',
   404: 'modelo',
-  429: 'cuota',
 }
 
-const codigoDe = (estado) =>
-  CODIGO_POR_ESTADO[estado] ?? (REINTENTABLES.has(estado) ? 'saturado' : 'ia')
-
-const dormir = (ms) => new Promise((r) => setTimeout(r, ms))
+const codigoDe = (estado) => CODIGO_POR_ESTADO[estado] ?? 'ia'
 
 /* Base64 infla un tercio. El cuerpo de una funcion de Vercel se corta en 4,5
    MB, asi que aqui se rechaza antes de intentarlo: mejor un mensaje claro que
@@ -171,11 +178,8 @@ ${materias.map((m) => `${m.codigo} — ${m.nombre}`).join('\n')}`
 
 /* Comprueba que la peticion viene de la propia web. Es un badén, no una
    cerradura: una cabecera se falsifica en una linea de curl. Pero para de
-   golpe el uso casual desde otra pagina, que es de donde vendria el gasto si
-   alguien encuentra el endpoint.
-   La proteccion de verdad seria un limite por IP. El almacen para llevarlo
-   ya existe -el Redis de Upstash de api/latido.js-, pero el limite todavia
-   no esta hecho. */
+   golpe el uso casual desde otra pagina. Lo que aguanta a quien la falsifica
+   es el tope por origen (ver _turno.js). */
 function mismaCasa(req) {
   const host = req.headers.host || ''
   if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) return true
@@ -189,8 +193,234 @@ function mismaCasa(req) {
   }
 }
 
-const fallo = (res, estado, error, detalle) =>
-  res.status(estado).json(detalle ? { error, detalle } : { error })
+/**
+ * Quien llama, para contarle las lecturas sin guardar su IP.
+ *
+ * La IP pasa por un HMAC y se guarda la huella: con ella se cuenta igual, y
+ * quien abra el almacen no puede volver de la huella a la IP sin el secreto.
+ * El secreto es la clave del lector porque ya esta aqui, no esta en el
+ * repositorio y un HMAC no la deja ver.
+ */
+function huellaDe(req, secreto) {
+  const ip = String(req.headers['x-forwarded-for'] ?? '')
+    .split(',')[0]
+    .trim()
+  return ip ? createHmac('sha256', secreto).update(ip).digest('hex').slice(0, 16) : null
+}
+
+/** Lo que entra, comprobado: o el fallo, o lo que se le va a mandar al modelo */
+function comprobar(cuerpo) {
+  const { imagen, tipo, materias } = cuerpo ?? {}
+
+  if (typeof imagen !== 'string' || !imagen) return { estado: 400, error: 'sin-imagen' }
+  if (imagen.length > TOPE_BASE64) return { estado: 413, error: 'imagen-grande' }
+  if (!TIPOS.includes(tipo)) return { estado: 400, error: 'tipo' }
+  if (!Array.isArray(materias) || !materias.length) return { estado: 400, error: 'sin-materias' }
+
+  const listado = materias
+    .slice(0, 200)
+    .map((m) => ({ codigo: String(m.codigo ?? ''), nombre: String(m.nombre ?? '') }))
+    .filter((m) => m.codigo && m.nombre)
+
+  return { imagen, tipo, listado }
+}
+
+const peticionA = (clave, { imagen, tipo, listado }) => ({
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
+  body: JSON.stringify({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: instrucciones(listado) },
+          { inline_data: { mime_type: tipo, data: imagen } },
+        ],
+      },
+    ],
+    generationConfig: {
+      /* A cero. Esto es una lectura, no una redaccion: la misma foto tiene
+         que dar el mismo resultado las dos veces que alguien la suba, y aqui
+         la variedad solo puede empeorar. */
+      temperature: 0,
+      responseMimeType: 'application/json',
+      responseSchema: ESQUEMA,
+    },
+  }),
+})
+
+/** Una peticion a un modelo. Nunca lanza: lo que falle vuelve como estado. */
+async function llamar(modelo, peticion, plazo) {
+  let r
+  try {
+    r = await fetch(`${GOOGLE}/${modelo}:generateContent`, {
+      ...peticion,
+      signal: AbortSignal.timeout(plazo),
+    })
+  } catch (e) {
+    // estado 0 = no hubo respuesta: la red del servidor, o se paso el plazo
+    return { estado: 0, texto: String(e?.message ?? e) }
+  }
+  if (r.ok) return { respuesta: r }
+  /* El mensaje de Google se guarda tal cual. Es lo unico que distingue "ese
+     modelo ya no existe" de "se acabo la cuota de hoy", y sin el, arreglar
+     esto seria adivinar. No lleva la clave: va en una cabecera, no en el
+     cuerpo ni en la URL. */
+  return { estado: r.status, texto: await r.text().catch(() => '') }
+}
+
+/**
+ * Por que un modelo no pudo, si es de las cosas que se pasan solas: se paso
+ * el cupo o esta lleno. Devuelve el descanso que le toca, o null si el fallo
+ * es de los que no mejoran esperando.
+ */
+function descansoDe({ estado, texto }) {
+  if (SATURADO.has(estado)) return descansoPor(MOTIVO.SATURADO)
+  if (estado !== SIN_CUPO) return null
+  const { porDia, espera } = leerCuota(texto)
+  return porDia ? descansoPor(MOTIVO.DIA) : descansoPor(MOTIVO.MINUTO, espera)
+}
+
+/**
+ * Pregunta a los modelos, en orden, hasta que uno conteste.
+ *
+ * UNA vez a cada uno. Ante un tropiezo se pasa al siguiente en vez de
+ * insistir en el mismo: contesta antes, y cada modelo gasta de su propio
+ * cupo. Eran tres intentos por modelo, seguidos: seis peticiones por lectura
+ * en el mismo minuto contra un cupo de veinte, y cada fallo metia seis mas.
+ *
+ * Del modelo que no puede se avisa en el acto con `alDescansar`, para que
+ * quien llegue detras ni le pregunte.
+ */
+async function preguntar(modelos, peticion, alDescansar) {
+  const arranque = Date.now()
+  const queda = () => PRESUPUESTO - (Date.now() - arranque)
+
+  const pausas = new Map()
+  let ultimo = null
+  let llamadas = 0
+
+  for (const modelo of modelos) {
+    if (queda() <= 0) break
+
+    llamadas++
+    const r = await llamar(modelo, peticion, Math.min(PLAZO_POR_MODELO, queda()))
+    if (r.respuesta) return { respuesta: r.respuesta, modelo, llamadas, pausas }
+
+    ultimo = r
+    const descanso = descansoDe(r)
+    if (descanso) {
+      pausas.set(modelo, descanso)
+      alDescansar(modelo, descanso)
+    } else {
+      /* Un modelo que ya no existe o que la clave no alcanza. Si el otro
+         contesta, la lectura sale bien y esto no se veria nunca: se estaria
+         con la mitad del cupo sin saberlo. */
+      console.warn(`[lector] ${modelo} respondio ${r.estado} · ${r.texto.slice(0, 300)}`)
+    }
+  }
+  return { ultimo, llamadas, pausas }
+}
+
+/** De la respuesta de Google a las clases, o el fallo que explica por que no */
+async function clasesDe(respuesta) {
+  const datos = await respuesta.json().catch(() => null)
+  const crudo = datos?.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!crudo) {
+    /* Sin texto casi siempre es un filtro de seguridad o un corte por
+       longitud. El motivo viene en finishReason y es lo que hay que ver. */
+    return {
+      error: 'vacia',
+      detalle: JSON.stringify(datos?.candidates?.[0]?.finishReason ?? datos),
+    }
+  }
+  try {
+    const leido = JSON.parse(crudo)
+    return { clases: Array.isArray(leido?.clases) ? leido.clases.slice(0, 60) : [] }
+  } catch {
+    return { error: 'json', detalle: crudo.slice(0, 300) }
+  }
+}
+
+/**
+ * Ningun modelo puede atender porque todos descansan. Si a alguno le falta
+ * poco, hay cola y se dice cuanto: la pantalla espera sola y vuelve. Si todos
+ * agotaron el dia, no hay nada que esperar.
+ */
+function sinSitio(pausas) {
+  const espera = esperaDe(pausas)
+  return {
+    estado: SIN_CUPO,
+    cuerpo: espera == null ? { error: 'cuota' } : { error: 'cola', espera },
+  }
+}
+
+/** Lo que se contesta cuando se pregunto y nadie leyo la imagen */
+function sinLectura(lectura, modelos, pausas) {
+  // Con alguno descansando no es una averia: es una espera
+  if (pausas.size) return sinSitio(pausas)
+
+  /* El detalle lleva los modelos que se probaron. Sin eso, un "no existe" no
+     dice CUAL no existe, que es justo lo unico que hace falta saber. */
+  const texto = String(lectura.ultimo?.texto ?? '').slice(0, 600)
+  return {
+    estado: 502,
+    cuerpo: {
+      error: codigoDe(lectura.ultimo?.estado),
+      detalle: `${lectura.llamadas} intento(s) · ${modelos.join(', ')} · ${texto}`,
+    },
+  }
+}
+
+/**
+ * De la peticion ya comprobada a lo que se contesta, mas lo que hay que
+ * apuntar en el turno. Aqui esta el orden de las decisiones; cada una vive en
+ * su funcion.
+ */
+async function atender({ entrada, clave, modelos, turno }) {
+  if (turno.lecturas >= TOPE_POR_HORA) {
+    return { llamadas: 0, estado: SIN_CUPO, cuerpo: { error: 'muchas' } }
+  }
+
+  // A los que descansan no se les pregunta: es cupo tirado
+  const libres = modelos.filter((m) => !turno.pausas.has(m))
+  if (!libres.length) return { llamadas: 0, ...sinSitio(turno.pausas) }
+
+  /* Los avisos de descanso salen en cuanto ocurren y se recogen al final: la
+     funcion no puede contestar con una escritura a medias, que la plataforma
+     congela lo que quede pendiente. */
+  const avisos = []
+  const lectura = await preguntar(libres, peticionA(clave, entrada), (modelo, descanso) =>
+    avisos.push(pausar(modelo, descanso)),
+  )
+  await Promise.all(avisos)
+  const hecho = { llamadas: lectura.llamadas }
+
+  if (!lectura.respuesta) {
+    const todas = new Map([...turno.pausas, ...lectura.pausas])
+    return { ...hecho, ...sinLectura(lectura, libres, todas) }
+  }
+
+  const leido = await clasesDe(lectura.respuesta)
+  if (leido.error) return { ...hecho, estado: 502, cuerpo: leido }
+
+  return {
+    ...hecho,
+    modelo: lectura.modelo,
+    estado: 200,
+    cuerpo: {
+      clases: leido.clases,
+      /* Que modelo contesto y a la cuantas. Es lo unico que permite saber,
+         sin instrumentar nada, si el primero de la lista esta sirviendo o si
+         todo el mundo esta cayendo al de repuesto. */
+      modelo: lectura.modelo,
+      intentos: lectura.llamadas,
+    },
+  }
+}
+
+const fallo = (res, estado, error) => res.status(estado).json({ error })
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return fallo(res, 405, 'metodo')
@@ -199,131 +429,20 @@ export default async function handler(req, res) {
   const clave = process.env.GOOGLE_AI_API_KEY
   if (!clave) return fallo(res, 500, 'sin-clave')
 
-  const { imagen, tipo, materias } = req.body ?? {}
+  const entrada = comprobar(req.body)
+  if (entrada.error) return fallo(res, entrada.estado, entrada.error)
 
-  if (typeof imagen !== 'string' || !imagen) return fallo(res, 400, 'sin-imagen')
-  if (imagen.length > TOPE_BASE64) return fallo(res, 413, 'imagen-grande')
-  if (!TIPOS.includes(tipo)) return fallo(res, 400, 'tipo')
-  if (!Array.isArray(materias) || !materias.length) return fallo(res, 400, 'sin-materias')
+  const modelos = listaDe('GOOGLE_AI_MODELO', MODELOS_POR_DEFECTO)
+  const origen = huellaDe(req, clave)
 
-  const listado = materias
-    .slice(0, 200)
-    .map((m) => ({ codigo: String(m.codigo ?? ''), nombre: String(m.nombre ?? '') }))
-    .filter((m) => m.codigo && m.nombre)
+  const turno = await abrirTurno(modelos, origen)
+  const { estado, cuerpo, ...apunte } = await atender({ entrada, clave, modelos, turno })
+  await cerrarTurno({ ...apunte, origen, resultado: cuerpo.error ?? 'ok' })
 
-  const peticion = {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: instrucciones(listado) },
-            { inline_data: { mime_type: tipo, data: imagen } },
-          ],
-        },
-      ],
-      generationConfig: {
-        /* A cero. Esto es una lectura, no una redaccion: la misma foto tiene
-           que dar el mismo resultado las dos veces que alguien la suba, y aqui
-           la variedad solo puede empeorar. */
-        temperature: 0,
-        responseMimeType: 'application/json',
-        responseSchema: ESQUEMA,
-      },
-    }),
-  }
+  /* Las averias quedan en el registro de Vercel con el mensaje de Google: es
+     donde se va a mirar cuando alguien diga "no me lee el horario". Las
+     esperas no: no son averias y ya se cuentan en el turno. */
+  if (cuerpo.detalle) console.warn(`[lector] ${cuerpo.error} · ${cuerpo.detalle}`)
 
-  const MODELOS = listaDe('GOOGLE_AI_MODELO', MODELOS_POR_DEFECTO)
-  const ESPERAS = listaDe('GOOGLE_AI_ESPERAS', ESPERAS_POR_DEFECTO).map(Number)
-
-  const arranque = Date.now()
-  const queda = () => PRESUPUESTO - (Date.now() - arranque)
-
-  let respuesta = null
-  let modeloUsado = null
-  let ultimoFallo = null
-  let intentos = 0
-
-  /* Cada modelo con sus reintentos, y se pasa al siguiente solo cuando el
-     anterior se ha agotado. Al reves -alternar modelos en cada intento- se
-     descartaria el bueno por un tropiezo de dos segundos. */
-  buscando: for (const modelo of MODELOS) {
-    for (let vuelta = 0; vuelta <= ESPERAS.length; vuelta++) {
-      if (queda() <= 0) break buscando
-
-      intentos++
-      let r = null
-      try {
-        r = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
-          peticion,
-        )
-      } catch (e) {
-        // estado 0 = ni siquiera hubo respuesta: DNS, TLS, la red del telefono
-        ultimoFallo = { estado: 0, texto: String(e?.message ?? e) }
-      }
-
-      if (r?.ok) {
-        respuesta = r
-        modeloUsado = modelo
-        break buscando
-      }
-
-      if (r) {
-        /* El mensaje de Google se guarda tal cual. Es lo unico que distingue
-           "ese modelo ya no existe" de "se acabo la cuota de hoy", y sin el,
-           arreglar esto seria adivinar. No lleva la clave: va en una cabecera,
-           no en el cuerpo ni en la URL. */
-        ultimoFallo = { estado: r.status, texto: (await r.text().catch(() => '')).slice(0, 600) }
-
-        // Lo que no mejora esperando, no espera: se prueba el siguiente modelo
-        if (!REINTENTABLES.has(r.status)) break
-      }
-
-      /* La espera vale igual para un 503 que para una red caida. Antes el
-         fallo de red se saltaba esta linea y volvia a intentarlo al instante:
-         seis peticiones seguidas contra algo que no responde, que es la forma
-         mas rapida de gastar el presupuesto sin darle tiempo a nada. */
-      if (vuelta === ESPERAS.length) break
-      await dormir(Math.min(ESPERAS[vuelta], Math.max(0, queda())))
-    }
-  }
-
-  if (!respuesta) {
-    /* El detalle lleva los modelos que se probaron. Sin eso, un "no existe"
-       no dice CUAL no existe, que es justo lo unico que hace falta saber. */
-    return fallo(
-      res,
-      502,
-      codigoDe(ultimoFallo?.estado),
-      `${intentos} intento(s) · ${MODELOS.join(', ')} · ${ultimoFallo?.texto ?? ''}`,
-    )
-  }
-
-  const datos = await respuesta.json().catch(() => null)
-  const crudo = datos?.candidates?.[0]?.content?.parts?.[0]?.text
-
-  if (!crudo) {
-    /* Sin texto casi siempre es un filtro de seguridad o un corte por
-       longitud. El motivo viene en finishReason y es lo que hay que ver. */
-    return fallo(res, 502, 'vacia', JSON.stringify(datos?.candidates?.[0]?.finishReason ?? datos))
-  }
-
-  let leido
-  try {
-    leido = JSON.parse(crudo)
-  } catch {
-    return fallo(res, 502, 'json', crudo.slice(0, 300))
-  }
-
-  return res.status(200).json({
-    clases: Array.isArray(leido?.clases) ? leido.clases.slice(0, 60) : [],
-    /* Que modelo contesto y a la cuantas. Es lo unico que permite saber, sin
-       instrumentar nada, si el primero de la lista esta sirviendo o si todo
-       el mundo esta cayendo al de repuesto. */
-    modelo: modeloUsado,
-    intentos,
-  })
+  return res.status(estado).json(cuerpo)
 }

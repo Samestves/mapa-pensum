@@ -1,3 +1,4 @@
+import { hayAlmacen, pedir } from './_almacen.js'
 import { leerAparato } from './_aparato.js'
 
 /**
@@ -13,21 +14,15 @@ import { leerAparato } from './_aparato.js'
  *     llave es el identificador aleatorio del navegador, no un nombre. No se
  *     guarda la IP, ni las marcas del estudiante, ni su horario.
  *
- * El almacen es Redis en Upstash, por su API REST y no por un cliente: una
- * dependencia menos y una sola peticion por latido gracias al pipeline. El
- * plan gratuito da 500.000 comandos al mes; un latido gasta cinco o seis y
- * un cierre uno por cosa vista, con topes puestos desde el navegador.
+ * El almacen es el Redis de _almacen.js. Un latido gasta cinco o seis
+ * comandos y un cierre uno por cosa vista, con topes puestos desde el
+ * navegador.
  *
  * Sin las variables de entorno del almacen esto no falla: responde 204 y no
  * hace nada. Asi el despliegue sigue funcionando igual antes de crear la
  * base de datos, y si algun dia se cae Upstash no se lleva por delante la
  * aplicacion, que no depende de esto para nada.
  */
-
-/* Las dos parejas de nombres que puede haber: la que pone la integracion de
-   Vercel con Upstash y la que da Upstash directamente. */
-const URL_REDIS = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
-const TOKEN_REDIS = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
 
 /* Monagas. Las fechas se cortan a la medianoche de aqui y no a la del
    servidor, que esta en cualquier sitio: si no, las visitas de la noche
@@ -259,17 +254,6 @@ export function comandosDe(latido, fecha, hora = horaDe(), ahora = Date.now()) {
   return comandos
 }
 
-/** Manda los comandos a Upstash en una sola peticion */
-export async function ejecutar(comandos) {
-  if (!URL_REDIS || !TOKEN_REDIS || !comandos.length) return false
-  const respuesta = await fetch(`${URL_REDIS}/pipeline`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN_REDIS}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(comandos),
-  })
-  return respuesta.ok
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -295,7 +279,8 @@ export default async function handler(req, res) {
   if (latido.tipo === 'inicio') latido.aparato = leerAparato(latido.ficha, req.headers)
 
   try {
-    await ejecutar(comandosDe(latido, fechaDe()))
+    const comandos = comandosDe(latido, fechaDe())
+    if (hayAlmacen() && comandos.length) await pedir(comandos)
   } catch {
     // Que el almacen falle no es asunto de quien esta usando la aplicacion
   }
