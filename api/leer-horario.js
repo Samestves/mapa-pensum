@@ -172,8 +172,10 @@ ${materias.map((m) => `${m.codigo} — ${m.nombre}`).join('\n')}`
 /* Comprueba que la peticion viene de la propia web. Es un badén, no una
    cerradura: una cabecera se falsifica en una linea de curl. Pero para de
    golpe el uso casual desde otra pagina, que es de donde vendria el gasto si
-   alguien encuentra el endpoint. La proteccion de verdad -limite por IP-
-   necesita un almacen que este proyecto no tiene. */
+   alguien encuentra el endpoint.
+   La proteccion de verdad seria un limite por IP. El almacen para llevarlo
+   ya existe -el Redis de Upstash de api/latido.js-, pero el limite todavia
+   no esta hecho. */
 function mismaCasa(req) {
   const host = req.headers.host || ''
   if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) return true
