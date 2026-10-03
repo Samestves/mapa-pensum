@@ -2,15 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { planoDeFoco, salidaDeFoco, sinLoDe } from './foco.js'
 
-/* Tres materias en fila, A -> B -> C, mas D suelta de otra area, y una
-   casilla de electiva que lleva dentro a E. */
-const porCodigo = new Map([
-  ['A', { codigo: 'A', area: 'mat' }],
-  ['B', { codigo: 'B', area: 'mat' }],
-  ['C', { codigo: 'C', area: 'inf' }],
-  ['D', { codigo: 'D', area: 'inf' }],
-  ['E', { codigo: 'E', area: 'inf' }],
-])
+/* Tres materias en fila, A -> B -> C, mas D suelta, y una casilla de electiva
+   que lleva dentro a E. */
 const nodos = [
   { codigo: 'A' },
   { codigo: 'B' },
@@ -23,32 +16,25 @@ const aristas = [
   { id: 'B->C', origen: 'B', destino: 'C' },
 ]
 const base = {
-  porCodigo,
   nodos,
   casillasFranja: [],
   aristas,
-  enCasilla: (codigo) => (codigo === 'H1' ? porCodigo.get('E') : null),
+  enCasilla: (codigo) => (codigo === 'H1' ? { codigo: 'E' } : null),
 }
 
-test('sin cadena ni area no hay foco', () => {
-  assert.equal(planoDeFoco({ ...base, cadena: null, areaFiltrada: null }), null)
+test('sin cadena no hay foco', () => {
+  assert.equal(planoDeFoco({ ...base, cadena: null }), null)
 })
 
 test('una cadena deja nitidas sus materias y los cables entre ellas', () => {
-  const foco = planoDeFoco({ ...base, cadena: new Set(['A', 'B']), areaFiltrada: null })
+  const foco = planoDeFoco({ ...base, cadena: new Set(['A', 'B']) })
   assert.deepEqual([...foco.nodos], ['A', 'B'])
   assert.deepEqual([...foco.aristas], ['A->B'])
 })
 
 test('una casilla llena cuenta por la electiva que lleva y se dibuja con su clave', () => {
-  const foco = planoDeFoco({ ...base, cadena: new Set(['E']), areaFiltrada: null })
+  const foco = planoDeFoco({ ...base, cadena: new Set(['E']) })
   assert.deepEqual([...foco.nodos], ['H1'])
-})
-
-test('con area y cadena a la vez queda lo que cumple las dos', () => {
-  const foco = planoDeFoco({ ...base, cadena: new Set(['A', 'B', 'C']), areaFiltrada: 'mat' })
-  assert.deepEqual([...foco.nodos], ['A', 'B'])
-  assert.deepEqual([...foco.aristas], ['A->B'])
 })
 
 test('sinLoDe resta conjuntos y trata la falta de uno como vacio', () => {

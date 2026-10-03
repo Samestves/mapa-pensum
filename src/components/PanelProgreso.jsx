@@ -9,8 +9,11 @@ import ContenidoAvance from './ContenidoAvance'
  *
  * Antes era una nubecita colgada de la capsula, que crecia con su contenido
  * y acababa con barra de desplazamiento. De lado y de alto fijo se lee de un
- * vistazo, y deja el mapa a la vista: lo unico que tiene de mas que en el
- * telefono es aislar un area, y eso solo sirve viendo el mapa detras.
+ * vistazo, y deja el mapa a la vista.
+ *
+ * Tenia de mas que el telefono unas pastillas para aislar un area en el
+ * mapa. No las usaba nadie y empujaban la apariencia y el reinicio fuera de
+ * la vista: ahora cabe todo sin desplazarse.
  */
 function PanelProgreso({ abierto, alCerrar, carrera, ...avance }) {
   return (

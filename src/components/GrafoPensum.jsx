@@ -57,7 +57,6 @@ function GrafoPensum({
   estados,
   descarga,
   toque,
-  areaFiltrada,
   seleccionado,
   alSeleccionar,
   alMarcar,
@@ -159,7 +158,6 @@ function GrafoPensum({
   const { mirada, foco, nodoSeleccionado, detalle } = useFocoGrafo({
     seleccionado,
     senalado: senaladoVisible,
-    areaFiltrada,
     estados,
     relaciones,
     porCodigo,

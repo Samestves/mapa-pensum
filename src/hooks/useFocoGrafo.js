@@ -15,7 +15,6 @@ import { planoDeFoco } from '../layout/foco'
 export function useFocoGrafo({
   seleccionado,
   senalado,
-  areaFiltrada,
   estados,
   relaciones,
   porCodigo,
@@ -28,20 +27,18 @@ export function useFocoGrafo({
   // Manda la seleccion; el hover solo resalta si no hay nada seleccionado
   const mirada = seleccionado ?? senalado
 
-  /* Cambia de identidad solo cuando cambia lo que se mira o el area: es lo
-     que decide si el plano de foco se vuelve a dibujar. */
+  /* Cambia de identidad solo cuando cambia lo que se mira: es lo que decide
+     si el plano de foco se vuelve a dibujar. */
   const foco = useMemo(
     () =>
       planoDeFoco({
         cadena: mirada ? cadenaDe(mirada, relaciones) : null,
-        areaFiltrada,
-        porCodigo,
         nodos,
         casillasFranja,
         aristas,
         enCasilla,
       }),
-    [mirada, relaciones, areaFiltrada, porCodigo, nodos, casillasFranja, aristas, enCasilla],
+    [mirada, relaciones, nodos, casillasFranja, aristas, enCasilla],
   )
 
   const nodoSeleccionado = seleccionado ? porCodigo.get(seleccionado) : null

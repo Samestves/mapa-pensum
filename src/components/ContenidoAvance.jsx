@@ -4,7 +4,6 @@ import { textoCarga } from '../data/cargaPlan'
 import { mesCorto } from '../data/exportarPlan'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
-import { colorArea, etiquetaArea } from '../theme/areas'
 import SelectorTema from './SelectorTema'
 import { BotonReinicio, CuotaGrupo } from './PiezasAvance'
 
@@ -154,49 +153,6 @@ function TarjetaPlan({ carrera, marcas, elegidas, alPlanificar }) {
 }
 
 /**
- * Aislar un area en el mapa: una pastilla por area, con su color y cuantas
- * llevas de ella. Es una herramienta del mapa y no una medida de avance, por
- * eso solo sale en escritorio, donde el mapa se ve detras del panel. Pulsar
- * la elegida la suelta.
- */
-function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
-  return (
-    <section>
-      <h3 className={TITULO}>Ver un área en el mapa</h3>
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        {areas.map((a) => {
-          const activa = areaFiltrada === a.area
-          return (
-            <button
-              key={a.area}
-              type="button"
-              onClick={() => alFiltrarArea(activa ? null : a.area)}
-              aria-pressed={activa}
-              className={`flex h-8 items-center gap-2 rounded-full border px-3 text-[12px] transition-[background-color,border-color,color,opacity] duration-200 ${
-                activa
-                  ? 'border-transparent bg-tinta/[0.1] text-tinta'
-                  : `border-panel-borde text-tinta-suave hover:bg-tinta/[0.05] hover:text-tinta ${
-                      areaFiltrada ? 'opacity-50 hover:opacity-100' : ''
-                    }`
-              }`}
-            >
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: colorArea(a.area) }}
-              />
-              {etiquetaArea(a.area)}
-              <span className="text-[11px] text-tinta-tenue tabular-nums">
-                {a.aprobadas}/{a.total}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-/**
  * Lo que dice el avance, el mismo en el telefono (HojaAvance) y en
  * escritorio (PanelProgreso): solo cambia el marco. Responde tres cosas en
  * este orden:
@@ -206,9 +162,8 @@ function FiltroAreas({ areas, areaFiltrada, alFiltrarArea }) {
  *   3. Cuando termino: el grado estimado, que abre el plan de ruta.
  *
  * Despues, solo si la carrera las tiene con meta oficial, las cuotas de
- * electivas, que cuentan para graduarse. En escritorio, si se le pasa
- * `alFiltrarArea`, las areas para aislarlas en el mapa. Y al final lo que no
- * es avance pero no tiene mejor sitio: la apariencia y reiniciar.
+ * electivas, que cuentan para graduarse. Y al final lo que no es avance pero
+ * no tiene mejor sitio: la apariencia y reiniciar.
  */
 export default function ContenidoAvance({
   carrera,
@@ -220,8 +175,6 @@ export default function ContenidoAvance({
   alPlanificar,
   tema,
   alternarTema,
-  areaFiltrada,
-  alFiltrarArea,
 }) {
   /* Solo las cuotas con meta oficial: un "0 UC" sin saber de cuantas no le
      dice a nadie si le falta algo. */
@@ -248,14 +201,6 @@ export default function ContenidoAvance({
             ))}
           </div>
         </section>
-      )}
-
-      {alFiltrarArea && progreso.porArea.length > 0 && (
-        <FiltroAreas
-          areas={progreso.porArea}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={alFiltrarArea}
-        />
       )}
 
       <footer className="flex flex-col gap-3 border-t border-panel-borde pt-4">

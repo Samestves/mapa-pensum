@@ -162,26 +162,9 @@ export function usePensum(carrera) {
     // once por inscribir no sirve de nada si no sabes cuales son.
     const paraInscribir = []
 
-    // Desglose por area. Solo tiene sentido donde las areas estan
-    // clasificadas; en las demas carreras queda vacio.
-    const areas = new Map()
-
     for (const a of asignaturas) {
       const estado = estados[a.codigo]
       const uc = a.uc ?? 0
-
-      if (a.area) {
-        if (!areas.has(a.area)) {
-          areas.set(a.area, { area: a.area, uc: 0, ucAprobadas: 0, total: 0, aprobadas: 0 })
-        }
-        const fila = areas.get(a.area)
-        fila.uc += uc
-        fila.total += 1
-        if (estado === ESTADO.APROBADA) {
-          fila.ucAprobadas += uc
-          fila.aprobadas += 1
-        }
-      }
 
       if (estado === ESTADO.APROBADA) {
         ucAprobadas += uc
@@ -222,7 +205,6 @@ export function usePensum(carrera) {
       ),
       bloqueadas: asignaturas.length - aprobadas - cursando - paraInscribir.length,
       total: asignaturas.length,
-      porArea: [...areas.values()].sort((a, b) => b.uc - a.uc),
     }
   }, [asignaturas, estados, creditos, avanceGrupos])
 

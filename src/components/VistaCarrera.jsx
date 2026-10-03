@@ -184,7 +184,6 @@ function VistaCarrera({ carrera, alVolver }) {
     document.addEventListener('keydown', tecla, true)
     return () => document.removeEventListener('keydown', tecla, true)
   }, [])
-  const [areaFiltrada, setAreaFiltrada] = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
 
   /* Elegir la electiva de una casilla abre su panel, y en escritorio ese
@@ -223,19 +222,6 @@ function VistaCarrera({ carrera, alVolver }) {
       cancelAnimationFrame(cuadro)
       clearTimeout(red)
     }
-  }, [])
-
-  // Aislar un area y enfocar una cadena son dos formas de mirar el mismo mapa.
-  // Si se dejan activas a la vez casi siempre no queda nada visible, asi que
-  // cada una apaga la otra.
-  //
-  // Los dos van en useCallback y sin dependencias, y eso no es adorno: son las
-  // funciones que acaban en manos de los mil seiscientos elementos del grafo.
-  // Si cambiaran de identidad en cada render, el memo de los nodos no serviria
-  // de nada porque siempre verian una prop distinta.
-  const filtrarArea = useCallback((area) => {
-    setAreaFiltrada(area)
-    setSeleccionado(null)
   }, [])
 
   // El alternar vive aqui y no en el nodo para que la funcion no dependa de
@@ -343,7 +329,6 @@ function VistaCarrera({ carrera, alVolver }) {
         mirar(codigo)
         return codigo
       })
-      setAreaFiltrada(null)
     },
     [mirar],
   )
@@ -394,7 +379,6 @@ function VistaCarrera({ carrera, alVolver }) {
         carreras={CARRERAS.filter((c) => c.slug !== carrera.slug)}
         alIrAMateria={(codigo) => {
           setVista('mapa')
-          setAreaFiltrada(null)
           setSeleccionado(codigo)
         }}
         alIrACarrera={alVolver}
@@ -460,7 +444,6 @@ function VistaCarrera({ carrera, alVolver }) {
                     estados={estados}
                     descarga={descarga}
                     toque={toque}
-                    areaFiltrada={areaFiltrada}
                     seleccionado={seleccionado}
                     alSeleccionar={alternarSeleccion}
                     alMarcar={marcarYContar}
@@ -531,13 +514,7 @@ function VistaCarrera({ carrera, alVolver }) {
           />
         </>
       ) : (
-        <PanelProgreso
-          {...avance}
-          abierto={abierto === 'avance'}
-          alCerrar={cerrar}
-          areaFiltrada={areaFiltrada}
-          alFiltrarArea={filtrarArea}
-        />
+        <PanelProgreso {...avance} abierto={abierto === 'avance'} alCerrar={cerrar} />
       )}
     </div>
   )

@@ -14,39 +14,26 @@
 /**
  * Lo que se ve nitido con el foco puesto, o null si no hay foco.
  *
- * Hay foco cuando se mira una cadena -la materia señalada o elegida con sus
- * prelaciones hacia atras y hacia delante- o cuando se aisla un area desde el
- * avance. Con las dos a la vez, queda lo que cumple ambas.
+ * Hay foco cuando se mira una cadena: la materia señalada o elegida con sus
+ * prelaciones hacia atras y hacia delante.
  *
  * Devuelve las claves de lo DIBUJADO, no de las materias: una casilla de
  * electiva se dibuja con su codigo de casilla aunque cuente por la electiva
  * que lleva dentro. Un cable entra si se ven sus dos puntas.
  */
-export function planoDeFoco({
-  cadena,
-  areaFiltrada,
-  porCodigo,
-  nodos,
-  casillasFranja,
-  aristas,
-  enCasilla,
-}) {
-  if (!cadena && !areaFiltrada) return null
-
-  const visible = (codigo) =>
-    (!areaFiltrada || porCodigo.get(codigo)?.area === areaFiltrada) &&
-    (!cadena || cadena.has(codigo))
+export function planoDeFoco({ cadena, nodos, casillasFranja, aristas, enCasilla }) {
+  if (!cadena) return null
 
   const claves = new Set()
   for (const nodo of [...nodos, ...casillasFranja]) {
     // Una casilla llena cuenta por su electiva; vacia, por si misma
     const codigo = nodo.esHueco ? (enCasilla(nodo.codigo)?.codigo ?? nodo.codigo) : nodo.codigo
-    if (visible(codigo)) claves.add(nodo.codigo)
+    if (cadena.has(codigo)) claves.add(nodo.codigo)
   }
 
   const cables = new Set()
   for (const arista of aristas) {
-    if (visible(arista.origen) && visible(arista.destino)) cables.add(arista.id)
+    if (cadena.has(arista.origen) && cadena.has(arista.destino)) cables.add(arista.id)
   }
 
   return { nodos: claves, aristas: cables, cadena }

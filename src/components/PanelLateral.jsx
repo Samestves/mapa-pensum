@@ -14,9 +14,9 @@ const SALIDA_MS = 320
  * telefono.
  *
  * No tapa nada mas que su franja: el mapa sigue a la vista y se puede usar
- * detras -aislar un area desde el avance, ver donde cae la casilla que se
- * esta eligiendo-, por eso no lleva velo ni se cierra al pulsar fuera. Se
- * cierra con su X, con Escape o con el mismo boton que lo abrio.
+ * detras -ver donde cae la casilla que se esta eligiendo-, por eso no lleva
+ * velo ni se cierra al pulsar fuera. Se cierra con su X, con Escape o con el
+ * mismo boton que lo abrio.
  *
  * Alto fijo, de la cabecera al pie, en vez de crecer con lo que lleva: un
  * panel que cambia de tamaño segun el contenido es lo que hacia que el
