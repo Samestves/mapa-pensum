@@ -1,0 +1,240 @@
+/* ---- Isla de avance (telefono) -----------------------------------------
+   El arco recorre el canto de la isla. La pista es la tinta casi
+   transparente, para que el circulo entero se lea aunque el avance sea poco,
+   y el arco se mueve con transicion de CSS -sin JavaScript por fotograma-. */
+.vista-carrera {
+  --isla-avance-pista: color-mix(in oklab, var(--tinta) 11%, transparent);
+}
+
+.arco-avance {
+  transition: stroke-dashoffset 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---- Hoja inferior (telefono) ------------------------------------------
+   Aparece subiendo un paso corto mientras se funde, con una sola transicion:
+   se monta "fuera" y pasa a "dentro" un par de fotogramas despues (ver
+   useEntrada), y al cerrarse vuelve a "fuera". Subia desde fuera de la
+   pantalla, y en un telefono modesto el primer cuadro de esa subida salia a
+   destiempo: la hoja aparecia arriba y volvia a bajar, y por el hueco se
+   veia el mapa. Con un paso corto y fundiendose no hay hueco que ver.
+   El arrastre la baja entera con un transform en linea, que manda sobre
+   este. */
+.hoja-inferior,
+.panel-lateral {
+  box-shadow:
+    0 -1px 0 rgb(255 255 255 / 0.04),
+    0 24px 60px -12px rgb(0 0 0 / 0.6);
+}
+
+[data-tema='claro'] :is(.hoja-inferior, .panel-lateral) {
+  box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
+}
+
+.hoja-inferior {
+  transition:
+    transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 180ms ease;
+}
+
+.hoja-inferior[data-fase='fuera'] {
+  transform: translateY(48px);
+  opacity: 0;
+}
+
+/* En modo ligero sin sombra: el velo ya la separa del mapa, y una sombra de
+   sesenta pixeles de desenfoque es lo mas caro de pintar de toda la hoja. */
+[data-ligero] .hoja-inferior {
+  box-shadow: none;
+}
+
+/* ---- Panel lateral (escritorio) ----------------------------------------
+   Entra desde la derecha con la misma curva que la hoja del telefono, un
+   paso corto y no todo su ancho: viene de su sitio, no de fuera de la
+   pantalla. Una sola transicion para entrar y salir, como la hoja (ver
+   useEntrada). */
+.panel-lateral {
+  transition:
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 240ms ease;
+}
+
+.panel-lateral[data-fase='fuera'] {
+  transform: translateX(28px);
+  opacity: 0;
+}
+
+/* El pie se desvanece en vez de cortarse en seco: dice que hay mas abajo
+   sin una barra de desplazamiento a la vista. Encima del contenido y sin
+   atrapar el puntero. */
+.panel-lateral::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 28px;
+  background: linear-gradient(to bottom, transparent, var(--panel));
+  pointer-events: none;
+}
+
+/* Se desplaza con la rueda, el trackpad o el dedo, sin barra pintada */
+.desplazable-limpio {
+  scrollbar-width: none;
+}
+
+.desplazable-limpio::-webkit-scrollbar {
+  display: none;
+}
+
+/* El velo oscurece poco: lo de detras sigue siendo la pantalla en la que
+   estas, no algo que haya desaparecido. */
+.velo-hoja {
+  background: rgb(0 0 0 / 0.45);
+  transition: opacity 300ms ease;
+}
+
+[data-tema='claro'] .velo-hoja {
+  background: rgb(16 32 64 / 0.22);
+}
+
+.velo-hoja[data-fase='fuera'] {
+  opacity: 0;
+}
+
+/* Una ficha del selector de electivas (ver FichaElectiva): un contorno
+   apenas marcado que se aclara al apuntarle; la elegida, teñida del verde
+   de aprobada. */
+.ficha-electiva {
+  border-color: var(--panel-borde);
+  background: color-mix(in oklab, var(--tinta) 2%, transparent);
+}
+
+.ficha-electiva[data-aqui='true'] {
+  border-color: color-mix(in oklab, var(--estado-aprobada) 45%, transparent);
+  background: color-mix(in oklab, var(--estado-aprobada) 10%, transparent);
+}
+
+.ficha-electiva:focus-visible {
+  outline: 2px solid var(--estado-aprobada);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .ficha-electiva[data-aqui='false']:hover {
+    background: color-mix(in oklab, var(--tinta) 5%, transparent);
+    border-color: color-mix(in oklab, var(--tinta) 16%, transparent);
+  }
+}
+
+/* Cada seccion de la lista -un semestre, un grupo de electivas- solo se
+   maqueta y se pinta cuando esta cerca de la pantalla. Son mas de dos mil
+   nodos, y entrar a la lista los maquetaba todos de una vez: medio segundo
+   con el telefono congelado (CPU x4). El alto que se reserva mientras no se
+   ha pintado es una estimacion; despues se recuerda el de verdad. Por eso el
+   aire entre secciones va dentro de cada una y no entre ellas: la linea del
+   recorrido tiene que llegar hasta la siguiente, y lo que se sale de una
+   seccion contenida no se pinta. */
+.seccion-lista {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
+}
+
+/* Lo que se pinta de antemano, invisible (ver Precalentar): maquetado a su
+   ancho de verdad pero fuera de la pantalla y sin pintar nada. */
+.precalentar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  transform: translateX(-200vw);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Lo que borra -reiniciar el avance, quitar una electiva- es gris quieto y
+   solo enseña el rojo cuando se apunta a ello: si no, el boton mas peligroso
+   seria el mas llamativo. */
+@media (hover: hover) {
+  .boton-peligro:not(:disabled):hover {
+    background: color-mix(in oklab, var(--estado-rojo) 10%, transparent);
+    color: var(--estado-rojo);
+  }
+}
+
+/* La tarjeta del plan: la misma superficie que los semestres de la ruta, que
+   es a donde lleva. El verde queda para lo que se toca y para el semestre
+   que viene; un tinte de color en toda la tarjeta se veia a plantilla. */
+.tarjeta-plan {
+  background: var(--panel-suave);
+  box-shadow: inset 0 0 0 1px var(--panel-borde);
+}
+
+/* La pieza que marca el tema elegido en la hoja de avance. */
+.lente-tema {
+  background: color-mix(in oklab, var(--tinta) 14%, var(--panel));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-tema='claro'] .lente-tema {
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgb(16 32 64 / 0.14),
+    0 0 0 0.5px rgb(16 32 64 / 0.06);
+}
+
+/* El icono de la vista que se acaba de elegir se asienta: pasa de contorno a
+   relleno y crece un pelo hasta su sitio, sin rebote. */
+.icono-asentado {
+  animation: asentar-icono 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes asentar-icono {
+  from {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El icono que releva a otro entra girando desde donde salio el anterior.
+   Solo lo llevan los botones cuyo icono cambia con el estado -hoy el sol y la
+   luna-: el tema tarda 200ms en recorrer toda la app y sin esto el boton que
+   lo dispara era lo unico quieto en la pantalla. */
+@keyframes relevar-icono {
+  from {
+    opacity: 0;
+    transform: rotate(-75deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.icono-relevo {
+  animation: relevar-icono 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* El panel de avance entra desde el borde en el que se apoya: desde abajo en
+   movil, desde la derecha en escritorio. Que entre desde su propio borde es
+   lo que lo hace leerse como una hoja que se levanta y no como algo que
+   aparece flotando en medio. */
+/* La ficha del telefono ya no es una hoja pegada al borde sino una tarjeta
+   que flota: sube poco y se asienta, en vez de recorrer su propio alto
+   entero desde fuera de la pantalla. */
+@keyframes subir-hoja {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hoja-ficha {
+  animation: subir-hoja 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}

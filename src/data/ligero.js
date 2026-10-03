@@ -33,7 +33,7 @@ export function esAparatoModesto({ tactil, memoria, nucleos, ahorroDatos, menosM
   )
 }
 
-/** Marca <html data-ligero> si el aparato es modesto. Ver index.css. */
+/** Marca <html data-ligero> si el aparato es modesto. Ver los [data-ligero] de src/estilos. */
 export function aplicarModoLigero() {
   const modesto = esAparatoModesto({
     tactil: window.matchMedia('(pointer: coarse)').matches,

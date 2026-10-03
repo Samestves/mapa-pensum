@@ -4,7 +4,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEntrada } from '../hooks/useEntrada'
 
 /* Lo que tarda en irse. Tiene que coincidir con la transicion de
-   .hoja-inferior en index.css: es el tiempo que la hoja sigue montada despues
+   .hoja-inferior en estilos/hojas.css: es el tiempo que la hoja sigue montada despues
    de pedir cerrarse, para que se la vea bajar. */
 const SALIDA_MS = 400
 
@@ -61,7 +61,7 @@ function HojaInferior({ abierta, alCerrar, etiqueta, cabecera, children }) {
   }, [saliendo])
 
   /* Mientras haya una hoja, la luz de los cables del mapa se congela (ver
-     .flujo en index.css). Detras del velo apenas se ve, y es la unica
+     .flujo en estilos/mapa.css). Detras del velo apenas se ve, y es la unica
      animacion que repinta en el hilo principal: le quitaba cuadros a la
      subida de la hoja justo cuando el telefono mas trabajo tiene. */
   useLayoutEffect(() => {

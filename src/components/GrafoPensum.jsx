@@ -319,7 +319,7 @@ function GrafoPensum({
    *
    * Asi que al aprobar la ficha se aparta, el mapa se corre lo justo para
    * que quepan la materia y todo lo que desbloquea, y la luz sale cuando el
-   * mapa ya llego (ver .descarga en index.css).
+   * mapa ya llego (ver .descarga en estilos/mapa.css).
    */
   const marcarDesdeFicha = useCallback(
     (codigo, marca) => {
@@ -487,7 +487,7 @@ function GrafoPensum({
           />
 
           {/* lienzo-en-gesto congela las luces mientras el mapa se mueve. Ver
-              .lienzo-en-gesto en index.css. */}
+              .lienzo-en-gesto en estilos/mapa.css. */}
           <Plano
             vista={vistaPlanos}
             className={`plano-luces ${enGesto ? 'lienzo-en-gesto' : ''}`}

@@ -8,7 +8,7 @@ import { TextoTarjeta } from './CaraTarjeta'
 import { CableBase, CableEnFoco, LuzCable } from './Arista'
 
 /* Lo que tarda en apagarse lo que sale del foco. Tiene que coincidir con
-   .foco-saliendo y la transicion de .plano-base en index.css. */
+   .foco-saliendo y la transicion de .plano-base en estilos/mapa.css. */
 const DURACION_FOCO = 320
 
 /**

@@ -5,7 +5,7 @@ import { SITUACION } from '../layout/situacion.js'
  * las electivas: si cada una decidiera su propio verde, a la tercera ya no
  * serian el mismo verde.
  *
- * Todo apunta a variables --sit-* de index.css, que cada tema define con sus
+ * Todo apunta a variables --sit-* de estilos/tema.css, que cada tema define con sus
  * propios valores: una mezcla que funciona en oscuro falla en claro, donde un
  * 9 % de verde sobre blanco es blanco.
  *

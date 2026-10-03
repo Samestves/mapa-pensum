@@ -1,7 +1,7 @@
 import { NODO } from '../layout/constantes'
 
 /* Lo que se le resta a `y` para que la linea base caiga en `y`: el alto del
-   ::before de .texto-mapa en index.css. Tiene que ser mayor que lo que sube
+   ::before de .texto-mapa en estilos/mapa.css. Tiene que ser mayor que lo que sube
    la letra mas grande del mapa por encima de su linea base (la cifra de 32 px
    de las cabeceras). */
 const ALTO_SOBRE_BASE = 40

@@ -4,7 +4,7 @@ import { guardar, leer } from '../data/almacen'
 const CLAVE = 'mapa-pensum:tema'
 
 /* El color de la barra del navegador en cada tema: el del lienzo. Tiene que
-   coincidir con --lienzo de index.css y con el script de index.html, que lo
+   coincidir con --lienzo de estilos/tema.css y con el script de index.html, que lo
    pone antes del primer pintado. */
 const COLOR_BARRA = { oscuro: '#070b13', claro: '#eff2f8' }
 

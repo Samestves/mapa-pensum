@@ -1,0 +1,262 @@
+/* ------------------------------------------------------------------
+   Tema oscuro (por defecto). Todo el color vive en estas variables:
+   cambiar de tema es cambiar data-tema en <html>, nada mas.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  --lienzo: #070b13;
+  --rejilla: #101a28;
+  /* El fondo del mapa. Hoy es el mismo lienzo en los dos temas; queda como
+     variable aparte para poder separarlos sin tocar el mapa. */
+  --lienzo-mapa: var(--lienzo);
+  --sombra-tarjeta: transparent;
+  /* Pesos de la letra del mapa. Van en variables porque cambian con el
+     tema: el mismo trazo se ve mas grueso claro sobre oscuro que oscuro sobre
+     claro -la luz se derrama sobre el negro-, asi que en claro hace falta un
+     punto mas de peso para que se lea igual de firme. */
+  --peso-nombre: 380;
+  --peso-rotulo: 460;
+  --peso-dato: 300;
+  --panel: #0d131e;
+  --panel-borde: #1e293b;
+  --panel-suave: #131c2b;
+  --nodo: #121d2c;
+  --nodo-borde: #2a3a52;
+  --tinta: #eaf1fa;
+  --tinta-suave: #b3c4da;
+  /* Subido desde #62748e: a 11-12px el texto secundario no se leia */
+  --tinta-tenue: #8497b1;
+
+  --area-generales: #9aa8bd;
+  --area-ciencias-basicas: #46c8f5;
+  --area-estadistica: #b781ff;
+  --area-computacion: #2fe8c6;
+  --area-electronica: #ffa94d;
+  --area-sistemas: #6094ff;
+  --area-gestion: #ff6f9f;
+  --area-tesis: #ffd93d;
+
+  --estado-aprobada: #2fe8c6;
+  --estado-cursando: #ffb454;
+  --estado-rojo: #ff6b7d;
+
+  /* ---- Tarjetas del mapa, por situacion ------------------------------
+     Colores propios de cada tema, no mezclas calculadas. Una mezcla sirve en
+     oscuro -un 9 % de verde sobre casi negro ya se ve- y falla en claro: el
+     mismo 9 % sobre blanco es blanco, y un borde al 8 % no existe. Por eso
+     cada tema dice sus propios valores, elegidos para que se lea cada tarjeta.
+
+     La tarjeta que puedes inscribir tampoco se "levanta" igual en los dos: en
+     oscuro aclarando, y en claro no es posible aclarar -una mezcla con tinta
+     la oscurecia y la dejaba con cara de desactivada-, asi que se queda
+     blanca y la levantan el borde y el halo. */
+  --sit-hecha-fondo: color-mix(in oklab, var(--estado-aprobada) 9%, var(--nodo));
+  --sit-hecha-borde: color-mix(in oklab, var(--estado-aprobada) 30%, transparent);
+  --sit-hecha-nombre: var(--tinta-suave);
+  --sit-cursando-fondo: color-mix(in oklab, var(--estado-cursando) 9%, var(--nodo));
+  --sit-cursando-borde: color-mix(in oklab, var(--estado-cursando) 72%, transparent);
+  --sit-cursando-texto: var(--estado-cursando);
+  --sit-inscribible-fondo: color-mix(in oklab, var(--tinta) 6%, var(--nodo));
+  /* La luz de lo inscribible: un blanco frio tirando al azul de la casa. Un
+     solo color, el mismo del filo quieto, de la luz que da la vuelta y del
+     icono de estado. */
+  --sit-inscribible-luz: color-mix(in oklab, #ffffff 70%, var(--area-sistemas));
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 55%, transparent);
+  --sit-proxima-fondo: var(--nodo);
+  --sit-proxima-borde: color-mix(in oklab, var(--tinta) 24%, transparent);
+  --sit-proxima-nombre: var(--tinta-suave);
+  --sit-lejana-fondo: color-mix(in oklab, var(--lienzo) 40%, var(--nodo));
+  --sit-lejana-borde: color-mix(in oklab, var(--tinta) 8%, transparent);
+  --sit-lejana-nombre: var(--tinta-tenue);
+  --sit-codigo: var(--tinta-tenue);
+  --sit-resalte: color-mix(in oklab, var(--tinta) 62%, transparent);
+
+  /* La luz que viaja por un cable es su propio color aclarado hacia el
+     blanco: sobre negro, un nucleo casi blanco con el tinte del area. */
+  --flujo-luz: #ffffff;
+  --flujo-mezcla: 50%;
+
+  /* Los colores que una clase del horario puede tomar. Son los ocho de area
+     reordenados: ya estan ajustados para los dos temas, asi que el horario no
+     inventa una paleta que no se parezca al resto de la aplicacion. */
+  --clase-1: #46c8f5;
+  --clase-2: #2fe8c6;
+  --clase-3: #6094ff;
+  --clase-4: #b781ff;
+  --clase-5: #ff6f9f;
+  --clase-6: #ffa94d;
+  --clase-7: #ffd93d;
+  --clase-8: #9aa8bd;
+
+  /* Linea de la rejilla del horario. No vale --panel-borde: ese esta pensado
+     para el borde de una tarjeta suelta sobre el lienzo, y aqui la linea cae
+     sobre --panel-suave, que en oscuro esta casi al mismo nivel.
+
+     En oscuro es blanco translucido y no un azul solido: el azul teñia la
+     rejilla entera y competia con el color de las clases, que es lo unico que
+     deberia llevar color ahi. El blanco al once por ciento se apoya en el
+     fondo que tenga debajo y se lee como una linea de lapiz. */
+  --horario-linea: rgba(255, 255, 255, 0.11);
+}
+
+[data-tema='claro'] {
+  color-scheme: light;
+
+  --lienzo: #eff2f8;
+  --rejilla: #dde4ee;
+  --panel: #ffffff;
+  --panel-borde: #d7dfea;
+  --panel-suave: #f4f7fb;
+  --nodo: #ffffff;
+  --nodo-borde: #c6d1e0;
+  --tinta: #0c1725;
+  --tinta-suave: #3a4a61;
+  /* Bajado desde #75859c: sobre panel blanco quedaba lavado */
+  --tinta-tenue: #5b6b82;
+
+  --area-generales: #56677e;
+  --area-ciencias-basicas: #0b7aa8;
+  --area-estadistica: #7434cb;
+  --area-computacion: #0a9781;
+  --area-electronica: #c8650d;
+  --area-sistemas: #2751cc;
+  --area-gestion: #c92f65;
+  --area-tesis: #9c7700;
+
+  --estado-aprobada: #0a9781;
+  --estado-cursando: #c8650d;
+  --estado-rojo: #d92d45;
+  /* Las tarjetas del claro.
+
+     Probe a despegarlas oscureciendo el lienzo del mapa, y el mapa entero
+     se veia apagado y sucio: el problema no era el fondo sino las tarjetas.
+     Eran blanco sobre casi blanco, con filos de un gris que en pantalla casi
+     no se distingue, y las lejanas, en un gris #f4f6fa, se fundian con el
+     lienzo en vez de apartarse de el.
+
+     Ahora es tinta sobre papel, como el mapa de la maqueta en oscuro pero al
+     reves: todas las tarjetas blancas -el color sale solo en el filo y en la
+     palabra de estado, nunca en el relleno-, filos un escalon mas oscuros y
+     una sombra de papel de dos pixeles (ver --sombra-tarjeta). */
+  --sit-hecha-fondo: #f4fbf9;
+  --sit-hecha-borde: #7fc6b5;
+  --sit-hecha-nombre: #2f4b46;
+  --sit-cursando-fondo: #fff8f1;
+  --sit-cursando-borde: #dc8a3b;
+  --sit-cursando-texto: #9a4a06;
+  --sit-inscribible-fondo: #ffffff;
+  /* En claro la luz no puede ser blanca: se usa el azul profundo de la casa */
+  --sit-inscribible-luz: #2f5bd8;
+  --sit-inscribible-borde: color-mix(in oklab, var(--sit-inscribible-luz) 50%, transparent);
+  --sit-proxima-fondo: #ffffff;
+  --sit-proxima-borde: #a7b4c6;
+  --sit-proxima-nombre: #22324a;
+  --sit-lejana-fondo: #ffffff;
+  --sit-lejana-borde: #d0d8e3;
+  --sit-lejana-nombre: #56647a;
+  --sit-codigo: #66758b;
+  /* La sombra de papel: un rectangulo corrido dos pixeles bajo cada tarjeta.
+     Sin filtro -un blur por tarjeta costaria un repintado en cada cuadro del
+     arrastre- y en oscuro transparente, donde el filo ya separa. */
+  --sombra-tarjeta: rgba(22, 38, 66, 0.075);
+  --peso-nombre: 440;
+  --peso-rotulo: 560;
+  --peso-dato: 400;
+  --sit-resalte: color-mix(in oklab, var(--tinta) 55%, transparent);
+
+  /* En claro la luz no puede ir hacia el blanco: se perderia en el lienzo.
+     Va hacia la tinta, o sea el mismo color del area un poco mas profundo. */
+  --flujo-luz: var(--tinta);
+  --flujo-mezcla: 18%;
+
+  --clase-1: #0b7aa8;
+  --clase-2: #0a9781;
+  --clase-3: #2751cc;
+  --clase-4: #7434cb;
+  --clase-5: #c92f65;
+  --clase-6: #c8650d;
+  --clase-7: #9c7700;
+  --clase-8: #56677e;
+
+  --horario-linea: #cfd9e6;
+}
+
+/* @theme inline hace que las utilidades emitan var(--x) en vez del valor
+   resuelto, que es lo que permite cambiar de tema en caliente. */
+@theme inline {
+  --color-lienzo: var(--lienzo);
+  --color-rejilla: var(--rejilla);
+  --color-panel: var(--panel);
+  --color-panel-borde: var(--panel-borde);
+  --color-panel-suave: var(--panel-suave);
+  --color-nodo: var(--nodo);
+  --color-nodo-borde: var(--nodo-borde);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-tinta-tenue: var(--tinta-tenue);
+  --color-aprobada: var(--estado-aprobada);
+  --color-cursando: var(--estado-cursando);
+
+  /* Inter en toda la aplicacion.
+
+     Es lo mas parecido a la letra de Apple que se puede poner en una web: SF
+     Pro no se puede, su licencia la limita a dispositivos Apple. Inter se
+     dibujo con sus mismas proporciones y, sobre todo, tiene lo que hace a SF
+     Pro verse como se ve: un eje de tamaño optico. SF Pro trae "Text" para
+     leer y "Display" para titulos, con espaciado y grosor de trazo propios de
+     cada tamaño; Inter hace lo mismo sola con font-optical-sizing, asi que el
+     codigo de una tarjeta a 9,5 px sale con dibujo de lectura, abierto, y un
+     titulo de 38 px con dibujo de titular, apretado.
+
+     Antes fue Geist, y antes Manrope. Geist quedo solo para titulares durante
+     una prueba, y con dos sans casi iguales en la misma pantalla no se veia
+     un contraste sino un descuido. Una sola familia. */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --font-display: var(--font-sans);
+
+  /* El lenguaje del mapa: poca tinta, mucho aire. Jost en peso fino para lo
+     que se lee -el nombre de cada materia- y en mayusculas espaciadas para lo
+     que se señala -SEMESTRE 04, DISPONIBLE-; Plex Mono para lo que se cuenta
+     o se copia -codigos, UC-. Dos voces que no se confunden: la que nombra y
+     la que mide. */
+  --font-ui: 'Jost Variable', 'Futura', 'Century Gothic', ui-sans-serif, system-ui, sans-serif;
+  --font-dato: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  /* dvh sigue a la barra del navegador movil. Con 100% a secas la app queda
+     mas alta que la ventana cuando la barra se retrae y aparece un scroll
+     fantasma en el borde inferior. */
+  height: 100dvh;
+}
+
+/* La app nunca scrollea: el grafo hace su propio pan/zoom y las vistas
+   scrollean por dentro. Si algo desborda es un bug de maquetacion, y
+   prefiero que se recorte a que aparezca una barra horizontal. */
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background-color: var(--lienzo);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* el grafo hace su propio pan/zoom, la pagina no scrollea */
+
+  /* Arrastrar el grafo seleccionaba el texto de todas las tarjetas.
+     Esto es una app de lienzo: aqui no se selecciona nada por defecto. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}

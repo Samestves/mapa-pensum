@@ -3,7 +3,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEntrada } from '../hooks/useEntrada'
 
 /* Lo que tarda en irse. Tiene que coincidir con la transicion de
-   .panel-lateral en index.css: el tiempo que sigue montado despues de pedir
+   .panel-lateral en estilos/hojas.css: el tiempo que sigue montado despues de pedir
    cerrarse, para que se lo vea salir. */
 const SALIDA_MS = 320
 

@@ -15,7 +15,7 @@ import { esModoLigero } from '../data/ligero'
 const MARGEN_ENCAJE = 28
 
 /* Congela lo de dentro del mapa mientras dura un viaje (ver .capa-viajando
-   en index.css). En modo ligero no hace falta: ahi el mapa no tiene
+   en estilos/mapa.css). En modo ligero no hace falta: ahi el mapa no tiene
    transiciones nunca, y poner y quitar la clase recalculaba el estilo de los
    mil y pico elementos del mapa al salir y al llegar, unos 120 ms por viaje
    en un telefono modesto. */

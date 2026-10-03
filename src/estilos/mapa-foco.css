@@ -1,0 +1,48 @@
+/* ---- Foco del mapa ------------------------------------------------------
+   Al señalar una materia, lo que no esta en su cadena se aparta: el plano
+   base del mapa baja de opacidad y, con raton, se desenfoca, como el fondo de
+   una foto con poca profundidad de campo. El desenfoque hace que lo apagado
+   se lea como "lejos" y no como "apagado", y por eso con el la opacidad sube
+   un poco: a 0,14 ya no se veria.
+
+   Se aplica al plano entero y no tarjeta por tarjeta (ver .plano-base en
+   estilos/mapa.css), asi que el desenfoque es una sola pasada de la GPU
+   sobre una textura ya pintada, cueste lo mismo con diez tarjetas que con
+   cien. Por tarjeta eran ochenta filtros animados a la vez.
+
+   En el telefono se queda en el apagado de siempre: alli el foco sale de
+   tocar una materia, con el mapa casi siempre acercado, y el desenfoque no
+   aporta lo que en escritorio. Los valores se ajustan aqui. */
+.vista-carrera {
+  --opacidad-foco: 0.14;
+  --filtro-foco: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vista-carrera {
+    --opacidad-foco: 0.34;
+    --filtro-foco: blur(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plano-base,
+  .plano-luces {
+    transition: none;
+  }
+
+  .foco-saliendo {
+    animation: none;
+  }
+}
+
+/* El nombre de cada vista en el dock: apagado, y la elegida se enciende. Solo
+   cambia el color: lo que se mueve es la lente. */
+.etiqueta-pestana {
+  color: var(--tinta-tenue);
+  transition: color 200ms ease;
+}
+
+.pestana-dock[data-activa='true'] .etiqueta-pestana {
+  color: var(--tinta);
+}

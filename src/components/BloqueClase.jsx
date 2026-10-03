@@ -19,7 +19,7 @@ const CABE_PROFESOR = 136
  * hace que la semana se lea de un vistazo.
  *
  * Se tiñe del color de su materia (--c, ver coloresDelHorario y
- * .bloque-clase en index.css): la tarjeta apenas, el contorno algo mas y la
+ * .bloque-clase en estilos/cabecera.css): la tarjeta apenas, el contorno algo mas y la
  * hora del todo.
  *
  * `carril` y `carriles` solo entran en juego si dos clases se pisaran. El

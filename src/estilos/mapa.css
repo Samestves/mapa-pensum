@@ -1,0 +1,640 @@
+/* ------------------------------------------------------------------
+   Animaciones del grafo.
+
+   Cuatro, y solo una es perpetua, y esa solo en los cables de la frontera
+   -de lo aprobado a lo que puedes inscribir-, que en un avance normal son
+   entre dos y ocho. Lo caro nunca fue animar: fue animar los cuarenta y tres
+   cables de Sistemas a la vez, cinco capas cada uno, doscientas quince
+   animaciones que la GPU no compone. Las otras tres responden a algo que
+   hiciste y se desmontan al terminar.
+
+   Todas las aristas llevan pathLength="100", asi que los recorridos se miden
+   en porcentaje. Y ninguna lleva vector-effect="non-scaling-stroke": con el,
+   el guion se mide en pixeles de pantalla mientras pathLength lo normaliza en
+   coordenadas del dibujo, y la luz salia de otro tamaño y a saltos.
+   ------------------------------------------------------------------ */
+
+/* La luz que viaja por la frontera hacia lo que puedes inscribir. Nace y
+   muere apagada, para que no aparezca de golpe en el origen ni choque contra
+   la tarjeta: se enciende al salir y se funde al llegar.
+
+   Un guion de 9 sobre 100: suficiente para leerse como luz y no como punto,
+   corto para que no parezca que el cable se esta dibujando. */
+@keyframes fluir {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.flujo {
+  stroke-dasharray: 9 91;
+  animation: fluir 2.8s cubic-bezier(0.45, 0, 0.3, 1) infinite;
+}
+
+/* En tactil, mientras se arrastra o se pellizca, la luz se congela.
+
+   Esto existia con las estelas de antes y se perdio en el rediseño, y se
+   noto: en un Redmi el arrastre empezo a ir a tirones. Medido con Chrome a
+   CPU x4 y pantalla de telefono, arrastrando Sistemas: 76 cuadros por segundo
+   sin la luz, 51-64 con ella corriendo. Y no por cuantas son -con cuatro o
+   cinco cables basta- sino porque cada cuadro de una animacion de guiones se
+   vuelve a pintar en el hilo principal, y ese hilo es el mismo que esta
+   moviendo el mapa. En reposo cuesta unos 9 ms por cuadro a esa CPU; durante
+   el gesto se suman a los del propio movimiento.
+
+   Pausar no reinicia nada: al soltar, cada luz sigue donde estaba. Solo en
+   tactil porque en escritorio el arrastre va sobrado y ahi la luz quieta a
+   mitad de cable se veria como un fallo. */
+@media (hover: none) and (pointer: coarse) {
+  .lienzo-en-gesto .flujo {
+    animation-play-state: paused;
+  }
+}
+
+/* En modo ligero (ver data/ligero.js) la luz no corre: el cable de lo que
+   puedes inscribir queda encendido entero, quieto y mas tenue. Dice lo
+   mismo -por aqui se abre algo- sin repintar su plano en cada fotograma. */
+[data-ligero] .flujo {
+  animation: none;
+  stroke-dasharray: none;
+  opacity: 0.4;
+}
+
+/* Y con una hoja abierta encima (HojaInferior), en cualquier pantalla: el
+   mapa queda detras del velo y la luz solo le robaria cuadros a la hoja. */
+[data-hoja] .flujo {
+  animation-play-state: paused;
+}
+
+/* La capa del contenido del mapa, la que se estira durante los gestos (ver
+   layout/vistaViva.js), y sus planos (ver PlanosGrafo).
+
+   No atrapa el puntero ella misma, solo lo que tiene dibujado: asi el click
+   en el hueco entre tarjetas llega a la rejilla de debajo, que es la que
+   cierra la seleccion. Y un plano de encima deja pasar el puntero por donde
+   no tiene nada hasta el de debajo.
+
+   will-change la sube a su propia capa de GPU de antemano, en todos los
+   aparatos: es lo que hace que estirarla no vuelva a rasterizar nada. Con el
+   raton se pierde el suavizado de subpixel del texto de Windows, que en un
+   SVG que se escala y se mueve no se notaba; lo que si se notaba era el
+   mapa repintandose entero en cada cuadro de rueda.
+
+   geometricPrecision porque el texto del mapa se maqueta a su tamaño y se
+   pinta escalado: sin el, Chrome ajusta cada letra a la rejilla de pixeles
+   de ese tamaño, y escalada se ve deforme o baila al acercar. */
+.capa-grafo {
+  pointer-events: none;
+  transform-origin: 0 0;
+  text-rendering: geometricPrecision;
+  will-change: transform;
+}
+
+.plano,
+.plano > svg {
+  position: absolute;
+  inset: 0;
+}
+
+/* Cada plano se recorta a la capa. El SVG ya lo hacia, pero el texto HTML
+   de encima medía el mapa entero -3600 px de ancho contra los 650 de la
+   capa-, y Chrome no junta en una textura algo tan grande y tan vacio: lo
+   subia a una capa de GPU propia, y todo lo que se pinta encima de ella
+   tenia que subir tambien por solaparla. Siete capas a pantalla y pico
+   cada una, 107 MB de memoria grafica en un telefono, que el compositor
+   mezcla en cada cuadro. Recortadas, quedan dos y 48 MB, y a CPU x6 un
+   arrastre gasta un 28 % menos y tocar una materia un 22 % menos. Lo que
+   queda fuera de la capa no se veia nunca: es justo lo que no se pinto. */
+.plano {
+  overflow: clip;
+}
+
+.plano > svg > g {
+  pointer-events: auto;
+}
+
+/* La casilla de marcar un semestre entero, en la cabecera del mapa y en la
+   de la lista (ver GlifoCasilla). Vacia es un contorno; a medias lleva una
+   raya verde; marcada se llena con su check. Al apuntarle anticipa lo que
+   hara el click: la vacia se enciende, la llena se apaga.
+
+   Cada estado solo cambia variables en la casilla misma, y la caja, la raya
+   y el check las leen. No hay reglas de ":hover" con descendientes: con una
+   asi, cada vez que el puntero entra o sale de CUALQUIER cosa del mapa el
+   navegador revisa los descendientes de todos sus ancestros por si son una
+   caja.
+
+   En el mapa cambia de golpe, sin transicion: la casilla esta pintada en el
+   plano de los rotulos, y animarla repinta el plano entero en cada cuadro
+   de la animacion -el hover de las tarjetas, que pasa por encima, perdia un
+   cuadro por eso (medido con npm run rendimiento)-. En la lista, que es un
+   boton suelto, si se anima. */
+.casilla-semestre {
+  --caja-relleno: transparent;
+  --caja-trazo: color-mix(in oklab, var(--tinta) 40%, transparent);
+  --caja-grosor: 1.4;
+  --raya: 0;
+  --tilde: 0;
+  --tilde-color: var(--estado-aprobada);
+  cursor: pointer;
+  outline: none;
+}
+
+.casilla-semestre[data-marca='mixto'] {
+  --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
+  --caja-trazo: var(--estado-aprobada);
+  --raya: 1;
+}
+
+.casilla-semestre[data-marca='marcado'] {
+  --caja-relleno: var(--estado-aprobada);
+  --caja-trazo: var(--estado-aprobada);
+  --tilde: 1;
+  --tilde-color: var(--lienzo);
+}
+
+.casilla-semestre:focus-visible {
+  --caja-trazo: var(--estado-aprobada);
+  --caja-grosor: 2.2;
+}
+
+@media (hover: hover) {
+  .casilla-semestre[data-marca='vacio']:hover,
+  .casilla-semestre[data-marca='mixto']:hover {
+    --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
+    --caja-trazo: var(--estado-aprobada);
+    --raya: 0;
+    --tilde: 1;
+  }
+
+  .casilla-semestre[data-marca='marcado']:hover {
+    --caja-relleno: transparent;
+    --tilde: 0.45;
+    --tilde-color: var(--estado-aprobada);
+  }
+}
+
+.casilla-semestre .caja {
+  fill: var(--caja-relleno);
+  stroke: var(--caja-trazo);
+  stroke-width: var(--caja-grosor);
+}
+
+.casilla-semestre .raya,
+.casilla-semestre .tilde {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button.casilla-semestre .caja,
+button.casilla-semestre .raya,
+button.casilla-semestre .tilde {
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease,
+    opacity 200ms ease;
+}
+
+.casilla-semestre .raya {
+  stroke: var(--estado-aprobada);
+  opacity: var(--raya);
+}
+
+.casilla-semestre .tilde {
+  stroke: var(--tilde-color);
+  opacity: var(--tilde);
+}
+
+/* Las luces no se pulsan: el click pasa a la tarjeta o al cable de debajo */
+.plano-luces > svg > g {
+  pointer-events: none;
+}
+
+/* El texto del mapa: HTML por encima de las formas, con el mismo pan y zoom
+   (ver Texto). No atrapa el puntero: lo pulsable es la tarjeta del SVG de
+   debajo. text-size-adjust para que el ajuste de tamaño de letra del
+   telefono no lo agrande y se salga de su tarjeta, que en el SVG no pasaba.
+
+   Nada va posicionado: cada grupo y cada texto cae en la unica celda de la
+   rejilla de su padre y se corre con margenes. Una celda por padre, y no un
+   position absolute por texto, que para Chrome es una capa de pintado cada
+   uno. */
+.textos-plano {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.textos-plano,
+.grupo-texto {
+  display: grid;
+}
+
+.textos-plano > *,
+.grupo-texto > * {
+  grid-area: 1 / 1;
+  justify-self: start;
+  align-self: start;
+}
+
+/* Cada texto apoya su linea base en el punto que le dan: un flex alineado
+   por la linea base cuyo primer hijo es este ::before vacio, que la tiene en
+   su borde de abajo. 40 px es ALTO_SOBRE_BASE en Texto.jsx. */
+.texto-mapa {
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.texto-mapa::before {
+  content: '';
+  height: 40px;
+}
+
+/* Cada plano que cambia por su cuenta, en su propia capa de GPU: lo que se
+   repinta en uno no obliga a rasterizar los otros. Los rotulos no la
+   necesitan: casi nunca cambian y se pintan en la de la capa.
+
+   La base y las luces se apagan ENTERAS con el foco puesto: opacidad y
+   desenfoque sobre la textura ya pintada, que la GPU resuelve sin tocar el
+   SVG y con una transicion que corre en el compositor. Los valores se ajustan
+   en .vista-carrera (--opacidad-foco, --filtro-foco). */
+.plano-base,
+.plano-luces,
+.plano-foco {
+  will-change: transform;
+}
+
+/* En modo ligero el mapa entero va en UNA capa de GPU, la de .capa-grafo,
+   que es la que se estira en los gestos. Cada capa de mas es una textura de
+   casi dos pantallas que la GPU guarda y mezcla en cada cuadro: con base y
+   foco aparte eran dos, unos 50 MB en un telefono de densidad alta, y al
+   volver al mapa desde otra vista habia que rehacerlas todas mientras el
+   dedo ya lo estaba moviendo. El apagado del foco sigue fundiendose: el
+   navegador sube el plano a su capa solo mientras dura la transicion. */
+[data-ligero] .plano {
+  will-change: auto;
+}
+
+.plano-base,
+.plano-luces {
+  transition:
+    opacity 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    filter 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.plano-base[data-foco] {
+  opacity: var(--opacidad-foco);
+  filter: var(--filtro-foco);
+}
+
+/* Las luces de la frontera, con el foco puesto, se van del todo: las de la
+   cadena las dibuja el plano de foco, y las demas, apagadas y quietas, no
+   dirian nada. Paradas, ademas, dejan de repintar su plano. */
+.plano-luces[data-foco] {
+  opacity: 0;
+}
+
+.plano-luces[data-foco] .flujo {
+  animation-play-state: paused;
+}
+
+/* Lo que sale del foco se apaga en su propio plano, entero, sobre su copia
+   apagada de la base (ver salidaDeFoco en layout/foco.js): una animacion de
+   opacidad de una capa, que corre en el compositor sin repintar nada. La
+   misma duracion y la misma curva que la base: DURACION_FOCO en PlanosGrafo. */
+.foco-saliendo {
+  animation: foco-sale 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes foco-sale {
+  to {
+    opacity: 0;
+  }
+}
+
+/* El mapa se asienta al llegar a una vista de golpe (ver llegar en
+   useVistaGrafo): sube unos pixeles y aparece. Con `translate` y no con
+   `transform`, que es donde vive el estiramiento del pellizco y de los
+   viajes, para no pisarlo. */
+.capa-grafo.capa-llegando {
+  animation: capa-llega 620ms cubic-bezier(0.22, 0.61, 0.2, 1) both;
+}
+
+@keyframes capa-llega {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Y nada de lo que hay dentro se mueve mientras tanto: cualquier cosa que
+   cambie en un cuadro obliga a repintar la capa entera, y el viaje vuelve
+   a costar lo mismo que pintando cada cuadro. Medido al aprobar a CPU x4:
+   al cerrarse la ficha se soltaban noventa y tantas transiciones a la vez
+   -las tarjetas que dejan de estar atenuadas, los cables que dejan de estar
+   resaltados, los colores de lo que se aprueba y se abre- y cada cuadro
+   seguia en 30-50 ms con la capa ya estirada.
+
+   Asi que esos cambios se dan de golpe en el primer cuadro, que ya se
+   pinta de todas formas y no se ve porque el mapa arranca a moverse, y el
+   anillo de la tarjeta tocada espera quieto a que llegue la camara. La luz
+   del cable no se para: ya espera sola lo que dura el viaje (ver
+   .descarga). */
+.capa-viajando * {
+  transition: none !important;
+}
+
+.capa-viajando .anillo-cambio,
+.capa-viajando .flujo {
+  animation-play-state: paused;
+}
+
+/* En modo ligero lo de dentro del mapa cambia siempre de golpe, viaje o no.
+   Es lo mismo que pone .capa-viajando, pero fijo: asi no hay clase que poner
+   y quitar en cada viaje, que en un telefono modesto costaba mas que las
+   transiciones que se ahorraban. Los planos si se funden (data-foco): eso
+   es opacidad de una capa entera y lo hace la GPU. */
+[data-ligero] .plano * {
+  transition: none !important;
+}
+
+/* Al mirar una materia, su cadena se dibuja de origen a destino */
+@keyframes trazar {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.trazar {
+  stroke-dasharray: 100;
+  animation: trazar 560ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* La luz al aprobar: el cable entero se enciende de origen a destino, se
+   queda encendido un instante y se apaga. Antes era un guion corto que
+   pasaba corriendo -una chispa-; ahora es el camino que se abre, que es lo
+   que acaba de pasar.
+
+   Espera 380 ms antes de salir: es lo que tarda el mapa en correrse para
+   enseñar lo que se desbloquea (ver marcarDesdeFicha en GrafoPensum). `both`
+   la deja apagada durante esa espera en vez de enseñar el cable ya lleno. */
+@keyframes descarga {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  58% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.descarga {
+  stroke-dasharray: 100;
+  animation: descarga 1300ms cubic-bezier(0.55, 0, 0.25, 1) 380ms both;
+}
+
+/* Su halo: el mismo trazo, ancho y muy flojo, debajo. Hace de resplandor sin
+   filtro: un blur en un cable recto recorta la linea entera (su caja no
+   tiene alto) y cuesta un repintado por cuadro. */
+.descarga-halo {
+  stroke-dasharray: 100;
+  animation: descarga 1300ms cubic-bezier(0.55, 0, 0.25, 1) 380ms both;
+}
+
+/* La materia que se acaba de abrir se despierta: su contorno sale hacia
+   fuera y se apaga, una sola vez. Espera a que la luz llegue por el cable -380 ms de
+   espera y unos 750 de viaje-:
+   encenderse antes que el cable se ve mal. `both` la deja invisible durante
+   esa espera; con `forwards` el contorno se veia quieto hasta que arrancaba.
+
+   Crece mas en alto que en ancho a proposito: la tarjeta es apaisada, y
+   escalando igual en los dos ejes el pulso casi no asomaba por arriba y por
+   abajo. */
+@keyframes destello {
+  0% {
+    opacity: 0;
+    transform: scale(1, 1);
+  }
+  18% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06, 1.28);
+  }
+}
+
+.destello {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: destello 1100ms cubic-bezier(0.22, 0.61, 0.2, 1) 1000ms both;
+}
+
+/* ---- Mantener una tarjeta en el telefono (ContornoCarga) ----------------
+
+   Una linea recorre el borde de la tarjeta mientras el dedo se queda quieto:
+   asoma a los --espera ms -un toque normal termina antes y no ve nada- y da
+   la vuelta en --carga ms. Al cerrarse se fija la ruta, y la linea se apaga
+   en --apagado ms mientras las demas tarjetas se atenuan. Los tres tiempos
+   los pone ContornoCarga desde layout/mantenerRuta.js, que es de donde los
+   toma tambien el reloj que fija la ruta.
+
+   La curva arranca suave y llega firme: se lee como algo que se carga, no
+   como una barra que corre a velocidad fija. */
+.contorno-carga {
+  pointer-events: none;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: cargar-contorno var(--carga) cubic-bezier(0.45, 0, 0.25, 1) var(--espera) forwards;
+}
+
+.contorno-carga.hecha {
+  stroke-dashoffset: 0;
+  animation: apagar-contorno var(--apagado) cubic-bezier(0.22, 0.61, 0.2, 1) forwards;
+}
+
+@keyframes cargar-contorno {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes apagar-contorno {
+  to {
+    opacity: 0;
+  }
+}
+
+/* La lente del selector de marcas del telefono (ver SelectorTelefono): la
+   misma gota de cristal que marca la vista en la barra de abajo, teñida con
+   el color de la marca elegida, y la misma curva al deslizarse. */
+.selector-lente {
+  background: color-mix(in oklab, var(--lente) 14%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--lente) 36%, transparent),
+    inset 0 1px 0.5px rgb(255 255 255 / 0.08);
+  transition:
+    transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+/* ---- La ficha de la materia: salida y filo de luz ---------------------- */
+
+/* Al cerrarse, la nubecita del escritorio se encoge un poco hacia su pico y
+   se apaga, el camino inverso de como brota. Con las dos clases: .menu-clase
+   esta en estilos/horario.css, que se carga despues, y su animacion de
+   entrada ganaria. */
+.menu-clase.ficha-saliendo {
+  animation: ficha-fuera 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes ficha-fuera {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+/* La tarjeta del telefono baja y se apaga. Con `translate` y no con
+   `transform`: si se cerro arrastrandola, su transform es donde la dejo el
+   dedo, y la salida sigue desde ahi en vez de saltar arriba. Con las dos
+   clases por lo mismo que la de escritorio. */
+.hoja-ficha.tarjeta-saliendo {
+  animation: tarjeta-fuera 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes tarjeta-fuera {
+  to {
+    opacity: 0;
+    translate: 0 56px;
+  }
+}
+
+/* El filo de luz del borde de arriba de la ficha, en el color de su estado:
+   verde aprobada, ambar cursando, la luz de disponible o un gris. Es la luz
+   de la marca, la misma que ya tenia el logo, puesta donde dice algo. */
+.ficha-filo {
+  position: absolute;
+  top: 0;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--filo) 80%, transparent),
+    transparent
+  );
+  transition: background 280ms ease;
+}
+
+/* El boton redondo con aro: la X de la ficha, el tema de la portada. Uno
+   solo para todos los botones sueltos, que se hunde
+   al pulsarlo. La X era una X suelta de trazo fino y en el telefono ni
+   parecia un boton. */
+.boton-cerrar,
+.boton-aro {
+  border: 1px solid color-mix(in oklab, var(--tinta) 16%, transparent);
+  background-color: color-mix(in oklab, var(--tinta) 5%, transparent);
+  color: var(--tinta-suave);
+  transition:
+    transform 160ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.boton-cerrar:hover,
+.boton-aro:hover,
+.group:hover > .boton-aro {
+  color: var(--tinta);
+  border-color: color-mix(in oklab, var(--tinta) 28%, transparent);
+  background-color: color-mix(in oklab, var(--tinta) 9%, transparent);
+}
+
+.boton-cerrar:active,
+.boton-aro:active {
+  transform: scale(0.9);
+}
+
+/* Las filas de Requiere y Desbloquea que llevan a otra materia: al pasar por
+   encima entra desde la izquierda una raya fina, el resalte de los menus de
+   la maqueta. Dice "esto se elige" sin caja ni flecha. */
+.fila-prelacion::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: var(--tinta);
+  transition: width 320ms cubic-bezier(0.22, 0.61, 0.2, 1);
+}
+
+.fila-prelacion:hover::before,
+.fila-prelacion:focus-visible::before {
+  width: 8px;
+}
+
+/* Anillo que se expande en la tarjeta que se acaba de tocar */
+@keyframes anillo {
+  from {
+    opacity: 0.7;
+    stroke-width: 2;
+  }
+  to {
+    opacity: 0;
+    stroke-width: 14;
+  }
+}
+
+.anillo-cambio {
+  animation: anillo 620ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* Entrada de tarjetas y paneles: arranca casi en su sitio y asienta sin
+   rebote. La curva es la de iOS para hojas modales. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

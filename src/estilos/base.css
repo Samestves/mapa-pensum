@@ -1,0 +1,57 @@
+/* ------------------------------------------------------------------
+   La mano en lo que se pulsa.
+
+   Tailwind 4 cambio el preflight: antes los <button> heredaban cursor
+   pointer y ahora se quedan en default, que es lo que hace el navegador con
+   un boton nativo. La consecuencia en esta aplicacion era que casi nada
+   parecia pulsable -las tarjetas de carrera del inicio, las filas de la
+   lista de electivas, las islas de la barra, el horario-, y el cursor es la
+   unica señal que tiene alguien con raton de que ahi hay una accion.
+
+   Se arregla en un sitio y no en los cuarenta botones que hay. Poner
+   cursor-pointer en cada uno seria repetir cuarenta veces una decision que
+   es del proyecto entero, y ademas garantizar que el boton numero cuarenta y
+   uno se olvide.
+
+   Va en @layer base, que importa: las utilidades de Tailwind viven en una
+   capa posterior y por tanto ganan. Asi un boton que a proposito NO deba
+   parecer pulsable -el fondo oscuro que cierra un modal, que es un boton
+   solo para poder pulsarlo- puede seguir diciendo cursor-default y se le
+   respeta. Sin la capa, esta regla tiene mas especificidad que la clase y se
+   la comeria.
+   ------------------------------------------------------------------ */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+/* Presente para quien lee, invisible para quien mira: el contenido que se
+   prerenderiza para los buscadores y los lectores de pantalla (ver
+   scripts/prerenderizar.js). */
+.seo-solo-lectura {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Se marca lo que si tiene sentido copiar */
+.seleccionable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* El cambio de tema es instantaneo y de una vez (ver useTema): mientras se
+   aplica, ninguna pieza anima su color por su cuenta. Sin esto, lo que lleva
+   transicion de color -un boton con hover, el pico de una nubecita- llegaba
+   tarde al tema nuevo y el cambio se leia como un retraso. La excepcion es la
+   pieza del selector de tema, que es el acuse del toque: se desliza. */
+[data-cambiando-tema] *:not(.lente-tema),
+[data-cambiando-tema] *::before,
+[data-cambiando-tema] *::after {
+  transition: none !important;
+}
