@@ -228,6 +228,13 @@ function Horario({ carrera, estados }) {
             setALeer(null)
           }}
           alCambiarImagen={setALeer}
+          /* La otra salida de la bienvenida, sin volver a ella: cuando el
+             lector no puede -hay cola, o se acabo por hoy- lo que queda es
+             armarlo, y se entra directo a la semana vacia. */
+          alCrearAMano={() => {
+            setEmpezado(true)
+            setALeer(null)
+          }}
           alCerrar={() => setALeer(null)}
         />
       )}

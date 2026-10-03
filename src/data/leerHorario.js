@@ -26,49 +26,110 @@ const TAMANO_MAXIMO = 12 * 1024 * 1024
    añada un formato en una sola. */
 export const FORMATOS = 'image/png,image/jpeg,image/webp,image/heic,image/heif'
 
-/** Los mensajes de cada fallo, en cristiano. La vista los enseña tal cual. */
-const EXPLICACION = {
-  'sin-clave': 'Falta configurar la clave del lector en el servidor.',
-  fuera: 'Esta petición no viene de la web. Recarga la página.',
-  'sin-imagen': 'No llegó ninguna imagen.',
-  'imagen-grande': 'La imagen pesa demasiado. Prueba con una captura de pantalla.',
-  tipo: 'Ese formato de imagen no se puede leer. Usa JPG, PNG o una captura.',
-  'sin-materias': 'No se pudo leer el pensum de esta carrera.',
-  red: 'No se pudo conectar con el lector. Revisa tu conexión.',
-  ia: 'El lector no pudo procesar la imagen. Inténtalo de nuevo en un minuto.',
-  /* Saturado y cuota son cosas distintas y hay que decirlo: una se arregla
-     insistiendo en un minuto y la otra esperando a mañana. Con el mismo
-     mensaje, nadie sabe si volver a intentarlo. */
-  saturado:
-    'El lector de Google está saturado ahora mismo. No es tu cuota: le pasa a todo el mundo a la vez y suele durar poco.',
-  cuota: 'Se agotó la cuota del lector por ahora. Vuelve a intentarlo más tarde.',
-  /* Estos tres no los arregla el estudiante y no hay que fingir que sí: un
-     modelo jubilado no va a existir dentro de un minuto por mucho que
-     insista. Debajo sale el mensaje de Google, que es lo que hace falta para
-     saber qué modelo poner. */
-  modelo: 'El lector está mal configurado: el modelo que usa ya no está disponible.',
-  permiso: 'La clave del lector no tiene permiso para ese modelo.',
-  peticion: 'La petición al lector no era válida.',
-  vacia: 'El lector no devolvió nada. Prueba con una foto más nítida.',
-  json: 'La respuesta del lector vino mal formada.',
-  metodo: 'Petición inválida.',
-  'no-es-imagen': 'Eso no es una imagen.',
-  pesada: 'Esa imagen pesa más de 12 MB. Prueba con una captura de pantalla.',
-  'no-se-abre':
-    'No se pudo abrir esa imagen. Si viene de un iPhone, prueba con una captura de pantalla.',
-  'sin-servidor':
-    'El lector no está disponible aquí. En desarrollo local hace falta arrancar con "vercel dev".',
-  desconocido: 'Algo falló al leer la imagen.',
+/* Lo que se le ofrece a quien le fallo la lectura. Una salida por fallo: la
+   que de verdad lo arregla. Ofrecer "prueba otra foto" ante un servicio lleno
+   es mandar a buscar el problema donde no esta. */
+export const SALIDA = {
+  /* La misma imagen otra vez: el problema no es la foto y se pasa solo */
+  REINTENTAR: 'reintentar',
+  /* El problema es la foto */
+  OTRA_IMAGEN: 'otra-imagen',
+  /* No lo arregla el estudiante ni esperar un minuto: queda armarlo a mano */
+  A_MANO: 'a-mano',
+}
+
+/* Las averias del lector -un modelo jubilado, una clave sin permiso- se dicen
+   igual todas. A quien quiere su horario le da lo mismo cual sea, y lo unico
+   que tiene que saber es que no es por su foto. El detalle de cual fue queda
+   en la consola y en el registro del servidor, para quien lo arregla. */
+const AVERIA = {
+  mensaje: 'El lector está fuera de servicio. No es por tu imagen.',
+  salida: SALIDA.A_MANO,
+}
+
+/** Cada fallo, en cristiano y con su salida. La vista los enseña tal cual. */
+const FALLOS = {
+  /* Cola y cuota son cosas distintas y hay que decirlo: la primera se pasa
+     en segundos -el lector atiende unas veinte lecturas por minuto, o Google
+     esta lleno un momento- y la segunda mañana. Con el mismo mensaje nadie
+     sabe si quedarse mirando la pantalla. */
+  cola: { mensaje: 'Hay mucha gente leyendo su horario ahora mismo.', salida: SALIDA.REINTENTAR },
+  cuota: {
+    mensaje: 'Hoy ya se leyeron todos los horarios que el lector permite. Mañana vuelve.',
+    salida: SALIDA.A_MANO,
+  },
+  muchas: {
+    mensaje: 'Has leído muchas imágenes seguidas. El lector te deja volver en una hora.',
+    salida: SALIDA.A_MANO,
+  },
+  red: {
+    mensaje: 'No se pudo conectar con el lector. Revisa tu conexión.',
+    salida: SALIDA.REINTENTAR,
+  },
+  ia: { mensaje: 'El lector no pudo con esta imagen.', salida: SALIDA.REINTENTAR },
+  vacia: {
+    mensaje: 'El lector no encontró nada que leer. Prueba con una foto más nítida.',
+    salida: SALIDA.REINTENTAR,
+  },
+  json: { mensaje: 'La lectura llegó a medias.', salida: SALIDA.REINTENTAR },
+
+  'sin-imagen': { mensaje: 'No llegó ninguna imagen.', salida: SALIDA.OTRA_IMAGEN },
+  'imagen-grande': {
+    mensaje: 'La imagen pesa demasiado. Prueba con una captura de pantalla.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+  tipo: {
+    mensaje: 'Ese formato de imagen no se puede leer. Usa JPG, PNG o una captura.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+  'no-es-imagen': { mensaje: 'Eso no es una imagen.', salida: SALIDA.OTRA_IMAGEN },
+  pesada: {
+    mensaje: 'Esa imagen pesa más de 12 MB. Prueba con una captura de pantalla.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+  'no-se-abre': {
+    mensaje:
+      'No se pudo abrir esa imagen. Si viene de un iPhone, prueba con una captura de pantalla.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+
+  fuera: {
+    mensaje: 'Algo se quedó viejo en esta página. Recárgala y vuelve a subir la imagen.',
+    salida: SALIDA.A_MANO,
+  },
+  'sin-servidor': {
+    mensaje:
+      'El lector no está disponible aquí. En desarrollo local hace falta arrancar con "vercel dev".',
+    salida: SALIDA.A_MANO,
+  },
+  desconocido: AVERIA,
 }
 
 /** Un error con codigo, para que la vista decida sin leer mensajes. */
 class FalloLectura extends Error {
-  constructor(codigo, detalle) {
-    super(EXPLICACION[codigo] ?? EXPLICACION.desconocido)
+  /**
+   * @param {string} codigo
+   * @param {object} [extra]
+   * @param {string} [extra.detalle]  lo que dijo el servidor, para quien lo arregla
+   * @param {number} [extra.espera]   segundos tras los que merece la pena volver
+   */
+  constructor(codigo, { detalle, espera } = {}) {
+    const { mensaje, salida } = FALLOS[codigo] ?? AVERIA
+    super(mensaje)
     this.codigo = codigo
+    this.salida = salida
     this.detalle = detalle
+    this.espera = espera
   }
 }
+
+/* Cualquier cosa que reviente, con la forma que la vista espera. Un error que
+   no es de la lectura -un fallo nuestro- sale como averia y no con su mensaje
+   de programa en la pantalla. */
+export const comoFallo = (error) =>
+  error instanceof FalloLectura
+    ? error
+    : new FalloLectura('desconocido', { detalle: String(error?.message ?? error) })
 
 const leerComo = (blob, metodo) =>
   new Promise((cumplir, fallar) => {
@@ -120,16 +181,17 @@ export async function prepararImagen(archivo) {
   const blob = await new Promise((r) => lienzo.toBlob(r, TIPO_SUBIDA, CALIDAD))
   if (!blob) throw new FalloLectura('no-se-abre')
 
-  const url = await leerComo(blob, 'readAsDataURL')
+  const enTexto = await leerComo(blob, 'readAsDataURL')
+  const vistaPrevia = URL.createObjectURL(blob)
 
   return {
-    base64: String(url).split(',')[1],
+    base64: String(enTexto).split(',')[1],
     tipo: TIPO_SUBIDA,
-    vistaPrevia: URL.createObjectURL(blob),
+    vistaPrevia,
     peso: blob.size,
     ancho,
     alto,
-    soltar: () => URL.revokeObjectURL(url),
+    soltar: () => URL.revokeObjectURL(vistaPrevia),
   }
 }
 
@@ -152,7 +214,7 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
     })
   } catch (e) {
     if (e?.name === 'AbortError') throw e
-    throw new FalloLectura('red', String(e?.message ?? e))
+    throw new FalloLectura('red', { detalle: String(e?.message ?? e) })
   }
 
   /* En `npm run dev` no hay funciones: Vite devuelve el index.html para
@@ -163,13 +225,15 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
   if (!esJSON) throw new FalloLectura('sin-servidor')
 
   const datos = await respuesta.json().catch(() => null)
-  if (!respuesta.ok) throw new FalloLectura(datos?.error ?? 'desconocido', datos?.detalle)
+  if (!respuesta.ok) {
+    /* `espera` solo viene cuando el servidor sabe que el fallo se pasa solo
+       -hay cola- y cuanto tarda. Es lo que le permite a
+       la pantalla esperar y volver sin que nadie pulse nada. */
+    throw new FalloLectura(datos?.error ?? 'desconocido', {
+      detalle: datos?.detalle,
+      espera: Number.isFinite(datos?.espera) ? datos.espera : undefined,
+    })
+  }
 
   return datos?.clases ?? []
 }
-
-/* Fallos que mejoran solos con el tiempo. Para estos la accion que sirve es
-   volver a intentarlo con LA MISMA imagen; para el resto, cambiarla. Ofrecer
-   siempre "prueba otra foto" ante un servicio lleno es mandar a buscar el
-   problema donde no esta. */
-export const SE_REINTENTA = new Set(['saturado', 'red', 'ia', 'vacia'])
