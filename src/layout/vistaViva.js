@@ -6,17 +6,31 @@
  * se ve, y en un telefono eso son decenas de milisegundos por cuadro. Pero
  * mientras los dedos se mueven no hace falta nitidez, hace falta que el mapa
  * siga a los dedos. Asi que durante el gesto el <svg> ya pintado se estira y
- * se desplaza con un transform CSS, que resuelve la GPU sin tocar el hilo
- * principal, y al soltar se pinta una sola vez a la escala final.
+ * se desplaza con un transform CSS, que resuelve la GPU sin repintar nada, y
+ * al parar se pinta una sola vez a la escala final.
  *
  * Dos vistas: la VIVA, a donde van los dedos, y la PINTADA, la que tiene el
  * DOM. Todo lo de aqui es aritmetica entre las dos, sin React, para poder
  * probarlo.
  */
 
-/* Cuanto se deja estirar la capa antes de repintarla. Estirada al doble ya
-   se nota borrosa; hasta aqui pasa por el desenfoque normal de un gesto. */
+/* Cuanto se puede estirar la capa sin que se note. Estirada al doble ya se ve
+   borrosa; hasta aqui pasa por el desenfoque normal de un gesto. */
 export const AUMENTO_MAX = 1.8
+
+/* Y cuanto se deja estirar mientras la mueve una mano. Mas, a proposito:
+   pintar a mitad de un pellizco es parar el mapa unas decenas de ms, y eso
+   se ve mucho mas que unas letras borrosas que van creciendo. Es lo que hace
+   el navegador al ampliar una pagina con dos dedos: estira lo que tiene y lo
+   afina cuando los dedos paran. Aqui igual -se pinta al quedarse quieto o al
+   soltar (ver REPOSO_MS en useVistaGrafo)-, y a partir de cuatro veces se
+   pinta de todos modos, que ahi ya no se sabe que se esta mirando.
+
+   Medido en un telefono emulado a CPU x4, acercando de 0,45 a 2,3: con el
+   tope en 1,8 el mapa se pintaba dos veces por el camino, con el cuadro
+   parado unos 40 ms cada vez; con cuatro, una sola, casi al final. Y en un
+   pellizco normal, de dos o tres veces, ninguna. */
+export const AUMENTO_GESTO = 4
 
 /* Cuanto mas grande que la ventana se pinta la capa, por cada lado y en
    fraccion de la ventana. Con 0,4 la capa mide 1,8 veces la ventana en cada
@@ -100,11 +114,82 @@ export function capaCubre(
   )
 }
 
-/* En un viaje de camara se deja estirar mas que en el pellizco. El viaje
+/* Cuanto de la capa se deja por delante al pintarla a mitad de un arrastre,
+   en fraccion del margen: con 0 la ventana queda en el centro de la capa, y
+   con 1, pegada a su borde de atras. A tres cuartos queda por delante el
+   70 % de la pantalla en vez del 40, y por detras lo justo para que
+   rectificar un poco no destape el borde nada mas pintar. */
+const ADELANTO = 0.75
+
+/**
+ * La vista a la que pintar cuando un gesto se sale de lo pintado y toca
+ * pintar con el mapa en marcha.
+ *
+ * No la de ahora: una adelantada hacia donde va el gesto. Pintar es el tiron
+ * de un gesto, y pintando justo lo que se ve, un arrastre largo o un mapa
+ * lanzado volvian a salirse de la capa a los cuatro decimos de pantalla, y
+ * alejar, cada vez que el mapa encogia a algo mas de la mitad. En pantalla
+ * no cambia nada: la capa se estira desde la vista adelantada hasta la viva
+ * igual que desde cualquier otra, y al parar se pinta la de verdad.
+ *
+ *  - Alejando: se pinta mas lejos de lo que se esta, lo que da el aumento
+ *    que no se nota. La capa abarca mas mapa, y seguir alejando la encoge en
+ *    vez de destaparle los bordes.
+ *  - Arrastrando: se pinta corrida hacia donde va el mapa.
+ *  - Acercando no hay nada que adelantar: lo que viene ya esta dentro.
+ */
+export function vistaAdelantada(viva, pintada, medida, margen) {
+  if (viva.escala > pintada.escala) return viva
+
+  if (viva.escala < pintada.escala) {
+    const cx = medida.ancho / 2
+    const cy = medida.alto / 2
+    return {
+      escala: viva.escala / AUMENTO_MAX,
+      x: cx - (cx - viva.x) / AUMENTO_MAX,
+      y: cy - (cy - viva.y) / AUMENTO_MAX,
+    }
+  }
+
+  // El recorrido desde que se pinto, en pantallas: de ahi sale la direccion
+  const dx = viva.x - pintada.x
+  const dy = viva.y - pintada.y
+  const recorrido = Math.max(Math.abs(dx) / medida.ancho, Math.abs(dy) / medida.alto)
+  if (!recorrido) return viva
+  const paso = (ADELANTO * margen) / recorrido
+  return { ...viva, x: viva.x + dx * paso, y: viva.y + dy * paso }
+}
+
+/* Lo que tiene que cambiar una vista para que se note: un par de pixeles, o
+   un uno por ciento de escala. Por debajo es el temblor de un dedo apoyado. */
+const TEMBLOR_PX = 2
+const TEMBLOR_ESCALA = 0.01
+
+/**
+ * Si de la vista `a` a la `b` el mapa se ha movido de verdad, y no solo
+ * temblado.
+ *
+ * Se mira lo que se ve y no los numeros de la vista: cuanto se ha corrido lo
+ * que estaba en el centro de la ventana. `x` e `y` dicen donde cae el origen
+ * del mapa, que con el mapa ampliado esta a miles de pixeles: ahi el temblor
+ * de un pellizco los mueve decenas de pixeles sin que en pantalla cambie
+ * nada.
+ */
+export function seMueve(a, b, medida) {
+  const k = b.escala / a.escala
+  const cx = medida.ancho / 2
+  const cy = medida.alto / 2
+  return (
+    Math.abs(b.x + k * (cx - a.x) - cx) > TEMBLOR_PX ||
+    Math.abs(b.y + k * (cy - a.y) - cy) > TEMBLOR_PX ||
+    Math.abs(k - 1) > TEMBLOR_ESCALA
+  )
+}
+
+/* En un viaje de camara se deja estirar mas de lo que no se nota. El viaje
    dura menos de medio segundo y va deprisa justo al principio, que es
    cuando la capa esta mas estirada: el ojo va siguiendo el movimiento y no
-   llega a leer letras. Con los dedos, en cambio, el mapa se para donde uno
-   quiera y ahi si se veria borroso. */
+   llega a leer letras. */
 export const AUMENTO_VIAJE = 3
 
 /**

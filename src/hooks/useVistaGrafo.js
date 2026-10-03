@@ -2,13 +2,18 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { ZOOM } from '../layout/constantes'
 import { escalaDeLectura } from '../layout/camara'
 import {
+  AUMENTO_GESTO,
   AUMENTO_VIAJE,
   MARGEN_CAPA,
   capaCubre,
   mismaVista,
+  seMueve,
   transformRelativo,
+  vistaAdelantada,
   vistaParaViaje,
 } from '../layout/vistaViva'
+import { moverCapa } from '../layout/moverCapa'
+import { relojAplazable } from '../layout/relojAplazable'
 import { holguraDe } from '../layout/mantenerRuta'
 import { esModoLigero } from '../data/ligero'
 
@@ -26,6 +31,17 @@ function congelarCapa(capa, congelada) {
    desbloquea al aprobar: un viaje y no un salto, a una velocidad que el ojo
    pueda seguir. */
 const DURACION_MOSTRAR = 420
+
+/* Lo que tiene que llevar quieto el mapa para pintarlo nitido donde quedo.
+   Mientras se mueve va estirado (ver layout/vistaViva.js); al parar -los
+   dedos quietos, la rueda sin girar, la inercia agotada- se pinta de verdad.
+   Lo bastante corto para que no se llegue a ver borroso, y lo bastante largo
+   para que entre dos arrastres seguidos no se pinte nada: pintar ahi era
+   ocupar el telefono justo cuando el dedo volvia a moverlo. */
+const REPOSO_MS = 150
+/* Y lo que tarda en darse por terminado un gesto, que es cuando vuelven las
+   luces de los cables y el hover. */
+const FIN_GESTO_MS = 250
 
 const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
 
@@ -97,11 +113,13 @@ function acotarVista(v, medida, anchoContenido, altoContenido) {
  * transform sobre un <g>, no tocando el viewBox: asi el fondo se queda
  * quieto y solo se mueve el contenido.
  *
- * Ningun gesto repinta el mapa mientras dura. El arrastre, la rueda, el
- * pellizco y los viajes de camara estiran la capa ya pintada en la GPU, y el
- * mapa se pinta una vez al acabar (ver layout/vistaViva.js). Lo que tiene que
- * ir pegado al mapa sin estar dentro de el -la ficha de escritorio- se
- * engancha con `seguir` y se desplaza con la capa.
+ * Mover el mapa no es repintarlo. El arrastre, la rueda, el pellizco y los
+ * viajes de camara estiran la capa ya pintada en la GPU, y el mapa se pinta
+ * cuando se queda quieto (ver layout/vistaViva.js). Solo si un gesto se sale
+ * de lo que hay pintado se pinta por el camino, y entonces adelantado hacia
+ * donde va, para que no vuelva a hacer falta. Lo que tiene que ir pegado al
+ * mapa sin estar dentro de el -la ficha de escritorio- se engancha con
+ * `seguir` y se desplaza con la capa.
  *
  * `vistaInicial(medida)` da la vista con la que abre el mapa, o null para
  * abrirlo encajado entero (ver layout/camara.js).
@@ -147,10 +165,10 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     const viva = vistaRef.current
     const pintada = pintadaRef.current
     if (mismaVista(viva, pintada)) {
-      capa.style.transform = ''
+      moverCapa(capa, null)
     } else {
       const { k, x, y } = transformRelativo(viva, pintada)
-      capa.style.transform = `translate(${x}px, ${y}px) scale(${k})`
+      moverCapa(capa, `translate(${x}px, ${y}px) scale(${k})`)
     }
     for (const [el, punto] of seguidores.current) moverSeguidor(el, punto)
   }, [moverSeguidor])
@@ -176,42 +194,66 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     estirarCapa()
   }, [vista, estirarCapa])
 
+  /* Pintar la vista a la que llego el gesto. Lo hace el reposo -el mapa
+     quieto durante REPOSO_MS-, o antes quien sepa que su gesto termino, como
+     levantar los dedos de un pellizco. */
+  const pintarDondeQuedo = useCallback(() => {
+    if (!mismaVista(vistaRef.current, pintadaRef.current)) setVista(vistaRef.current)
+  }, [])
+  const [reposo] = useState(() => relojAplazable(REPOSO_MS, pintarDondeQuedo))
+  useEffect(() => () => reposo.cancelar(), [reposo])
+  const asentarVista = useCallback(() => {
+    reposo.cancelar()
+    pintarDondeQuedo()
+  }, [reposo, pintarDondeQuedo])
+  /* La ultima vista que corrio el reposo: solo lo corre un movimiento de
+     verdad. Un dedo apoyado tiembla, y si cada temblor contara, el mapa no
+     se pintaria nitido hasta levantarlo... o, contando solo para pedir otro
+     reposo, se pintaria entero cada 150 ms mientras siguiera apoyado. Asi
+     que el temblor no cuenta para nada, y lo que deje sin pintar -un pixel,
+     medio por ciento de escala- lo recoge quien da su gesto por acabado
+     pidiendo un reposo (reposo.asegurar). */
+  const vistaReposo = useRef(vista)
+
   /* Todo pasa por aqui -arrastre, rueda, pellizco, botones y encaje-, asi que
      acotar en este punto y en ninguno mas basta para que no exista ninguna
      forma de dejar el mapa fuera de la pantalla. Ponerlo en cada gesto seria
      cuatro sitios donde acordarse.
 
      `enVivo` lo piden los gestos. Si estirar la capa basta, no se toca
-     React; si no -se destaparia un borde o ya se ve borroso-, se pinta de
-     verdad ese cuadro y el gesto sigue estirando desde ahi. */
+     React, y el mapa se pinta cuando el gesto repose. Si no basta -se
+     destaparia un borde, o ya no se sabe que se mira-, se pinta ese cuadro,
+     adelantado hacia donde va el gesto para no tener que volver a pintar
+     enseguida, y se sigue estirando desde ahi. */
   const aplicarVista = useCallback(
     (siguiente, enVivo = false) => {
       const acotada = acotarVista(siguiente, medida, anchoContenido, altoContenido)
       vistaRef.current = acotada
-      if (
-        enVivo &&
-        capaCubre(
-          acotada,
-          pintadaRef.current,
-          medida,
-          anchoContenido,
-          altoContenido,
-          undefined,
-          MARGEN_CAPA,
-        )
-      ) {
-        estirarCapa()
+      if (!enVivo) {
+        setVista(acotada)
         return
       }
-      setVista(acotada)
-    },
-    [medida, anchoContenido, altoContenido, estirarCapa],
-  )
 
-  /* Al acabar un gesto se pinta la vista a la que llego */
-  const asentarVista = useCallback(() => {
-    if (!mismaVista(vistaRef.current, pintadaRef.current)) setVista(vistaRef.current)
-  }, [])
+      if (seMueve(vistaReposo.current, acotada, medida)) {
+        vistaReposo.current = acotada
+        reposo.aplazar()
+      }
+
+      const pintada = pintadaRef.current
+      const cubre = capaCubre(
+        acotada,
+        pintada,
+        medida,
+        anchoContenido,
+        altoContenido,
+        AUMENTO_GESTO,
+        MARGEN_CAPA,
+      )
+      if (cubre) estirarCapa()
+      else setVista(vistaAdelantada(acotada, pintada, medida, MARGEN_CAPA))
+    },
+    [medida, anchoContenido, altoContenido, estirarCapa, reposo],
+  )
   const [arrastrando, setArrastrando] = useState(false)
 
   /* Cierto mientras se mueve el mapa: arrastre, pellizco o rueda. Sirve para
@@ -227,17 +269,22 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
      del estado cambiaria de identidad al empezar y al acabar cada gesto,
      tirando abajo el memo de los ciento treinta y un hijos. */
   const refEnGesto = useRef(false)
-  const relojGesto = useRef(null)
-  const marcarGesto = useCallback(() => {
-    refEnGesto.current = true
-    setEnGesto(true)
-    clearTimeout(relojGesto.current)
-    relojGesto.current = setTimeout(() => {
+  const [finGesto] = useState(() =>
+    relojAplazable(FIN_GESTO_MS, () => {
       refEnGesto.current = false
       setEnGesto(false)
-    }, 250)
-  }, [])
-  useEffect(() => () => clearTimeout(relojGesto.current), [])
+    }),
+  )
+  /* Se llama en cada movimiento, asi que hace lo justo: avisar a React la
+     primera vez y correr la hora del final. */
+  const marcarGesto = useCallback(() => {
+    if (!refEnGesto.current) {
+      refEnGesto.current = true
+      setEnGesto(true)
+    }
+    finGesto.aplazar()
+  }, [finGesto])
+  useEffect(() => () => finGesto.cancelar(), [finGesto])
 
   /* La posicion del contenedor en pantalla, cacheada.
      Leerla con getBoundingClientRect en cada evento de rueda o de pellizco
@@ -413,6 +460,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     (hasta, duracion) => {
       cancelAnimationFrame(animacion.current)
       clearTimeout(redZoom.current)
+      // El viaje pinta por su cuenta: que no lo pise el reposo de un gesto de antes
+      reposo.cancelar()
       const desde = vistaRef.current
       const destino = acotarVista(hasta, medida, anchoContenido, altoContenido)
       const base = vistaParaViaje(
@@ -497,7 +546,16 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       animacion.current = requestAnimationFrame(paso)
       programarRed(duracion + 1000)
     },
-    [medida, anchoContenido, altoContenido, estirarCapa, asentarViaje, aplicarVista, marcarGesto],
+    [
+      medida,
+      anchoContenido,
+      altoContenido,
+      estirarCapa,
+      asentarViaje,
+      aplicarVista,
+      marcarGesto,
+      reposo,
+    ],
   )
 
   /**
@@ -568,25 +626,21 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
      una vez da exactamente el mismo destino con una fraccion del trabajo.
 
      Y en vivo, como el pellizco: la rueda estira la capa y el mapa se pinta
-     nitido cuando deja de girar. La rueda no avisa de cuando termina, asi
-     que eso es a los 150 ms del ultimo giro. Antes cada cuadro de rueda
-     repintaba el mapa entero a la escala nueva, y en un portatil eso era el
-     zoom a tirones. */
+     nitido cuando deja de girar, que es cuando reposa (ver REPOSO_MS). Antes
+     cada cuadro de rueda repintaba el mapa entero a la escala nueva, y en un
+     portatil eso era el zoom a tirones. */
   useEffect(() => {
     const el = contenedorRef.current
     if (!el) return
 
     let acumulado = 0
     let cuadro = 0
-    let reposo = 0
     let puntero = { x: 0, y: 0 }
 
     const alRodar = (e) => {
       e.preventDefault()
       acumulado += e.deltaY
       puntero = { x: e.clientX, y: e.clientY }
-      clearTimeout(reposo)
-      reposo = setTimeout(asentarVista, 150)
       if (cuadro) return
       cuadro = requestAnimationFrame(() => {
         cuadro = 0
@@ -594,6 +648,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
         acumulado = 0
         const { left, top } = cajaRef.current
         zoomEn(Math.exp(-paso * 0.0015), puntero.x - left, puntero.y - top, true)
+        // La rueda no avisa de cuando termina: cada giro puede ser el ultimo
+        reposo.asegurar()
       })
     }
 
@@ -601,9 +657,8 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     return () => {
       el.removeEventListener('wheel', alRodar)
       cancelAnimationFrame(cuadro)
-      clearTimeout(reposo)
     }
-  }, [zoomEn, asentarVista])
+  }, [zoomEn, reposo])
 
   // --- Arrastre y pellizco ----------------------------------------------
   // Se lleva la cuenta de los punteros activos: uno = mover, dos = pellizcar
@@ -625,20 +680,20 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
      borde, ese eje se para.
 
      Como el arrastre, va estirando la capa (en vivo) y se pinta una vez al
-     pararse. Devuelve si hubo inercia: si no, quien suelta asienta ya. */
+     pararse, cuando reposa. */
   const lanzar = () => {
     const m = muestras.current
     muestras.current = []
-    if (m.length < 2) return false
+    if (m.length < 2) return
     const ultimo = m[m.length - 1]
     // Si el dedo se quedo quieto antes de soltar, no lo estaba lanzando
-    if (performance.now() - ultimo.t > 60) return false
+    if (performance.now() - ultimo.t > 60) return
     const primero = m.find((p) => ultimo.t - p.t <= 80) ?? m[0]
     const dt = ultimo.t - primero.t
-    if (dt <= 0) return false
+    if (dt <= 0) return
     let vx = (ultimo.x - primero.x) / dt
     let vy = (ultimo.y - primero.y) / dt
-    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return false
+    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return
 
     let previo = null
     const paso = (ahora) => {
@@ -654,7 +709,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
         vx *= f
         vy *= f
         if (Math.hypot(vx, vy) < 0.02) {
-          asentarVista()
+          reposo.asegurar()
           return
         }
       }
@@ -663,7 +718,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       inercia.current = requestAnimationFrame(paso)
     }
     inercia.current = requestAnimationFrame(paso)
-    return true
   }
 
   /* Doble toque en el lienzo: acerca al doble alrededor del dedo, que es
@@ -687,9 +741,28 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     }
   }
 
+  /* El pellizco se aplica una vez por cuadro. Cada dedo manda su propio
+     movimiento, asi que en cada cuadro llegan dos, y con cada uno se hacia el
+     zoom entero para que solo se viera el segundo. */
+  const cuadroPellizco = useRef(0)
+  const aplicarPellizco = () => {
+    cuadroPellizco.current = 0
+    if (punteros.current.size < 2 || !pellizco.current) return
+    const ahora = medirPellizco()
+    if (pellizco.current.distancia > 0) {
+      zoomEn(ahora.distancia / pellizco.current.distancia, ahora.centroX, ahora.centroY, true)
+    }
+    pellizco.current = ahora
+  }
+  useEffect(() => () => cancelAnimationFrame(cuadroPellizco.current), [])
+
   const alPresionar = (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
     detenerViaje()
+    /* Si el mapa estaba a punto de pintarse tras el gesto anterior, que
+       espere: este dedo viene a moverlo otra vez, y pintar ahora seria tener
+       el telefono ocupado justo en sus primeros cuadros. */
+    reposo.aplazar()
     // Una sola medida por gesto, no una por movimiento
     refrescarCaja()
     punteros.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -716,12 +789,10 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     punteros.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
     if (punteros.current.size >= 2 && pellizco.current) {
-      const ahora = medirPellizco()
-      if (pellizco.current.distancia > 0) {
-        zoomEn(ahora.distancia / pellizco.current.distancia, ahora.centroX, ahora.centroY, true)
-      }
-      pellizco.current = ahora
       huboMovimiento.current = true
+      if (!cuadroPellizco.current) {
+        cuadroPellizco.current = requestAnimationFrame(aplicarPellizco)
+      }
       return
     }
 
@@ -759,25 +830,32 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   }
 
   const alSoltar = (e) => {
+    // El ultimo movimiento del pellizco, si aun esperaba su cuadro
+    if (cuadroPellizco.current) {
+      cancelAnimationFrame(cuadroPellizco.current)
+      aplicarPellizco()
+    }
     punteros.current.delete(e.pointerId)
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
     const tactil = e.pointerType !== 'mouse' && e.type === 'pointerup'
     const eraArrastre = arrastre.current?.capturado && deUnDedo.current
-    // Al levantar un dedo del pellizco no se reanuda el arrastre con el otro:
-    // haria un salto feo. Hace falta volver a tocar.
+    /* Al levantar un dedo del pellizco no se reanuda el arrastre con el otro:
+       haria un salto feo. Hace falta volver a tocar. Y se pinta ya, sin
+       esperar al reposo: el pellizco deja el mapa a otra escala, borroso, y
+       quien suelta es porque ya esta donde queria mirar. */
     if (pellizco.current) asentarVista()
     pellizco.current = null
     arrastre.current = null
     if (punteros.current.size === 0) setArrastrando(false)
 
-    /* Con el ultimo dedo fuera se pinta donde quedo la capa, salvo que el
-       arrastre siga solo con inercia, que asienta al pararse. Tambien cubre
-       el toque que frena una inercia: la capa se quedo desplazada y hay que
-       pintarla ahi. */
-    const sigueSola = tactil && eraArrastre && lanzar()
-    if (punteros.current.size === 0 && !sigueSola) asentarVista()
+    /* Un arrastre no se pinta al soltar: lo pinta el reposo. La capa solo
+       quedo corrida, sin estirar, asi que se ve igual de nitida, y si el dedo
+       vuelve enseguida -que es como se recorre el mapa, a base de arrastres
+       seguidos- no hay nada pintandose cuando empieza a moverlo. */
+    if (tactil && eraArrastre) lanzar()
+    reposo.asegurar()
 
     // Un toque limpio de un dedo en el vacio: puede ser la mitad de un doble toque
     if (tactil && deUnDedo.current && !huboMovimiento.current && punteros.current.size === 0) {

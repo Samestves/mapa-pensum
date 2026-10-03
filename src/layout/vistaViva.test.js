@@ -1,12 +1,15 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  AUMENTO_GESTO,
   AUMENTO_MAX,
   AUMENTO_VIAJE,
   MARGEN_CAPA,
   capaCubre,
   mismaVista,
+  seMueve,
   transformRelativo,
+  vistaAdelantada,
   vistaParaViaje,
 } from './vistaViva.js'
 
@@ -128,5 +131,89 @@ describe('la vista para un viaje de camara', () => {
     const desde = { x: -3000, y: -2000, escala: 2.5 }
     const hasta = { x: 40, y: 60, escala: 0.1 }
     assert.equal(vistaParaViaje(desde, hasta, VENTANA, ...MAPA), null)
+  })
+})
+
+test('con la mano en el mapa se deja estirar hasta el aumento de gesto', () => {
+  const pintada = { x: -300, y: -200, escala: 1 }
+  const cubre = (f) =>
+    capaCubre(acercar(pintada, f, 200, 150), pintada, VENTANA, 2000, 1500, AUMENTO_GESTO)
+  assert.ok(cubre(AUMENTO_MAX + 1))
+  assert.ok(cubre(AUMENTO_GESTO - 0.01))
+  assert.ok(!cubre(AUMENTO_GESTO + 0.01))
+})
+
+describe('la vista adelantada, cuando toca pintar con el mapa en marcha', () => {
+  const MAPA = [6000, 4500]
+  const m = MARGEN_CAPA
+  const cubre = (viva, pintada) => capaCubre(viva, pintada, VENTANA, ...MAPA, AUMENTO_GESTO, m)
+  const pintada = { x: -2000, y: -1500, escala: 1 }
+
+  test('arrastrando, deja por delante mas recorrido del que daba pintar donde se esta', () => {
+    // El mapa se ha corrido a la izquierda mas de lo que cubria el margen
+    const viva = { ...pintada, x: pintada.x - VENTANA.ancho * (m + 0.05) }
+    assert.ok(!cubre(viva, pintada))
+
+    const adelantada = vistaAdelantada(viva, pintada, VENTANA, m)
+    assert.ok(cubre(viva, adelantada), 'lo que se ve ahora sigue dentro')
+    assert.equal(adelantada.escala, viva.escala)
+    assert.equal(adelantada.y, viva.y, 'solo se adelanta en la direccion del arrastre')
+
+    const sigue = (pantallas) => ({ ...viva, x: viva.x - VENTANA.ancho * pantallas })
+    assert.ok(cubre(sigue(0.65), adelantada), 'seguir 0,65 pantallas se resuelve estirando')
+    assert.ok(!cubre(sigue(0.65), viva), 'y pintando donde se estaba, no')
+    assert.ok(cubre(sigue(-0.05), adelantada), 'rectificar un poco tampoco destapa nada')
+  })
+
+  test('arrastrando en diagonal se adelanta en los dos ejes sin salirse del margen', () => {
+    const viva = {
+      ...pintada,
+      x: pintada.x + VENTANA.ancho * 0.2,
+      y: pintada.y + VENTANA.alto * (m + 0.1),
+    }
+    const adelantada = vistaAdelantada(viva, pintada, VENTANA, m)
+    assert.ok(cubre(viva, adelantada))
+    assert.ok(adelantada.x > viva.x && adelantada.y > viva.y)
+  })
+
+  test('alejando, pinta mas lejos y deja alejar bastante mas sin volver a pintar', () => {
+    const viva = acercar(pintada, 0.5, 200, 150)
+    assert.ok(!cubre(viva, pintada))
+
+    const adelantada = vistaAdelantada(viva, pintada, VENTANA, m)
+    assert.ok(cubre(viva, adelantada), 'lo que se ve ahora sigue dentro')
+    const estirada = transformRelativo(viva, adelantada).k
+    assert.ok(Math.abs(estirada - AUMENTO_MAX) < 1e-9, 'estirada lo que no se nota, no mas')
+
+    const mas = acercar(viva, 0.35, 200, 150)
+    assert.ok(cubre(mas, adelantada), 'alejar casi el triple mas se resuelve encogiendo')
+    assert.ok(!cubre(mas, viva), 'y pintando a la escala de ahora, no')
+  })
+
+  test('acercando no hay nada que adelantar', () => {
+    const viva = acercar(pintada, AUMENTO_GESTO + 0.5, 200, 150)
+    assert.deepEqual(vistaAdelantada(viva, pintada, VENTANA, m), viva)
+  })
+})
+
+describe('el temblor de un dedo no cuenta como movimiento', () => {
+  const v = { x: 100, y: 50, escala: 0.8 }
+
+  test('arrastrando: un par de pixeles no, tres si', () => {
+    assert.ok(!seMueve(v, { ...v, x: 101.5, y: 49 }, VENTANA))
+    assert.ok(seMueve(v, { ...v, x: 103 }, VENTANA))
+    assert.ok(seMueve(v, { ...v, y: 47 }, VENTANA))
+  })
+
+  test('pellizcando: medio por ciento de escala no, un dos por ciento si', () => {
+    assert.ok(!seMueve(v, acercar(v, 1.005, 200, 150), VENTANA))
+    assert.ok(seMueve(v, acercar(v, 1.02, 200, 150), VENTANA))
+  })
+
+  test('con el mapa ampliado y su origen lejos, el temblor de un pellizco sigue sin contar', () => {
+    const lejos = { x: -5200, y: -3900, escala: 2.4 }
+    const tiembla = acercar(lejos, 1.004, 200, 150)
+    assert.ok(Math.abs(tiembla.x - lejos.x) > 20, 'el origen se corre decenas de pixeles')
+    assert.ok(!seMueve(lejos, tiembla, VENTANA), 'y en pantalla no se ha movido nada')
   })
 })
