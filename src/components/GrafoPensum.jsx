@@ -14,6 +14,12 @@ import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../la
 import { cabecerasDe } from '../layout/cabeceras'
 import { MARGEN_CAPA } from '../layout/vistaViva'
 
+/* Cuanto tiene que pararse el raton en una tarjeta para encender su ruta.
+   Encenderla monta el plano de foco y el de lo que sale (ver PlanosFoco):
+   hacerlo en cada tarjeta que el raton cruza de pasada eran cuadros de
+   hasta 90 ms al barrer el mapa. Parado, 80 ms no se notan. */
+const INTENCION_MS = 80
+
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
 const SIN_FRANJA = []
@@ -188,27 +194,42 @@ function GrafoPensum({
      lienzo vacio, a los 160 ms se suelta igual. Cruzar la fila de 26 px entre
      dos tarjetas lleva bastante menos que eso a cualquier velocidad normal. */
   const relojSoltar = useRef(null)
+  const relojSenalar = useRef(null)
 
+  /* Entrar en una tarjeta PROGRAMA encenderla (ver INTENCION_MS): si el
+     raton sigue de largo, salir lo cancela y no se monta nada. Lo que
+     estuviera encendido se queda hasta que la nueva se encienda, asi que
+     pasar despacio de una tarjeta a la de al lado no apaga el mapa entre
+     medias. */
   const senalar = useCallback(
     (codigo) => {
       if (refEnGesto.current) return
       clearTimeout(relojSoltar.current)
-      alSenalar(codigo)
+      clearTimeout(relojSenalar.current)
+      relojSenalar.current = setTimeout(() => alSenalar(codigo), INTENCION_MS)
     },
     [alSenalar, refEnGesto],
   )
   const dejarDeSenalar = useCallback(() => {
+    clearTimeout(relojSenalar.current)
     clearTimeout(relojSoltar.current)
     relojSoltar.current = setTimeout(() => alSenalar(null), 160)
   }, [alSenalar])
 
-  useEffect(() => () => clearTimeout(relojSoltar.current), [])
+  useEffect(
+    () => () => {
+      clearTimeout(relojSoltar.current)
+      clearTimeout(relojSenalar.current)
+    },
+    [],
+  )
 
   /* Y al empezar a mover, lo que hubiera resaltado se apaga. Arrastrar el
      mapa con media pantalla atenuada estorba para ver a donde se va, y de
      paso deja el gesto con el arbol en su estado mas barato. */
   useEffect(() => {
     if (!enGesto) return
+    clearTimeout(relojSenalar.current)
     clearTimeout(relojSoltar.current)
     alSenalar(null)
   }, [enGesto, alSenalar])
