@@ -28,6 +28,24 @@ export function useMantenerRuta(alFijar) {
   const [carga, despachar] = useReducer(mantenerRuta, null)
   // La pulsacion en curso, para los manejadores, que no cambian de identidad
   const cargaRef = useRef(null)
+
+  /* Un evento solo llega a React si cambia algo.
+
+     Despachar en un useReducer vuelve a ejecutar el componente aunque el
+     estado salga igual, y aqui los eventos son los movimientos del dedo: cada
+     pointermove de un arrastre -y los dos de cada cuadro de un pellizco-
+     re-ejecutaba GrafoPensum entero para nada.
+
+     El reducer es una funcion pura, asi que se le pregunta antes: si
+     devuelve el mismo estado, no hay nada que contar. La ref va al dia en el
+     acto, sin esperar al render, para que el evento siguiente se decida
+     sobre lo que ya se despacho. */
+  const enviar = useCallback((evento) => {
+    const siguiente = mantenerRuta(cargaRef.current, evento)
+    if (siguiente === cargaRef.current) return
+    cargaRef.current = siguiente
+    despachar(evento)
+  }, [])
   const dedos = useRef(new Set())
   const tragar = useRef(false)
   const alFijarRef = useRef(alFijar)
@@ -38,21 +56,20 @@ export function useMantenerRuta(alFijar) {
   /* El reloj de cada fase. Va atado a la pulsacion: una nueva -otra
      tarjeta, otro dedo- cambia `carga` y el efecto cancela el reloj viejo. */
   useEffect(() => {
-    cargaRef.current = carga
     if (carga?.fase === 'cargando') {
       const reloj = setTimeout(() => {
         tragar.current = true
         alFijarRef.current(carga.codigo)
         vibrar()
-        despachar({ tipo: 'cumple' })
+        enviar({ tipo: 'cumple' })
       }, FIJA_MS)
       return () => clearTimeout(reloj)
     }
     if (carga?.fase === 'hecha') {
-      const reloj = setTimeout(() => despachar({ tipo: 'apaga' }), APAGADO_MS)
+      const reloj = setTimeout(() => enviar({ tipo: 'apaga' }), APAGADO_MS)
       return () => clearTimeout(reloj)
     }
-  }, [carga])
+  }, [carga, enviar])
 
   const manejadores = useMemo(() => {
     const deDedo = (e) => e.pointerType === 'touch'
@@ -62,7 +79,7 @@ export function useMantenerRuta(alFijar) {
         dedos.current.add(e.pointerId)
         // Una pulsacion nueva: el click que llegue ya no es el de la anterior
         tragar.current = false
-        despachar({
+        enviar({
           tipo: 'apoya',
           dedo: e.pointerId,
           x: e.clientX,
@@ -73,18 +90,18 @@ export function useMantenerRuta(alFijar) {
         })
       },
       onPointerMove(e) {
-        if (deDedo(e)) despachar({ tipo: 'mueve', dedo: e.pointerId, x: e.clientX, y: e.clientY })
+        if (deDedo(e)) enviar({ tipo: 'mueve', dedo: e.pointerId, x: e.clientX, y: e.clientY })
       },
       onPointerUp(e) {
         if (!deDedo(e)) return
         dedos.current.delete(e.pointerId)
         if (!esToque(cargaRef.current, e.timeStamp)) tragar.current = true
-        despachar({ tipo: 'suelta', dedo: e.pointerId })
+        enviar({ tipo: 'suelta', dedo: e.pointerId })
       },
       onPointerCancel(e) {
         if (!deDedo(e)) return
         dedos.current.delete(e.pointerId)
-        despachar({ tipo: 'suelta', dedo: e.pointerId })
+        enviar({ tipo: 'suelta', dedo: e.pointerId })
       },
       /* Mantener el dedo es tambien lo que abre el menu contextual del
          navegador. Con un dedo apoyado, o recien fijada una ruta, no. Se
@@ -94,7 +111,7 @@ export function useMantenerRuta(alFijar) {
         if (dedos.current.size > 0 || tragar.current) e.preventDefault()
       },
     }
-  }, [])
+  }, [enviar])
 
   const tragarToque = useCallback(() => {
     const era = tragar.current
