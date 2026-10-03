@@ -3,8 +3,13 @@ import { NODO, MARGEN, FRANJA } from '../layout/constantes'
 import { FormaSituacion } from './IconoSituacion'
 import { ASPECTO } from '../theme/situacion'
 import Texto, { GrupoTexto } from './Texto'
-import { MARCA_SEMESTRE } from '../data/semestre'
-import GlifoCasilla from './GlifoCasilla'
+import {
+  MARCA_SEMESTRE,
+  etiquetaDeCasilla,
+  pistaDeCasilla,
+  textoFaltaElegir,
+} from '../data/semestre'
+import GlifoSemestre from './GlifoSemestre'
 
 /**
  * Los rotulos del mapa: la cabecera de cada semestre, la de cada grupo de la
@@ -51,7 +56,7 @@ const CRECER = 'width 600ms cubic-bezier(0.32, 0.72, 0, 1), x 600ms cubic-bezier
  * es -arriba- y como vas en el -abajo-: aprobado y, a continuacion, lo que
  * cursas. Crece con transicion al aprobar en vez de saltar.
  */
-function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlternar }) {
+function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlternar, alSenalar }) {
   return (
     <>
       {cabeceras.map((c) => (
@@ -99,8 +104,9 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
             <CasillaSemestre
               semestre={c.semestre}
               x={c.x}
-              marca={marcas.get(c.semestre)}
+              resumen={marcas.get(c.semestre)}
               alAlternar={alAlternar}
+              alSenalar={alSenalar}
             />
           )}
         </g>
@@ -124,33 +130,41 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
   )
 }
 
+/* Lo que dice una casilla a quien no la ve: llena, vacia o a medias */
+const MARCADA = {
+  [MARCA_SEMESTRE.COMPLETO]: 'true',
+  [MARCA_SEMESTRE.VACIO]: 'false',
+}
+
 /**
- * La casilla de marcar el semestre entero, delante de su nombre: la de una
- * lista de tareas, que todo el mundo sabe leer y pulsar.
+ * La casilla de marcar el semestre entero, delante de su nombre.
  *
- * Vacia si no llevas nada aprobado, con una raya si llevas una parte y llena
- * con su check si esta todo. Pulsarla vacia o con raya aprueba lo que falta;
- * llena, lo desmarca todo. Al apuntarle anticipa lo que va a pasar: la
- * vacia se enciende con su check, la llena se apaga (ver alternarSemestre
- * en VistaCarrera).
+ * Enseña cuanto llevas (ver GlifoSemestre) y pulsarla hace lo que falta:
+ * aprueba lo pendiente, abre el selector si solo queda una electiva sin
+ * elegir, o lo desmarca todo si ya estaba completo (ver accionDeSemestre en
+ * data/semestre.js).
+ *
+ * Con el raton encima anticipa lo que va a pasar, en el dibujo y con
+ * palabras: avisa de que la señalan, y el pie de su cabecera cambia la cuenta
+ * por la accion -"APROBAR TODO"-. Solo con raton: un dedo no señala, pulsa.
  */
-function CasillaSemestre({ semestre, x, marca, alAlternar }) {
-  const marcada = marca === MARCA_SEMESTRE.MARCADO
-  const etiqueta = marcada
-    ? `Desmarcar el semestre ${semestre} entero`
-    : `Aprobar el semestre ${semestre} entero`
+function CasillaSemestre({ semestre, x, resumen, alAlternar, alSenalar }) {
+  const { marca } = resumen
+  const etiqueta = etiquetaDeCasilla(marca, semestre)
   const alternar = () => alAlternar(semestre)
 
   return (
     <g
       role="checkbox"
-      aria-checked={marcada ? 'true' : marca === MARCA_SEMESTRE.MIXTO ? 'mixed' : 'false'}
+      aria-checked={MARCADA[marca] ?? 'mixed'}
       aria-label={etiqueta}
       tabIndex={0}
       className="casilla-semestre"
       data-marca={marca}
       transform={`translate(${x}, ${Y + CASILLA_ARRIBA})`}
       onClick={alternar}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && alSenalar(semestre)}
+      onPointerLeave={() => alSenalar(null)}
       onKeyDown={(e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return
         e.preventDefault()
@@ -165,7 +179,7 @@ function CasillaSemestre({ semestre, x, marca, alAlternar }) {
         height={PULSABLE.alto}
         fill="transparent"
       />
-      <GlifoCasilla />
+      <GlifoSemestre resumen={resumen} />
     </g>
   )
 }
@@ -189,7 +203,7 @@ function CasillaSemestre({ semestre, x, marca, alAlternar }) {
  * colores ni cajas. Los estados se anclan al borde derecho, asi que caen en
  * el mismo sitio en las diez columnas.
  */
-function RotulosTextosSinMemo({ cabeceras, filasFranja }) {
+function RotulosTextosSinMemo({ cabeceras, filasFranja, marcas, senalado }) {
   return (
     <>
       {cabeceras.map((c) => (
@@ -245,19 +259,7 @@ function RotulosTextosSinMemo({ cabeceras, filasFranja }) {
             </span>
           </Texto>
 
-          <Texto
-            x={0}
-            y={CABECERA.pie}
-            className="tabular-nums"
-            style={{
-              fontSize: 9.5,
-              fontWeight: 500,
-              color: c.completo ? 'var(--estado-aprobada)' : 'var(--tinta-tenue)',
-              ...espaciado(0.22),
-            }}
-          >
-            {c.completo ? 'COMPLETO' : `${c.hechas}/${c.total} APROBADAS`}
-          </Texto>
+          <Pie cabecera={c} resumen={marcas.get(c.semestre)} senalado={senalado === c.semestre} />
 
           {c.estados.map((e) => (
             <Texto
@@ -277,6 +279,44 @@ function RotulosTextosSinMemo({ cabeceras, filasFranja }) {
         <CabeceraFranja key={fila.clave} fila={fila} />
       ))}
     </>
+  )
+}
+
+/**
+ * El pie de la cabecera: como vas en el semestre, con palabras. Cuantas
+ * llevas aprobadas; que falta elegir la electiva, cuando es lo unico que
+ * falta; o que esta completo.
+ *
+ * Con el raton sobre la casilla del semestre dice en cambio lo que hara
+ * pulsarla. La casilla es un dibujo de catorce pixeles: sin esto no se sabe
+ * que sirve para marcar el semestre de una vez hasta que se prueba.
+ */
+function Pie({ cabecera, resumen, senalado }) {
+  const pista = senalado && resumen
+  const faltaElegir = resumen?.marca === MARCA_SEMESTRE.FALTA_ELEGIR
+  const texto = pista
+    ? pistaDeCasilla(resumen.marca)
+    : cabecera.completo
+      ? 'Completo'
+      : faltaElegir
+        ? textoFaltaElegir(resumen.huecos)
+        : `${cabecera.hechas}/${cabecera.total} aprobadas`
+  const verde = pista ? !cabecera.completo : cabecera.completo
+
+  return (
+    <Texto
+      x={0}
+      y={CABECERA.pie}
+      className="tabular-nums"
+      style={{
+        fontSize: 9.5,
+        fontWeight: 500,
+        color: verde ? 'var(--estado-aprobada)' : pista ? 'var(--tinta)' : 'var(--tinta-tenue)',
+        ...espaciado(0.22),
+      }}
+    >
+      {texto.toUpperCase()}
+    </Texto>
   )
 }
 

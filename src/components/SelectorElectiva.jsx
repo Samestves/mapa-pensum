@@ -121,7 +121,16 @@ function Cabecera({ casilla, grupo, alCerrar, telefono }) {
   )
 }
 
-function Contenido({ casilla, grupo, opciones, estados, casillaDe, alColocar, alCerrar }) {
+function Contenido({
+  casilla,
+  grupo,
+  opciones,
+  estados,
+  casillaDe,
+  aprobarAlElegir,
+  alColocar,
+  alCerrar,
+}) {
   const [busqueda, setBusqueda] = useState('')
 
   const puesta = opciones.find((o) => casillaDe[o.codigo] === casilla.codigo) ?? null
@@ -174,6 +183,16 @@ function Contenido({ casilla, grupo, opciones, estados, casillaDe, alColocar, al
 
   return (
     <div className="flex flex-col gap-4 px-5 pb-8 md:px-6">
+      {/* Se llego aqui desde la casilla del semestre, que lo tenia todo
+          aprobado menos esto: lo que se elija queda aprobado, y hay que
+          decirlo antes de que pase. */}
+      {aprobarAlElegir && !puesta && (
+        <p className="flex items-start gap-2 text-[13px] leading-snug text-aprobada">
+          <Check size={14} strokeWidth={2.6} className="mt-0.5 shrink-0" />
+          Es lo único que le falta a este semestre. La que elijas queda aprobada.
+        </p>
+      )}
+
       {grupo?.cuota != null && (
         <CuotaGrupo
           avance={{

@@ -7,7 +7,7 @@ import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { ESTADO } from '../data/estados'
-import { marcasDeSemestres, materiasDeSemestre } from '../data/semestre'
+import { accionDeSemestre, marcasDeSemestres } from '../data/semestre'
 import { VISTAS } from '../data/vistas'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
@@ -189,12 +189,17 @@ function VistaCarrera({ carrera, alVolver }) {
 
   /* Elegir la electiva de una casilla abre su panel, y en escritorio ese
      panel sale donde el del avance: abrir uno cierra el otro. La ficha de la
-     materia tambien se cierra, que ya estas en otra cosa. */
+     materia tambien se cierra, que ya estas en otra cosa.
+
+     `aprobar` lo pide la casilla del semestre cuando lo unico que le falta
+     es esta electiva (ver alternarSemestre): lo que se elija queda aprobado. */
+  const [aprobarAlElegir, setAprobarAlElegir] = useState(false)
   const abrirCasilla = useCallback(
-    (codigo) => {
+    (codigo, { aprobar = false } = {}) => {
       cerrar()
       setSeleccionado(null)
       setCasillaAbierta(codigo)
+      setAprobarAlElegir(aprobar)
     },
     [cerrar],
   )
@@ -299,31 +304,36 @@ function VistaCarrera({ carrera, alVolver }) {
     [marcarVarias, carrera.slug],
   )
 
-  /* La casilla de cada semestre -marcada, mixta o vacia-, la misma en la
-     cabecera del mapa y en la de la lista. */
+  /* La casilla de cada semestre -cuanto llevas de el y que le falta-, la
+     misma en la cabecera del mapa y en la de la lista. */
   const marcasSemestre = useMemo(
     () => marcasDeSemestres(layout.nodos, enCasilla, estados),
     [layout.nodos, enCasilla, estados],
   )
 
-  /* Marcar o desmarcar un semestre entero desde su casilla, en el mapa o en
-     la lista: sus obligatorias y la electiva de cada casilla, en un solo
-     cambio. Si le falta algo, aprueba lo que falta; si ya esta todo, lo
-     desmarca todo. Sin confirmar antes: la misma casilla lo devuelve de un
-     toque, y preguntar seria pedir dos toques para lo que casi siempre se
-     quiere a la primera. */
+  /* Pulsar la casilla de un semestre, en el mapa o en la lista (ver
+     accionDeSemestre): aprueba lo que le falta, sus obligatorias y la
+     electiva de cada casilla, en un solo cambio; si ya esta todo, lo desmarca.
+     Sin confirmar antes: la misma casilla lo devuelve de un toque, y
+     preguntar seria pedir dos toques para lo que casi siempre se quiere a la
+     primera.
+
+     Y si lo unico que falta es una electiva sin elegir, abre su selector. Lo
+     que se elija ahi queda aprobado: quien pulso la casilla queria el
+     semestre completo, y dejarle la electiva puesta y sin aprobar seria
+     pedirle otro toque para acabar lo que ya pidio. */
   const alternarSemestre = useCallback(
     (semestre) => {
-      const codigos = materiasDeSemestre(layout.nodos, semestre, enCasilla)
-      const pendientes = codigos.filter((c) => estados[c] !== ESTADO.APROBADA)
-      const aprobar = pendientes.length > 0
-      const cambian = aprobar ? pendientes : codigos
-      if (!cambian.length) return
-
-      const marca = aprobar ? ESTADO.APROBADA : null
-      marcarVariasYContar(Object.fromEntries(cambian.map((c) => [c, marca])))
+      const accion = accionDeSemestre(layout.nodos, semestre, enCasilla, estados)
+      if (!accion) return
+      if (accion.tipo === 'elegir') {
+        abrirCasilla(accion.casilla, { aprobar: true })
+        return
+      }
+      const marca = accion.tipo === 'aprobar' ? ESTADO.APROBADA : null
+      marcarVariasYContar(Object.fromEntries(accion.codigos.map((c) => [c, marca])))
     },
-    [layout, enCasilla, estados, marcarVariasYContar],
+    [layout, enCasilla, estados, marcarVariasYContar, abrirCasilla],
   )
 
   const alternarSeleccion = useCallback(
@@ -408,8 +418,12 @@ function VistaCarrera({ carrera, alVolver }) {
         grupos={grupos}
         estados={estados}
         casillaDe={casillaDe}
+        aprobarAlElegir={aprobarAlElegir}
         alColocar={(casilla, codigo) => {
           colocar(casilla, codigo)
+          if (aprobarAlElegir && codigo && estados[codigo] !== ESTADO.APROBADA) {
+            marcarYContar(codigo, ESTADO.APROBADA)
+          }
           setCasillaAbierta(null)
         }}
         alCerrar={cerrarCasilla}

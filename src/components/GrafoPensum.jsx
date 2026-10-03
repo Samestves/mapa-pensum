@@ -379,6 +379,18 @@ function GrafoPensum({
     [estados, relaciones, porCodigo, medida.ancho, mostrar, alSeleccionar, alMarcar],
   )
 
+  /* El semestre cuya casilla señala el raton: su cabecera dice entonces lo
+     que hara pulsarla (ver Pie en RotulosGrafo). Como el señalado de las
+     tarjetas, no cuenta mientras el mapa se mueve. */
+  const [semestreSenalado, setSemestreSenalado] = useState(null)
+  const senalarSemestre = useCallback(
+    (semestre) => {
+      if (semestre != null && refEnGesto.current) return
+      setSemestreSenalado(semestre)
+    },
+    [refEnGesto],
+  )
+
   /* Marcar o desmarcar un semestre desde su casilla. Como un click en una
      tarjeta: si el puntero se movio fue un arrastre del lienzo, no un click. */
   const alternarSemestre = useCallback(
@@ -494,9 +506,17 @@ function GrafoPensum({
                 ancho={ancho}
                 marcas={marcasSemestre}
                 alAlternar={alternarSemestre}
+                alSenalar={senalarSemestre}
               />
             }
-            textos={<RotulosTextos cabeceras={cabeceras} filasFranja={filasFranja} />}
+            textos={
+              <RotulosTextos
+                cabeceras={cabeceras}
+                filasFranja={filasFranja}
+                marcas={marcasSemestre}
+                senalado={semestreSenalado}
+              />
+            }
           />
 
           <Plano

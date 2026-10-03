@@ -6,8 +6,13 @@ import { SITUACION, situacionDe } from '../layout/situacion'
 import { tituloGrupo } from '../layout/franjaElectivas'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import { IconoSituacion } from './IconoSituacion'
-import GlifoCasilla from './GlifoCasilla'
-import { MARCA_SEMESTRE } from '../data/semestre'
+import GlifoSemestre from './GlifoSemestre'
+import {
+  MARCA_SEMESTRE,
+  etiquetaDeCasilla,
+  pistaDeCasilla,
+  textoFaltaElegir,
+} from '../data/semestre'
 
 /* Los filtros son las preguntas que se le hacen a una lista de materias: que
    puedo inscribir, que llevo, que me falta y que ya pase. Cada uno con el
@@ -381,20 +386,28 @@ function Resumen({ progreso, semestres, actual, alIr }) {
 }
 
 /** La casilla de marcar un semestre entero en su cabecera de la lista. */
-function CasillaLista({ semestre, marca, alAlternar }) {
-  const marcada = marca === MARCA_SEMESTRE.MARCADO
+function CasillaLista({ semestre, resumen, alAlternar }) {
+  const { marca } = resumen
+  const etiqueta = etiquetaDeCasilla(marca, semestre)
   return (
     <button
       type="button"
       role="checkbox"
-      aria-checked={marcada ? 'true' : marca === MARCA_SEMESTRE.MIXTO ? 'mixed' : 'false'}
-      aria-label={`${marcada ? 'Desmarcar' : 'Aprobar'} el semestre ${semestre} entero`}
+      aria-checked={
+        marca === MARCA_SEMESTRE.COMPLETO
+          ? 'true'
+          : marca === MARCA_SEMESTRE.VACIO
+            ? 'false'
+            : 'mixed'
+      }
+      aria-label={etiqueta}
+      title={etiqueta}
       data-marca={marca}
       onClick={() => alAlternar(semestre)}
       className="casilla-semestre -mt-1.5 -mr-1.5 grid size-10 shrink-0 place-items-center rounded-xl transition-transform duration-150 active:scale-90"
     >
-      <svg viewBox="-1 -1 16 16" width={22} height={22} aria-hidden="true">
-        <GlifoCasilla />
+      <svg viewBox="-2 -2 18 18" width={25} height={25} aria-hidden="true">
+        <GlifoSemestre resumen={resumen} />
       </svg>
     </button>
   )
@@ -470,17 +483,23 @@ function VistaLista({
         const todas = nodos.filter((n) => n.semestre === columna.semestre)
         const materias = todas.filter((n) => !n.esHueco)
         const situaciones = materias.map((m) => situacionDe(m.codigo, m.prerrequisitos, estados))
+        /* Cuanto lleva el semestre sale de su casilla (ver marcasDeSemestres),
+           que cuenta tambien sus electivas, elegidas o no. Es la misma cuenta
+           de la cabecera del mapa: contando aqui solo las obligatorias, un
+           semestre con la electiva sin elegir salia "Completo" en la lista y
+           al 83 % en el mapa. */
+        const cuenta = marcasSemestre.get(columna.semestre)
         return {
           numero: columna.semestre,
           materias,
           huecos: todas.filter((n) => n.esHueco),
           situaciones,
-          total: materias.length,
-          hechas: situaciones.filter((s) => s === SITUACION.HECHA).length,
-          cursando: situaciones.filter((s) => s === SITUACION.CURSANDO).length,
+          total: cuenta?.total ?? materias.length,
+          hechas: cuenta?.hechas ?? situaciones.filter((s) => s === SITUACION.HECHA).length,
+          cursando: cuenta?.cursando ?? situaciones.filter((s) => s === SITUACION.CURSANDO).length,
         }
       }),
-    [columnas, nodos, estados],
+    [columnas, nodos, estados, marcasSemestre],
   )
   const actual = semestres.find((s) => s.hechas < s.total)?.numero
 
@@ -671,6 +690,7 @@ function VistaLista({
           {(completa ? visibles : visibles.slice(0, PRIMERAS_SECCIONES)).map((s, i) => {
             const id = `semestre-${s.numero}`
             const completo = s.total > 0 && s.hechas === s.total
+            const resumen = marcasSemestre.get(s.numero)
             const plegado = filtro === 'todo' && (plegados[id] ?? completo)
             const ultimo = i === visibles.length - 1
             const nodoEstado = completo
@@ -703,7 +723,7 @@ function VistaLista({
                   {completo && <Check size={9} strokeWidth={3} className="text-[var(--lienzo)]" />}
                 </span>
 
-                <div className="flex items-start gap-3 pb-3">
+                <div className="cabecera-semestre flex items-start gap-3 pb-3">
                   <button
                     type="button"
                     onClick={() => setPlegados((p) => ({ ...p, [id]: !plegado }))}
@@ -719,19 +739,33 @@ function VistaLista({
                         Semestre
                       </span>
                       <span
-                        className={`ml-auto text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
+                        className={`cuenta-semestre ml-auto text-[12px] tabular-nums ${completo ? 'text-aprobada' : 'text-tinta-tenue'}`}
                       >
-                        {completo ? 'Completo' : `${s.hechas} de ${s.total} aprobadas`}
+                        {completo
+                          ? 'Completo'
+                          : resumen?.marca === MARCA_SEMESTRE.FALTA_ELEGIR
+                            ? textoFaltaElegir(resumen.huecos)
+                            : `${s.hechas} de ${s.total} aprobadas`}
                       </span>
+                      {/* Lo que hara la casilla, en lugar de la cuenta mientras
+                          el raton esta sobre ella (ver .pista-semestre). */}
+                      {resumen && (
+                        <span
+                          aria-hidden="true"
+                          className={`pista-semestre ml-auto text-[12px] font-medium ${completo ? 'text-tinta' : 'text-aprobada'}`}
+                        >
+                          {pistaDeCasilla(resumen.marca)}
+                        </span>
+                      )}
                     </span>
                     <Riel hechas={s.hechas} cursando={s.cursando} total={s.total} />
                   </button>
                   {/* La casilla de marcar el semestre entero, la misma de su
                       cabecera en el mapa (ver CasillaSemestre). */}
-                  {marcasSemestre.has(s.numero) && (
+                  {resumen && (
                     <CasillaLista
                       semestre={s.numero}
-                      marca={marcasSemestre.get(s.numero)}
+                      resumen={resumen}
                       alAlternar={alAlternarSemestre}
                     />
                   )}

@@ -125,15 +125,15 @@
 }
 
 /* La casilla de marcar un semestre entero, en la cabecera del mapa y en la
-   de la lista (ver GlifoCasilla). Vacia es un contorno; a medias lleva una
-   raya verde; marcada se llena con su check. Al apuntarle anticipa lo que
-   hara el click: la vacia se enciende, la llena se apaga.
+   de la lista (ver GlifoSemestre): un aro con un tramo por materia, que se
+   va encendiendo, y el sello verde cuando esta completo. Al apuntarle
+   anticipa lo que hara el click: lo que falta se enciende con un check en el
+   centro, y el sello se apaga.
 
-   Cada estado solo cambia variables en la casilla misma, y la caja, la raya
-   y el check las leen. No hay reglas de ":hover" con descendientes: con una
-   asi, cada vez que el puntero entra o sale de CUALQUIER cosa del mapa el
-   navegador revisa los descendientes de todos sus ancestros por si son una
-   caja.
+   Cada estado solo cambia variables en la casilla misma, y los trazos las
+   leen. No hay reglas de ":hover" con descendientes: con una asi, cada vez
+   que el puntero entra o sale de CUALQUIER cosa del mapa el navegador revisa
+   los descendientes de todos sus ancestros por si son un trazo.
 
    En el mapa cambia de golpe, sin transicion: la casilla esta pintada en el
    plano de los rotulos, y animarla repinta el plano entero en cada cuadro
@@ -141,81 +141,130 @@
    cuadro por eso (medido con npm run rendimiento)-. En la lista, que es un
    boton suelto, si se anima. */
 .casilla-semestre {
-  --caja-relleno: transparent;
-  --caja-trazo: color-mix(in oklab, var(--tinta) 40%, transparent);
-  --caja-grosor: 1.4;
-  --raya: 0;
-  --tilde: 0;
-  --tilde-color: var(--estado-aprobada);
+  --pendiente: color-mix(in oklab, var(--tinta) 42%, transparent);
+  --hueco: color-mix(in oklab, var(--tinta) 16%, transparent);
+  --grosor-pendiente: 1.5;
+  --mas: var(--tinta);
+  --pista: 0;
+  --sello: var(--estado-aprobada);
+  --tilde: var(--lienzo);
+  --foco: 0;
   cursor: pointer;
   outline: none;
 }
 
-.casilla-semestre[data-marca='mixto'] {
-  --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
-  --caja-trazo: var(--estado-aprobada);
-  --raya: 1;
-}
-
-.casilla-semestre[data-marca='marcado'] {
-  --caja-relleno: var(--estado-aprobada);
-  --caja-trazo: var(--estado-aprobada);
-  --tilde: 1;
-  --tilde-color: var(--lienzo);
-}
-
 .casilla-semestre:focus-visible {
-  --caja-trazo: var(--estado-aprobada);
-  --caja-grosor: 2.2;
+  --foco: 1;
 }
 
 @media (hover: hover) {
-  .casilla-semestre[data-marca='vacio']:hover,
-  .casilla-semestre[data-marca='mixto']:hover {
-    --caja-relleno: color-mix(in oklab, var(--estado-aprobada) 22%, transparent);
-    --caja-trazo: var(--estado-aprobada);
-    --raya: 0;
-    --tilde: 1;
+  .casilla-semestre:hover {
+    --pendiente: color-mix(in oklab, var(--estado-aprobada) 55%, transparent);
+    --grosor-pendiente: 2.2;
+    --pista: 1;
   }
 
-  .casilla-semestre[data-marca='marcado']:hover {
-    --caja-relleno: transparent;
-    --tilde: 0.45;
-    --tilde-color: var(--estado-aprobada);
+  .casilla-semestre[data-marca='falta-elegir']:hover {
+    --hueco: color-mix(in oklab, var(--estado-aprobada) 55%, transparent);
+    --mas: var(--estado-aprobada);
+  }
+
+  .casilla-semestre[data-marca='completo']:hover {
+    --sello: color-mix(in oklab, var(--estado-aprobada) 20%, transparent);
+    --tilde: var(--estado-aprobada);
   }
 }
 
-.casilla-semestre .caja {
-  fill: var(--caja-relleno);
-  stroke: var(--caja-trazo);
-  stroke-width: var(--caja-grosor);
-}
-
-.casilla-semestre .raya,
-.casilla-semestre .tilde {
+.casilla-semestre .tramo,
+.casilla-semestre .mas,
+.casilla-semestre .pista,
+.casilla-semestre .tilde,
+.casilla-semestre .foco {
   fill: none;
-  stroke-width: 1.8;
+}
+
+.casilla-semestre .tramo {
+  stroke-width: 2.2;
+}
+
+.casilla-semestre .hechas {
+  stroke: var(--estado-aprobada);
+}
+
+.casilla-semestre .cursando {
+  stroke: var(--estado-cursando);
+}
+
+.casilla-semestre .pendientes {
+  stroke: var(--pendiente);
+  stroke-width: var(--grosor-pendiente);
+}
+
+.casilla-semestre .huecos {
+  stroke: var(--hueco);
+  stroke-width: var(--grosor-pendiente);
+}
+
+.casilla-semestre .mas,
+.casilla-semestre .pista,
+.casilla-semestre .tilde {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-button.casilla-semestre .caja,
-button.casilla-semestre .raya,
+.casilla-semestre .mas {
+  stroke: var(--mas);
+  stroke-width: 1.4;
+}
+
+.casilla-semestre .pista {
+  stroke: var(--estado-aprobada);
+  stroke-width: 1.5;
+  opacity: var(--pista);
+}
+
+.casilla-semestre .sello {
+  fill: var(--sello);
+}
+
+.casilla-semestre .tilde {
+  stroke: var(--tilde);
+  stroke-width: 1.8;
+}
+
+.casilla-semestre .foco {
+  stroke: var(--tinta);
+  stroke-width: 1.2;
+  opacity: var(--foco);
+}
+
+button.casilla-semestre .tramo,
+button.casilla-semestre .mas,
+button.casilla-semestre .pista,
+button.casilla-semestre .sello,
 button.casilla-semestre .tilde {
   transition:
     fill 200ms ease,
     stroke 200ms ease,
+    stroke-width 200ms ease,
     opacity 200ms ease;
 }
 
-.casilla-semestre .raya {
-  stroke: var(--estado-aprobada);
-  opacity: var(--raya);
+/* En la lista, la cuenta del semestre -"2 de 6 aprobadas"- deja su sitio a
+   lo que hara la casilla mientras el raton esta sobre ella. Ahi si con :has:
+   es una fila suelta, no el mapa. */
+.pista-semestre {
+  display: none;
 }
 
-.casilla-semestre .tilde {
-  stroke: var(--tilde-color);
-  opacity: var(--tilde);
+@media (hover: hover) {
+  .cabecera-semestre:has(.casilla-semestre:hover) .cuenta-semestre {
+    display: none;
+  }
+
+  .cabecera-semestre:has(.casilla-semestre:hover) .pista-semestre {
+    display: inline;
+  }
 }
 
 /* Las luces no se pulsan: el click pasa a la tarjeta o al cable de debajo */
