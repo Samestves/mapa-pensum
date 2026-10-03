@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { etiquetaSemestre } from '../layout/planificador'
+import { avanceDe, cuantoLlevas } from '../data/avance'
 import { textoCarga } from '../data/cargaPlan'
 import Logo from './Logo'
 
@@ -68,13 +69,8 @@ function HojaPlan({ nombre, carrera, progreso, plan, carga, grado }) {
   const semestres = plan.semestres.length
   /* El avance se mide contra las UC del titulo, no contra la suma de las
      obligatorias: las electivas tambien cuentan para graduarse. */
-  const conUc = progreso.porcentaje != null
-  const avance = conUc
-    ? progreso.porcentaje
-    : (progreso.aprobadas / Math.max(1, progreso.total)) * 100
-  const llevas = conUc
-    ? `${progreso.ucAprobadas + progreso.ucElectivas} de ${progreso.ucTitulo} UC`
-    : `${progreso.aprobadas} de ${progreso.total} materias`
+  const avance = avanceDe(progreso)
+  const llevas = cuantoLlevas(progreso)
 
   return (
     <div ref={refHoja} className="hoja-ruta" lang="es">

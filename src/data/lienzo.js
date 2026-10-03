@@ -1,10 +1,26 @@
-import { CAJA, NODOS, ROSA, TRANSFORMA } from './logoTrazos'
+import { CAJA, NODOS, ROSA, TRANSFORMA } from './logoTrazos.js'
 
 /* Lo basico para dibujar a mano en un canvas lo que la app dibuja en SVG y
-   CSS: colores, letra, texto partido en lineas, iconos de Lucide y la rosa
-   del logotipo. Lo usa la imagen del horario (exportarHorario). */
+   CSS: colores, letra, texto partido en lineas, iconos de Lucide, la rosa
+   del logotipo y las piezas que comparten las imagenes que se mandan -la
+   baldosa del logo, las pastillas y la firma-. Lo usan la imagen del horario
+   (exportarHorario) y la de la ruta (exportarPlan). */
 
 const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif`
+
+/* El papel de las imagenes: siempre en claro, sea cual sea el tema de la
+   app. Se mandan por WhatsApp y se imprimen, y las dos cosas asumen papel
+   blanco. */
+export const CLARO = {
+  fondo: '#f6f7f9',
+  papel: '#ffffff',
+  tinta: '#0f1522',
+  suave: '#566074',
+  tenue: '#8f98a8',
+  linea: '#dfe3ea',
+  marco: '#d6dbe3',
+  filo: '#e3e6ec',
+}
 
 export const css = ({ r, g, b }, alfa = 1) =>
   `rgb(${Math.round(r)} ${Math.round(g)} ${Math.round(b)} / ${alfa})`
@@ -118,5 +134,80 @@ export function dibujarLogo(ctx, x, y, tam, color) {
   ctx.scale(ESCALA_X, ESCALA_Y)
   ctx.fillStyle = color
   for (const d of [...ROSA, ...NODOS]) ctx.fill(new Path2D(d))
+  ctx.restore()
+}
+
+/** El logo de la UDO en blanco sobre una baldosa oscura, como un icono de app */
+export function baldosa(ctx, x, y, lado, sombra = false) {
+  ctx.save()
+  redondeado(ctx, x, y, lado, lado, lado * 0.28)
+  const brillo = ctx.createLinearGradient(x, y, x + lado, y + lado)
+  brillo.addColorStop(0, '#1c2740')
+  brillo.addColorStop(1, '#0b101b')
+  ctx.fillStyle = brillo
+  if (sombra) {
+    /* La sombra no se escala con el lienzo: se mide en pixeles del archivo,
+       asi que va multiplicada por la densidad a la que se dibuja. */
+    const densidad = ctx.getTransform().a
+    ctx.shadowColor = 'rgb(15 21 34 / 0.25)'
+    ctx.shadowBlur = 16 * densidad
+    ctx.shadowOffsetY = 6 * densidad
+  }
+  ctx.fill()
+  ctx.restore()
+  dibujarLogo(ctx, x + lado / 6, y + lado / 7.5, lado * (2 / 3), CLARO.papel)
+}
+
+/** Una pastilla blanca con borde fino, como las de la app */
+export function pastilla(ctx, x, y, ancho, alto) {
+  redondeado(ctx, x, y, ancho, alto, alto / 2)
+  ctx.fillStyle = CLARO.papel
+  ctx.fill()
+  ctx.strokeStyle = CLARO.filo
+  ctx.lineWidth = 1
+  ctx.stroke()
+}
+
+/* Lo que mide la firma, contando el aviso de debajo */
+export const ALTO_FIRMA = 60
+
+/**
+ * La firma de las imagenes: una pastilla centrada en `centro` con la baldosa
+ * en pequeño y de donde sale, y debajo el aviso. Si no cabe en `anchoMaximo`
+ * se encoge entera, aviso incluido: en una imagen estrecha antes sale mas
+ * pequeña que partida.
+ */
+export function dibujarFirma(ctx, centro, y, aviso, anchoMaximo = Infinity) {
+  const partes = [
+    { texto: 'Hecho con ', peso: 450, espaciado: 0, color: CLARO.suave },
+    { texto: 'Mapa de Pensum', peso: 700, espaciado: -0.1, color: CLARO.tinta },
+    { texto: '   mapa-pensum.vercel.app', peso: 450, espaciado: 0, color: CLARO.tenue },
+  ]
+  const anchos = partes.map((p) => {
+    letra(ctx, p.peso, 13.5, p.espaciado)
+    return ctx.measureText(p.texto).width
+  })
+  const ancho = 7 + 26 + 10 + anchos.reduce((a, b) => a + b, 0) + 18
+  const encoger = Math.min(1, anchoMaximo / ancho)
+
+  ctx.save()
+  ctx.translate(centro, y)
+  ctx.scale(encoger, encoger)
+  const x = -ancho / 2
+  pastilla(ctx, x, -4, ancho, 38)
+  baldosa(ctx, x + 7, 2, 26)
+
+  let tx = x + 7 + 26 + 10
+  partes.forEach((p, i) => {
+    letra(ctx, p.peso, 13.5, p.espaciado)
+    ctx.fillStyle = p.color
+    ctx.fillText(p.texto, tx, 20)
+    tx += anchos[i]
+  })
+
+  ctx.fillStyle = CLARO.tenue
+  letra(ctx, 450, 12)
+  ctx.textAlign = 'center'
+  ctx.fillText(aviso, 0, 56)
   ctx.restore()
 }

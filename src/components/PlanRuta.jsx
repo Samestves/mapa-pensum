@@ -1,12 +1,23 @@
 import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
-import { Check, ChevronDown, Download, GraduationCap, Share, TriangleAlert, X } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  Download,
+  GraduationCap,
+  ImageDown,
+  Loader2,
+  Share,
+  TriangleAlert,
+  X,
+} from 'lucide-react'
 import { etiquetaSemestre, horasDe, mesEstimadoGrado, planificar } from '../layout/planificador'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { guardar, leer } from '../data/almacen'
 import { LIMITES_CARGA, guardarCarga, leerCarga, textoCarga } from '../data/cargaPlan'
-import { compartirTexto, MES, mesCorto, textoDeLaRuta } from '../data/exportarPlan'
+import { compartirArchivo, descargarArchivo, puedeCompartir } from '../data/compartir'
+import { imagenDeLaRuta, mensajeDeLaRuta, MES, mesCorto } from '../data/exportarPlan'
 import { colorArea } from '../theme/areas'
 import HojaInferior from './HojaInferior'
 import HojaPlan, { ALTO_HOJA, ANCHO_HOJA } from './HojaPlan'
@@ -110,7 +121,7 @@ function Ruta({ carrera, marcas, progreso, elegidas, telefono = false, alCerrar 
         </>
       )}
       <label className="mt-7 block">
-        <span className={`px-1.5 ${ROTULO}`}>Tu nombre en la hoja</span>
+        <span className={`px-1.5 ${ROTULO}`}>Tu nombre en el PDF y la imagen</span>
         <input
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
@@ -122,14 +133,25 @@ function Ruta({ carrera, marcas, progreso, elegidas, telefono = false, alCerrar 
     </>
   )
 
+  /* La ruta como imagen. En el telefono se manda con la hoja de compartir
+     del sistema -a un chat, a un estado-; en el ordenador, donde esa hoja es
+     una rareza, se baja. Devuelve si salio, para que el boton lo diga. */
+  const compartir = async () => {
+    const archivo = await imagenDeLaRuta({
+      carrera,
+      nombre,
+      progreso,
+      plan,
+      carga: cargaDelPlan,
+      grado,
+    })
+    if (puedeCompartir()) return compartirArchivo(archivo, mensajeDeLaRuta(grado))
+    descargarArchivo(archivo)
+    return true
+  }
+
   const acciones = (
-    <Acciones
-      alImprimir={imprimir}
-      alCompartir={() =>
-        compartirTexto(textoDeLaRuta({ carrera, plan, carga: cargaDelPlan, grado }))
-      }
-      deshabilitado={terminado}
-    />
+    <Acciones alImprimir={imprimir} alCompartir={compartir} deshabilitado={terminado} />
   )
 
   return (
@@ -473,30 +495,61 @@ function FilaMateria({ materia: a }) {
   )
 }
 
+/* Lo que se queda el check a la vista despues de compartir */
+const LISTO_MS = 1800
+
+/**
+ * Compartir la ruta como imagen y guardarla en PDF. El de compartir dice en
+ * que va, como el de bajar el horario: girando mientras se dibuja la imagen
+ * y con un check cuando salio. En el ordenador baja la imagen, y su icono lo
+ * dice.
+ */
 function Acciones({ alImprimir, alCompartir, deshabilitado }) {
-  // Donde no hay hoja de compartir se copia: el boton lo confirma un momento
-  const [copiado, setCopiado] = useState(false)
+  const [enTelefono] = useState(puedeCompartir)
+  const [estado, setEstado] = useState('quieto')
   useEffect(() => {
-    if (!copiado) return
-    const t = setTimeout(() => setCopiado(false), 1800)
+    if (estado !== 'listo') return
+    const t = setTimeout(() => setEstado('quieto'), LISTO_MS)
     return () => clearTimeout(t)
-  }, [copiado])
+  }, [estado])
+
+  const pulsar = async () => {
+    if (estado === 'trabajando') return
+    setEstado('trabajando')
+    try {
+      // Cerrar la hoja de compartir sin mandar nada no merece un check
+      setEstado((await alCompartir()) ? 'listo' : 'quieto')
+    } catch {
+      setEstado('quieto')
+    }
+  }
+
+  const Icono =
+    estado === 'trabajando' ? Loader2 : estado === 'listo' ? Check : enTelefono ? Share : ImageDown
+  const etiqueta = enTelefono ? 'Compartir mi ruta como imagen' : 'Descargar mi ruta como imagen'
 
   return (
     <div className="flex gap-2">
       <button
         type="button"
-        onClick={async () => setCopiado((await alCompartir()) === 'copiado')}
+        onClick={pulsar}
         disabled={deshabilitado}
-        title={copiado ? 'Ruta copiada' : 'Compartir mi ruta'}
-        aria-label={copiado ? 'Ruta copiada' : 'Compartir mi ruta'}
+        aria-busy={estado === 'trabajando'}
+        title={etiqueta}
+        aria-label={etiqueta}
         className="barra-cristal relative grid size-[52px] shrink-0 place-items-center rounded-full text-tinta-suave transition-transform active:scale-95 disabled:opacity-40"
       >
-        {copiado ? (
-          <Check size={19} strokeWidth={2.2} className="text-aprobada" />
-        ) : (
-          <Share size={18} strokeWidth={1.9} />
-        )}
+        <Icono
+          size={18}
+          strokeWidth={estado === 'listo' ? 2.2 : 1.9}
+          className={
+            estado === 'trabajando'
+              ? 'animate-spin'
+              : estado === 'listo'
+                ? 'text-aprobada'
+                : undefined
+          }
+        />
       </button>
       <button
         type="button"

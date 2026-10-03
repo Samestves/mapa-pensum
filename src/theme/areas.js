@@ -1,4 +1,4 @@
-import { TONOS } from './paleta'
+import { TONOS } from './paleta.js'
 
 // Etiquetas y color de acento por area. El color apunta a la variable CSS,
 // asi que cambia solo al alternar tema claro/oscuro.

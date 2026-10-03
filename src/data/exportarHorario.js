@@ -1,15 +1,18 @@
-import { DIAS, tramoCorto } from '../layout/horario'
-import { colorClase, coloresDelHorario } from '../theme/areas'
+import { DIAS, tramoCorto } from '../layout/horario.js'
+import { colorClase, coloresDelHorario } from '../theme/areas.js'
 import {
+  CLARO,
+  baldosa,
   cargarLetra,
   css,
+  dibujarFirma,
   dibujarIcono,
-  dibujarLogo,
   letra,
   partirEnLineas,
+  pastilla,
   redondeado,
   resolverColores,
-} from './lienzo'
+} from './lienzo.js'
 
 /* La imagen del horario: la que se guarda en la galeria y se manda por
    WhatsApp. Se dibuja a mano en un canvas, sin libreria: html2canvas eran
@@ -24,8 +27,7 @@ import {
 
    A triple densidad: sale de unos cuatro mil pixeles de ancho, y se puede
    ampliar en el telefono hasta leer el aula de cualquier clase. Siempre en
-   claro, sea cual sea el tema de la app: se imprime y se manda por WhatsApp,
-   y las dos cosas asumen papel blanco. */
+   claro, sea cual sea el tema de la app (ver CLARO). */
 
 const ESCALA = 3
 const MARGEN = 56
@@ -37,14 +39,15 @@ const ALTO_DIAS = 50
 const ALTO_PIE = 104
 const ANCHO = MARGEN * 2 + ANCHO_HORAS + ANCHO_COL * DIAS.length
 
-const FONDO = '#f6f7f9'
-const PAPEL = '#ffffff'
-const TINTA = '#0f1522'
-const SUAVE = '#566074'
-const TENUE = '#8f98a8'
-const LINEA = '#dfe3ea'
-const MARCO = '#d6dbe3'
-const FILO = '#e3e6ec'
+const {
+  fondo: FONDO,
+  papel: PAPEL,
+  tinta: TINTA,
+  suave: SUAVE,
+  tenue: TENUE,
+  linea: LINEA,
+  marco: MARCO,
+} = CLARO
 
 /* Los iconos, con los nodos de Lucide tal cual: los mismos que la app. */
 const ICONO = {
@@ -97,34 +100,6 @@ function franjaUtil(sesiones) {
   const desde = Math.floor(Math.min(...sesiones.map((s) => s.inicio)) / 60) * 60
   const hasta = Math.ceil(Math.max(...sesiones.map((s) => s.fin)) / 60) * 60
   return { desde, horas: Math.max(3, (hasta - desde) / 60) }
-}
-
-/** El logo de la UDO en blanco sobre una baldosa oscura, como un icono de app */
-function baldosa(ctx, x, y, lado, sombra = false) {
-  ctx.save()
-  redondeado(ctx, x, y, lado, lado, lado * 0.28)
-  const brillo = ctx.createLinearGradient(x, y, x + lado, y + lado)
-  brillo.addColorStop(0, '#1c2740')
-  brillo.addColorStop(1, '#0b101b')
-  ctx.fillStyle = brillo
-  if (sombra) {
-    ctx.shadowColor = 'rgb(15 21 34 / 0.25)'
-    ctx.shadowBlur = 16 * ESCALA
-    ctx.shadowOffsetY = 6 * ESCALA
-  }
-  ctx.fill()
-  ctx.restore()
-  dibujarLogo(ctx, x + lado / 6, y + lado / 7.5, lado * (2 / 3), PAPEL)
-}
-
-/** Una pastilla blanca con borde fino, como las de la app */
-function pastilla(ctx, x, y, ancho, alto) {
-  redondeado(ctx, x, y, ancho, alto, alto / 2)
-  ctx.fillStyle = PAPEL
-  ctx.fill()
-  ctx.strokeStyle = FILO
-  ctx.lineWidth = 1
-  ctx.stroke()
 }
 
 function dibujarCabecera(ctx, { carrera, nombre, clases }) {
@@ -274,37 +249,6 @@ function dibujarClase(ctx, s, izq, rejilla, desde, pxPorMinuto) {
   ctx.restore()
 }
 
-/** La firma: una pastilla centrada con la baldosa en pequeño, y el aviso debajo */
-function dibujarPie(ctx, y) {
-  const partes = [
-    { texto: 'Hecho con ', peso: 450, espaciado: 0, color: SUAVE },
-    { texto: 'Mapa de Pensum', peso: 700, espaciado: -0.1, color: TINTA },
-    { texto: '   mapa-pensum.vercel.app', peso: 450, espaciado: 0, color: TENUE },
-  ]
-  const anchos = partes.map((p) => {
-    letra(ctx, p.peso, 13.5, p.espaciado)
-    return ctx.measureText(p.texto).width
-  })
-  const ancho = 7 + 26 + 10 + anchos.reduce((a, b) => a + b, 0) + 18
-  const x = ANCHO / 2 - ancho / 2
-  pastilla(ctx, x, y - 4, ancho, 38)
-  baldosa(ctx, x + 7, y + 2, 26)
-
-  let tx = x + 7 + 26 + 10
-  partes.forEach((p, i) => {
-    letra(ctx, p.peso, 13.5, p.espaciado)
-    ctx.fillStyle = p.color
-    ctx.fillText(p.texto, tx, y + 20)
-    tx += anchos[i]
-  })
-
-  ctx.fillStyle = TENUE
-  letra(ctx, 450, 12)
-  ctx.textAlign = 'center'
-  ctx.fillText('Confirma horas, sección y aula con tu coordinación.', ANCHO / 2, y + 56)
-  ctx.textAlign = 'left'
-}
-
 /** Dibuja el horario y devuelve el PNG como Blob */
 async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
   await cargarLetra([450, 500, 550, 600, 650, 700])
@@ -330,7 +274,12 @@ async function dibujarHorario({ carrera, sesiones, porCodigo, nombre }) {
 
   dibujarCabecera(ctx, { carrera, nombre, clases })
   dibujarSemana(ctx, { clases, desde, horas })
-  dibujarPie(ctx, alto - MARGEN - 22 - 34)
+  dibujarFirma(
+    ctx,
+    ANCHO / 2,
+    alto - MARGEN - 56,
+    'Confirma horas, sección y aula con tu coordinación.',
+  )
 
   return new Promise((resolver) => lienzo.toBlob(resolver, 'image/png'))
 }
@@ -353,39 +302,8 @@ export function imagenDelHorario(datos) {
   return archivo
 }
 
-/** Baja el archivo, en el ordenador y en el telefono */
-export function descargarArchivo(archivo) {
-  const url = URL.createObjectURL(archivo)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = archivo.name
-  a.click()
-  /* Se suelta despues y no en el acto: Safari y Firefox leen el enlace un
-     instante mas tarde, y soltado antes la descarga sale vacia o no sale. */
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
-}
-
 /* Lo que acompaña a la imagen al compartirla: lo que diria uno al mandarla */
-const MENSAJE = 'Mira, te comparto mi horario 📅 Arma el tuyo en https://mapa-pensum.vercel.app'
-
-/**
- * Si este aparato sabe compartir imagenes con la hoja del sistema. Solo en
- * los tactiles: en el ordenador la hoja de compartir es una rareza y basta
- * con descargar.
- */
-export const puedeCompartir = () =>
-  window.matchMedia('(pointer: coarse)').matches &&
-  Boolean(navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }))
-
-/**
- * Abre la hoja de compartir con la imagen. Nunca falla: cerrar la hoja sin
- * elegir nada, o un navegador que la niega, no son errores de nadie -quien
- * la abre ya tiene el archivo descargado-.
- */
-export async function compartirArchivo(archivo) {
-  try {
-    await navigator.share({ files: [archivo], title: 'Mi horario', text: MENSAJE })
-  } catch {
-    // Cerrada o negada: no hay nada que hacer
-  }
+export const MENSAJE_DEL_HORARIO = {
+  titulo: 'Mi horario',
+  texto: 'Mira, te comparto mi horario 📅 Arma el tuyo en https://mapa-pensum.vercel.app',
 }

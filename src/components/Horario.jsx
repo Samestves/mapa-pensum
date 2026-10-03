@@ -4,12 +4,8 @@ import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useHorario } from '../hooks/useHorario'
 import { leer } from '../data/almacen'
-import {
-  compartirArchivo,
-  descargarArchivo,
-  imagenDelHorario,
-  puedeCompartir,
-} from '../data/exportarHorario'
+import { compartirArchivo, descargarArchivo, puedeCompartir } from '../data/compartir'
+import { imagenDelHorario, MENSAJE_DEL_HORARIO } from '../data/exportarHorario'
 import { coloresDelHorario } from '../theme/areas'
 import RejillaHorario from './RejillaHorario'
 import HorarioMovil from './HorarioMovil'
@@ -112,7 +108,7 @@ function Horario({ carrera, estados }) {
   const descargar = async () => {
     const archivo = await imagen()
     descargarArchivo(archivo)
-    if (puedeCompartir()) await compartirArchivo(archivo)
+    if (puedeCompartir()) await compartirArchivo(archivo, MENSAJE_DEL_HORARIO)
   }
 
   return (
