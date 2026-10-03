@@ -1,0 +1,15 @@
+#!/bin/sh
+# Antes de cada commit: lint y formato de los archivos que se commitean.
+# Solo los preparados, para que tarde un segundo y no todo el repo.
+archivos=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(src|api|scripts)/.*\.(js|jsx|mjs|css)$')
+[ -z "$archivos" ] && exit 0
+
+# oxlint solo entiende JavaScript: los .css van solo a Prettier
+codigo=$(echo "$archivos" | grep -E '\.(js|jsx|mjs)$')
+if [ -n "$codigo" ]; then
+  npx --no-install oxlint $codigo || exit 1
+fi
+npx --no-install prettier --check $archivos || {
+  echo "Formato: ejecuta npm run formato y vuelve a preparar los archivos."
+  exit 1
+}

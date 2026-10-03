@@ -9,6 +9,9 @@
     "validar": "node scripts/validar-pensum.js",
     "build": "npm run lint && npm test && npm run datos && npm run validar && node scripts/og.js && node scripts/iconos.js && vite build && node scripts/prerenderizar.js && node scripts/serviceworker.js",
     "lint": "oxlint",
+    "formato": "prettier --write \"src/**/*.{js,jsx,css}\" \"api/**/*.js\" \"scripts/**/*.js\"",
+    "formato:revisar": "prettier --check \"src/**/*.{js,jsx,css}\" \"api/**/*.js\" \"scripts/**/*.js\"",
+    "prepare": "git config core.hooksPath .githooks || exit 0",
     "preview": "vite preview",
     "rendimiento": "node scripts/rendimiento.js",
     "test": "node --test \"src/**/*.test.js\" \"api/**/*.test.js\""
@@ -31,6 +34,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
     "playwright-core": "^1.56.0",
+    "prettier": "3.9.9",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
   }
