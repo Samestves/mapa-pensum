@@ -291,7 +291,7 @@ function PanelUso({ alVolver }) {
                 el fondo de la lista de aparatos no deberia obligar a subir. */}
             <nav
               aria-label="Secciones del panel"
-              className="sticky top-0 z-10 -mx-5 overflow-x-auto bg-[color-mix(in_oklab,var(--lienzo)_86%,transparent)] px-5 py-3 backdrop-blur-md [scrollbar-width:none]"
+              className="sticky top-0 z-10 -mx-5 overflow-x-auto bg-[color-mix(in_oklab,var(--lienzo)_86%,transparent)] px-5 py-3 backdrop-blur-md desplazable-limpio"
             >
               <div className="flex w-max rounded-full border border-panel-borde bg-panel p-1">
                 {PESTANAS.map(([clave, nombre, Icono]) => (

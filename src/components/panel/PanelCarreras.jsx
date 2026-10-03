@@ -199,7 +199,7 @@ export default function PanelCarreras({ slug, alElegir, datos, cargando, resumen
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+      <div className="-mx-5 overflow-x-auto px-5 pb-1 desplazable-limpio">
         <div className="flex w-max gap-1.5">
           {porUso.map((c) => {
             const activa = c.slug === carrera.slug

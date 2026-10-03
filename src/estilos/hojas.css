@@ -63,9 +63,14 @@
   opacity: 0;
 }
 
+/* Dentro de un panel de esquinas redondas la barra no llega hasta abajo: se
+   meteria en la curva. */
+.desplazable-panel::-webkit-scrollbar-track {
+  margin-block: 6px 18px;
+}
+
 /* El pie se desvanece en vez de cortarse en seco: dice que hay mas abajo
-   sin una barra de desplazamiento a la vista. Encima del contenido y sin
-   atrapar el puntero. */
+   antes de mirar la barra. Encima del contenido y sin atrapar el puntero. */
 .panel-lateral::after {
   content: '';
   position: absolute;

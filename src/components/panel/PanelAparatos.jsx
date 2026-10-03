@@ -458,7 +458,7 @@ export default function PanelAparatos({ datos, cargando, ventana, alCambiarVenta
             titulo="Cada aparato"
             explica="Del más reciente al más antiguo. Tócalo para ver todo lo que se sabe de él."
           >
-            <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none]">
+            <div className="-mx-5 overflow-x-auto px-5 desplazable-limpio">
               <div className="flex w-max gap-1.5">
                 {FILTROS.map(([clave, nombre]) => {
                   const n = lista.filter(pasa[clave]).length

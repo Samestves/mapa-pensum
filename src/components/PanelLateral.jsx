@@ -20,8 +20,8 @@ const SALIDA_MS = 320
  *
  * Alto fijo, de la cabecera al pie, en vez de crecer con lo que lleva: un
  * panel que cambia de tamaño segun el contenido es lo que hacia que el
- * avance pareciera una nubecita. Si no cabe se desplaza por dentro, sin
- * barra a la vista y con el borde de abajo desvaneciendose.
+ * avance pareciera una nubecita. Si no cabe se desplaza por dentro, con la
+ * barra fina de la aplicacion y el borde de abajo desvaneciendose.
  *
  * Va dentro de la vista de la carrera y no en un portal: de ahi toma lo que
  * mide la cabecera (--reserva-cabecera) para empezar justo debajo.
@@ -72,8 +72,13 @@ function PanelLateral({ abierto, alCerrar, etiqueta, ancho = 380, cabecera, chil
       className="panel-lateral absolute top-[calc(var(--reserva-cabecera)+0.5rem)] right-5 bottom-5 z-30 flex max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-[28px] border border-panel-borde bg-panel outline-none"
     >
       <div className="shrink-0">{cabecera}</div>
-      <div className="desplazable-limpio min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        {children}
+      {/* La barra tiene su hueco reservado siempre, para que el contenido no
+          salte de ancho al pasar de caber a no caber. Y ese hueco sale del
+          margen derecho de lo que va dentro -que se mete debajo lo que mide
+          la barra-, no se le suma: asi lo de dentro sigue alineado con la
+          cabecera, y la barra cae en el margen. */}
+      <div className="desplazable-panel min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+        <div className="mr-[calc(var(--ancho-barra)*-1)]">{children}</div>
       </div>
     </section>
   )

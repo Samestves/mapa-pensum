@@ -641,7 +641,7 @@ function VistaLista({
           <div
             role="tablist"
             aria-label="Filtrar materias"
-            className="flex gap-1.5 overflow-x-auto pr-[var(--hueco-avisos)] pl-4 [scrollbar-width:none]"
+            className="flex gap-1.5 overflow-x-auto pr-[var(--hueco-avisos)] pl-4 desplazable-limpio"
           >
             {FILTROS.map((f) => {
               const activo = f.id === filtro

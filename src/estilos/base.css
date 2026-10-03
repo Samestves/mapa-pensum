@@ -55,3 +55,80 @@
 [data-cambiando-tema] *::after {
   transition: none !important;
 }
+
+/* ------------------------------------------------------------------
+   La barra de desplazamiento.
+
+   Una sola para toda la aplicacion: un hilo de cuatro pixeles con las
+   puntas redondas, del color de la tinta muy rebajado, sin carril y sin
+   flechas. Engorda y se aclara al apuntarle, que es cuando se va a agarrar.
+   La del sistema -un carril gris de diecisiete pixeles con sus dos flechas-
+   era lo unico de la pantalla que no parecia de aqui.
+
+   Solo donde hay raton. En un telefono la barra ya es un hilo que aparece
+   al desplazar y se va, y estos pseudo-elementos la cambiarian por una fija
+   que le quita ancho a la pagina.
+
+   Lo que no deba enseñarla -las filas de pastillas que se desplazan de
+   lado- lleva .desplazable-limpio (estilos/hojas.css).
+
+   Medido en la lista, cien pasos de rueda a CPU x4: lo mismo que con la del
+   sistema, dentro del ruido de una pasada a otra.
+
+   --ancho-barra es lo que ocupa, para quien tenga que descontarlo de su
+   margen (ver PanelLateral): cero donde no ocupa nada.
+   ------------------------------------------------------------------ */
+:root {
+  --ancho-barra: 0px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  @supports selector(::-webkit-scrollbar) {
+    :root {
+      --ancho-barra: 10px;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  /* El hilo es el relleno; el borde transparente es el aire que lo separa
+     del canto y lo que lo deja en cuatro pixeles. */
+  ::-webkit-scrollbar-thumb {
+    min-height: 44px;
+    min-width: 44px;
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-color: color-mix(in oklab, var(--tinta) 22%, transparent);
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    border-width: 2px;
+    background-color: color-mix(in oklab, var(--tinta) 40%, transparent);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    border-width: 2px;
+    background-color: color-mix(in oklab, var(--tinta) 55%, transparent);
+  }
+
+  /* Firefox no tiene esos pseudo-elementos: la suya, fina y del mismo color */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklab, var(--tinta) 26%, transparent) transparent;
+    }
+  }
+}

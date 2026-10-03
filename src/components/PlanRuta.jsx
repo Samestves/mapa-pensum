@@ -588,7 +588,9 @@ function Ventana({ carrera, alCerrar, cuerpo, acciones, children }) {
           <div className="pt-4">
             <Cabecera carrera={carrera} alCerrar={alCerrar} />
           </div>
-          <div className="desplazable-limpio min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+          {/* El hueco de la barra sale del margen derecho, no se le suma:
+              lo de dentro sigue alineado con la cabecera y con el pie. */}
+          <div className="desplazable-panel min-h-0 flex-1 overflow-y-auto pr-[calc(1.25rem-var(--ancho-barra))] pb-6 pl-5 [scrollbar-gutter:stable]">
             {cuerpo}
           </div>
           <div className="border-t border-panel-borde px-5 py-4">
