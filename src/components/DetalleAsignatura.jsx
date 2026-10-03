@@ -156,7 +156,7 @@ function AvisoSituacion({ estado, situacion, prerrequisitos }) {
       situacion={s}
       size={13}
       className="mt-[2px] shrink-0"
-      color={s === SITUACION.LEJANA ? 'var(--tinta-tenue)' : ASPECTO[s].marca.color}
+      color={ASPECTO[s].icono}
     />
   )
 

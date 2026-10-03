@@ -12,14 +12,14 @@ const FUENTE = `'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, 
    app. Se mandan por WhatsApp y se imprimen, y las dos cosas asumen papel
    blanco. */
 export const CLARO = {
-  fondo: '#f6f7f9',
+  fondo: '#f6f6f7',
   papel: '#ffffff',
-  tinta: '#0f1522',
-  suave: '#566074',
-  tenue: '#8f98a8',
-  linea: '#dfe3ea',
-  marco: '#d6dbe3',
-  filo: '#e3e6ec',
+  tinta: '#171a20',
+  suave: '#50545a',
+  tenue: '#8e9197',
+  linea: '#e1e2e5',
+  marco: '#d7d9dc',
+  filo: '#e4e5e7',
 }
 
 export const css = ({ r, g, b }, alfa = 1) =>
@@ -142,8 +142,8 @@ export function baldosa(ctx, x, y, lado, sombra = false) {
   ctx.save()
   redondeado(ctx, x, y, lado, lado, lado * 0.28)
   const brillo = ctx.createLinearGradient(x, y, x + lado, y + lado)
-  brillo.addColorStop(0, '#1c2740')
-  brillo.addColorStop(1, '#0b101b')
+  brillo.addColorStop(0, '#2a2d33')
+  brillo.addColorStop(1, '#0b0c0e')
   ctx.fillStyle = brillo
   if (sombra) {
     /* La sombra no se escala con el lienzo: se mide en pixeles del archivo,

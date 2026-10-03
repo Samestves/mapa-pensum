@@ -88,16 +88,16 @@
 /* La paleta del cristal. Todo lo que cambia entre temas vive aqui como
    variable, y las reglas de .barra-cristal de abajo se escriben una sola vez.
 
-   Oscuro: grafito mate. Un gris frio muy diluido, sin realce de brillo ni de
+   Oscuro: grafito mate. Un gris neutro muy diluido, sin realce de brillo ni de
    saturacion -eso es lo que hacia que sobre negro pareciera plastico- y con
    los filos apenas insinuados: el cristal se nota por la sombra y por el
    contorno fino, no por brillar.
-   Claro: blanco lechoso con el filo en azul marino casi transparente, para
+   Claro: blanco lechoso con el filo en gris carbon casi transparente, para
    que la isla no se funda con un lienzo que ya es claro. */
 :root {
   --cristal-fondo:
     linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.015)),
-    color-mix(in oklab, #8b93a4 14%, transparent);
+    color-mix(in oklab, #9a9da3 14%, transparent);
   --cristal-filtro: blur(24px) saturate(1.25);
   --cristal-anillo:
     inset 0 0 0 0.5px rgb(255 255 255 / 0.1), inset 0 0.5px 0 rgb(255 255 255 / 0.16),
@@ -126,20 +126,20 @@
      pixel y una sombra algo mayor le devuelven el contorno. */
   --cristal-anillo:
     inset 0 0 0 0.5px rgb(255 255 255 / 0.85), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 1),
-    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8), 0 0 0 0.5px rgb(16 32 64 / 0.1),
-    0 12px 26px -10px rgb(16 32 64 / 0.3), 0 2px 6px rgb(16 32 64 / 0.09);
+    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8), 0 0 0 0.5px rgb(23 26 32 / 0.1),
+    0 12px 26px -10px rgb(23 26 32 / 0.3), 0 2px 6px rgb(23 26 32 / 0.09);
   --cristal-filo: linear-gradient(
     135deg,
     rgb(255 255 255 / 1),
-    rgb(16 32 64 / 0.04) 35%,
-    rgb(16 32 64 / 0.07) 65%,
+    rgb(23 26 32 / 0.04) 35%,
+    rgb(23 26 32 / 0.07) 65%,
     rgb(255 255 255 / 0.9)
   );
   --cristal-brillo: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.7), transparent 70%);
   --cristal-lente: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(255 255 255 / 0.78));
   --cristal-lente-anillo:
-    inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 1px rgb(16 32 64 / 0.06),
-    0 0 0 0.5px rgb(16 32 64 / 0.07), 0 4px 12px -4px rgb(16 32 64 / 0.22);
+    inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 1px rgb(23 26 32 / 0.06),
+    0 0 0 0.5px rgb(23 26 32 / 0.07), 0 4px 12px -4px rgb(23 26 32 / 0.22);
 }
 
 .barra-cristal {

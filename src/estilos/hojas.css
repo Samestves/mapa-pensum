@@ -27,7 +27,7 @@
 }
 
 [data-tema='claro'] :is(.hoja-inferior, .panel-lateral) {
-  box-shadow: 0 24px 60px -12px rgb(16 32 64 / 0.28);
+  box-shadow: 0 24px 60px -12px rgb(23 26 32 / 0.28);
 }
 
 .hoja-inferior {
@@ -92,7 +92,7 @@
 }
 
 [data-tema='claro'] .velo-hoja {
-  background: rgb(16 32 64 / 0.22);
+  background: rgb(23 26 32 / 0.22);
 }
 
 .velo-hoja[data-fase='fuera'] {
@@ -177,8 +177,8 @@
 [data-tema='claro'] .lente-tema {
   background: #ffffff;
   box-shadow:
-    0 1px 3px rgb(16 32 64 / 0.14),
-    0 0 0 0.5px rgb(16 32 64 / 0.06);
+    0 1px 3px rgb(23 26 32 / 0.14),
+    0 0 0 0.5px rgb(23 26 32 / 0.06);
 }
 
 /* El icono de la vista que se acaba de elegir se asienta: pasa de contorno a

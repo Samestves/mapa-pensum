@@ -102,7 +102,7 @@
 
 [data-tema='claro'] .panel-cristal {
   background: color-mix(in oklab, var(--panel) 78%, transparent);
-  box-shadow: 0 20px 48px -24px rgb(12 23 37 / 0.34);
+  box-shadow: 0 20px 48px -24px rgb(23 26 32 / 0.3);
 }
 
 .panel-cristal::before {

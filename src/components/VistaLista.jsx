@@ -35,7 +35,7 @@ const NOMBRE_FILTRO = {
   aprobadas: 'Aprobadas',
 }
 
-const colorSituacion = (s) => ASPECTO[s].marca.color
+const colorSituacion = (s) => ASPECTO[s].icono
 const bloqueada = (s) => s === SITUACION.PROXIMA || s === SITUACION.LEJANA
 
 /**

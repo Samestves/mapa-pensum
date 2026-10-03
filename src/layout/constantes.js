@@ -43,8 +43,6 @@ export const ALTO_ENCABEZADO = 84
 
 export const TEXTO = {
   codigo: 10,
-  // DISPONIBLE, CURSANDO: pequeño y muy espaciado, se lee como rotulo
-  rotulo: 8.5,
   nombre: 14,
   meta: 10,
   altoLinea: 16.5,

@@ -87,9 +87,9 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
           {c.estados.map((e) => (
             <g
               key={e.situacion}
-              transform={`translate(${e.x}, ${Y + CABECERA.pie - 10}) scale(0.86)`}
+              transform={`translate(${e.x}, ${Y + CABECERA.pie - 10}) scale(0.6)`}
             >
-              <FormaSituacion situacion={e.situacion} color={ASPECTO[e.situacion].marca.color} />
+              <FormaSituacion situacion={e.situacion} color={ASPECTO[e.situacion].icono} />
             </g>
           ))}
           {marcas.has(c.semestre) && (

@@ -5,17 +5,15 @@ import { IconoSituacion } from './IconoSituacion'
 /** La frase para cuando no hay nada que pedir */
 export const SIN_PRELACIONES = 'Nada: puedes verla desde el inicio.'
 
-/* El color del icono de cada fila. La lejana no tiene color de estado -es la
-   mayoria y la que menos importa-, asi que va en tinta apagada. */
-const colorDe = (situacion) =>
-  situacion === SITUACION.LEJANA ? 'var(--tinta-tenue)' : ASPECTO[situacion].marca.color
+/* El color del icono de cada fila: el mismo de la tarjeta del mapa */
+const colorDe = (situacion) => ASPECTO[situacion].icono
 
 /**
  * Una materia dentro de la lista: el icono de su estado, su nombre y su
- * codigo en letra de maquina. El mismo icono que la tarjeta del mapa tendria
- * si la palabra no cupiera: aro lleno con check, a medias, con punto o
- * candado. Se lee de un vistazo cual de las prelaciones ya esta y cual
- * falta, sin tener que leer ninguna etiqueta.
+ * codigo en letra de maquina. El mismo icono que lleva su tarjeta en el mapa:
+ * sello, libro, candado abierto, reloj de arena o candado cerrado. Se lee de
+ * un vistazo cual de las prelaciones ya esta y cual falta, sin tener que leer
+ * ninguna etiqueta.
  *
  * Si la materia esta dibujada en el mapa, la fila es un boton que lleva a
  * ella. Al pasar por encima entra desde la izquierda una raya fina, el mismo

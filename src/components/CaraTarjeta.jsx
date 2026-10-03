@@ -1,24 +1,30 @@
 import { memo } from 'react'
 import { NODO, TEXTO } from '../layout/constantes'
-import { ASPECTO } from '../theme/situacion'
+import { ASPECTO, idIcono } from '../theme/situacion'
 import Texto, { GrupoTexto } from './Texto'
 
 const SUAVE =
   'fill 280ms ease, stroke 280ms ease, stroke-opacity 280ms ease, stroke-width 160ms ease'
 
+/* El icono de estado, arriba a la derecha: su borde derecho cae en el margen
+   de la tarjeta y su centro a la altura del codigo. */
+const LADO_ICONO = 17.5
+const X_ICONO = NODO.ancho - NODO.padDer - LADO_ICONO
+const Y_ICONO = 10.5
+
 /**
  * La cara de una tarjeta de materia. La usan la materia obligatoria y la
  * casilla de electiva ya llena, que por eso se ven exactamente iguales.
  *
- *   0713632                DISPONIBLE     codigo | estado
+ *   0713632                      [icono]  codigo | estado
  *   Teoria de Sistemas                    nombre, protagonista
  *   ● 2 UC                                area en un punto y UC
  *
  * Dos voces que no se mezclan: la que nombra, en Jost fina, y la que mide o
- * se copia -codigo y UC-, en letra de maquina. El estado es una sola palabra
- * en mayusculas muy espaciadas, sin icono ni pastilla: a ese tamaño y con ese
- * aire se lee como un rotulo, y el color del borde ya dice lo mismo desde
- * lejos, cuando la palabra ya no se alcanza a leer.
+ * se copia -codigo y UC-, en letra de maquina. El estado es un icono (ver
+ * IconoSituacion): cada situacion tiene su silueta, asi que se reconoce de
+ * lejos, cuando una palabra ya no se alcanzaria a leer. Y es un texto menos
+ * por tarjeta, que es lo que mas cuesta maquetar.
  *
  * Va en dos piezas porque el mapa las dibuja en dos sitios: la FORMA en el
  * SVG y el TEXTO en HTML, encima (ver Texto). El texto de un SVG se vuelve a
@@ -26,7 +32,7 @@ const SUAVE =
  * cambia de escala en cada cuadro de un zoom.
  */
 
-/** Lo que se dibuja de la tarjeta: fondo, borde, sombra y el punto del area */
+/** Lo que se dibuja de la tarjeta: fondo, borde, sombra, icono y el punto del area */
 export function FormaTarjeta({ situacion, acento, seleccionado, resaltado }) {
   const a = ASPECTO[situacion]
   const { ancho, alto, radio, padIzq } = NODO
@@ -53,19 +59,25 @@ export function FormaTarjeta({ situacion, acento, seleccionado, resaltado }) {
       {/* Sombra de papel, solo en claro: en oscuro la variable es
           transparente. Un rectangulo corrido y no un filtro, que costaria un
           repintado por cuadro al mover el mapa. */}
-      <rect
-        y={2}
-        width={ancho}
-        height={alto}
-        rx={radio}
-        style={{ fill: 'var(--sombra-tarjeta)' }}
-      />
+      <rect y={2} width={ancho} height={alto} rx={radio} style={{ fill: a.sombra }} />
 
       <rect
         width={ancho}
         height={alto}
         rx={radio}
         style={{ fill: a.fondo, stroke: borde, strokeWidth: grosor, transition: SUAVE }}
+      />
+
+      {/* Un <use> y no las formas del icono: el dibujo vive una vez en el
+          SVG del mapa (ver DefsGrafo) y cada tarjeta solo lo señala. Lo
+          calado del icono toma el color del relleno de la tarjeta. */}
+      <use
+        href={`#${idIcono(situacion)}`}
+        x={X_ICONO}
+        y={Y_ICONO}
+        width={LADO_ICONO}
+        height={LADO_ICONO}
+        style={{ color: a.icono, '--sobre': a.fondo }}
       />
 
       <circle cx={padIzq + 3} cy={alto - 16} r={3} fill={acento} />
@@ -80,16 +92,10 @@ export function FormaTarjeta({ situacion, acento, seleccionado, resaltado }) {
  */
 function TextoTarjetaSinMemo({ x, y, situacion, codigo, lineasNombre, uc }) {
   const a = ASPECTO[situacion]
-  const { ancho, alto, padIzq, padDer } = NODO
+  const { alto, padIzq } = NODO
 
   // El bloque del nombre se centra: 1, 2 o 3 lineas quedan equilibradas
   const primeraLinea = TEXTO.centroNombre - ((lineasNombre.length - 1) * TEXTO.altoLinea) / 2
-
-  /* El espaciado de las mayusculas se añade tambien detras de la ultima
-     letra: sin esta correccion la palabra quedaba despegada del borde
-     derecho, mas adentro que el codigo del izquierdo. */
-  const espaciadoRotulo = 0.22
-  const xRotulo = ancho - padDer + TEXTO.rotulo * espaciadoRotulo
 
   return (
     <GrupoTexto x={x} y={y}>
@@ -106,23 +112,6 @@ function TextoTarjetaSinMemo({ x, y, situacion, codigo, lineasNombre, uc }) {
       >
         {codigo}
       </Texto>
-
-      {a.marca.texto && (
-        <Texto
-          x={xRotulo}
-          y={TEXTO.lineaSuperior}
-          ancla="fin"
-          style={{
-            fontSize: TEXTO.rotulo,
-            color: a.marca.color,
-            fontWeight: 'var(--peso-rotulo)',
-            letterSpacing: `${espaciadoRotulo}em`,
-            transition: 'color 280ms ease',
-          }}
-        >
-          {a.marca.texto.toUpperCase()}
-        </Texto>
-      )}
 
       {lineasNombre.map((linea, i) => (
         <Texto

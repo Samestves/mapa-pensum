@@ -263,7 +263,7 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
           >
             <IconoSituacion
               situacion={SITUACION.INSCRIBIBLE}
-              color={ASPECTO[SITUACION.INSCRIBIBLE].marca.color}
+              color={ASPECTO[SITUACION.INSCRIBIBLE].icono}
               size={12}
             />
             <span>
