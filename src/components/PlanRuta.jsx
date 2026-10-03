@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import {
   Check,
@@ -21,6 +21,7 @@ import { imagenDeLaRuta, mensajeDeLaRuta, MES, mesCorto } from '../data/exportar
 import { colorArea } from '../theme/areas'
 import HojaInferior from './HojaInferior'
 import HojaPlan, { ALTO_HOJA, ANCHO_HOJA } from './HojaPlan'
+import VisorHoja from './VisorHoja'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
 const ROTULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'
@@ -566,7 +567,8 @@ function Acciones({ alImprimir, alCompartir, deshabilitado }) {
 
 /**
  * Escritorio: la ruta a la izquierda y la hoja de papel a la derecha, tal
- * como va a salir. Se ve lo que se imprime antes de imprimirlo.
+ * como va a salir, en un visor para acercarla y recorrerla (ver VisorHoja).
+ * Se ve lo que se imprime antes de imprimirlo.
  */
 function Ventana({ carrera, alCerrar, cuerpo, acciones, children }) {
   useCerrarConEscape(alCerrar)
@@ -600,45 +602,9 @@ function Ventana({ carrera, alCerrar, cuerpo, acciones, children }) {
             </p>
           </div>
         </div>
-        <VistaPrevia>{children}</VistaPrevia>
-      </div>
-    </div>
-  )
-}
-
-/* Lo que respira la hoja dentro de su panel, a cada lado */
-const MARGEN_PREVIA = 32
-
-/**
- * La hoja ENTERA a la vista, encogida hasta que quepa a lo ancho y a lo alto:
- * es una pagina, y se revisa como una pagina. Se encoge con zoom y no con
- * transform porque zoom si reflota y el panel no reserva el hueco del tamaño
- * natural.
- */
-function VistaPrevia({ children }) {
-  const refPanel = useRef(null)
-  const [escala, setEscala] = useState(1)
-
-  useLayoutEffect(() => {
-    const panel = refPanel.current
-    const medir = () =>
-      setEscala(
-        Math.min(
-          1,
-          (panel.clientWidth - 2 * MARGEN_PREVIA) / ANCHO_HOJA,
-          (panel.clientHeight - 2 * MARGEN_PREVIA) / ALTO_HOJA,
-        ),
-      )
-    medir()
-    const observador = new ResizeObserver(medir)
-    observador.observe(panel)
-    return () => observador.disconnect()
-  }, [])
-
-  return (
-    <div ref={refPanel} className="grid min-w-0 flex-1 place-items-center bg-lienzo">
-      <div style={{ zoom: escala }} className="overflow-hidden rounded-md shadow-2xl">
-        {children}
+        <VisorHoja ancho={ANCHO_HOJA} alto={ALTO_HOJA}>
+          {children}
+        </VisorHoja>
       </div>
     </div>
   )

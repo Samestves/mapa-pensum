@@ -361,3 +361,47 @@
   font-weight: 600;
   color: var(--papel-tinta);
 }
+
+/* ------------------------------------------------------------------
+   El visor de la hoja (ver VisorHoja).
+
+   La hoja se mueve con un transform y nada mas. Mientras se mueve lleva su
+   propia capa de GPU, y acercarla o arrastrarla es estirar lo ya pintado sin
+   volver a pintarlo: por eso va fluido. Quieta, la capa se suelta y el
+   navegador la pinta al tamaño al que se ve, con las letras nitidas a
+   cualquier zoom. Con la capa puesta siempre, la hoja acercada al triple
+   seria una foto ampliada.
+   ------------------------------------------------------------------ */
+.visor-hoja {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.visor-hoja[data-acercada] {
+  cursor: grab;
+}
+
+.visor-hoja[data-acercada]:active {
+  cursor: grabbing;
+}
+
+.visor-hoja:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--estado-aprobada) 60%, transparent);
+}
+
+.hoja-visor.moviendose {
+  will-change: transform;
+}
+
+/* El viaje de los botones y del doble clic. Con la rueda y el arrastre no:
+   ahi la hoja tiene que ir pegada a la mano. */
+.hoja-visor.suave {
+  transition: transform var(--viaje) cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La cifra del mando cambia en cada cuadro de un zoom. Contenida, el
+   navegador sabe que lo que pase dentro no mueve nada de fuera. */
+.cifra-visor {
+  contain: strict;
+}
