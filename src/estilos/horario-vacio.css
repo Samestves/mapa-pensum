@@ -1,11 +1,99 @@
-/* ---- Horario vacio: la semana de muestra ---------------------------------- */
+/* ---- Horario vacio: la semana que se lee sola -----------------------------
+   El dibujo que abre la pantalla cuenta lo que va a pasar con tu foto: una
+   semana con sus clases, y una linea que la recorre y las va encendiendo.
 
-/* Cada clase entra como si alguien la colocara: crece desde un poco mas
-   pequeña y se funde. Una tras otra con animation-delay, y despues quietas. */
+   Todo se mueve con transform y opacity. Los tiempos van en variables porque
+   tres animaciones tienen que ir acompasadas: la linea que baja y la luz de
+   cada clase, que se enciende justo cuando la linea le pasa por encima.
+   ------------------------------------------------------------------------ */
+.semana-muestra {
+  /* El alto de cada fila, que es lo primero que cede en pantallas bajas para
+     que la bienvenida quepa sin desplazarse. Aqui y no en clases de Tailwind:
+     las dos consultas se solapan, y solo en este orden gana la mas estrecha. */
+  --fila-muestra: 19px;
+  /* Cada cuanto se vuelve a leer la semana, cuanto tarda la primera lectura
+     en empezar -lo que tardan las clases en colocarse- y lo que tarda la
+     linea en cruzar una fila. La bajada entera es un cuarto del ciclo (ver
+     leer-semana): con cinco filas, un veinteavo por fila. */
+  --ciclo: 6400ms;
+  --arranque: 1200ms;
+  --por-fila: calc(var(--ciclo) / 20);
+}
+
+@media (max-height: 760px) {
+  .semana-muestra {
+    --fila-muestra: 14px;
+  }
+}
+
+@media (max-height: 660px) {
+  .semana-muestra {
+    --fila-muestra: 10px;
+  }
+}
+
+/* La rejilla se desvanece hacia abajo en vez de acabar en un borde: no es
+   una tarjeta, es un trozo de semana que sale del fondo. */
+.rejilla-muestra {
+  -webkit-mask-image: linear-gradient(to bottom, #000 48%, rgb(0 0 0 / 0.16));
+  mask-image: linear-gradient(to bottom, #000 48%, rgb(0 0 0 / 0.16));
+}
+
+/* Las lineas de las horas, detras de todo: es lo que hace que cinco columnas
+   de rectangulos se lean como una semana y no como un mosaico. */
+.hora-muestra {
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+}
+
+/* Una clase: el relleno diluido y una barra fina a color pleno, como en
+   cualquier calendario. Entra subiendo un paso corto, sin rebote. */
+.clase-muestra {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  /* Opaca: tapa las lineas de las horas, como una clase de verdad */
+  background: color-mix(in oklab, var(--color) 21%, var(--panel-suave));
+  animation: colocar-clase 640ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.clase-muestra::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--color);
+}
+
+/* El nombre de la clase, reducido a un trazo */
+.clase-muestra > i {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  width: 46%;
+  height: 2px;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--color) 62%, transparent);
+}
+
+/* La luz de la clase recien leida. Lleva el mismo ciclo que la linea y un
+   retraso segun la fila en la que esta: asi se enciende cuando le toca. */
+.clase-muestra::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--color) 38%, transparent);
+  opacity: 0;
+  animation: encender-clase var(--ciclo) linear infinite;
+  animation-delay: calc(var(--arranque) + var(--fila) * var(--por-fila));
+}
+
 @keyframes colocar-clase {
   from {
     opacity: 0;
-    transform: scale(0.7);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -13,94 +101,66 @@
   }
 }
 
-.clase-muestra {
-  animation: colocar-clase 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
-}
-
-/* El alto de cada fila de la semana, que es lo primero que cede en pantallas
-   bajas para que la bienvenida quepa sin desplazarse. Aqui y no en clases de
-   Tailwind: las dos consultas se solapan, y solo en este orden gana la mas
-   estrecha. */
-.semana-muestra {
-  --fila-muestra: 17px;
-}
-
-@media (max-height: 760px) {
-  .semana-muestra {
-    --fila-muestra: 13px;
+@keyframes encender-clase {
+  0% {
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  16%,
+  100% {
+    opacity: 0;
   }
 }
 
-@media (max-height: 660px) {
-  .semana-muestra {
-    --fila-muestra: 9px;
-  }
-}
-
-/* Las dos acciones. Fondo de panel y un contorno de un pixel hecho con
-   degradado, como la caja de la marca: se enciende arriba a la izquierda y se
-   apaga hacia el otro lado. La destacada lo enciende con el verde de la casa
-   y lleva un velo de ese verde por dentro, casi imperceptible. */
-.accion-horario {
-  background: var(--panel);
-  transition:
-    transform 300ms cubic-bezier(0.32, 0.72, 0, 1),
-    background-color 200ms ease;
-}
-
-.accion-horario[data-destacada] {
-  background:
-    radial-gradient(
-      120% 140% at 0% 0%,
-      color-mix(in oklab, var(--estado-aprobada) 10%, transparent),
-      transparent 60%
-    ),
-    var(--panel);
-}
-
-.accion-horario::before {
-  content: '';
+/* La linea de lectura. Mide lo que la rejilla y lleva la luz en su borde de
+   abajo, asi que cruzarla entera es un transform de -100% a 0. */
+.lectura-muestra {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  padding: 1px;
   background: linear-gradient(
-    150deg,
-    color-mix(in oklab, var(--tinta) 22%, transparent),
-    color-mix(in oklab, var(--tinta) 7%, transparent) 45%,
-    color-mix(in oklab, var(--tinta) 11%, transparent)
+    to bottom,
+    transparent calc(100% - 46px),
+    color-mix(in oklab, var(--tinta) 9%, transparent) calc(100% - 1px),
+    color-mix(in oklab, var(--tinta) 70%, transparent) calc(100% - 1px)
   );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
+  opacity: 0;
   pointer-events: none;
-  transition: opacity 200ms ease;
+  animation: leer-semana var(--ciclo) linear infinite;
+  animation-delay: var(--arranque);
 }
 
-.accion-horario[data-destacada]::before {
-  background: linear-gradient(
-    150deg,
-    color-mix(in oklab, var(--estado-aprobada) 70%, transparent),
-    color-mix(in oklab, var(--estado-aprobada) 18%, transparent) 45%,
-    color-mix(in oklab, var(--estado-aprobada) 30%, transparent)
-  );
-}
-
-@media (hover: hover) {
-  .accion-horario:hover {
-    background-color: color-mix(in oklab, var(--tinta) 3%, var(--panel));
+@keyframes leer-semana {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
   }
+  2% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  29%,
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+}
+
+/* En modo ligero se lee una vez y se queda quieta: es el saludo, no un
+   adorno que corre mientras decides (ver data/ligero.js). */
+[data-ligero] .clase-muestra::after,
+[data-ligero] .lectura-muestra {
+  animation-iteration-count: 1;
 }
 
 /* El hueco con el mas solo existe mientras miras "Crearlo a mano" */
 .hueco-muestra {
   opacity: 0;
-  transform: scale(0.85);
+  transform: scale(0.9);
   transition:
     opacity 280ms ease,
     transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -111,32 +171,11 @@
   transform: none;
 }
 
-/* Y la linea de lectura solo mientras miras "Subir una foto": baja por la
-   semana como un escaner, que es lo que va a pasar con tu imagen. */
-@keyframes escanear {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(420%);
-  }
-}
-
-.escaneo-muestra {
-  opacity: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    color-mix(in oklab, var(--estado-aprobada) 14%, transparent) 70%,
-    color-mix(in oklab, var(--estado-aprobada) 55%, transparent) 98%,
-    transparent
-  );
-  transition: opacity 240ms ease;
-}
-
-.semana-muestra[data-foco='foto'] .escaneo-muestra {
-  opacity: 1;
-  animation: escanear 1600ms cubic-bezier(0.45, 0, 0.3, 1) infinite;
+/* Al arrastrar una imagen sobre la pantalla, la lectura se queda encendida:
+   es lo que va a pasar al soltarla. */
+.semana-muestra[data-foco='foto'] .clase-muestra::after {
+  animation: none;
+  opacity: 0.6;
 }
 
 .riel-tramo {

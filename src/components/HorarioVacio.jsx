@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowRight, ImagePlus, PencilLine, Plus } from 'lucide-react'
+import { ImagePlus, Plus } from 'lucide-react'
 import { FORMATOS } from '../data/leerHorario'
 import { SITUACION } from '../layout/situacion'
 import { ASPECTO } from '../theme/situacion'
@@ -25,31 +25,30 @@ const FILAS = 5
 
 /**
  * La semana en miniatura que abre la pantalla. Dice sin palabras que es lo
- * que se viene a hacer aqui: una rejilla de lunes a viernes que se llena de
- * clases. Las clases entran una tras otra al llegar, como si alguien las
- * fuera colocando, y despues se quedan quietas.
+ * que se viene a hacer aqui: una semana de lunes a viernes que se llena de
+ * clases. Entran una tras otra, y despues una linea la recorre de arriba
+ * abajo y cada clase se enciende cuando le pasa por encima: es lo que va a
+ * pasar con la foto.
  *
- * Responde a la opcion que tengas encima: con "Subir una foto" la recorre una
- * linea de lectura, y con "Crearlo a mano" aparece un hueco con un mas donde
- * iria la siguiente clase. Es la misma accion, contada en pequeño antes de
- * pulsar.
+ * No lleva caja. Es un trozo de semana que sale del fondo y se desvanece
+ * hacia abajo, no una tarjeta con un dibujo dentro.
+ *
+ * `foco` cuenta la opcion que se esta mirando: con "mano" aparece un hueco
+ * con un mas donde iria la siguiente clase; con "foto" -al arrastrar una
+ * imagen sobre la pantalla- las clases se quedan encendidas.
  *
  * El alto de cada fila es una variable que encoge en pantallas bajas: es lo
  * primero que cede para que todo quepa sin desplazarse, porque un dibujo
  * sigue leyendose igual un poco mas aplastado y un boton no.
  */
-function SemanaMuestra({ foco, soltando }) {
+function SemanaMuestra({ foco }) {
   return (
-    <div
-      aria-hidden="true"
-      className="semana-muestra relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-panel-borde bg-panel p-3"
-      data-foco={soltando ? 'foto' : foco}
-    >
-      <div className="grid grid-cols-5 gap-1.5 pb-2">
-        {DIAS.map((d, i) => (
+    <div aria-hidden="true" className="semana-muestra w-full max-w-[300px]" data-foco={foco}>
+      <div className="grid grid-cols-5 gap-2 pb-2.5">
+        {DIAS.map((d) => (
           <span
-            key={i}
-            className="text-center text-[9.5px] font-medium tracking-[0.2em] text-tinta-tenue"
+            key={d}
+            className="text-center font-ui text-[10px] font-medium tracking-[0.22em] text-tinta-tenue"
           >
             {d}
           </span>
@@ -57,104 +56,45 @@ function SemanaMuestra({ foco, soltando }) {
       </div>
 
       <div
-        className="relative grid grid-cols-5 gap-1.5"
+        className="rejilla-muestra relative grid grid-cols-5 gap-x-2 gap-y-1.5 overflow-hidden"
         style={{ gridTemplateRows: `repeat(${FILAS}, var(--fila-muestra))` }}
       >
-        {/* Las lineas de las horas, detras de todo */}
         {Array.from({ length: FILAS - 1 }, (_, i) => (
           <span
             key={i}
-            className="pointer-events-none absolute inset-x-0 h-px bg-[color-mix(in_oklab,var(--tinta)_6%,transparent)]"
-            style={{ top: `calc(${((i + 1) / FILAS) * 100}% - 0.5px)` }}
+            className="hora-muestra"
+            style={{ top: `calc(${((i + 1) / FILAS) * 100}% - 3px)` }}
           />
         ))}
 
         {MUESTRA.map((c, i) => (
           <span
             key={i}
-            className="clase-muestra relative rounded-[5px] border"
+            className="clase-muestra"
             style={{
               gridColumn: c.dia + 1,
               gridRow: `${c.desde + 1} / span ${c.filas}`,
-              backgroundColor: `color-mix(in oklab, ${c.color} 22%, transparent)`,
-              borderColor: `color-mix(in oklab, ${c.color} 45%, transparent)`,
-              animationDelay: `${180 + i * 70}ms`,
+              '--color': c.color,
+              // La fila por la que pasa su centro: cuando le llega la linea
+              '--fila': c.desde + c.filas / 2,
+              animationDelay: `${140 + i * 70}ms`,
             }}
           >
-            <span
-              className="absolute top-1.5 left-1.5 h-[3px] w-1/2 rounded-full"
-              style={{ backgroundColor: `color-mix(in oklab, ${c.color} 70%, transparent)` }}
-            />
+            <i />
           </span>
         ))}
 
         {/* El hueco que se ofrece a mano */}
         <span
-          className="hueco-muestra grid place-items-center rounded-[5px] border border-dashed border-tinta-tenue text-tinta-suave"
+          className="hueco-muestra grid place-items-center rounded-[5px] bg-[color-mix(in_oklab,var(--tinta)_8%,transparent)] text-tinta-suave"
           style={{ gridColumn: 2, gridRow: '4 / span 2' }}
         >
           <Plus size={12} strokeWidth={1.75} />
         </span>
+
+        <span className="lectura-muestra" />
       </div>
-
-      {/* La linea de lectura de la foto */}
-      <span className="escaneo-muestra pointer-events-none absolute inset-x-0 top-0 h-10" />
     </div>
-  )
-}
-
-/**
- * Una de las dos salidas, como una fila de accion: icono, dos lineas y una
- * flecha. Es un boton entero -toda la superficie responde- y no una tarjeta
- * con un boton dentro.
- *
- * Fila y no tarjeta alta porque en un telefono las dos tarjetas de antes
- * median casi 400 px juntas y obligaban a desplazarse para ver la segunda:
- * justo la opcion que media carrera va a usar quedaba debajo del pliegue. En
- * una fila caben las dos en 150 px y se comparan de un vistazo.
- *
- * La destacada no se distingue por un fondo de color sino por su filo: el
- * mismo contorno de luz de la cajita del logo, que se enciende en una
- * esquina, y una flecha llena. La otra, filo neutro y flecha de contorno.
- */
-function Accion({ icono: Ico, titulo, detalle, destacada, alPulsar, alEnfocar }) {
-  return (
-    <button
-      type="button"
-      onClick={alPulsar}
-      onPointerEnter={alEnfocar}
-      onFocus={alEnfocar}
-      data-destacada={destacada || undefined}
-      /* Sin utilidades de transicion: .accion-horario declara la suya, y dos
-         declaraciones se pisarian entre si. */
-      className="accion-horario group relative flex w-full items-center gap-3.5 rounded-[20px] p-3 text-left active:scale-[0.985] sm:py-3.5"
-    >
-      <span
-        className={`relative grid size-11 shrink-0 place-items-center rounded-[14px] transition-transform duration-300 group-hover:scale-105 ${
-          destacada ? 'text-[var(--estado-aprobada)]' : 'text-tinta-suave'
-        }`}
-      >
-        <span className="marca-caja" aria-hidden="true" />
-        <Ico size={19} strokeWidth={1.5} className="relative" />
-      </span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] leading-tight font-medium tracking-[-0.015em] text-tinta">
-          {titulo}
-        </span>
-        <span className="mt-1 block truncate text-[12px] text-tinta-tenue">{detalle}</span>
-      </span>
-
-      <span
-        className={`grid size-9 shrink-0 place-items-center rounded-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 ${
-          destacada
-            ? 'bg-aprobada text-[var(--lienzo)]'
-            : 'border border-panel-borde text-tinta-suave'
-        }`}
-      >
-        <ArrowRight size={16} strokeWidth={destacada ? 2 : 1.5} />
-      </span>
-    </button>
   )
 }
 
@@ -174,11 +114,11 @@ function Accion({ icono: Ico, titulo, detalle, destacada, alPulsar, alEnfocar })
  * primero deja al segundo sin sitio, y solo lo segundo condena al primero a
  * teclear catorce clases a mano.
  *
- * La foto va primera y destacada porque es la que resuelve el caso de casi
- * todo el mundo en un gesto. Pero se dice claramente que hay una revision
- * despues: prometer "sube y ya" y luego enseñar una lista que hay que repasar
- * se siente como una trampa, y decirlo antes convierte esa misma lista en lo
- * que es, una comprobacion rapida.
+ * La foto es la accion llena porque resuelve el caso de casi todo el mundo en
+ * un gesto; armarlo a mano va debajo, del mismo tamaño y sin relleno: se ve
+ * igual de pronto, pero no compite. Y se dice que hay una revision despues:
+ * prometer "sube y ya" y luego enseñar una lista que hay que repasar se
+ * siente como una trampa.
  *
  * Tiene que caber entera sin desplazarse, tambien en un telefono: una
  * pantalla de bienvenida con scroll esconde justo lo que viene a ofrecer.
@@ -196,9 +136,9 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
 
   return (
     <div
-      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-[var(--reserva-cabecera)] pb-[var(--reserva-barra)]"
-      /* Soltar la imagen encima funciona en toda la zona, no solo sobre la
-         tarjeta: en un escritorio, arrastrar la captura desde el escritorio a
+      className="relative flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-6 pt-[var(--reserva-cabecera)] pb-[var(--reserva-barra)]"
+      /* Soltar la imagen encima funciona en toda la zona, no solo sobre el
+         boton: en un escritorio, arrastrar la captura desde el escritorio a
          "por ahi en medio" es el gesto natural, y obligar a acertar un
          rectangulo de trescientos pixeles solo sirve para fallar. */
       onDragOver={(e) => {
@@ -218,10 +158,8 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
           donde soltarla: un marco discontinuo dentro del borde. */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-3 rounded-3xl border-2 border-dashed transition-[opacity,border-color] duration-300 ${
-          encima
-            ? 'border-[color-mix(in_oklab,var(--estado-aprobada)_60%,transparent)] opacity-100'
-            : 'border-transparent opacity-0'
+        className={`pointer-events-none absolute inset-3 rounded-3xl border border-dashed border-[color-mix(in_oklab,var(--tinta)_38%,transparent)] transition-opacity duration-300 ${
+          encima ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
@@ -229,42 +167,76 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
           deja que el contenido empiece arriba y se pueda desplazar. Con
           justify-center la parte de arriba se saldria por encima, fuera del
           alcance del scroll. */}
-      <div className="my-auto flex w-full max-w-[400px] flex-col items-center py-5 text-center [@media(max-height:660px)]:py-3">
+      <div className="my-auto flex w-full max-w-[360px] flex-col items-center py-5 text-center [@media(max-height:660px)]:py-3">
         <div className="lista-entrar flex w-full justify-center">
-          <SemanaMuestra foco={foco} soltando={encima} />
+          <SemanaMuestra foco={encima ? 'foto' : foco} />
         </div>
 
         <p
-          className="lista-entrar mt-6 text-[10.5px] font-medium tracking-[0.24em] text-tinta-tenue uppercase [@media(max-height:760px)]:mt-4"
+          className="lista-entrar mt-7 font-ui text-[10.5px] font-medium tracking-[0.26em] text-tinta-tenue uppercase [@media(max-height:760px)]:mt-4"
           style={{ animationDelay: '60ms' }}
         >
           Mi horario
         </p>
         <h2
-          className="lista-entrar mt-1.5 text-[27px] leading-tight font-light tracking-[-0.03em] text-tinta sm:text-[30px]"
+          className="lista-entrar mt-2 font-ui text-[32px] leading-[1.1] font-light tracking-[-0.015em] text-tinta sm:text-[36px]"
           style={{ animationDelay: '90ms' }}
         >
           {encima ? 'Suéltala para leerla' : 'Arma tu semana'}
         </h2>
         <p
-          className="lista-entrar mt-2 max-w-[34ch] text-[13px] leading-relaxed text-balance text-tinta-suave"
+          className="lista-entrar mt-3 max-w-[30ch] text-[14px] leading-relaxed text-balance text-tinta-suave"
           style={{ animationDelay: '120ms' }}
         >
-          Sube la foto de tu horario y lo copiamos por ti, o créalo tú probando combinaciones.
+          Sube la foto de tu horario y la pasamos a tu semana, clase por clase.
+        </p>
+
+        <div
+          className="lista-entrar mt-7 flex w-full flex-col gap-2.5 [@media(max-height:760px)]:mt-5"
+          style={{ animationDelay: '170ms' }}
+          onPointerLeave={() => setFoco(null)}
+        >
+          <button
+            type="button"
+            onClick={() => refArchivo.current?.click()}
+            onPointerEnter={() => setFoco(null)}
+            onFocus={() => setFoco(null)}
+            className="boton-tinta h-[52px] w-full rounded-2xl text-[15px]"
+          >
+            <ImagePlus size={18} strokeWidth={1.75} />
+            Subir una foto
+          </button>
+          <button
+            type="button"
+            onClick={alCrear}
+            onPointerEnter={() => setFoco('mano')}
+            onFocus={() => setFoco('mano')}
+            className="boton-sordo h-[52px] w-full rounded-2xl text-[15px]"
+          >
+            Crearlo a mano
+          </button>
+        </div>
+
+        <p
+          className="lista-entrar mt-4 max-w-[34ch] text-[12px] leading-relaxed text-balance text-tinta-tenue"
+          style={{ animationDelay: '210ms' }}
+        >
+          Vale una captura. Nada entra a tu horario sin que lo revises
+          <span className="hidden sm:inline">, y también puedes arrastrar la imagen aquí</span>.
         </p>
 
         {/* Lo que el pensum ya te deja inscribir. Es el dato con el que se
-            arma un horario, y decirlo aqui convierte la pantalla vacia en
-            un punto de partida con numeros. */}
+            arma un horario, y decirlo aqui convierte la pantalla vacia en un
+            punto de partida con numeros. */}
         {disponibles > 0 && (
           <p
-            className="lista-entrar mt-3.5 flex items-center gap-2 rounded-full border border-panel-borde px-3 py-1.5 text-[12px] text-tinta-suave"
-            style={{ animationDelay: '150ms' }}
+            className="lista-entrar mt-5 flex items-center gap-2 text-[12.5px] text-tinta-suave [@media(max-height:700px)]:mt-3"
+            style={{ animationDelay: '250ms' }}
           >
             <IconoSituacion
               situacion={SITUACION.INSCRIBIBLE}
               color={ASPECTO[SITUACION.INSCRIBIBLE].icono}
-              size={12}
+              size={13}
             />
             <span>
               <span className="text-tinta tabular-nums">{disponibles}</span>{' '}
@@ -272,37 +244,6 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
             </span>
           </p>
         )}
-
-        <div
-          className="lista-entrar mt-6 flex w-full flex-col gap-2.5 [@media(max-height:760px)]:mt-4"
-          style={{ animationDelay: '190ms' }}
-          onPointerLeave={() => setFoco(null)}
-        >
-          <Accion
-            destacada
-            icono={ImagePlus}
-            titulo="Subir una foto"
-            detalle="Captura o foto · la revisas antes"
-            alPulsar={() => refArchivo.current?.click()}
-            alEnfocar={() => setFoco('foto')}
-          />
-          <Accion
-            icono={PencilLine}
-            titulo="Crearlo a mano"
-            detalle="Toca un hueco y añade clases"
-            alPulsar={alCrear}
-            alEnfocar={() => setFoco('mano')}
-          />
-        </div>
-
-        {/* Solo en escritorio: en un telefono no se arrastra nada, y la linea
-            seria una instruccion imposible ocupando sitio. */}
-        <p
-          className="lista-entrar mt-4 hidden text-[11.5px] text-tinta-tenue sm:block"
-          style={{ animationDelay: '230ms' }}
-        >
-          También puedes arrastrar la imagen a esta pantalla
-        </p>
 
         <input
           ref={refArchivo}

@@ -97,11 +97,13 @@
   .hoja-inferior,
   .velo-hoja,
   .panel-lateral,
-  .semana-muestra[data-foco='foto'] .escaneo-muestra,
+  .clase-muestra::after,
+  .lectura-muestra,
   .lector-barrido,
   .lector-lineas > *,
   .lector-cara,
-  .lector-arco {
+  .lector-arco,
+  .clase-leida {
     animation: none;
   }
 

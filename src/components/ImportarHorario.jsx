@@ -6,7 +6,7 @@ import { useEsTelefono } from '../hooks/useEsTelefono'
 import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 import { FASE, useLecturaHorario } from '../hooks/useLecturaHorario'
 import { FORMATOS, SALIDA } from '../data/leerHorario'
-import { aSesiones, avisosDe, marcarChoques } from '../layout/importarHorario'
+import { aSesiones, corregir, incluir } from '../layout/importarHorario'
 import { SITUACION } from '../layout/situacion'
 import HojaInferior from './HojaInferior'
 import { IconoSituacion } from './IconoSituacion'
@@ -132,30 +132,11 @@ function ImportarHorario({
   const aMano = () => irse(alCrearAMano)
   const elegirOtra = () => refArchivo.current?.click()
 
-  const cambiar = (id, cambios) => {
-    setCandidatas((previas) => {
-      const tocadas = previas.map((c) => {
-        if (c.id !== id) return c
-
-        const siguiente = { ...c, ...cambios }
-        if ('codigo' in cambios) {
-          siguiente.materia = materias.find((m) => m.codigo === cambios.codigo) ?? null
-          siguiente.codigo = siguiente.materia?.codigo ?? null
-        }
-        return { ...siguiente, avisos: avisosDe(siguiente) }
-      })
-      return marcarChoques(tocadas, sesiones)
-    })
-  }
-
-  const alternar = (id) => {
-    setCandidatas((previas) =>
-      marcarChoques(
-        previas.map((c) => (c.id === id ? { ...c, incluir: !c.incluir } : c)),
-        sesiones,
-      ),
-    )
-  }
+  /* Corregir una clase y meter o sacar varias: las reglas viven en
+     layout/importarHorario.js, aqui solo se guarda lo que devuelven. */
+  const cambiar = (id, cambios) =>
+    setCandidatas((previas) => corregir(previas, id, cambios, materias, sesiones))
+  const meter = (ids, dentro) => setCandidatas((previas) => incluir(previas, ids, dentro, sesiones))
 
   /* Lo que ofrece cada fallo, ademas de cerrar. Una salida llena -la que lo
      arregla- y, si acaso, otra debajo: ver SALIDA en data/leerHorario.js. */
@@ -217,14 +198,17 @@ function ImportarHorario({
     }
 
     const listas = candidatas.filter((c) => c.incluir && !c.avisos.length).length
+    const dudas = candidatas.filter((c) => c.avisos.length).length
     return {
       cabecera: (
         <Cabecera alCerrar={cerrar}>
           <h2 className="text-[17px] leading-tight font-medium tracking-[-0.015em] text-tinta">
-            Revisa lo que leí
+            Revisa tu semana
           </h2>
           <p className="mt-1 text-[12px] leading-snug text-tinta-suave">
-            Marca lo que quieras añadir. Nada entra a tu horario hasta que confirmes.
+            {dudas
+              ? `${dudas === 1 ? 'Una clase necesita que la mires' : `${dudas} clases necesitan que las mires`}. El resto está listo.`
+              : 'Así queda con lo que leí. Toca una materia para ajustarla.'}
           </p>
         </Cabecera>
       ),
@@ -232,10 +216,10 @@ function ImportarHorario({
         <LectorRevision
           imagen={imagen}
           candidatas={candidatas}
-          listas={listas}
           materias={materias}
+          sesiones={sesiones}
           alCambiar={cambiar}
-          alAlternar={alternar}
+          alIncluir={meter}
         />
       ),
       pie: (
@@ -251,7 +235,7 @@ function ImportarHorario({
             type="button"
             disabled={!listas}
             onClick={() => irse(() => alImportar(aSesiones(candidatas)))}
-            className="boton-lector flex-1"
+            className="boton-tinta flex-1"
           >
             {listas ? `Añadir ${listas} ${listas === 1 ? 'clase' : 'clases'}` : 'Nada que añadir'}
           </button>

@@ -144,28 +144,156 @@
   }
 }
 
-/* La accion llena. Tinta sobre lienzo: blanca en oscuro y negra en claro, sin
-   color. El color de esta hoja se guarda para lo que significa algo. */
-.boton-lector {
+/* ---- La revision de lo leido ---------------------------------------------
+   Una semana en miniatura arriba y, debajo, una fila por materia. Nada lleva
+   caja: las filas se separan con una linea, y lo unico lleno es la marca de
+   "esta entra" y la accion del pie.
+   ------------------------------------------------------------------------ */
+
+/* El selector de pocas opciones: "Tu semana | La foto", o los cinco dias. La
+   pieza elegida es la del selector de tema (ver .lente-tema en hojas.css). */
+.segmentos {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 48px;
-  border-radius: 14px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 11px;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+}
+
+.segmentos > button {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.segmentos > button[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--tinta) 14%, var(--panel));
+  color: var(--tinta);
+}
+
+[data-tema='claro'] .segmentos > button[aria-pressed='true'] {
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgb(23 26 32 / 0.14),
+    0 0 0 0.5px rgb(23 26 32 / 0.06);
+}
+
+/* Un campo: la materia, una hora */
+.campo-lector {
+  height: 40px;
+  padding-inline: 12px;
+  border-radius: 11px;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+  color: var(--tinta);
+  font-size: 14px;
+}
+
+/* Las opciones de un select las pinta el sistema sobre su propio fondo */
+.campo-lector option {
+  background: var(--panel);
+  color: var(--tinta);
+}
+
+/* La semana leida: las lineas de las horas y las clases */
+.hora-leida {
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: color-mix(in oklab, var(--tinta) 8%, transparent);
+}
+
+.clase-leida {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--color) 26%, var(--panel));
+  /* backwards y no both: al terminar, la animacion tiene que soltar la
+     opacidad. Si la retuviera, una clase que se saca no se apagaria nunca. */
+  animation: colocar-clase 520ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+  /* top y height tambien: al corregir una hora, o cuando entra una clase que
+     alarga el dia, las demas se recolocan en vez de saltar. Pasa una vez,
+     al tocar algo. */
+  transition:
+    opacity 260ms ease,
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    top 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    height 320ms cubic-bezier(0.32, 0.72, 0, 1),
+    left 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.clase-leida::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--color);
+}
+
+/* La que se saco se apaga en su sitio: se ve que hueco deja */
+.clase-leida[data-fuera] {
+  opacity: 0.16;
+  transform: scale(0.94);
+}
+
+/* Las que se pisan: translucidas para que se vea la de debajo, y con el filo
+   del mismo ambar que su aviso */
+.clase-leida[data-choca] {
+  background: color-mix(in oklab, var(--color) 30%, transparent);
+  box-shadow: inset 0 0 0 1px var(--estado-cursando);
+}
+
+/* Las filas de materia, separadas por una linea */
+.lista-leida > li + li {
+  border-top: 1px solid var(--panel-borde);
+}
+
+.materia-leida[data-fuera] .resumen-leido {
+  opacity: 0.45;
+}
+
+.resumen-leido {
+  transition: opacity 220ms ease;
+}
+
+/* Lo que hay que mirar: en ambar, el color de "en curso". No en rojo: no es
+   un error, es algo que falta por decidir. */
+.aviso-leido {
+  color: var(--estado-cursando);
+}
+
+/* La marca de "esta entra": un circulo que se llena de tinta */
+.marca-leida {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: transparent;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tinta) 30%, transparent);
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.marca-leida[data-activa] {
   background: var(--tinta);
   color: var(--lienzo);
-  font-size: 14.5px;
-  font-weight: 600;
-  transition:
-    transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 200ms ease;
+  box-shadow: none;
 }
 
-.boton-lector:active {
-  transform: scale(0.985);
+button:active > .marca-leida {
+  transform: scale(0.86);
 }
 
-.boton-lector:disabled {
-  opacity: 0.4;
+[data-ligero] .clase-leida {
+  animation: none;
 }

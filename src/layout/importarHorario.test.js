@@ -1,6 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { aDia, aHora, aSesiones, emparejar, parecido, revisar } from './importarHorario.js'
+import {
+  aDia,
+  aHora,
+  aSesiones,
+  corregir,
+  emparejar,
+  incluir,
+  ordenarRevision,
+  parecido,
+  revisar,
+  rivalDe,
+} from './importarHorario.js'
 
 const MATERIAS = [
   { codigo: '0071814', nombre: 'Matemática I' },
@@ -221,5 +232,213 @@ test('el paso a sesiones', async (t) => {
     ])
     assert.equal(s.color, null, 'sin color propio: toma el de su area')
     assert.ok(s.id.startsWith('ia-'))
+  })
+})
+
+test('corregir lo leido', async (t) => {
+  const fila = (extra) => ({
+    codigo: '0071814',
+    nombre: 'Matemática I',
+    dia: 'Lunes',
+    inicio: '07:00',
+    fin: '08:40',
+    ...extra,
+  })
+
+  await t.test('una fila rota que se arregla entra sola', () => {
+    const leidas = revisar([fila({ codigo: '', nombre: 'Yoga' })], MATERIAS)
+    assert.equal(leidas[0].incluir, false)
+
+    const [c] = corregir(leidas, leidas[0].id, { codigo: '0081733' }, MATERIAS)
+    assert.equal(c.materia.nombre, 'Programación I')
+    assert.deepEqual(c.avisos, [])
+    assert.equal(c.incluir, true, 'quien la arregla es porque la quiere')
+  })
+
+  await t.test('una correccion a medias no la mete', () => {
+    const leidas = revisar([fila({ codigo: '', nombre: 'Yoga', dia: 'sábado' })], MATERIAS)
+    const [c] = corregir(leidas, leidas[0].id, { codigo: '0081733' }, MATERIAS)
+    assert.deepEqual(c.avisos, ['sin-dia'])
+    assert.equal(c.incluir, false)
+  })
+
+  await t.test('mover una clase encima de otra las marca a las dos', () => {
+    const leidas = revisar([fila(), fila({ codigo: '0072914', dia: 'Martes' })], MATERIAS)
+    const tras = corregir(leidas, leidas[1].id, { dia: 0 }, MATERIAS)
+    assert.ok(tras.every((c) => c.avisos.includes('choca')))
+  })
+
+  await t.test('y tambien contra lo que ya estaba guardado', () => {
+    const guardadas = [{ id: 'x', codigo: 'A', dia: 1, inicio: 420, fin: 500 }]
+    const leidas = revisar([fila()], MATERIAS, guardadas)
+    const [c] = corregir(leidas, leidas[0].id, { dia: 1 }, MATERIAS, guardadas)
+    assert.ok(c.avisos.includes('choca'))
+  })
+})
+
+test('meter y sacar clases', async (t) => {
+  const leidas = revisar(
+    [
+      { codigo: '0071814', nombre: 'Matemática I', dia: 'Lunes', inicio: '07:00', fin: '08:40' },
+      {
+        codigo: '0071814',
+        nombre: 'Matemática I',
+        dia: 'Miércoles',
+        inicio: '07:00',
+        fin: '08:40',
+      },
+      { codigo: '', nombre: 'Yoga', dia: 'Viernes', inicio: '07:00', fin: '08:40' },
+    ],
+    MATERIAS,
+  )
+  const [lunes, miercoles, yoga] = leidas.map((c) => c.id)
+
+  await t.test('una materia sale entera, con todas sus clases', () => {
+    const tras = incluir(leidas, [lunes, miercoles], false)
+    assert.deepEqual(
+      tras.map((c) => c.incluir),
+      [false, false, false],
+    )
+  })
+
+  await t.test('una rota no entra por mucho que se marque', () => {
+    const tras = incluir(leidas, [yoga], true)
+    assert.equal(tras[2].incluir, false)
+  })
+
+  await t.test('sacar una de dos que chocan libera a la otra', () => {
+    const chocan = revisar(
+      [
+        { codigo: '0071814', nombre: 'Matemática I', dia: 'Lunes', inicio: '07:00', fin: '08:40' },
+        { codigo: '0072914', nombre: 'Física I', dia: 'Lunes', inicio: '08:00', fin: '09:40' },
+      ],
+      MATERIAS,
+    )
+    assert.ok(chocan.every((c) => c.avisos.includes('choca')))
+
+    const tras = incluir(chocan, [chocan[1].id], false)
+    assert.deepEqual(tras[0].avisos, [])
+    assert.deepEqual(tras[1].avisos, [], 'la que se saco ya no choca con nadie')
+  })
+})
+
+test('la revision, ordenada para leerla', async (t) => {
+  const leidas = revisar(
+    [
+      {
+        codigo: '0071814',
+        nombre: 'MAT I',
+        dia: 'Lunes',
+        inicio: '07:00',
+        fin: '08:40',
+        aula: 'A-12',
+      },
+      {
+        codigo: '0072914',
+        nombre: 'FIS I',
+        dia: 'Martes',
+        inicio: '08:50',
+        fin: '10:30',
+        aula: 'B-1',
+      },
+      {
+        codigo: '0071814',
+        nombre: 'MAT I',
+        dia: 'Miércoles',
+        inicio: '07:00',
+        fin: '08:40',
+        aula: 'A-12',
+      },
+      { codigo: '', nombre: 'Yoga', dia: 'Viernes', inicio: '07:00', fin: '08:40' },
+      {
+        codigo: '0071814',
+        nombre: 'MAT I',
+        dia: 'Viernes',
+        inicio: '10:00',
+        fin: '11:40',
+        aula: 'LAB',
+      },
+    ],
+    MATERIAS,
+  )
+  const nombres = (tarjetas) => tarjetas.map((x) => x.materia?.nombre ?? x.sesiones[0].leido.nombre)
+
+  await t.test('una tarjeta por materia, y las que llegan con dudas primero', () => {
+    const tarjetas = ordenarRevision(leidas)
+    assert.deepEqual(nombres(tarjetas), ['Yoga', 'Matemática I', 'Física I'])
+    assert.deepEqual(
+      tarjetas.map((x) => [x.sesiones.length, x.porRevisar]),
+      [
+        [1, 1],
+        [3, 0],
+        [1, 0],
+      ],
+    )
+  })
+
+  await t.test('arreglar una tarjeta no la cambia de sitio', () => {
+    const yoga = leidas.find((c) => c.leido.nombre === 'Yoga')
+    const tras = corregir(leidas, yoga.id, { codigo: '0081733' }, MATERIAS)
+    const tarjetas = ordenarRevision(tras)
+
+    assert.deepEqual(nombres(tarjetas), ['Programación I', 'Matemática I', 'Física I'])
+    assert.equal(tarjetas[0].porRevisar, 0)
+    assert.equal(tarjetas[0].incluida, true)
+  })
+
+  await t.test('ni se funde con otra aunque se le ponga su materia', () => {
+    const yoga = leidas.find((c) => c.leido.nombre === 'Yoga')
+    const tras = corregir(leidas, yoga.id, { codigo: '0072914' }, MATERIAS)
+    assert.deepEqual(nombres(ordenarRevision(tras)), ['Física I', 'Matemática I', 'Física I'])
+  })
+
+  await t.test('las clases a la misma hora y en la misma aula son un solo tramo', () => {
+    const matematica = ordenarRevision(leidas)[1]
+    assert.deepEqual(matematica.tramos, [
+      { inicio: 420, fin: 520, aula: 'A-12', dias: [0, 2] },
+      { inicio: 600, fin: 700, aula: 'LAB', dias: [4] },
+    ])
+  })
+
+  await t.test('una materia sigue incluida mientras entre alguna de sus clases', () => {
+    const sinElLunes = incluir(leidas, [leidas[0].id], false)
+    const matematica = ordenarRevision(sinElLunes)[1]
+    assert.equal(matematica.incluida, true)
+    assert.deepEqual(matematica.tramos[0].dias, [2], 'y dice solo las que entran')
+  })
+
+  await t.test('fuera del todo, sigue diciendo que es lo que se dejo fuera', () => {
+    const ids = leidas.filter((c) => c.codigo === '0071814').map((c) => c.id)
+    const matematica = ordenarRevision(incluir(leidas, ids, false))[1]
+    assert.equal(matematica.incluida, false)
+    assert.equal(matematica.tramos.length, 2)
+  })
+
+  await t.test('dos que se pisan al leerlas van arriba las dos, y se sabe con quien', () => {
+    const chocan = revisar(
+      [
+        { codigo: '0081733', nombre: 'PROG I', dia: 'Jueves', inicio: '07:00', fin: '08:40' },
+        { codigo: '0071814', nombre: 'MAT I', dia: 'Lunes', inicio: '07:00', fin: '08:40' },
+        { codigo: '0072914', nombre: 'FIS I', dia: 'Lunes', inicio: '08:00', fin: '09:40' },
+      ],
+      MATERIAS,
+    )
+    assert.deepEqual(nombres(ordenarRevision(chocan)), [
+      'Matemática I',
+      'Física I',
+      'Programación I',
+    ])
+    assert.equal(rivalDe(chocan[1], chocan).materia.nombre, 'Física I')
+    assert.equal(rivalDe(chocan[0], chocan), null)
+  })
+
+  await t.test('tambien se sabe cuando se pisa con algo que ya estaba guardado', () => {
+    const guardadas = [{ id: 'x', codigo: '0075812', dia: 0, inicio: 420, fin: 500 }]
+    const [c] = revisar(
+      [{ codigo: '0071814', nombre: 'MAT I', dia: 'Lunes', inicio: '07:00', fin: '08:40' }],
+      MATERIAS,
+      guardadas,
+    )
+    assert.equal(rivalDe(c, [c], guardadas).codigo, '0075812')
   })
 })

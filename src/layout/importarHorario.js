@@ -242,10 +242,20 @@ export function revisar(filas, materias, yaGuardadas = []) {
       profesor: String(fila.profesor ?? '').trim(),
       avisos,
       incluir: avisos.length === 0,
+      /* En que tarjeta de la revision va: con las demas clases de su materia,
+         o sola si no se supo cual es. Se fija aqui y no cambia aunque luego
+         se corrija la materia: una tarjeta que salta de sitio mientras la
+         estas tocando es peor que dos tarjetas con el mismo nombre. */
+      grupo: materia?.codigo ?? `leida-${i}`,
     }
   })
 
-  return marcarChoques(candidatas, yaGuardadas)
+  /* Las que llegan con algun aviso -tambien un choque- quedan señaladas, y
+     ordenarRevision las pone arriba. Arregladas, siguen ahi: por lo mismo. */
+  return marcarChoques(candidatas, yaGuardadas).map((c) => ({
+    ...c,
+    dudosa: c.avisos.length > 0,
+  }))
 }
 
 /**
@@ -269,6 +279,114 @@ export function marcarChoques(candidatas, yaGuardadas = []) {
     )
     return { ...c, avisos: choca ? [...sinChoque, 'choca'] : sinChoque }
   })
+}
+
+/**
+ * Corrige una candidata y vuelve a juzgar la lista entera.
+ *
+ * Si la correccion la deja sana, entra: quien se molesta en arreglar una
+ * fila es porque la quiere. Y si sigue rota, se queda fuera, que una clase
+ * sin dia o sin hora no tiene donde ponerse.
+ *
+ * @param {object} cambios  `codigo`, `dia`, `inicio` o `fin`
+ */
+export function corregir(candidatas, id, cambios, materias, yaGuardadas = []) {
+  const tocadas = candidatas.map((c) => {
+    if (c.id !== id) return c
+
+    const siguiente = { ...c, ...cambios }
+    if ('codigo' in cambios) {
+      siguiente.materia = materias.find((m) => m.codigo === cambios.codigo) ?? null
+      siguiente.codigo = siguiente.materia?.codigo ?? null
+    }
+    const avisos = avisosDe(siguiente)
+    return { ...siguiente, avisos, incluir: avisos.length === 0 }
+  })
+  return marcarChoques(tocadas, yaGuardadas)
+}
+
+/**
+ * Mete o saca varias candidatas a la vez -todas las clases de una materia- y
+ * vuelve a repasar los choques. Una rota no entra por mucho que se marque.
+ */
+export function incluir(candidatas, ids, dentro, yaGuardadas = []) {
+  const elegidas = new Set(ids)
+  const tocadas = candidatas.map((c) =>
+    elegidas.has(c.id) ? { ...c, incluir: dentro && avisosDe(c).length === 0 } : c,
+  )
+  return marcarChoques(tocadas, yaGuardadas)
+}
+
+/* Las clases de una materia que comparten hora y aula se dicen juntas: una
+   materia de lunes y miercoles a la misma hora es un renglon, no dos. */
+function tramosDe(sesiones) {
+  const tramos = new Map()
+  for (const s of sesiones) {
+    const clave = `${s.inicio}-${s.fin}-${s.aula}`
+    const tramo = tramos.get(clave) ?? { inicio: s.inicio, fin: s.fin, aula: s.aula, dias: [] }
+    tramo.dias.push(s.dia)
+    tramos.set(clave, tramo)
+  }
+  return [...tramos.values()].map((t) => ({
+    ...t,
+    dias: [...new Set(t.dias)].sort((a, b) => a - b),
+  }))
+}
+
+/**
+ * La revision, ordenada para leerla de un vistazo.
+ *
+ * Lo leido llega fila a fila, una por sesion, y asi se enseñaba: catorce
+ * renglones para seis materias. Pero quien revisa piensa en materias -"¿me
+ * leyo bien Matematicas?"-, y casi todas vienen bien. Asi que sale una
+ * tarjeta por materia, con sus clases resumidas en tramos.
+ *
+ * Las que llegaron con alguna duda van primero, y ahi se quedan aunque se
+ * arreglen: el orden se decide con lo que se leyo, no con como va quedando.
+ *
+ * De cada tarjeta:
+ *   `materia`     la que es, o null si ninguna de sus clases se emparejo
+ *   `porRevisar`  cuantas de sus clases tienen todavia algun aviso
+ *   `incluida`    si entra alguna de sus clases
+ *   `tramos`      las clases que entran, resumidas; si no entra ninguna,
+ *                 las que se leyeron, para que siga diciendo de que se habla
+ */
+export function ordenarRevision(candidatas) {
+  const grupos = new Map()
+  for (const c of candidatas) {
+    const sesiones = grupos.get(c.grupo) ?? []
+    sesiones.push(c)
+    grupos.set(c.grupo, sesiones)
+  }
+
+  const tarjetas = [...grupos].map(([grupo, sesiones]) => {
+    const sanas = sesiones.filter((s) => !s.avisos.length)
+    const dentro = sanas.filter((s) => s.incluir)
+    // Las que al menos dicen cuando son, aunque les falte otra cosa
+    const conHora = sesiones.filter((s) => s.dia != null && s.fin > s.inicio)
+    return {
+      grupo,
+      sesiones,
+      materia: sesiones.find((s) => s.materia)?.materia ?? null,
+      dudosa: sesiones.some((s) => s.dudosa),
+      porRevisar: sesiones.length - sanas.length,
+      incluida: dentro.length > 0,
+      tramos: tramosDe(dentro.length ? dentro : sanas.length ? sanas : conHora),
+    }
+  })
+
+  return [...tarjetas.filter((t) => t.dudosa), ...tarjetas.filter((t) => !t.dudosa)]
+}
+
+/**
+ * Con quien se pisa una candidata: otra de las leidas que entran, o una clase
+ * que ya estaba guardada. null si con nadie.
+ */
+export function rivalDe(candidata, candidatas, yaGuardadas = []) {
+  const activas = candidatas.filter(
+    (o) => o.id !== candidata.id && o.incluir && o.dia != null && o.inicio != null && o.fin != null,
+  )
+  return [...activas, ...yaGuardadas].find((o) => solapan(o, candidata)) ?? null
 }
 
 /** Las candidatas marcadas y sanas, ya como sesiones del horario. */

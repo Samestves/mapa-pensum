@@ -98,7 +98,7 @@ function LectorAviso({ espera, glifo, titulo, detalle, principal, otras = [] }) 
       </p>
 
       {principal && (
-        <button type="button" onClick={principal.alPulsar} className="boton-lector mt-6 w-full">
+        <button type="button" onClick={principal.alPulsar} className="boton-tinta mt-6 w-full">
           {Icono && <Icono size={16} strokeWidth={1.75} />}
           {principal.texto}
         </button>
