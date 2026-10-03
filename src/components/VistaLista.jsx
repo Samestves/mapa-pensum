@@ -14,7 +14,11 @@ import { MARCA_SEMESTRE } from '../data/semestre'
    mismo icono que llevan las filas, para que filtro y fila se reconozcan. */
 const FILTROS = [
   { id: 'todo', entra: () => true },
-  { id: 'disponibles', situacion: SITUACION.INSCRIBIBLE, entra: (s) => s === SITUACION.INSCRIBIBLE },
+  {
+    id: 'disponibles',
+    situacion: SITUACION.INSCRIBIBLE,
+    entra: (s) => s === SITUACION.INSCRIBIBLE,
+  },
   { id: 'cursando', situacion: SITUACION.CURSANDO, entra: (s) => s === SITUACION.CURSANDO },
   {
     id: 'pendientes',
@@ -104,7 +108,11 @@ function Camino({ icono: Icono, rotulo, color, materias, estados, alIr }) {
         {materias.map((m, i) => {
           const s = situacionDe(m.codigo, m.prerrequisitos, estados)
           return (
-            <li key={m.codigo} className="chip-entrar max-w-full" style={{ animationDelay: `${60 + i * 45}ms` }}>
+            <li
+              key={m.codigo}
+              className="chip-entrar max-w-full"
+              style={{ animationDelay: `${60 + i * 45}ms` }}
+            >
               <button
                 type="button"
                 onClick={() => alIr(m.codigo)}
@@ -197,7 +205,10 @@ const FilaMateria = memo(function FilaMateria({
           aria-label={aprobada ? `Desmarcar ${nodo.nombre}` : `Marcar ${nodo.nombre} como aprobada`}
           className="grid size-12 shrink-0 place-items-center"
         >
-          <span key={tocada ? claveToque : 'quieto'} className={tocada ? 'marca-pulso grid' : 'grid'}>
+          <span
+            key={tocada ? claveToque : 'quieto'}
+            className={tocada ? 'marca-pulso grid' : 'grid'}
+          >
             <IconoSituacion situacion={situacion} color={colorSituacion(situacion)} size={18} />
           </span>
         </button>
@@ -317,7 +328,11 @@ function Resumen({ progreso, semestres, actual, alIr }) {
             { situacion: SITUACION.CURSANDO, n: progreso.cursando, nombre: 'cursando' },
           ].map((d) => (
             <span key={d.situacion} className="flex items-center gap-1.5 text-tinta-tenue">
-              <IconoSituacion situacion={d.situacion} color={colorSituacion(d.situacion)} size={13} />
+              <IconoSituacion
+                situacion={d.situacion}
+                color={colorSituacion(d.situacion)}
+                size={13}
+              />
               <span className="text-tinta">{d.n}</span>
               {d.nombre}
             </span>
@@ -739,7 +754,11 @@ function VistaLista({
                               className="flex w-full items-center pr-4 text-left"
                             >
                               <span className="grid size-12 shrink-0 place-items-center">
-                                <IconoSituacion situacion={SITUACION.PROXIMA} color="var(--tinta-tenue)" size={18} />
+                                <IconoSituacion
+                                  situacion={SITUACION.PROXIMA}
+                                  color="var(--tinta-tenue)"
+                                  size={18}
+                                />
                               </span>
                               <span className="min-w-0 flex-1 truncate py-3.5 text-[15px] tracking-[-0.01em] text-tinta-tenue">
                                 {hueco.nombre}
@@ -758,66 +777,81 @@ function VistaLista({
             )
           })}
 
-          {completa && secciones.map((g) => {
-            const id = `grupo-${g.clave}`
-            /* Con un filtro solo salen las electivas que ya son tuyas: las
+          {completa &&
+            secciones.map((g) => {
+              const id = `grupo-${g.clave}`
+              /* Con un filtro solo salen las electivas que ya son tuyas: las
                veintitantas opciones del catalogo enterrarian las
                obligatorias, que son lo que el filtro viene a buscar. */
-            const candidatas = filtro === 'todo' ? g.items : g.marcadas
-            const items = candidatas.filter((e) =>
-              entra(situacionDe(e.codigo, e.prerrequisitos, estados)),
-            )
-            if (filtro !== 'todo' && !items.length) return null
+              const candidatas = filtro === 'todo' ? g.items : g.marcadas
+              const items = candidatas.filter((e) =>
+                entra(situacionDe(e.codigo, e.prerrequisitos, estados)),
+              )
+              if (filtro !== 'todo' && !items.length) return null
 
-            const abierto = gruposAbiertos[g.clave] ?? false
-            const mostradas = filtro === 'todo' && !abierto ? g.marcadas : items
-            const avance = g.avance
+              const abierto = gruposAbiertos[g.clave] ?? false
+              const mostradas = filtro === 'todo' && !abierto ? g.marcadas : items
+              const avance = g.avance
 
-            return (
-              <section key={id} id={`lista-${id}`} className="seccion-lista lista-entrar scroll-mt-[var(--margen-seccion)] pb-7 pl-7">
-                <div className="flex items-center gap-4 pb-3">
-                  <h2 className="min-w-0 flex-1 truncate text-[17px] leading-tight font-light tracking-[-0.02em] text-tinta">
-                    {tituloGrupo(g)
-                      .toLowerCase()
-                      .replace(/^./, (c) => c.toUpperCase())}
-                  </h2>
-                  <span
-                    className="shrink-0 text-[12px] tabular-nums"
-                    style={{ color: avance?.completa ? 'var(--estado-aprobada)' : 'var(--tinta-tenue)' }}
-                  >
-                    {avance?.meta != null ? `${avance.uc}/${avance.meta} UC` : `${avance?.uc ?? 0} UC`}
-                  </span>
-                  {filtro === 'todo' && (
-                    <button
-                      type="button"
-                      onClick={() => setGruposAbiertos((a) => ({ ...a, [g.clave]: !abierto }))}
-                      aria-expanded={abierto}
-                      aria-label={abierto ? 'Ver solo las tuyas' : `Ver las ${g.cantidad} opciones`}
-                      className="flex h-8 shrink-0 items-center gap-1 rounded-full border border-panel-borde px-3 text-[12px] text-tinta-suave tabular-nums transition-colors"
+              return (
+                <section
+                  key={id}
+                  id={`lista-${id}`}
+                  className="seccion-lista lista-entrar scroll-mt-[var(--margen-seccion)] pb-7 pl-7"
+                >
+                  <div className="flex items-center gap-4 pb-3">
+                    <h2 className="min-w-0 flex-1 truncate text-[17px] leading-tight font-light tracking-[-0.02em] text-tinta">
+                      {tituloGrupo(g)
+                        .toLowerCase()
+                        .replace(/^./, (c) => c.toUpperCase())}
+                    </h2>
+                    <span
+                      className="shrink-0 text-[12px] tabular-nums"
+                      style={{
+                        color: avance?.completa ? 'var(--estado-aprobada)' : 'var(--tinta-tenue)',
+                      }}
                     >
-                      <Plus
-                        size={12}
-                        strokeWidth={1.75}
-                        className={`transition-transform duration-300 ${abierto ? 'rotate-45' : ''}`}
-                      />
-                      {abierto ? 'Ocultar' : `${g.cantidad} opciones`}
-                    </button>
-                  )}
-                </div>
-                {avance?.meta != null && (
-                  <div className="pb-3">
-                    <Riel hechas={Math.min(avance.uc, avance.meta)} cursando={0} total={avance.meta} />
+                      {avance?.meta != null
+                        ? `${avance.uc}/${avance.meta} UC`
+                        : `${avance?.uc ?? 0} UC`}
+                    </span>
+                    {filtro === 'todo' && (
+                      <button
+                        type="button"
+                        onClick={() => setGruposAbiertos((a) => ({ ...a, [g.clave]: !abierto }))}
+                        aria-expanded={abierto}
+                        aria-label={
+                          abierto ? 'Ver solo las tuyas' : `Ver las ${g.cantidad} opciones`
+                        }
+                        className="flex h-8 shrink-0 items-center gap-1 rounded-full border border-panel-borde px-3 text-[12px] text-tinta-suave tabular-nums transition-colors"
+                      >
+                        <Plus
+                          size={12}
+                          strokeWidth={1.75}
+                          className={`transition-transform duration-300 ${abierto ? 'rotate-45' : ''}`}
+                        />
+                        {abierto ? 'Ocultar' : `${g.cantidad} opciones`}
+                      </button>
+                    )}
                   </div>
-                )}
+                  {avance?.meta != null && (
+                    <div className="pb-3">
+                      <Riel
+                        hechas={Math.min(avance.uc, avance.meta)}
+                        cursando={0}
+                        total={avance.meta}
+                      />
+                    </div>
+                  )}
 
-                {mostradas.length > 0 && (
-                  <ul className="divide-y divide-panel-borde overflow-hidden rounded-2xl border border-panel-borde bg-panel">
-                    {mostradas.map(fila)}
-                  </ul>
-                )}
-              </section>
-            )
-          })}
+                  {mostradas.length > 0 && (
+                    <ul className="divide-y divide-panel-borde overflow-hidden rounded-2xl border border-panel-borde bg-panel">
+                      {mostradas.map(fila)}
+                    </ul>
+                  )}
+                </section>
+              )
+            })}
         </div>
       </div>
     </div>

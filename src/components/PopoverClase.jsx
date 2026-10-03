@@ -148,10 +148,14 @@ function PopoverClase({
         >
           <span
             className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: colorIndice(color ?? colorAutomatico(colores, elegida.codigo)) }}
+            style={{
+              backgroundColor: colorIndice(color ?? colorAutomatico(colores, elegida.codigo)),
+            }}
           />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[12.5px] font-medium text-tinta">{elegida.nombre}</span>
+            <span className="block truncate text-[12.5px] font-medium text-tinta">
+              {elegida.nombre}
+            </span>
             <span className="block font-mono text-[9px] text-tinta-tenue">
               {codigoVisible(elegida)} · {elegida.uc} UC
             </span>

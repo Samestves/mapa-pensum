@@ -61,7 +61,8 @@ for (const archivo of archivos) {
     if (a.uc == null && !a.esComodin && !a.esHueco) err(`[${ref}] uc nula en una materia real`)
     if (a.esComodin && a.uc != null) err(`[${ref}] comodin con uc: ${a.uc}`)
     if (a.esHueco && a.uc != null) err(`[${ref}] hueco con uc: ${a.uc}`)
-    if (a.esHueco && a.prerrequisitos?.length) err(`[${ref}] un hueco no puede tener prerrequisitos`)
+    if (a.esHueco && a.prerrequisitos?.length)
+      err(`[${ref}] un hueco no puede tener prerrequisitos`)
     if (!Array.isArray(a.prerrequisitos)) err(`[${ref}] prerrequisitos debe ser un arreglo`)
   }
   for (const a of c.asignaturas) {
@@ -198,7 +199,9 @@ for (const archivo of archivos) {
 
 console.log('')
 if (erroresTotales) {
-  console.error(`${erroresTotales} error(es) en ${archivos.length} carreras. La validacion NO pasa.`)
+  console.error(
+    `${erroresTotales} error(es) en ${archivos.length} carreras. La validacion NO pasa.`,
+  )
   process.exit(1)
 }
 console.log(

@@ -107,7 +107,16 @@ function Fila({ resultado, activa, alElegir, alSenalar }) {
  * este proyecto: sinTildes es la de todos los buscadores y el foco lo
  * encierra el mismo hook que usan los modales.
  */
-function PaletaComandos({ abierta, alCerrar, acciones, materias, estados, carreras, alIrAMateria, alIrACarrera }) {
+function PaletaComandos({
+  abierta,
+  alCerrar,
+  acciones,
+  materias,
+  estados,
+  carreras,
+  alIrAMateria,
+  alIrACarrera,
+}) {
   const refCaja = useRef(null)
   const refEntrada = useRef(null)
   const [texto, setTexto] = useState('')
@@ -238,7 +247,9 @@ function PaletaComandos({ abierta, alCerrar, acciones, materias, estados, carrer
             role="combobox"
             aria-expanded="true"
             aria-controls="paleta-resultados"
-            aria-activedescendant={resultados[activa] ? `paleta-${resultados[activa].clave}` : undefined}
+            aria-activedescendant={
+              resultados[activa] ? `paleta-${resultados[activa].clave}` : undefined
+            }
             className="seleccionable min-w-0 flex-1 bg-transparent text-[16px] font-light tracking-[-0.01em] text-tinta outline-none placeholder:text-tinta-tenue"
           />
           <Tecla>esc</Tecla>

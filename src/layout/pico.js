@@ -118,7 +118,10 @@ export const SALIENTE = -(ALTO - 0.5)
  */
 export function trazar(lado, cierre) {
   const { p } = LADOS[lado]
-  const q = (u, v) => p(u, v).map((n) => Math.round(n * 1000) / 1000).join(' ')
+  const q = (u, v) =>
+    p(u, v)
+      .map((n) => Math.round(n * 1000) / 1000)
+      .join(' ')
 
   const d = TRAMOS.reduce((acc, [inicio, c1, c2, fin], i) => {
     const salto = i === 0 ? `M ${q(...inicio)}` : ` L ${q(...inicio)}`

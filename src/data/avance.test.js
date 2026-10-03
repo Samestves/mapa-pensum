@@ -24,7 +24,14 @@ describe('la silueta de la portada', () => {
 
 describe('el avance del anillo', () => {
   test('cuanto llevas va en la misma unidad que el porcentaje', () => {
-    const conUc = { porcentaje: 11, ucAprobadas: 15, ucElectivas: 2, ucTitulo: 153, aprobadas: 6, total: 49 }
+    const conUc = {
+      porcentaje: 11,
+      ucAprobadas: 15,
+      ucElectivas: 2,
+      ucTitulo: 153,
+      aprobadas: 6,
+      total: 49,
+    }
     assert.equal(cuantoLlevas(conUc), '17 de 153 UC')
     assert.equal(cuantoLlevas({ ...conUc, porcentaje: null }), '6 de 49 materias')
   })

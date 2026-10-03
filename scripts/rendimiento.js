@@ -139,11 +139,21 @@ const ESCENARIOS = [
           touchPoints: puntos.map(([x, y], i) => ({ x, y, id: i + 1 })),
         })
       const [cx, cy] = [195, 420]
-      for (const [d0, d1] of [[300, 60], [60, 20], [20, 300]]) {
-        await toque('touchStart', [[cx - d0 / 2, cy], [cx + d0 / 2, cy]])
+      for (const [d0, d1] of [
+        [300, 60],
+        [60, 20],
+        [20, 300],
+      ]) {
+        await toque('touchStart', [
+          [cx - d0 / 2, cy],
+          [cx + d0 / 2, cy],
+        ])
         for (let i = 1; i <= 30; i++) {
           const d = d0 + ((d1 - d0) * i) / 30
-          await toque('touchMove', [[cx - d / 2, cy], [cx + d / 2, cy]])
+          await toque('touchMove', [
+            [cx - d / 2, cy],
+            [cx + d / 2, cy],
+          ])
         }
         await toque('touchEnd', [])
         await p.waitForTimeout(500)

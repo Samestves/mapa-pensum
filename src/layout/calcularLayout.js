@@ -80,12 +80,7 @@ export function calcularLayout(asignaturas, grupos = []) {
         ...asignatura,
         x,
         y: MARGEN.top + ALTO_ENCABEZADO + fila * (NODO.alto + ESPACIADO.fila),
-        lineasNombre: partirEnLineas(
-          asignatura.nombre,
-          ANCHO_TEXTO,
-          TEXTO.nombre,
-          TEXTO.maxLineas,
-        ),
+        lineasNombre: partirEnLineas(asignatura.nombre, ANCHO_TEXTO, TEXTO.nombre, TEXTO.maxLineas),
       })
     })
 

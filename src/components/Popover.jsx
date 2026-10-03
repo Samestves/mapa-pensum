@@ -6,8 +6,7 @@ import PicoPopover from './PicoPopover'
 
 /* El aspecto de la nubecita. La ficha del mapa lleva el suyo (CARA_FICHA en
    DetalleAsignatura): esquina mas cerrada, de la familia de las tarjetas. */
-const CARA =
-  'relative w-full rounded-2xl border border-panel-borde bg-panel shadow-2xl'
+const CARA = 'relative w-full rounded-2xl border border-panel-borde bg-panel shadow-2xl'
 
 /**
  * La nubecita. UNA, para todo lo que se abre colgando de algo.
@@ -67,9 +66,7 @@ function Popover({
     if (!ancla) return
     const cabe = anchoQueCabe(anchoDeseado)
     setAncho(cabe)
-    setPos(
-      colocar(ancla, { ancho: cabe, alto: refPanel.current?.offsetHeight ?? 0 }, preferencia),
-    )
+    setPos(colocar(ancla, { ancho: cabe, alto: refPanel.current?.offsetHeight ?? 0 }, preferencia))
   }, [ancla, anchoDeseado, preferencia])
 
   if (!ancla) return null

@@ -1,7 +1,20 @@
 import { etiquetaSemestre } from '../layout/planificador'
 import { textoCarga } from './cargaPlan'
 
-const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const MESES_CORTOS = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+]
 
 /** "Octubre de 2030" */
 export const MES = (fecha) => {

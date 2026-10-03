@@ -77,12 +77,20 @@ test('con todas elegidas no queda casilla vacia, y lo que no cabe baja de fila',
   )
   assert.equal(nodos[2].x, 0)
   assert.ok(nodos[2].y > nodos[0].y)
-  assert.equal(filas[1].y, filas[0].y + (nodos[2].y - nodos[0].y), 'el grupo siguiente arranca en su fila')
+  assert.equal(
+    filas[1].y,
+    filas[0].y + (nodos[2].y - nodos[0].y),
+    'el grupo siguiente arranca en su fila',
+  )
 })
 
 test('las electivas con marca entran solas en la franja, sin pisar lo elegido', () => {
   const elegidas = { 'libre-tecnica-1': 'tecnica2' }
-  const marcas = { tecnica3: ESTADO.APROBADA, tecnica2: ESTADO.CURSANDO, 'areas-de-grado1': ESTADO.CURSANDO }
+  const marcas = {
+    tecnica3: ESTADO.APROBADA,
+    tecnica2: ESTADO.CURSANDO,
+    'areas-de-grado1': ESTADO.CURSANDO,
+  }
   const resultado = adoptarMarcadas(elegidas, [TECNICAS, AREAS], marcas)
   assert.deepEqual(resultado, {
     'libre-tecnica-1': 'tecnica2',

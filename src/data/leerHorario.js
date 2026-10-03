@@ -173,4 +173,3 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
    siempre "prueba otra foto" ante un servicio lleno es mandar a buscar el
    problema donde no esta. */
 export const SE_REINTENTA = new Set(['saturado', 'red', 'ia', 'vacia'])
-

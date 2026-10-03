@@ -96,7 +96,8 @@ function SelectorElectiva({ codigo, porCodigo, grupos, alCerrar, ...resto }) {
 function Cabecera({ casilla, grupo, alCerrar, telefono }) {
   /* Una casilla de la franja no tiene semestre: es de las carreras de las
      que la UDO no publica ruta de electivas. */
-  const donde = casilla.semestre == null && grupo ? tituloGrupo(grupo) : `Semestre ${casilla.semestre}`
+  const donde =
+    casilla.semestre == null && grupo ? tituloGrupo(grupo) : `Semestre ${casilla.semestre}`
 
   return (
     <header

@@ -69,7 +69,9 @@ function HojaPlan({ nombre, carrera, progreso, plan, carga, grado }) {
   /* El avance se mide contra las UC del titulo, no contra la suma de las
      obligatorias: las electivas tambien cuentan para graduarse. */
   const conUc = progreso.porcentaje != null
-  const avance = conUc ? progreso.porcentaje : (progreso.aprobadas / Math.max(1, progreso.total)) * 100
+  const avance = conUc
+    ? progreso.porcentaje
+    : (progreso.aprobadas / Math.max(1, progreso.total)) * 100
   const llevas = conUc
     ? `${progreso.ucAprobadas + progreso.ucElectivas} de ${progreso.ucTitulo} UC`
     : `${progreso.aprobadas} de ${progreso.total} materias`
@@ -126,9 +128,7 @@ function HojaPlan({ nombre, carrera, progreso, plan, carga, grado }) {
                 <section key={s.numero} className="hr-semestre">
                   <header>
                     <span className="hr-numero">{s.numero}</span>
-                    <span className="hr-titulo">
-                      {s.numero === 1 ? etiquetaSemestre(1) : ''}
-                    </span>
+                    <span className="hr-titulo">{s.numero === 1 ? etiquetaSemestre(1) : ''}</span>
                     <span className="hr-meta">
                       {s.materias.length} {s.materias.length === 1 ? 'materia' : 'materias'} ·{' '}
                       {s.uc} UC

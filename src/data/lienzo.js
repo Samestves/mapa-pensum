@@ -24,7 +24,9 @@ export function resolverColores(valores) {
     const d = document.createElement('div')
     d.style.color = valor
     caja.appendChild(d)
-    const n = getComputedStyle(d).color.match(/[\d.]+/g)?.map(Number) ?? [128, 128, 128]
+    const n = getComputedStyle(d)
+      .color.match(/[\d.]+/g)
+      ?.map(Number) ?? [128, 128, 128]
     return { r: n[0], g: n[1], b: n[2] }
   })
   caja.remove()
@@ -103,7 +105,9 @@ export function dibujarIcono(ctx, nodos, x, y, tam, color) {
 /* El calco del logotipo trae su propio sistema de coordenadas (ver
    logoTrazos): la caja cuadrada y, dentro, el transform de potrace. */
 const [CAJA_X, CAJA_Y, CAJA_LADO] = CAJA.split(' ').map(Number)
-const [TRASLADO_Y, ESCALA_X, ESCALA_Y] = TRANSFORMA.match(/-?[\d.]+/g).map(Number).slice(1)
+const [TRASLADO_Y, ESCALA_X, ESCALA_Y] = TRANSFORMA.match(/-?[\d.]+/g)
+  .map(Number)
+  .slice(1)
 
 /** La rosa del logotipo, de un solo color, en un cuadrado de `tam` px. */
 export function dibujarLogo(ctx, x, y, tam, color) {

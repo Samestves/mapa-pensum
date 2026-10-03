@@ -141,7 +141,9 @@ function Fila({ candidata, materias, abierta, alAbrir, alCambiar, alAlternar }) 
 
           <select
             value={dia ?? ''}
-            onChange={(e) => alCambiar({ dia: e.target.value === '' ? null : Number(e.target.value) })}
+            onChange={(e) =>
+              alCambiar({ dia: e.target.value === '' ? null : Number(e.target.value) })
+            }
             aria-label="Día"
             className="rounded-lg border border-panel-borde bg-panel px-2.5 py-2 text-[12px] text-tinta"
           >
@@ -453,7 +455,11 @@ function ImportarHorario({ archivo, materias, sesiones, alImportar, alCambiarIma
               }`}
             >
               <ImageUp size={15} />
-              <span className={fase === 'error' && SE_REINTENTA.has(fallo?.codigo) ? 'hidden sm:inline' : ''}>
+              <span
+                className={
+                  fase === 'error' && SE_REINTENTA.has(fallo?.codigo) ? 'hidden sm:inline' : ''
+                }
+              >
                 Probar otra imagen
               </span>
             </button>

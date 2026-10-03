@@ -84,49 +84,50 @@ function App() {
   // la red lenta puede durar. Lo que se enseña entonces no es un girador sino
   // la silueta de esta carrera, que viene del indice y por tanto ya esta en
   // memoria: se ve al instante que se entro donde se queria.
-  const contenido = ruta === PANEL ? (
-    /* El panel privado. Sin clave no enseña nada: la comprueba el servidor,
+  const contenido =
+    ruta === PANEL ? (
+      /* El panel privado. Sin clave no enseña nada: la comprueba el servidor,
        aqui solo se pide. */
-    <Suspense fallback={<div className="h-full bg-lienzo" />}>
-      <PanelDiferido alVolver={() => navegar('')} />
-    </Suspense>
-  ) : !slug ? (
-    <SelectorCarrera alElegir={navegar} />
-  ) : error ? (
-    <div className="grid h-full place-items-center p-6 text-center">
-      <div>
-        <p className="text-sm text-tinta-suave">No se pudo cargar el pensum. {error}</p>
-        <button
-          type="button"
-          onClick={() => navegar('')}
-          className="mt-3 rounded-lg border border-panel-borde px-3 py-1.5 text-xs font-semibold text-tinta-suave hover:text-tinta"
-        >
-          Volver a las carreras
-        </button>
+      <Suspense fallback={<div className="h-full bg-lienzo" />}>
+        <PanelDiferido alVolver={() => navegar('')} />
+      </Suspense>
+    ) : !slug ? (
+      <SelectorCarrera alElegir={navegar} />
+    ) : error ? (
+      <div className="grid h-full place-items-center p-6 text-center">
+        <div>
+          <p className="text-sm text-tinta-suave">No se pudo cargar el pensum. {error}</p>
+          <button
+            type="button"
+            onClick={() => navegar('')}
+            className="mt-3 rounded-lg border border-panel-borde px-3 py-1.5 text-xs font-semibold text-tinta-suave hover:text-tinta"
+          >
+            Volver a las carreras
+          </button>
+        </div>
       </div>
-    </div>
-  ) : !lista ? (
-    <div className="grid h-full place-items-center">
-      <EsqueletoMapa slug={slug} />
-    </div>
-  ) : (
-    /* El fallback de Suspense es EXACTAMENTE el mismo que el de esperar los
+    ) : !lista ? (
+      <div className="grid h-full place-items-center">
+        <EsqueletoMapa slug={slug} />
+      </div>
+    ) : (
+      /* El fallback de Suspense es EXACTAMENTE el mismo que el de esperar los
        datos, y eso no es pereza: al estudiante le da igual si lo que falta
        por llegar es el pensum o el codigo que lo dibuja. Dos pantallas de
        espera distintas para la misma espera solo se notarian como un
        parpadeo entre una y otra. */
-    <Suspense
-      fallback={
-        <div className="grid h-full place-items-center">
-          <EsqueletoMapa slug={slug} />
-        </div>
-      }
-    >
-      {/* key por slug: cambiar de carrera remonta la vista en vez de
+      <Suspense
+        fallback={
+          <div className="grid h-full place-items-center">
+            <EsqueletoMapa slug={slug} />
+          </div>
+        }
+      >
+        {/* key por slug: cambiar de carrera remonta la vista en vez de
           arrastrar el zoom y la seleccion de la anterior */}
-      <VistaCarreraDiferida key={slug} carrera={lista} alVolver={() => navegar('')} />
-    </Suspense>
-  )
+        <VistaCarreraDiferida key={slug} carrera={lista} alVolver={() => navegar('')} />
+      </Suspense>
+    )
 
   // Las dos fases del cambio de ruta cuelgan de aqui y no de cada vista, que
   // es lo que permite que la que se va y la que llega se animen igual sin que

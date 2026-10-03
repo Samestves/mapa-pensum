@@ -43,12 +43,14 @@ export function recargarSiHayVersionNueva(evento) {
   } catch {
     // Si no se puede apuntar, la recarga sigue: lo peor es otra mas
   }
-  const borrar = 'caches' in window
-    ? caches.keys().then((claves) => Promise.all(claves.map((c) => caches.delete(c))))
-    : Promise.resolve()
-  Promise.all([borrar.catch(() => {}), new Promise((r) => setTimeout(r, ESPERA_NAVEGACION_MS))]).then(
-    () => window.location.reload(),
-  )
+  const borrar =
+    'caches' in window
+      ? caches.keys().then((claves) => Promise.all(claves.map((c) => caches.delete(c))))
+      : Promise.resolve()
+  Promise.all([
+    borrar.catch(() => {}),
+    new Promise((r) => setTimeout(r, ESPERA_NAVEGACION_MS)),
+  ]).then(() => window.location.reload())
 }
 
 /**

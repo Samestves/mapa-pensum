@@ -79,11 +79,7 @@ export function colocar(ancla, medida, preferencia = 'abajo', limites) {
     const cabeDerecha = derecha + ancho <= tope.ancho - MARGEN
     const x = cabeDerecha ? derecha : Math.max(MARGEN, ancla.left - HUECO - ancho)
 
-    const y = acotar(
-      centroY - alto / 2,
-      MARGEN,
-      Math.max(MARGEN, tope.alto - alto - MARGEN),
-    )
+    const y = acotar(centroY - alto / 2, MARGEN, Math.max(MARGEN, tope.alto - alto - MARGEN))
     const origenY = acotar(centroY - y, 0, alto)
 
     return {
@@ -101,11 +97,7 @@ export function colocar(ancla, medida, preferencia = 'abajo', limites) {
   const cabeAbajo = abajo + alto <= tope.alto - MARGEN
   const y = cabeAbajo ? abajo : Math.max(MARGEN, ancla.top - HUECO - alto)
 
-  const x = acotar(
-    centroX + RADIO - ancho,
-    MARGEN,
-    Math.max(MARGEN, tope.ancho - ancho - MARGEN),
-  )
+  const x = acotar(centroX + RADIO - ancho, MARGEN, Math.max(MARGEN, tope.ancho - ancho - MARGEN))
   const origenX = acotar(centroX - x, 0, ancho)
 
   return {

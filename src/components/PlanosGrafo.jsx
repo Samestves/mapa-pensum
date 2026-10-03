@@ -175,7 +175,9 @@ function FormasBaseSinMemo(props) {
 
 /** El texto del plano base, memoizado por lo mismo que sus formas */
 function TextosBaseSinMemo(props) {
-  return todasLasTarjetas(props.nodos, props.casillasFranja).map((nodo) => dibujarTexto(nodo, props))
+  return todasLasTarjetas(props.nodos, props.casillasFranja).map((nodo) =>
+    dibujarTexto(nodo, props),
+  )
 }
 
 /** El plano de las luces de la frontera, que van a su aire */
@@ -212,8 +214,7 @@ function FormasFocoSinMemo({ conjunto, cadena, mirada, seleccionado, ...contexto
       )}
       {todasLasTarjetas(nodos, casillasFranja).map(
         (nodo) =>
-          conjunto.nodos.has(nodo.codigo) &&
-          dibujarForma(nodo, contexto, { seleccionado, cadena }),
+          conjunto.nodos.has(nodo.codigo) && dibujarForma(nodo, contexto, { seleccionado, cadena }),
       )}
     </>
   )

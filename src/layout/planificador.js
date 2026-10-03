@@ -235,7 +235,9 @@ export function planificar({
   const alturaMaxDesde = (semestre) =>
     Math.max(
       0,
-      ...pendientes.filter((a) => marcaNivel(a) && a.semestre >= semestre).map((a) => altura(a.codigo)),
+      ...pendientes
+        .filter((a) => marcaNivel(a) && a.semestre >= semestre)
+        .map((a) => altura(a.codigo)),
     )
   const cadena = new Map(
     pendientes.map((a) => {

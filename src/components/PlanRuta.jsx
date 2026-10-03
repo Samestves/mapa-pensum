@@ -280,7 +280,10 @@ function MandoCarga({ carga, alCambiar, plan }) {
         />
       </div>
 
-      <div className="relative mt-2 h-4 text-[11px] text-tinta-tenue tabular-nums" aria-hidden="true">
+      <div
+        className="relative mt-2 h-4 text-[11px] text-tinta-tenue tabular-nums"
+        aria-hidden="true"
+      >
         {marcas.map((v) => (
           <span
             key={v}
@@ -293,7 +296,11 @@ function MandoCarga({ carga, alCambiar, plan }) {
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex rounded-full bg-tinta/[0.07] p-[3px]" role="group" aria-label="Contar la carga en">
+        <div
+          className="flex rounded-full bg-tinta/[0.07] p-[3px]"
+          role="group"
+          aria-label="Contar la carga en"
+        >
           {[
             ['uc', 'UC'],
             ['materias', 'Materias'],
@@ -528,7 +535,9 @@ function Ventana({ carrera, alCerrar, cuerpo, acciones, children }) {
           <div className="pt-4">
             <Cabecera carrera={carrera} alCerrar={alCerrar} />
           </div>
-          <div className="desplazable-limpio min-h-0 flex-1 overflow-y-auto px-5 pb-6">{cuerpo}</div>
+          <div className="desplazable-limpio min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+            {cuerpo}
+          </div>
           <div className="border-t border-panel-borde px-5 py-4">
             {acciones}
             <p className="mt-2.5 text-center text-[11.5px] leading-snug text-tinta-tenue">

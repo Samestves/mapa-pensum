@@ -11,9 +11,7 @@ export function ponerMeta(carrera) {
      Monagas" se leia como "Mapa de Pensu...". Lo que sobraba no era
      informacion, era relleno: el nucleo y la universidad ya los dice la
      meta description, que es la que usan los buscadores para el resumen. */
-  document.title = carrera
-    ? `${carrera.nombre} — Pensum`
-    : 'Mapa de Pensum'
+  document.title = carrera ? `${carrera.nombre} — Pensum` : 'Mapa de Pensum'
 
   const descripcion = carrera
     ? `Mapa interactivo del pensum de ${carrera.nombre} en la UDO Núcleo de Monagas: ` +

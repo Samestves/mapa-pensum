@@ -20,7 +20,8 @@ const anchoTexto = (texto, tamano) => texto.length * tamano * 0.6
 export function cabecerasDe(columnas, nodos, enCasilla, situaciones) {
   const porSemestre = new Map()
   for (const nodo of nodos) {
-    if (!porSemestre.has(nodo.semestre)) porSemestre.set(nodo.semestre, { uc: 0, cuenta: {}, total: 0 })
+    if (!porSemestre.has(nodo.semestre))
+      porSemestre.set(nodo.semestre, { uc: 0, cuenta: {}, total: 0 })
     const datos = porSemestre.get(nodo.semestre)
     const materia = nodo.esHueco ? enCasilla(nodo.codigo) : nodo
     const situacion = materia ? situaciones.get(materia.codigo) : SITUACION.LEJANA

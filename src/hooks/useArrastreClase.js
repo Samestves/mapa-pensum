@@ -92,8 +92,7 @@ export function useArrastreClase({ puntoADiaYMinuto, porDia, alMover }) {
       if (!g?.movido) return
       // Soltar donde ya estaba no es un cambio: no se reescribe el horario
       const p = g.propuesta
-      const igual =
-        p.dia === g.sesion.dia && p.inicio === g.sesion.inicio && p.fin === g.sesion.fin
+      const igual = p.dia === g.sesion.dia && p.inicio === g.sesion.inicio && p.fin === g.sesion.fin
       if (!igual) alMover(p)
     }
 

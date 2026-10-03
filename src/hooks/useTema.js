@@ -54,9 +54,7 @@ export function useTema() {
     raiz.dataset.cambiandoTema = ''
     setTema((t) => (t === 'oscuro' ? 'claro' : 'oscuro'))
     // Dos fotogramas: el del cambio y el siguiente, ya pintado en el tema nuevo
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => delete raiz.dataset.cambiandoTema),
-    )
+    requestAnimationFrame(() => requestAnimationFrame(() => delete raiz.dataset.cambiandoTema))
   }, [])
 
   return { tema, alternarTema }

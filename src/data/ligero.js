@@ -26,10 +26,10 @@
 export function esAparatoModesto({ tactil, memoria, nucleos, ahorroDatos, menosMovimiento }) {
   return Boolean(
     tactil ||
-      menosMovimiento ||
-      ahorroDatos ||
-      (memoria != null && memoria <= 4) ||
-      (nucleos != null && nucleos <= 4),
+    menosMovimiento ||
+    ahorroDatos ||
+    (memoria != null && memoria <= 4) ||
+    (nucleos != null && nucleos <= 4),
   )
 }
 

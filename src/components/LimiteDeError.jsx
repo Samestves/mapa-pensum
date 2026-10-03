@@ -60,9 +60,7 @@ class LimiteDeError extends Component {
           {/* Se dice que fallo la aplicacion, no el pensum. Un estudiante que
               lee "no se pudo cargar" se queda pensando que sus datos estan
               mal, y no lo estan: lo que se rompio es esto. */}
-          <h1 className="mt-4 text-[15px] font-extrabold text-tinta">
-            Algo se rompió por aquí
-          </h1>
+          <h1 className="mt-4 text-[15px] font-extrabold text-tinta">Algo se rompió por aquí</h1>
           <p className="mt-1.5 text-[12.5px] leading-relaxed text-tinta-suave">
             Es un fallo de la aplicación, no de tu avance: lo que tengas marcado sigue guardado.
           </p>

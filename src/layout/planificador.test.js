@@ -236,7 +236,8 @@ describe('las electivas', () => {
     cuota,
     asignaturas: [materia('E1', null, 3), materia('E2', null, 3), materia('E3', null, 3)],
   })
-  const electivasDe = (plan) => plan.semestres.flatMap((s) => s.materias).filter((m) => m.esElectiva)
+  const electivasDe = (plan) =>
+    plan.semestres.flatMap((s) => s.materias).filter((m) => m.esElectiva)
 
   test('solo se planifican las que hacen falta para cubrir la cuota', () => {
     // Meter las 39 electivas de Sistemas daria un plan absurdo de 20 semestres
@@ -429,7 +430,9 @@ describe(
 
     test('lo que se esta cursando no vuelve a salir en el plan', () => {
       const marcas = segundoEnCurso()
-      const planificadas = new Set(plan(marcas).semestres.flatMap((s) => s.materias.map((a) => a.codigo)))
+      const planificadas = new Set(
+        plan(marcas).semestres.flatMap((s) => s.materias.map((a) => a.codigo)),
+      )
       for (const [codigo, marca] of Object.entries(marcas)) {
         if (marca === ESTADO.CURSANDO) assert.ok(!planificadas.has(codigo))
       }

@@ -17,8 +17,7 @@ const MARGEN = 12
 /* La cara de la ficha: la misma rejilla fina de las tarjetas del mapa.
    Esquina de 10 y no de 16 -la tarjeta tiene 7-, borde de un pixel y la
    sombra que la separa del mapa que queda debajo. */
-const CARA_FICHA =
-  'relative w-full rounded-[10px] border border-panel-borde bg-panel shadow-2xl'
+const CARA_FICHA = 'relative w-full rounded-[10px] border border-panel-borde bg-panel shadow-2xl'
 
 /* El aro vacio de «sin cursar», de la misma familia que los otros dos:
    mismo radio y mismo trazo, sin nada dentro. */

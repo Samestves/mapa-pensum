@@ -60,7 +60,9 @@ test('alejar desde el mapa entero si cabe en la capa', () => {
 test('pasado el aumento maximo se repinta aunque cubra, para que no se vea borroso', () => {
   const pintada = { x: -300, y: -200, escala: 1 }
   assert.ok(capaCubre(acercar(pintada, AUMENTO_MAX - 0.01, 200, 150), pintada, VENTANA, 2000, 1500))
-  assert.ok(!capaCubre(acercar(pintada, AUMENTO_MAX + 0.01, 200, 150), pintada, VENTANA, 2000, 1500))
+  assert.ok(
+    !capaCubre(acercar(pintada, AUMENTO_MAX + 0.01, 200, 150), pintada, VENTANA, 2000, 1500),
+  )
 })
 
 test('con margen, alejar y arrastrar dentro de el se resuelven estirando la capa', () => {

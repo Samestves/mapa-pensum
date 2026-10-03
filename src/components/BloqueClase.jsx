@@ -96,7 +96,9 @@ function BloqueClase({
           alAbrirMenu(sesion, e.currentTarget)
         }}
         className={`acciones-clase absolute top-1.5 right-1.5 grid size-6 cursor-pointer place-items-center rounded-full text-tinta-suave transition-[opacity,background-color] duration-150 hover:bg-tinta/[0.08] hover:text-tinta focus-visible:opacity-100 ${
-          menuAbierto ? 'bg-tinta/[0.08] text-tinta opacity-100' : 'opacity-0 group-hover:opacity-100'
+          menuAbierto
+            ? 'bg-tinta/[0.08] text-tinta opacity-100'
+            : 'opacity-0 group-hover:opacity-100'
         }`}
       >
         <MoreHorizontal size={15} />

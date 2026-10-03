@@ -71,11 +71,7 @@ function codificarPng(ancho, alto, rgba) {
 
 export const hexARgb = (hex) => {
   const n = hex.replace('#', '')
-  return [
-    parseInt(n.slice(0, 2), 16),
-    parseInt(n.slice(2, 4), 16),
-    parseInt(n.slice(4, 6), 16),
-  ]
+  return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)]
 }
 
 export function crearLienzo(ANCHO, ALTO) {

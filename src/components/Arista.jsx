@@ -117,11 +117,7 @@ function CableBase({ arista, areaDestino, tramo, descargando, claveDescarga }) {
             y2={y2}
           >
             <stop offset="0" stopColor={desde} style={{ stopColor: avivar(desde) }} />
-            <stop
-              offset="0.5"
-              stopColor={desde}
-              style={{ stopColor: avivar(girar(desde, 48)) }}
-            />
+            <stop offset="0.5" stopColor={desde} style={{ stopColor: avivar(girar(desde, 48)) }} />
             <stop offset="1" stopColor={hacia} style={{ stopColor: avivar(hacia) }} />
           </linearGradient>
         </defs>

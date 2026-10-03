@@ -94,10 +94,7 @@ function SelectorCarrera({ alElegir }) {
                 que se hace mas grande que lo que sujeta deja de apoyar. */}
             <span className="relative grid size-12 shrink-0 place-items-center sm:size-14">
               <span className="marca-caja" aria-hidden="true" />
-              <Logo
-                animado
-                className="relative size-[30px] text-tinta sm:size-[35px]"
-              />
+              <Logo animado className="relative size-[30px] text-tinta sm:size-[35px]" />
             </span>
             <div className="min-w-0">
               {/* Jost fina, como los nombres del mapa. Fue Inter en

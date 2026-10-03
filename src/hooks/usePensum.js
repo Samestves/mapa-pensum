@@ -240,17 +240,20 @@ export function usePensum(carrera) {
   }, [])
 
   // Fija una marca concreta, con su anillo y su descarga. null desmarca.
-  const marcar = useCallback((codigo, marca) => {
-    marcarVarias({ [codigo]: marca })
+  const marcar = useCallback(
+    (codigo, marca) => {
+      marcarVarias({ [codigo]: marca })
 
-    contador.current += 1
-    // Solo la tarjeta que se toco lleva el anillo de confirmacion
-    setToque({ codigo, n: contador.current })
+      contador.current += 1
+      // Solo la tarjeta que se toco lleva el anillo de confirmacion
+      setToque({ codigo, n: contador.current })
 
-    // La descarga solo tiene sentido al aprobar: es el momento en que algo
-    // se desbloquea. Pasar a cursando o desmarcar no enciende nada.
-    if (marca === ESTADO.APROBADA) setDescarga({ codigo, n: contador.current })
-  }, [marcarVarias])
+      // La descarga solo tiene sentido al aprobar: es el momento en que algo
+      // se desbloquea. Pasar a cursando o desmarcar no enciende nada.
+      if (marca === ESTADO.APROBADA) setDescarga({ codigo, n: contador.current })
+    },
+    [marcarVarias],
+  )
 
   // Click en la tarjeta: marcado tipo checklist, marcada o sin marcar.
   // Los tres estados completos siguen estando en la ficha.

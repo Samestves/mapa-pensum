@@ -173,8 +173,7 @@ export function lineasDeHora(altoHora) {
  * porque no abre ninguna fila y ponerla ahi metia dos horas en el mismo
  * cuadro.
  */
-export const horasEnPunto = () =>
-  Array.from({ length: FILAS }, (_, i) => ABRE + i * 60)
+export const horasEnPunto = () => Array.from({ length: FILAS }, (_, i) => ABRE + i * 60)
 
 export const acotar = (v, min, max) => Math.max(min, Math.min(max, v))
 
@@ -250,8 +249,7 @@ export function posicionValida(sesionesDelDia, candidata) {
 /* ---- Convivencia de clases -------------------------------------------- */
 
 /** Dos clases chocan si comparten dia y sus franjas se pisan */
-export const solapan = (a, b) =>
-  a.dia === b.dia && a.inicio < b.fin && b.inicio < a.fin
+export const solapan = (a, b) => a.dia === b.dia && a.inicio < b.fin && b.inicio < a.fin
 
 /**
  * La primera clase con la que choca una candidata, o null si no choca.

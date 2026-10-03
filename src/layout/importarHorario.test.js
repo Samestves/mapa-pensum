@@ -175,7 +175,17 @@ test('la revision', async (t) => {
 test('el paso a sesiones', async (t) => {
   await t.test('solo pasan las marcadas y sanas', () => {
     const candidatas = [
-      { incluir: true, avisos: [], codigo: 'A', dia: 0, inicio: 420, fin: 500, seccion: '01', aula: '', profesor: '' },
+      {
+        incluir: true,
+        avisos: [],
+        codigo: 'A',
+        dia: 0,
+        inicio: 420,
+        fin: 500,
+        seccion: '01',
+        aula: '',
+        profesor: '',
+      },
       { incluir: false, avisos: [], codigo: 'B', dia: 1, inicio: 420, fin: 500 },
       { incluir: true, avisos: ['choca'], codigo: 'C', dia: 2, inicio: 420, fin: 500 },
     ]
@@ -186,10 +196,28 @@ test('el paso a sesiones', async (t) => {
 
   await t.test('salen con la forma que el horario guarda', () => {
     const [s] = aSesiones([
-      { incluir: true, avisos: [], codigo: 'A', dia: 0, inicio: 420, fin: 500, seccion: '01', aula: 'B-3', profesor: 'Pérez' },
+      {
+        incluir: true,
+        avisos: [],
+        codigo: 'A',
+        dia: 0,
+        inicio: 420,
+        fin: 500,
+        seccion: '01',
+        aula: 'B-3',
+        profesor: 'Pérez',
+      },
     ])
     assert.deepEqual(Object.keys(s).sort(), [
-      'aula', 'codigo', 'color', 'dia', 'fin', 'id', 'inicio', 'profesor', 'seccion',
+      'aula',
+      'codigo',
+      'color',
+      'dia',
+      'fin',
+      'id',
+      'inicio',
+      'profesor',
+      'seccion',
     ])
     assert.equal(s.color, null, 'sin color propio: toma el de su area')
     assert.ok(s.id.startsWith('ia-'))

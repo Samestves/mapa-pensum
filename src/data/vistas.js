@@ -33,4 +33,8 @@ export const VISTAS = [
 ]
 
 /** Que posicion ocupa una vista. -1 nunca: si no la encuentra, la primera. */
-export const indiceDeVista = (vista) => Math.max(0, VISTAS.findIndex((v) => v.id === vista))
+export const indiceDeVista = (vista) =>
+  Math.max(
+    0,
+    VISTAS.findIndex((v) => v.id === vista),
+  )

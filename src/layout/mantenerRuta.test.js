@@ -66,10 +66,15 @@ test('mantener una tarjeta para fijar su ruta', async (t) => {
   })
 
   await t.test('una vez fijada, soltar y mover ya no la deshacen', () => {
-    const e = tras(apoya(), { tipo: 'cumple' }, { tipo: 'mueve', dedo: 1, x: 300, y: 300 }, {
-      tipo: 'suelta',
-      dedo: 1,
-    })
+    const e = tras(
+      apoya(),
+      { tipo: 'cumple' },
+      { tipo: 'mueve', dedo: 1, x: 300, y: 300 },
+      {
+        tipo: 'suelta',
+        dedo: 1,
+      },
+    )
     assert.equal(e.fase, 'hecha')
   })
 

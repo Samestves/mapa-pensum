@@ -136,7 +136,11 @@ function dibujarCabecera(ctx, { carrera, nombre, clases }) {
   ctx.fillText('Mi horario', izq, MARGEN + 30)
   ctx.fillStyle = SUAVE
   letra(ctx, 450, 15.5)
-  ctx.fillText([nombre, carrera.nombre, 'UDO Monagas'].filter(Boolean).join('  ·  '), izq + 1, MARGEN + 54)
+  ctx.fillText(
+    [nombre, carrera.nombre, 'UDO Monagas'].filter(Boolean).join('  ·  '),
+    izq + 1,
+    MARGEN + 54,
+  )
 
   // A la derecha, dos cifras en pastillas: cuantas materias y cuantas horas
   const materias = new Set(clases.map((c) => c.codigo)).size

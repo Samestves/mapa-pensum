@@ -276,8 +276,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       /* Cuanto de su borde de arriba tapa la cabecera flotante. Se lee del
          CSS al medir y no se vigila: es fijo por breakpoint, asi que basta
          con leerlo cuando cambia el tamaño. */
-      const arriba =
-        parseFloat(getComputedStyle(el).getPropertyValue('--reserva-cabecera')) || 0
+      const arriba = parseFloat(getComputedStyle(el).getPropertyValue('--reserva-cabecera')) || 0
       setMedida((previa) =>
         previa.ancho === width && previa.alto === height && previa.arriba === arriba
           ? previa
@@ -416,7 +415,14 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       clearTimeout(redZoom.current)
       const desde = vistaRef.current
       const destino = acotarVista(hasta, medida, anchoContenido, altoContenido)
-      const base = vistaParaViaje(desde, destino, medida, anchoContenido, altoContenido, MARGEN_CAPA)
+      const base = vistaParaViaje(
+        desde,
+        destino,
+        medida,
+        anchoContenido,
+        altoContenido,
+        MARGEN_CAPA,
+      )
 
       if (base) {
         enViaje.current = true

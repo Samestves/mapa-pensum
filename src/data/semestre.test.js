@@ -1,10 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  MARCA_SEMESTRE,
-  marcasDeSemestres,
-  materiasDeSemestre,
-} from './semestre.js'
+import { MARCA_SEMESTRE, marcasDeSemestres, materiasDeSemestre } from './semestre.js'
 import { ESTADO } from './estados.js'
 
 const { APROBADA, CURSANDO } = ESTADO

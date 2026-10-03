@@ -44,7 +44,8 @@ function tonoDe(codigo) {
    claro. Es el color de un cable encendido, y por eso tambien el del
    contorno que anuncia una ruta: lo que carga y lo que se enciende son la
    misma luz. */
-export const avivar = (color) => `color-mix(in oklab, var(--flujo-luz) var(--flujo-mezcla), ${color})`
+export const avivar = (color) =>
+  `color-mix(in oklab, var(--flujo-luz) var(--flujo-mezcla), ${color})`
 
 export const colorNodo = (nodo) => {
   if (nodo?.area) return colorArea(nodo.area)

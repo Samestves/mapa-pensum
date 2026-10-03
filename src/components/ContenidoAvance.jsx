@@ -27,7 +27,9 @@ function Cifra({ progreso }) {
   return (
     <div className="flex items-end justify-between gap-4">
       <p className="flex items-baseline text-tinta tabular-nums">
-        <span className="text-[60px] leading-[0.8] font-extralight tracking-[-0.05em]">{numero}</span>
+        <span className="text-[60px] leading-[0.8] font-extralight tracking-[-0.05em]">
+          {numero}
+        </span>
         <span className="ml-1 text-[22px] font-light text-tinta-tenue">%</span>
       </p>
       <p className="text-right text-[13px] leading-snug text-tinta-suave">

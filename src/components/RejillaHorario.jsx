@@ -186,10 +186,7 @@ function RejillaHorario({
       {/* El borde derecho cierra el viernes: las columnas solo llevan borde a
           la izquierda, asi que sin el la rejilla se quedaba abierta por ese
           lado y las lineas parecian cortarse antes de tiempo. */}
-      <div
-        className={`flex border-r border-b ${LINEA}`}
-        style={{ height: FILAS * altoHora }}
-      >
+      <div className={`flex border-r border-b ${LINEA}`} style={{ height: FILAS * altoHora }}>
         {/* Columna de horas. La etiqueta va debajo de su linea y no centrada
             en ella: centrada, la primera quedaria partida por la cabecera. */}
         <div style={{ width: ANCHO_HORAS_PX }} className="relative shrink-0">

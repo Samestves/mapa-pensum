@@ -21,7 +21,11 @@ const IMAGEN = Buffer.from('no soy una imagen de verdad').toString('base64')
 function llamar(cuerpo, { metodo = 'POST', cabeceras = {} } = {}) {
   const req = {
     method: metodo,
-    headers: { host: 'mapa-pensum.vercel.app', origin: 'https://mapa-pensum.vercel.app', ...cabeceras },
+    headers: {
+      host: 'mapa-pensum.vercel.app',
+      origin: 'https://mapa-pensum.vercel.app',
+      ...cabeceras,
+    },
     body: cuerpo,
   }
   const res = {
@@ -71,7 +75,9 @@ test('las puertas de entrada', async (t) => {
   })
 
   await t.test('sin procedencia no se atiende', async () => {
-    const { req, res } = llamar(cuerpoValido(), { cabeceras: { origin: undefined, referer: undefined } })
+    const { req, res } = llamar(cuerpoValido(), {
+      cabeceras: { origin: undefined, referer: undefined },
+    })
     await handler(req, res)
     assert.equal(res.codigo, 403)
   })
@@ -320,7 +326,13 @@ test('lo que vuelve', async (t) => {
       respuestaDeGoogle(
         JSON.stringify({
           clases: [
-            { codigo: '0081814', nombre: 'MATEMATICAS I', dia: 'Lunes', inicio: '07:00', fin: '08:40' },
+            {
+              codigo: '0081814',
+              nombre: 'MATEMATICAS I',
+              dia: 'Lunes',
+              inicio: '07:00',
+              fin: '08:40',
+            },
           ],
         }),
       ),
@@ -377,7 +389,12 @@ test('lo que vuelve', async (t) => {
   })
 
   await t.test('un horario absurdamente largo se corta', async () => {
-    const muchas = Array.from({ length: 200 }, () => ({ nombre: 'X', dia: 'Lunes', inicio: '07:00', fin: '08:00' }))
+    const muchas = Array.from({ length: 200 }, () => ({
+      nombre: 'X',
+      dia: 'Lunes',
+      inicio: '07:00',
+      fin: '08:00',
+    }))
     conFetch(respuestaDeGoogle(JSON.stringify({ clases: muchas })))
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)

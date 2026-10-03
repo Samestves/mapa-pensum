@@ -76,7 +76,9 @@ test('cada NOMBRE.propiedad de una constante importada existe', async () => {
         const accesos = new RegExp(`(?<![\\w$.])${local}\\.([A-Za-z_$][\\w$]*)`, 'g')
         for (const [, propiedad] of texto.matchAll(accesos)) {
           if (!(propiedad in objeto)) {
-            fallos.push(`${archivo.slice(SRC.length + 1)}: ${local}.${propiedad} no existe en ${importado}`)
+            fallos.push(
+              `${archivo.slice(SRC.length + 1)}: ${local}.${propiedad} no existe en ${importado}`,
+            )
           }
         }
       }

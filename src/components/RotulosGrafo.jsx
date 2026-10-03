@@ -67,7 +67,12 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
           <rect
             y={Y + CABECERA.barra}
             height={2}
-            style={{ x: c.x, width: c.anchoHechas, fill: 'var(--estado-aprobada)', transition: CRECER }}
+            style={{
+              x: c.x,
+              width: c.anchoHechas,
+              fill: 'var(--estado-aprobada)',
+              transition: CRECER,
+            }}
           />
           <rect
             y={Y + CABECERA.barra}
@@ -80,7 +85,10 @@ function RotulosFormasSinMemo({ cabeceras, filasFranja, ancho, marcas, alAlterna
             }}
           />
           {c.estados.map((e) => (
-            <g key={e.situacion} transform={`translate(${e.x}, ${Y + CABECERA.pie - 10}) scale(0.86)`}>
+            <g
+              key={e.situacion}
+              transform={`translate(${e.x}, ${Y + CABECERA.pie - 10}) scale(0.86)`}
+            >
               <FormaSituacion situacion={e.situacion} color={ASPECTO[e.situacion].marca.color} />
             </g>
           ))}

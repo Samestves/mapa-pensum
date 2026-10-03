@@ -108,7 +108,6 @@
      deberia llevar color ahi. El blanco al once por ciento se apoya en el
      fondo que tenga debajo y se lee como una linea de lapiz. */
   --horario-linea: rgba(255, 255, 255, 0.11);
-
 }
 
 [data-tema='claro'] {
@@ -1136,21 +1135,15 @@ button.casilla-semestre .tilde {
 
 .velo-oscuro {
   opacity: 1;
-  background: radial-gradient(
-      ellipse 62% 100% at 12% -10%,
-      rgb(96 148 255 / 0.18),
-      transparent 68%
-    ),
+  background:
+    radial-gradient(ellipse 62% 100% at 12% -10%, rgb(96 148 255 / 0.18), transparent 68%),
     radial-gradient(ellipse 48% 86% at 76% -18%, rgb(47 232 198 / 0.12), transparent 70%);
 }
 
 .velo-claro {
   opacity: 0;
-  background: radial-gradient(
-      ellipse 64% 104% at 8% -14%,
-      rgb(39 81 204 / 0.3),
-      transparent 64%
-    ),
+  background:
+    radial-gradient(ellipse 64% 104% at 8% -14%, rgb(39 81 204 / 0.3), transparent 64%),
     radial-gradient(ellipse 54% 94% at 72% -16%, rgb(10 151 129 / 0.22), transparent 66%),
     radial-gradient(ellipse 44% 78% at 42% -22%, rgb(116 52 203 / 0.13), transparent 68%);
 }
@@ -1961,10 +1954,8 @@ button.casilla-semestre .tilde {
     color-mix(in oklab, #8b93a4 14%, transparent);
   --cristal-filtro: blur(24px) saturate(1.25);
   --cristal-anillo:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.1),
-    inset 0 0.5px 0 rgb(255 255 255 / 0.16),
-    0 10px 26px -12px rgb(0 0 0 / 0.6),
-    0 1px 3px rgb(0 0 0 / 0.25);
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.1), inset 0 0.5px 0 rgb(255 255 255 / 0.16),
+    0 10px 26px -12px rgb(0 0 0 / 0.6), 0 1px 3px rgb(0 0 0 / 0.25);
   --cristal-filo: linear-gradient(
     135deg,
     rgb(255 255 255 / 0.22),
@@ -1976,8 +1967,7 @@ button.casilla-semestre .tilde {
   --cristal-brillo: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.07), transparent 70%);
   --cristal-lente: rgb(255 255 255 / 0.12);
   --cristal-lente-anillo:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.1),
-    inset 0 0.5px 0 rgb(255 255 255 / 0.18),
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.1), inset 0 0.5px 0 rgb(255 255 255 / 0.18),
     0 2px 8px -2px rgb(0 0 0 / 0.4);
 }
 
@@ -1989,12 +1979,9 @@ button.casilla-semestre .tilde {
   /* En claro el cristal blanco sobre fondo claro se funde: un anillo de medio
      pixel y una sombra algo mayor le devuelven el contorno. */
   --cristal-anillo:
-    inset 0 0 0 0.5px rgb(255 255 255 / 0.85),
-    inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 1),
-    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8),
-    0 0 0 0.5px rgb(16 32 64 / 0.1),
-    0 12px 26px -10px rgb(16 32 64 / 0.3),
-    0 2px 6px rgb(16 32 64 / 0.09);
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.85), inset 1.5px 1.5px 1px -1px rgb(255 255 255 / 1),
+    inset -1.5px -1.5px 1px -1px rgb(255 255 255 / 0.8), 0 0 0 0.5px rgb(16 32 64 / 0.1),
+    0 12px 26px -10px rgb(16 32 64 / 0.3), 0 2px 6px rgb(16 32 64 / 0.09);
   --cristal-filo: linear-gradient(
     135deg,
     rgb(255 255 255 / 1),
@@ -2005,10 +1992,8 @@ button.casilla-semestre .tilde {
   --cristal-brillo: radial-gradient(80% 60% at 50% -25%, rgb(255 255 255 / 0.7), transparent 70%);
   --cristal-lente: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(255 255 255 / 0.78));
   --cristal-lente-anillo:
-    inset 0 1px 0 rgb(255 255 255 / 1),
-    inset 0 -1px 1px rgb(16 32 64 / 0.06),
-    0 0 0 0.5px rgb(16 32 64 / 0.07),
-    0 4px 12px -4px rgb(16 32 64 / 0.22);
+    inset 0 1px 0 rgb(255 255 255 / 1), inset 0 -1px 1px rgb(16 32 64 / 0.06),
+    0 0 0 0.5px rgb(16 32 64 / 0.07), 0 4px 12px -4px rgb(16 32 64 / 0.22);
 }
 
 .barra-cristal {
@@ -2392,7 +2377,6 @@ button.casilla-semestre .tilde {
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
   transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
 }
-
 
 [data-tema='claro'] .lente-tema {
   background: #ffffff;
