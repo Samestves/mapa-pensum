@@ -692,4 +692,132 @@ test('lo que el lector recuerda entre una peticion y la siguiente', async (t) =>
     const res = await pedir()
     assert.equal(res.codigo, 200)
   })
+
+  /* La memoria por huella de la imagen */
+  const CLASES = [
+    { codigo: '0081814', nombre: 'Matemáticas I', dia: 'Lunes', inicio: '07:00', fin: '08:40' },
+  ]
+  const leeClases = () => ({
+    ok: true,
+    json: async () => ({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ clases: CLASES }) }] } }],
+    }),
+  })
+  const IMAGEN_OTRA = Buffer.from('otra foto distinta').toString('base64')
+
+  const pedirFoto = async (imagen, cabeceras = { 'x-forwarded-for': '190.0.0.1' }) => {
+    const { req, res } = llamar({ ...cuerpoValido(), imagen }, { cabeceras })
+    await handler(req, res)
+    return res
+  }
+
+  await t.test('la misma foto, segunda vez: sin Google y con las mismas clases', async () => {
+    const { visto, redis } = montar({ nuevo: leeClases, viejo: leeClases })
+
+    const primera = await pedirFoto(IMAGEN)
+    assert.deepEqual(visto.modelos, ['nuevo'])
+
+    visto.modelos.length = 0
+    const segunda = await pedirFoto(IMAGEN)
+
+    assert.deepEqual(visto.modelos, [], 'ni una peticion a Google')
+    assert.equal(segunda.codigo, 200)
+    assert.deepEqual(segunda.cuerpo.clases, primera.cuerpo.clases)
+    assert.equal(segunda.cuerpo.modelo, 'memoria')
+    assert.equal(segunda.cuerpo.intentos, 0)
+    assert.equal(redis.delDia().memoria, 1, 'el acierto se cuenta en el dia')
+  })
+
+  await t.test('lo guardado caduca a los siete dias y no lleva la imagen', async () => {
+    const { redis } = montar({ nuevo: leeClases, viejo: leeClases })
+    await pedirFoto(IMAGEN)
+
+    const [llave] = [...redis.llaves.keys()].filter((l) => l.startsWith('mp:lector:leida:'))
+    assert.match(llave, /^mp:lector:leida:[0-9a-f]{64}$/)
+    assert.equal(redis.llaves.get(llave).segundos, 7 * 24 * 3600)
+    assert.ok(!redis.llaves.get(llave).valor.includes(IMAGEN))
+  })
+
+  await t.test('una foto distinta si llama a Google', async () => {
+    const { visto } = montar({ nuevo: leeClases, viejo: leeClases })
+    await pedirFoto(IMAGEN)
+    await pedirFoto(IMAGEN_OTRA)
+
+    assert.deepEqual(visto.modelos, ['nuevo', 'nuevo'])
+  })
+
+  await t.test('la memoria no gasta del tope del origen', async () => {
+    const { visto, redis } = montar({ nuevo: leeClases, viejo: leeClases })
+    for (let i = 0; i < TOPE_POR_HORA + 5; i++) await pedirFoto(IMAGEN)
+
+    assert.equal(visto.modelos.length, 1)
+    const deOrigen = [...redis.llaves.keys()].filter((llave) => llave.includes(':de:'))
+    assert.equal(redis.llaves.get(deOrigen[0]).valor, '1', 'solo conto la lectura real')
+  })
+
+  await t.test('una lectura fallida no se guarda', async () => {
+    const roto = () => ({ ok: true, json: async () => ({ candidates: [] }) })
+    const { visto, redis } = montar({ nuevo: roto, viejo: roto })
+
+    const res = await pedirFoto(IMAGEN)
+    assert.equal(res.codigo, 502)
+    assert.ok(![...redis.llaves.keys()].some((l) => l.includes(':leida:')))
+
+    visto.modelos.length = 0
+    await pedirFoto(IMAGEN)
+    assert.deepEqual(visto.modelos, ['nuevo'], 'reintentar vuelve a preguntar')
+  })
+
+  await t.test('una lectura sin clases tampoco se guarda', async () => {
+    const { redis } = montar({ nuevo: lee, viejo: lee })
+    await pedirFoto(IMAGEN)
+
+    assert.ok(![...redis.llaves.keys()].some((l) => l.includes(':leida:')))
+  })
+
+  await t.test('lo guardado que no sirve se ignora y se lee de nuevo', async () => {
+    const { visto, redis } = montar({ nuevo: leeClases, viejo: leeClases })
+    await pedirFoto(IMAGEN)
+    const [llave] = [...redis.llaves.keys()].filter((l) => l.includes(':leida:'))
+    redis.llaves.get(llave).valor = '{no es json'
+
+    visto.modelos.length = 0
+    const res = await pedirFoto(IMAGEN)
+    assert.deepEqual(visto.modelos, ['nuevo'])
+    assert.deepEqual(res.cuerpo.clases, CLASES)
+  })
+})
+
+test('sin almacen, la misma foto se lee cada vez', async (t) => {
+  const antes = globalThis.fetch
+  process.env.GOOGLE_AI_API_KEY = 'clave-de-mentira'
+  process.env.GOOGLE_AI_MODELO = 'nuevo'
+  /* El archivo ya quito las variables del almacen al cargar, y la suite
+     anterior las deja quitadas: aqui no hay almacen, pase lo que pase fuera. */
+  t.after(() => {
+    globalThis.fetch = antes
+    delete process.env.GOOGLE_AI_MODELO
+  })
+
+  const peticiones = []
+  globalThis.fetch = async (url) => {
+    peticiones.push(String(url))
+    return {
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: '{"clases":[{"nombre":"A"}]}' }] } }],
+      }),
+    }
+  }
+
+  for (let i = 0; i < 2; i++) {
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+    assert.equal(res.cuerpo.modelo, 'nuevo')
+  }
+  assert.equal(peticiones.length, 2)
+  assert.ok(
+    peticiones.every((u) => u.includes('generativelanguage')),
+    'nada fuera de Google',
+  )
 })

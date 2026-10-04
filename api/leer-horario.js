@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto'
 import { leerCuota } from './_cuota.js'
+import { guardarLectura, huellaDeLectura, recordarLectura } from './_memoria.js'
 import {
   MOTIVO,
   TOPE_POR_HORA,
@@ -436,12 +437,21 @@ export default async function handler(req, res) {
   const entrada = comprobar(req.body)
   if (entrada.error) return fallo(res, entrada.estado, entrada.error)
 
+  /* La misma foto, ya leida: se contesta de memoria, sin Google y sin gastar
+     del tope del origen. */
+  const huella = huellaDeLectura(entrada)
+  const recordada = await recordarLectura(huella)
+  if (recordada) return res.status(200).json(recordada)
+
   const modelos = listaDe('GOOGLE_AI_MODELO', MODELOS_POR_DEFECTO)
   const origen = huellaDe(req, clave)
 
   const turno = await abrirTurno(modelos, origen)
   const { estado, cuerpo, ...apunte } = await atender({ entrada, clave, modelos, turno })
-  await cerrarTurno({ ...apunte, origen, resultado: cuerpo.error ?? 'ok' })
+  await Promise.all([
+    cerrarTurno({ ...apunte, origen, resultado: cuerpo.error ?? 'ok' }),
+    guardarLectura(huella, cuerpo.clases),
+  ])
 
   /* Las averias quedan en el registro de Vercel con el mensaje de Google: es
      donde se va a mirar cuando alguien diga "no me lee el horario". Las
