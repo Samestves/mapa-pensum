@@ -47,8 +47,69 @@
   }
 }
 
-/* ---- Horario -----------------------------------------------------------
-   El bloque entra creciendo desde el 96%: al confirmar una clase el ojo la
+/* ---- La semana en rejilla (escritorio) ----------------------------------
+   Una clase de la rejilla (BloqueClase), teñida del color de su materia
+   (--c): el fondo apenas y el filo de la izquierda del todo. Sin contorno: el
+   filo ya dice de quien es, y un borde alrededor de cada bloque convertia la
+   semana en una pared de cajas. En claro el tinte va sobre blanco y no sobre
+   el gris del fondo, para que el bloque se despegue igual que en oscuro. */
+.bloque-clase {
+  background: color-mix(in oklab, var(--c) 17%, var(--panel-suave));
+  transition: background-color 180ms ease;
+}
+
+.bloque-clase::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 3px;
+  background: var(--c);
+}
+
+[data-tema='claro'] .bloque-clase {
+  background: color-mix(in oklab, var(--c) 13%, var(--panel));
+}
+
+.bloque-clase:hover {
+  background: color-mix(in oklab, var(--c) 25%, var(--panel-suave));
+}
+
+[data-tema='claro'] .bloque-clase:hover {
+  background: color-mix(in oklab, var(--c) 20%, var(--panel));
+}
+
+/* Los tres puntos de un bloque llevan fondo propio: salen encima del texto */
+.bloque-clase .acciones-clase {
+  background: color-mix(in oklab, var(--c) 34%, var(--panel-suave));
+}
+
+[data-tema='claro'] .bloque-clase .acciones-clase {
+  background: color-mix(in oklab, var(--c) 26%, var(--panel));
+}
+
+/* La hora de ahora, cruzando el dia de hoy */
+.ahora-linea {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 0;
+  height: 0;
+  border-top: 1px solid var(--estado-rojo);
+  pointer-events: none;
+}
+
+.ahora-linea::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--estado-rojo);
+}
+
+/* El bloque entra creciendo desde el 96%: al confirmar una clase el ojo la
    sigue hasta su sitio en vez de tener que buscarla. */
 @keyframes asentar-bloque {
   from {

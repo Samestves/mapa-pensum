@@ -5,20 +5,28 @@ import {
   CIERRA,
   FILAS,
   MIN_DURACION,
+  MOMENTO,
   aMinutos,
   aTexto,
+  agendaDe,
   altoHoraPara,
   tramoCorto,
   choqueCon,
+  duracion,
   enDoceHoras,
-  etiquetaHoraMovil,
+  franjaNueva,
   franjaPropuesta,
+  horaEnPunto,
   huecoEn,
   imantar,
   imantarInicio,
   lineasDeHora,
+  momentoDe,
+  partesDeHora,
   posicionValida,
+  rangoDeClases,
   repartirEnCarriles,
+  resumenDe,
   solapan,
 } from './horario.js'
 
@@ -56,22 +64,29 @@ describe('el tiempo como minutos', () => {
     assert.equal(tramoCorto(13 * 60, 15 * 60 + 30), '1 – 3:30 PM')
   })
 
-  test('la marca del telefono solo repite el meridiano cuando cambia', () => {
-    // La regla entera: doce marcas al dia y solo dos con AM/PM.
-    assert.equal(etiquetaHoraMovil(h(7), null), '7 AM')
-    assert.equal(etiquetaHoraMovil(h(8), h(7)), '8')
-    assert.equal(etiquetaHoraMovil(h(12), h(11)), '12 PM')
-    assert.equal(etiquetaHoraMovil(h(13), h(12)), '1')
+  test('la hora se parte en numero y meridiano, tambien en el mediodia', () => {
+    assert.deepEqual(partesDeHora(h(7)), { hora: '7:00', meridiano: 'AM' })
+    assert.deepEqual(partesDeHora(h(12, 40)), { hora: '12:40', meridiano: 'PM' })
+    assert.deepEqual(horaEnPunto(h(12)), { hora: '12', meridiano: 'PM' })
+    assert.deepEqual(horaEnPunto(h(13)), { hora: '1', meridiano: 'PM' })
+  })
+
+  test('la duracion calla la parte que vale cero', () => {
+    assert.equal(duracion(100), '1 h 40 min')
+    assert.equal(duracion(120), '2 h')
+    assert.equal(duracion(45), '45 min')
   })
 })
 
 describe('la escala de la rejilla', () => {
-  test('el alto de la hora sube por tramos con el ancho, en los cortes de Tailwind', () => {
-    assert.equal(altoHoraPara(800), 100)
-    assert.equal(altoHoraPara(1023), 100)
-    assert.equal(altoHoraPara(1024), 124)
-    assert.equal(altoHoraPara(1280), 144)
-    assert.equal(altoHoraPara(3000), 144)
+  test('el alto de la hora reparte el alto libre, con suelo y con techo', () => {
+    // Cabe entera: doce filas en lo que hay
+    assert.equal(altoHoraPara(12 * 66), 66)
+    assert.equal(altoHoraPara(12 * 66 + 11), 66)
+    // Pantalla baja: no se aplasta, se desplaza
+    assert.equal(altoHoraPara(400), 52)
+    // Pantalla muy alta: no se estira hasta dejar los bloques vacios
+    assert.equal(altoHoraPara(2000), 84)
   })
 
   test('las lineas de hora pintan las de DENTRO y no la ultima', () => {
@@ -255,5 +270,109 @@ describe('huecoEn', () => {
 
   test('dentro de una clase no hay hueco', () => {
     assert.equal(huecoEn([clase(h(8), h(9), 'a')], h(8)), null)
+  })
+})
+
+describe('la semana leida como agenda', () => {
+  test('entre dos clases va lo que queda libre; entre dos pegadas, nada', () => {
+    const dia = [
+      clase(h(10, 40), h(12, 20), 'c'),
+      clase(h(7), h(8, 40), 'a'),
+      clase(h(8, 40), h(10), 'b'),
+    ]
+    assert.deepEqual(
+      agendaDe(dia).map((r) => (r.clase ? r.clase.id : `libre ${r.libre.inicio}-${r.libre.fin}`)),
+      ['a', 'b', `libre ${h(10)}-${h(10, 40)}`, 'c'],
+    )
+  })
+
+  test('dos clases que se pisan no inventan un hueco en medio', () => {
+    /* El libre empieza donde acaba la que acaba mas tarde, no la ultima que
+       se recorrio: una corta metida dentro de una larga no abre un tramo. */
+    const dia = [clase(h(7), h(10), 'larga'), clase(h(8), h(9), 'corta'), clase(h(11), h(12), 'c')]
+    assert.deepEqual(agendaDe(dia)[2], { libre: { inicio: h(10), fin: h(11) } })
+  })
+
+  test('el rango va de la primera clase a la ultima, en horas enteras y con un minimo', () => {
+    assert.deepEqual(rangoDeClases([clase(h(8, 50), h(10, 30)), clase(h(13), h(14, 40))]), [
+      h(8),
+      h(15),
+    ])
+    assert.deepEqual(rangoDeClases([clase(h(8), h(9, 30))]), [h(8), h(12)])
+    assert.deepEqual(rangoDeClases([]), [ABRE, ABRE + 4 * 60])
+  })
+
+  test('la clase nueva se propone detras de la ultima', () => {
+    assert.deepEqual(franjaNueva([clase(h(7), h(8, 40))]), { inicio: h(8, 40), fin: h(9, 40) })
+    assert.deepEqual(franjaNueva([]), { inicio: ABRE, fin: ABRE + 60 })
+  })
+
+  test('si detras de la ultima no cabe, en el primer hueco; con el dia lleno, en ninguno', () => {
+    const tarde = [clase(h(9), h(10), 'a'), clase(h(17), CIERRA, 'b')]
+    assert.deepEqual(franjaNueva(tarde), { inicio: ABRE, fin: ABRE + 60 })
+    assert.equal(franjaNueva([clase(ABRE, CIERRA)]), null)
+  })
+
+  test('el resumen cuenta materias y no clases repetidas', () => {
+    const semana = [
+      { codigo: 'mat', inicio: h(7), fin: h(8, 40) },
+      { codigo: 'mat', inicio: h(7), fin: h(8, 40) },
+      { codigo: 'qui', inicio: h(9), fin: h(10) },
+    ]
+    assert.deepEqual(resumenDe(semana), { materias: 2, clases: 3, minutos: 260 })
+  })
+})
+
+describe('ahora y despues', () => {
+  const en = (dia, inicio, fin, id) => ({ id, dia, inicio, fin })
+  const mate = en(0, h(7), h(8, 40), 'mate')
+  const ingles = en(0, h(10, 40), h(12, 20), 'ingles')
+  const quimica = en(1, h(8, 50), h(10, 30), 'quimica')
+  const semana = [[mate, ingles], [quimica], [], [], []]
+
+  test('en plena clase: cuanto lleva, cuanto queda y cual sigue', () => {
+    const m = momentoDe(semana, { dia: 0, minuto: h(8, 10) })
+    assert.equal(m.tipo, MOMENTO.EN_CURSO)
+    assert.equal(m.clase, mate)
+    assert.equal(m.quedan, 30)
+    assert.equal(m.avance, 0.7)
+    assert.equal(m.despues, ingles)
+  })
+
+  test('el minuto en que acaba una clase ya no es suyo', () => {
+    /* Los extremos: a las 8:40 en punto Matematicas ha terminado. Con un <=
+       de mas, la clase seguiria "en curso" con cero minutos por delante. */
+    assert.equal(momentoDe(semana, { dia: 0, minuto: h(7) }).tipo, MOMENTO.EN_CURSO)
+    const m = momentoDe(semana, { dia: 0, minuto: h(8, 40) })
+    assert.equal(m.tipo, MOMENTO.LUEGO)
+    assert.equal(m.clase, ingles)
+    assert.equal(m.faltan, 120)
+    assert.equal(m.despues, null)
+  })
+
+  test('acabado el dia, la proxima es la primera de mañana', () => {
+    const m = momentoDe(semana, { dia: 0, minuto: h(13) })
+    assert.deepEqual(m, {
+      tipo: MOMENTO.LIBRE,
+      terminado: true,
+      proxima: { clase: quimica, dentroDe: 1 },
+    })
+  })
+
+  test('el fin de semana no es un dia terminado, y la proxima da la vuelta al lunes', () => {
+    const sabado = momentoDe(semana, { dia: 5, minuto: h(10) })
+    assert.equal(sabado.terminado, false)
+    assert.deepEqual(sabado.proxima, { clase: mate, dentroDe: 2 })
+  })
+
+  test('con clase un solo dia, acabada esa la proxima es la de dentro de una semana', () => {
+    const m = momentoDe([[mate], [], [], [], []], { dia: 0, minuto: h(9) })
+    assert.deepEqual(m.proxima, { clase: mate, dentroDe: 7 })
+  })
+
+  test('sin ninguna clase no hay momento que contar', () => {
+    assert.deepEqual(momentoDe([[], [], [], [], []], { dia: 0, minuto: h(9) }), {
+      tipo: MOMENTO.VACIO,
+    })
   })
 })

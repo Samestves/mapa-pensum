@@ -1,9 +1,6 @@
 import { useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { ImageUp, PencilLine, RotateCw, X } from 'lucide-react'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEsTelefono } from '../hooks/useEsTelefono'
-import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 import { FASE, useLecturaHorario } from '../hooks/useLecturaHorario'
 import { FORMATOS, SALIDA } from '../data/leerHorario'
 import { aSesiones, corregir, incluir } from '../layout/importarHorario'
@@ -13,6 +10,7 @@ import { IconoSituacion } from './IconoSituacion'
 import LectorAviso from './LectorAviso'
 import LectorLeyendo from './LectorLeyendo'
 import LectorRevision from './LectorRevision'
+import Ventana from './Ventana'
 
 const ETIQUETA = 'Leer mi horario de una imagen'
 
@@ -58,38 +56,6 @@ function Cabecera({ miniatura, alCerrar, children }) {
         <X size={16} strokeWidth={1.5} />
       </button>
     </header>
-  )
-}
-
-/* La hoja en escritorio: una ventana centrada. En el telefono es una
-   HojaInferior, que ya trae su velo, su asa y su forma de irse. */
-function Ventana({ alCerrar, cabecera, pie, children }) {
-  const refCaja = useRef(null)
-  useCerrarConEscape(alCerrar)
-  useFocoAtrapado(refCaja, true, false)
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Cerrar"
-        tabIndex={-1}
-        onClick={alCerrar}
-        className="velo-hoja absolute inset-0 cursor-default"
-      />
-      <div
-        ref={refCaja}
-        role="dialog"
-        aria-modal="true"
-        aria-label={ETIQUETA}
-        className="surgir relative flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-[26px] border border-panel-borde bg-panel shadow-2xl outline-none"
-      >
-        {cabecera}
-        <div className="desplazable-panel min-h-0 overflow-y-auto">{children}</div>
-        {pie}
-      </div>
-    </div>,
-    document.body,
   )
 }
 
@@ -260,7 +226,7 @@ function ImportarHorario({
           {cuerpo}
         </HojaInferior>
       ) : (
-        <Ventana alCerrar={cerrar} cabecera={cabecera} pie={pie}>
+        <Ventana etiqueta={ETIQUETA} alCerrar={cerrar} cabecera={cabecera} pie={pie}>
           {cuerpo}
         </Ventana>
       )}

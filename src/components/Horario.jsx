@@ -1,23 +1,55 @@
-import { memo, useCallback, useMemo, useState } from 'react'
-import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { Copy, ImagePlus, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
-import { useEsTelefono } from '../hooks/useEsTelefono'
+import { useConsulta } from '../hooks/useConsulta'
 import { useHorario } from '../hooks/useHorario'
 import { leer } from '../data/almacen'
-import { compartirArchivo, descargarArchivo, puedeCompartir } from '../data/compartir'
+import {
+  compartirArchivo,
+  copiarImagen,
+  descargarArchivo,
+  puedeCompartir,
+  puedeCopiarImagen,
+} from '../data/compartir'
 import { imagenDelHorario, MENSAJE_DEL_HORARIO } from '../data/exportarHorario'
-import { coloresDelHorario } from '../theme/areas'
-import RejillaHorario from './RejillaHorario'
-import HorarioMovil from './HorarioMovil'
+import { FORMATOS } from '../data/leerHorario'
+import { colorClase, coloresDelHorario } from '../theme/areas'
+import HorarioSemana from './HorarioSemana'
+import HorarioAgenda from './HorarioAgenda'
+import AccionesHorario from './AccionesHorario'
 import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 import HorarioVacio from './HorarioVacio'
 import ImportarHorario from './ImportarHorario'
-import BotonDescargar from './BotonDescargar'
+import ConfirmarBorrado from './ConfirmarBorrado'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
    para firmar la imagen en vez de volver a preguntarlo. */
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
+
+/* Desde que ancho cabe la semana en rejilla al lado del panel de hoy. Por
+   debajo, cinco columnas se quedan en menos de lo que mide el nombre de una
+   materia, y el horario cambia de forma: una columna, un dia a la vez. Es el
+   corte lg de Tailwind, no el de telefono: una ventana de 900 px tiene raton
+   y cabecera de escritorio, pero no sitio para la semana. */
+const CABE_LA_SEMANA = '(min-width: 1024px)'
+
+const ANCHO_MENU_HORARIO = 226
+
+/* La caja en pantalla de un elemento, que es de donde cuelga la ficha */
+const cajaDe = (elemento) => {
+  const c = elemento?.getBoundingClientRect()
+  return c
+    ? { izquierda: c.left, derecha: c.right, arriba: c.top, abajo: c.bottom }
+    : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight }
+}
+
+/* Como manda el horario a otra persona ESTE aparato: la hoja de compartir en
+   el telefono, el portapapeles en el ordenador. Una de las dos, o ninguna. */
+const medioDeEnvio = () => {
+  const compartir = puedeCompartir()
+  return { compartir, copiar: !compartir && puedeCopiarImagen() }
+}
 
 /**
  * Mi horario.
@@ -28,25 +60,31 @@ const CLAVE_NOMBRE = 'mapa-pensum:nombre'
  * cerrarla para volver a cualquier otra cosa.
  *
  * Este componente es el unico que sabe de las piezas a la vez -los datos del
- * horario, el pensum, el formulario y el menu-, y su unico trabajo es
- * conectarlas. Ni dibuja la rejilla ni valida nada.
+ * horario, el pensum, la ficha, los menus y el lector-, y su unico trabajo es
+ * conectarlas. Ni dibuja la semana ni valida nada.
  */
 function Horario({ carrera, estados }) {
-  const { porDia, sesiones, guardar, guardarVarias, quitar, duplicar } = useHorario(carrera.slug)
-  const esTelefono = useEsTelefono()
+  const { porDia, sesiones, guardar, guardarVarias, quitar, vaciar, duplicar } = useHorario(
+    carrera.slug,
+  )
+  const cabeLaSemana = useConsulta(CABE_LA_SEMANA)
+  const [envio] = useState(medioDeEnvio)
 
   /* Que hay abierto. Un solo valor por cosa en vez de booleanos sueltos, para
-     que no exista el estado imposible de tener el menu y la ficha a la vez. */
+     que no exista el estado imposible de tener el menu y la ficha a la vez.
+     El menu es uno: con `sesion` es el de esa clase, sin ella el del horario. */
   const [enEdicion, setEnEdicion] = useState(null)
   const [menu, setMenu] = useState(null)
+  const [borrando, setBorrando] = useState(false)
 
   /* La imagen que se esta leyendo, si hay alguna. */
   const [aLeer, setALeer] = useState(null)
+  const refArchivo = useRef(null)
 
   /* Si ya se eligio empezar a mano. No se guarda entre visitas a proposito:
      un horario vacio SIGUE siendo un horario vacio la proxima vez que se
      entre, y volver a ofrecer las dos salidas es mas util que devolver a una
-     rejilla en blanco a quien no llego a poner nada. Dentro de la misma
+     semana en blanco a quien no llego a poner nada. Dentro de la misma
      visita, en cambio, se recuerda: borrar la ultima clase no puede hacer que
      la pantalla de bienvenida salte encima de lo que estabas haciendo. */
   const [empezado, setEmpezado] = useState(false)
@@ -57,8 +95,19 @@ function Horario({ carrera, estados }) {
   )
   const porCodigo = useMemo(() => new Map(todas.map((a) => [a.codigo, a])), [todas])
   /* El color de cada materia, uno distinto por materia (ver
-     coloresDelHorario): el mismo en la rejilla y en la ficha. */
+     coloresDelHorario): el mismo en la semana, en la lista y en la ficha. */
   const colores = useMemo(() => coloresDelHorario(sesiones), [sesiones])
+
+  /* Como se ve una clase: el nombre de su materia y su color. Lo preguntan
+     todas las piezas que pintan una, y asi ninguna tiene que saber del pensum
+     ni de la paleta. */
+  const aspectoDe = useCallback(
+    (sesion) => ({
+      nombre: porCodigo.get(sesion.codigo)?.nombre ?? sesion.codigo,
+      color: colorClase(sesion, colores),
+    }),
+    [porCodigo, colores],
+  )
 
   /* Las que el pensum ya desbloqueo: es lo que el estudiante puede inscribir
      de verdad este semestre, y por eso son las que el buscador ofrece antes
@@ -77,114 +126,143 @@ function Horario({ carrera, estados }) {
     [carrera, estados],
   )
 
-  const cajaDe = (elemento) => {
-    const c = elemento?.getBoundingClientRect()
-    return c
-      ? { izquierda: c.left, derecha: c.right, arriba: c.top, abajo: c.bottom }
-      : { izquierda: 0, derecha: window.innerWidth, arriba: 0, abajo: window.innerHeight }
-  }
-
+  /* Tres formas de llegar a la ficha, las tres con lo mismo: que clase -o que
+     hueco- y de que caja de la pantalla cuelga. */
   const abrirEnHueco = useCallback((celda, ancla) => {
     setEnEdicion({ inicial: celda, ancla })
   }, [])
 
-  /* El menu cuelga del boton de los tres puntos, no del bloque: es de donde
-     sale, y anclarlo ahi es lo que permite que se coloque solo hacia el lado
-     que tenga sitio sin taparle la clase al de al lado. */
+  const anadirEn = useCallback((dia, franja, elemento) => {
+    setEnEdicion({ inicial: { dia, ...franja }, ancla: cajaDe(elemento) })
+  }, [])
+
+  /* La ficha de una clase cuelga de la clase, este donde este pintada: el
+     bloque de la semana o su fila en la lista. Las dos llevan el mismo id. */
+  const editar = useCallback((sesion) => {
+    setEnEdicion({
+      inicial: sesion,
+      ancla: cajaDe(document.getElementById(`clase-${sesion.id}`)),
+    })
+  }, [])
+
+  /* Los menus cuelgan del boton de los tres puntos: es de donde salen, y
+     anclarlos ahi es lo que permite que se coloquen solos hacia el lado que
+     tenga sitio. */
   const abrirMenu = useCallback((sesion, boton) => {
-    setMenu({ sesion, boton, ancla: boton.getBoundingClientRect() })
+    setMenu({ sesion, ancla: boton.getBoundingClientRect() })
+  }, [])
+
+  const abrirMas = useCallback((boton) => {
+    setMenu({ ancla: boton.getBoundingClientRect() })
   }, [])
 
   /* Soltar una clase en otro sitio. Llega ya validada por el arrastre, asi
      que aqui solo se persiste: el hueco legal se resolvio mientras se movia. */
   const mover = useCallback((sesion) => guardar(sesion), [guardar])
 
-  // Sin nombre guardado la imagen sale igual, solo que sin firmar
+  /* La imagen del horario. Sin nombre guardado sale igual, solo que sin
+     firmar. Es una promesa: se dibuja la primera vez que se pide. */
   const imagen = () =>
     imagenDelHorario({ carrera, sesiones, porCodigo, nombre: leer(CLAVE_NOMBRE, '') })
-  /* Baja el archivo y, donde se puede, abre ademas la hoja de compartir con
-     la misma imagen: guardarlo y mandarlo por WhatsApp en un solo toque.
-     Cerrar la hoja no deshace nada, el archivo ya esta bajado. */
-  const descargar = async () => {
-    const archivo = await imagen()
-    descargarArchivo(archivo)
-    if (puedeCompartir()) await compartirArchivo(archivo, MENSAJE_DEL_HORARIO)
+  const descargar = async () => descargarArchivo(await imagen())
+  const compartir = async () => compartirArchivo(await imagen(), MENSAJE_DEL_HORARIO)
+  const copiar = () => copiarImagen(imagen())
+
+  const borrarTodo = () => {
+    vaciar()
+    /* De vuelta al inicio: las dos salidas de un horario por empezar */
+    setEmpezado(false)
+    setBorrando(false)
+  }
+
+  const hayClases = sesiones.length > 0
+
+  const opcionesDeClase = (sesion) => [
+    { id: 'editar', etiqueta: 'Editar', icono: Pencil, alPulsar: () => editar(sesion) },
+    { id: 'duplicar', etiqueta: 'Duplicar', icono: Copy, alPulsar: () => duplicar(sesion.id) },
+    {
+      id: 'quitar',
+      etiqueta: 'Eliminar',
+      icono: Trash2,
+      peligro: true,
+      alPulsar: () => quitar(sesion.id),
+    },
+  ]
+
+  const opcionesDelHorario = [
+    {
+      id: 'foto',
+      etiqueta: 'Añadir desde una foto',
+      icono: ImagePlus,
+      alPulsar: () => refArchivo.current?.click(),
+    },
+    hayClases && {
+      id: 'borrar',
+      etiqueta: 'Borrar todo el horario',
+      icono: Trash2,
+      peligro: true,
+      alPulsar: () => setBorrando(true),
+    },
+  ].filter(Boolean)
+
+  /* Sin clases no hay nada que sacar: queda solo el menu, para subir una foto */
+  const acciones = (
+    <AccionesHorario
+      conTexto={cabeLaSemana}
+      masAbierto={menu != null && !menu.sesion}
+      alCompartir={hayClases && envio.compartir ? compartir : null}
+      alCopiar={hayClases && envio.copiar ? copiar : null}
+      alDescargar={hayClases ? descargar : null}
+      alAbrirMas={abrirMas}
+    />
+  )
+
+  /* Lo que comparten las dos formas del horario */
+  const comun = {
+    porDia,
+    idMenuAbierto: menu?.sesion?.id,
+    aspectoDe,
+    acciones,
+    alEditar: editar,
+    alAbrirMenu: abrirMenu,
+    alAnadir: anadirEn,
   }
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-panel-suave">
-      {/* Dos formas del mismo horario. En el telefono la semana de cinco
-          columnas dejaria cada dia en unos sesenta pixeles, menos que el
-          nombre de cualquier materia, asi que se apila y se pasa de dia
-          deslizando. Los datos, el formulario y el menu son los mismos: lo
-          unico que cambia es cuantos dias se ven a la vez.
-          La rejilla de escritorio es su propio contenedor de desplazamiento
-          porque mide el ancho que le queda para sacar el alto de sus horas
-          (ver altoHoraPara). */}
-      {sesiones.length === 0 && !empezado ? (
+      {/* Dos formas del mismo horario, segun quepa o no la semana (ver
+          CABE_LA_SEMANA). Los datos, la ficha y los menus son los mismos: lo
+          unico que cambia es como se lee. */}
+      {!hayClases && !empezado ? (
         <HorarioVacio
           disponibles={disponibles}
           alSubir={setALeer}
           alCrear={() => setEmpezado(true)}
         />
-      ) : esTelefono ? (
-        <HorarioMovil
-          porDia={porDia}
+      ) : cabeLaSemana ? (
+        <HorarioSemana
+          {...comun}
+          sesiones={sesiones}
           porCodigo={porCodigo}
           colores={colores}
-          idMenuAbierto={menu?.sesion.id}
           alPulsarHueco={abrirEnHueco}
-          alAbrirMenu={abrirMenu}
+          alMoverClase={mover}
         />
       ) : (
-        <RejillaHorario
-          porDia={porDia}
-          porCodigo={porCodigo}
-          colores={colores}
-          alPulsarHueco={abrirEnHueco}
-          idMenuAbierto={menu?.sesion.id}
-          alMoverClase={mover}
-          alAbrirMenu={abrirMenu}
-        />
+        <HorarioAgenda {...comun} />
       )}
-
-      {/* Descargar vive dentro del horario y flotando sobre su esquina, no en
-          la barra de la aplicacion: es una accion de esta vista y solo de
-          esta. Flotando no le quita alto a la semana. Aparece solo si hay
-          algo que bajar. */}
-      {sesiones.length > 0 && <BotonDescargar alDescargar={descargar} />}
 
       {menu && (
         <MenuClase
           ancla={menu.ancla}
           alCerrar={() => setMenu(null)}
-          opciones={[
-            {
-              id: 'editar',
-              etiqueta: 'Editar',
-              icono: Pencil,
-              alPulsar: () =>
-                setEnEdicion({
-                  inicial: menu.sesion,
-                  // La ficha si cuelga del bloque entero: es grande y quiere
-                  // colocarse a su lado, no a la de un boton de 24 px.
-                  ancla: cajaDe(document.getElementById(`clase-${menu.sesion.id}`)),
-                }),
-            },
-            {
-              id: 'duplicar',
-              etiqueta: 'Duplicar',
-              icono: Copy,
-              alPulsar: () => duplicar(menu.sesion.id),
-            },
-            {
-              id: 'quitar',
-              etiqueta: 'Eliminar',
-              icono: Trash2,
-              peligro: true,
-              alPulsar: () => quitar(menu.sesion.id),
-            },
-          ]}
+          {...(menu.sesion
+            ? { opciones: opcionesDeClase(menu.sesion) }
+            : {
+                opciones: opcionesDelHorario,
+                ancho: ANCHO_MENU_HORARIO,
+                etiqueta: 'Acciones del horario',
+              })}
         />
       )}
 
@@ -213,6 +291,14 @@ function Horario({ carrera, estados }) {
         />
       )}
 
+      {borrando && (
+        <ConfirmarBorrado
+          clases={sesiones.length}
+          alBorrar={borrarTodo}
+          alCerrar={() => setBorrando(false)}
+        />
+      )}
+
       {aLeer && (
         <ImportarHorario
           /* Sin key: elegir otra imagen cambia el archivo y la lectura
@@ -237,6 +323,21 @@ function Horario({ carrera, estados }) {
           alCerrar={() => setALeer(null)}
         />
       )}
+
+      {/* La foto que se sube con el horario ya empezado, desde su menu */}
+      <input
+        ref={refArchivo}
+        type="file"
+        accept={FORMATOS}
+        className="hidden"
+        onChange={(e) => {
+          const archivo = e.target.files?.[0]
+          if (archivo) setALeer(archivo)
+          /* Se limpia para que elegir dos veces el mismo archivo vuelva a
+             disparar el cambio */
+          e.target.value = ''
+        }}
+      />
     </div>
   )
 }

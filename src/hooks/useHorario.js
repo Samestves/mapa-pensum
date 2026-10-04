@@ -131,6 +131,9 @@ export function useHorario(slug) {
     })
   }, [])
 
+  /** Quita todas las clases: el horario vuelve a estar por empezar */
+  const vaciar = useCallback(() => setSesiones([]), [])
+
   /** Cambia unos campos sueltos sin tocar el resto */
   const retocar = useCallback((id, cambios) => {
     setSesiones((previas) => previas.map((s) => (s.id === id ? { ...s, ...cambios } : s)))
@@ -143,5 +146,5 @@ export function useHorario(slug) {
     [sesiones],
   )
 
-  return { sesiones, porDia, guardar, guardarVarias, quitar, retocar, duplicar }
+  return { sesiones, porDia, guardar, guardarVarias, quitar, vaciar, retocar, duplicar }
 }

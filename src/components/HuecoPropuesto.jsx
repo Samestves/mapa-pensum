@@ -2,19 +2,8 @@ import { Plus } from 'lucide-react'
 import { ABRE, HUECO_CELDA } from '../layout/horario'
 
 /**
- * El hueco que se propone: donde caeria una clase si se pulsa ahi.
- *
- * Sale en las dos rejillas por motivos distintos. En escritorio sigue al
- * raton, porque ahi hay un puntero al que responder. En el telefono no hay
- * hover, asi que se planta en el primer hueco libre del dia: sin nada, la
- * rejilla parece un dibujo y no se sabe que responde.
- *
- * Estaba escrito dos veces, y eso ya costo caro: al hacerlo opaco -la marca
- * de la hora del telefono se transparentaba y salia un "9" flotando dentro
- * del recuadro- hubo que tocar los dos sitios, y de no haberme acordado del
- * segundo, escritorio y telefono habrian quedado con distinta opacidad para
- * la misma cosa. Dos copias de una pieza no divergen el dia que se escriben,
- * divergen el dia que se corrige una.
+ * El hueco que se propone en la rejilla de la semana: donde caeria una clase
+ * si se pulsa ahi. Sigue al raton, porque ahi hay un puntero al que responder.
  *
  * Neutro y de trazo fino, no un boton verde relleno: es una pista de que ahi
  * se puede crear algo, no una accion consumada. Si pesara mas que las clases

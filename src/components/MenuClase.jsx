@@ -3,7 +3,8 @@ import Popover from './Popover'
 const ANCHO = 178
 
 /**
- * El menu de una clase ya puesta: editar, duplicar, eliminar.
+ * El menu que sale de unos tres puntos. El de una clase ya puesta -editar,
+ * duplicar, eliminar- y el del horario entero.
  *
  * Existe para que los tres puntos hagan algo distinto que el resto del
  * bloque. Editar es una de tres cosas que se le pueden hacer a una clase, y
@@ -14,12 +15,18 @@ const ANCHO = 178
  * Cada opcion se cierra sola al ejecutarse: un menu que sigue abierto despues
  * de pulsar obliga a un segundo gesto para nada.
  */
-function MenuClase({ ancla, opciones, alCerrar }) {
+function MenuClase({
+  ancla,
+  opciones,
+  alCerrar,
+  ancho = ANCHO,
+  etiqueta = 'Acciones de la clase',
+}) {
   return (
     <Popover
       ancla={ancla}
-      ancho={ANCHO}
-      etiqueta="Acciones de la clase"
+      ancho={ancho}
+      etiqueta={etiqueta}
       rol="menu"
       alCerrar={alCerrar}
       claseContenido="flex flex-col p-1.5"

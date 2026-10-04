@@ -1,25 +1,11 @@
-import { ABRE, DIAS_CORTOS } from '../layout/horario'
+import { DIAS_CORTOS, horaEnPunto, rangoDeClases } from '../layout/horario'
 
 const HORA = 60
 
-/* Lo minimo que abarca el dibujo. Con una sola clase de hora y media, sin
-   esto el bloque ocuparia todo el alto y no diria nada de cuando es. */
-const MINIMO = 4 * HORA
-
-/* De que hora a que hora va: de la primera clase a la ultima, en horas
-   enteras. No la jornada entera -de siete a siete-, que dejaria media tarde
-   vacia y las clases apretadas arriba. */
-function rangoDe(sesiones) {
-  if (!sesiones.length) return [ABRE, ABRE + MINIMO]
-  const desde = Math.floor(Math.min(...sesiones.map((s) => s.inicio)) / HORA) * HORA
-  const hasta = Math.ceil(Math.max(...sesiones.map((s) => s.fin)) / HORA) * HORA
-  return [desde, Math.max(hasta, desde + MINIMO)]
-}
-
 /* "7 AM", "1 PM": la hora en punto, corta */
 const enPunto = (min) => {
-  const h = Math.floor(min / HORA)
-  return `${((h + 11) % 12) + 1} ${h < 12 ? 'AM' : 'PM'}`
+  const { hora, meridiano } = horaEnPunto(min)
+  return `${hora} ${meridiano}`
 }
 
 /**
@@ -35,7 +21,8 @@ const enPunto = (min) => {
  * @param {(codigo: string) => string} props.colorDe  el color de cada materia
  */
 function SemanaLeida({ sesiones, colorDe }) {
-  const [desde, hasta] = rangoDe(sesiones)
+  /* De la primera clase a la ultima, no la jornada entera (ver rangoDeClases) */
+  const [desde, hasta] = rangoDeClases(sesiones)
   const horas = Array.from({ length: (hasta - desde) / HORA + 1 }, (_, i) => desde + i * HORA)
   const alto = (min) => `${((min - desde) / (hasta - desde)) * 100}%`
   /* Con muchas horas no caben todas las etiquetas: una si y otra no */

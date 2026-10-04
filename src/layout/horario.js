@@ -21,39 +21,29 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 export const ABRE = 7 * 60
 export const CIERRA = 19 * 60
 
-/* Alto de una fila de hora en escritorio, por tramo de ancho.
+/* Alto de una fila de hora en escritorio.
 
-   Antes esto no era una medida sino un reparto: se cogia el alto de la
-   ventana y se dividia entre las doce horas para que la jornada entera
-   cupiese sin desplazarse. Cabia, si, pero a costa de todo lo demas. En una
-   ventana normal salian filas de 66 px contra columnas de 180: rectangulos
-   aplastados donde una clase de una hora no tiene sitio ni para su nombre y
-   su horario. Y encima el reparto dejaba un hueco muerto abajo, porque
-   floor(alto/12) tira hasta once pixeles que ya no los recuperaba nadie.
+   Ha tenido dos reglas y las dos fallaban por un lado. La primera repartia el
+   alto de la ventana entre las doce horas: la jornada cabia, pero el bloque
+   de entonces -hora, nombre, aula, seccion y profesor- no cabia en filas de
+   66 px. La segunda fijo la fila por tramos de ancho, de 100 a 144 px: los
+   bloques respiraban y la jornada dejo de caber. Para saber a que hora era
+   una clase habia que desplazarse hasta dar con su marca, y la semana no se
+   veia nunca entera.
 
-   La regla se invierte: la fila mide lo que tiene que medir para respirar y
-   si la jornada no cabe, se desplaza. Meter doce horas en una pantalla no es
-   un requisito de nadie; verlas bien, si.
+   Lo que cambio es el bloque: ahora dice el nombre y su tramo, y eso cabe en
+   una hora de cincuenta pixeles. Asi que vuelve el reparto, con suelo y
+   techo: la jornada entera cabe en una pantalla normal, en una baja se
+   desplaza un poco en vez de aplastarse, y en una muy alta no se estira
+   hasta dejar bloques vacios. */
+const ALTO_HORA = { minimo: 52, maximo: 84 }
 
-   Los cortes son los de Tailwind -md, lg, xl- para que la rejilla cambie de
-   escala en los mismos anchos que el resto de la app. Por debajo de md no
-   hay tramo porque ahi no llega esta vista: manda HorarioMovil, que tiene su
-   propio alto.
+/** El alto de fila que toca al alto que le queda libre a la rejilla. Funcion pura. */
+export const altoHoraPara = (altoLibre) =>
+  acotar(Math.floor(altoLibre / FILAS), ALTO_HORA.minimo, ALTO_HORA.maximo)
 
-   Es una tabla y no tres constantes sueltas para que anadir un tramo sea
-   anadir una linea, y para que la funcion de abajo pueda probarse sola. */
-const ALTO_HORA_ESCRITORIO = [
-  { desde: 1280, alto: 144 }, // xl
-  { desde: 1024, alto: 124 }, // lg
-  { desde: 0, alto: 100 }, // md
-]
-
-/** El alto de fila que toca a un ancho de rejilla. Funcion pura. */
-export const altoHoraPara = (ancho) =>
-  ALTO_HORA_ESCRITORIO.find((tramo) => ancho >= tramo.desde).alto
-
-/** Ancho de la columna de las horas. Cabe "11:00 AM" sin apretarse. */
-export const ANCHO_HORAS_PX = 88
+/** Ancho del carril de las horas. Cabe "12 PM" y la hora de ahora, "12:45". */
+export const ANCHO_HORAS_PX = 56
 
 /* El hueco entre dos clases seguidas, y el que deja una clase con el borde
    de su hora: una de 8 a 9 y otra de 9 a 10 se leen como dos, no como un
@@ -108,25 +98,32 @@ export function tramoCorto(inicio, fin) {
     : `${hora(inicio)} ${meridiano(inicio)} – ${hora(fin)} ${meridiano(fin)}`
 }
 
-/** La hora en punto, para la columna de la izquierda */
-export const etiquetaHora = (min) => enDoceHoras(min)
+const meridianoDe = (min) => (min < 12 * 60 ? 'AM' : 'PM')
 
 /**
- * La hora para la marca del telefono: el meridiano solo cuando cambia.
+ * La hora y su meridiano por separado: "7:00" y "AM".
  *
- * "7:00 AM, 8:00 AM, 9:00 AM..." repite doce veces algo que en una jornada
- * cambia una sola vez, y los ceros no dicen nada porque todas las marcas caen
- * en punto por definicion. Ese ruido se paga en tamaño de letra: es lo que
- * obligaba a reservarle a la hora un carril de sesenta y dos pixeles.
- *
- * Queda "7 AM", luego solo el numero, y el meridiano vuelve a salir cuando de
- * verdad aporta: "12 PM". Doce marcas, dos con meridiano.
+ * Donde la hora es lo que se lee -la agenda, el momento- el numero va grande
+ * y el meridiano pequeño a su lado. Escritos del mismo tamaño, "AM" pesa lo
+ * mismo que "7:00" y no dice ni la mitad.
  */
-export const etiquetaHoraMovil = (min, previa) => {
-  const h = Math.floor(min / 60)
-  const hora = ((h + 11) % 12) + 1
-  const cambiaElDia = previa == null || Math.floor(previa / 60) < 12 !== h < 12
-  return cambiaElDia ? `${hora} ${h < 12 ? 'AM' : 'PM'}` : `${hora}`
+export const partesDeHora = (min) => {
+  const [hora, meridiano] = enDoceHoras(min).split(' ')
+  return { hora, meridiano }
+}
+
+/** Lo mismo para una hora en punto, sin los ceros: "7" y "AM" */
+export const horaEnPunto = (min) => ({
+  hora: String(((Math.floor(min / 60) + 11) % 12) + 1),
+  meridiano: meridianoDe(min),
+})
+
+/** Cuanto dura algo, dicho corto: "1 h 40 min", "2 h", "30 min" */
+export function duracion(min) {
+  const horas = Math.floor(min / 60)
+  const resto = min % 60
+  if (horas && resto) return `${horas} h ${resto} min`
+  return horas ? `${horas} h` : `${resto} min`
 }
 
 /* Cuantas filas tiene la rejilla */
@@ -324,3 +321,148 @@ export function franjaPropuesta(sesionesDelDia, minuto) {
   const fin = Math.min(inicio + DURACION_POR_DEFECTO, libre.hasta)
   return fin - inicio >= MIN_DURACION ? { inicio, fin } : null
 }
+
+/* ---- La semana leida como agenda -------------------------------------- */
+
+const porInicio = (a, b) => a.inicio - b.inicio || a.fin - b.fin
+
+/**
+ * De que hora a que hora van unas clases, en horas enteras: de la primera a
+ * la ultima. No la jornada -de siete a siete-, que en un dibujo pequeño
+ * dejaria media tarde vacia y las clases apretadas arriba.
+ *
+ * `minimo` es lo menos que abarca: con una sola clase de hora y media, sin el
+ * su bloque ocuparia todo el alto y no diria nada de cuando es.
+ */
+export function rangoDeClases(sesiones, minimo = 4 * 60) {
+  if (!sesiones.length) return [ABRE, ABRE + minimo]
+  const desde = Math.floor(Math.min(...sesiones.map((s) => s.inicio)) / 60) * 60
+  const hasta = Math.ceil(Math.max(...sesiones.map((s) => s.fin)) / 60) * 60
+  return [desde, Math.max(hasta, desde + minimo)]
+}
+
+/**
+ * Un dia como se lee en una agenda: sus clases en orden y, entre una y la
+ * siguiente, lo que queda libre.
+ *
+ * Dos clases pegadas no dejan renglon entre ellas, y dos que se pisan
+ * tampoco: el tramo libre empieza donde acaba la que acaba mas tarde.
+ */
+export function agendaDe(sesionesDelDia) {
+  const renglones = []
+  let ocupadoHasta = null
+
+  for (const clase of [...sesionesDelDia].sort(porInicio)) {
+    if (ocupadoHasta != null && clase.inicio > ocupadoHasta) {
+      renglones.push({ libre: { inicio: ocupadoHasta, fin: clase.inicio } })
+    }
+    renglones.push({ clase })
+    ocupadoHasta = Math.max(ocupadoHasta ?? clase.fin, clase.fin)
+  }
+  return renglones
+}
+
+/**
+ * Donde proponer una clase nueva cuando no se señala ninguna hora.
+ *
+ * Primero detras de la ultima del dia, que es como se arma un horario: una
+ * clase y luego la siguiente. Si ahi ya no cabe -el dia llega al cierre-, el
+ * primer hueco que haya, mirando las horas en punto y el final de cada clase.
+ * Devuelve null con el dia lleno.
+ */
+export function franjaNueva(sesionesDelDia) {
+  const finales = sesionesDelDia.map((s) => s.fin)
+  const enOrden = [...horasEnPunto(), ...finales].sort((a, b) => a - b)
+  const candidatos = finales.length ? [Math.max(...finales), ...enOrden] : enOrden
+
+  for (const inicio of candidatos) {
+    if (inicio >= CIERRA) continue
+    const franja = franjaPropuesta(sesionesDelDia, inicio)
+    if (franja?.inicio === inicio) return franja
+  }
+  return null
+}
+
+/** La semana en tres numeros: cuantas materias, cuantas clases y cuantos minutos de clase */
+export const resumenDe = (sesiones) => ({
+  materias: new Set(sesiones.map((s) => s.codigo)).size,
+  clases: sesiones.length,
+  minutos: sesiones.reduce((total, s) => total + s.fin - s.inicio, 0),
+})
+
+/* ---- Ahora y despues --------------------------------------------------- */
+
+export const MOMENTO = {
+  /* Hay una clase a esta hora */
+  EN_CURSO: 'en-curso',
+  /* No hay clase ahora, pero hoy queda alguna */
+  LUEGO: 'luego',
+  /* Hoy ya no queda ninguna: se acabaron, o no habia */
+  LIBRE: 'libre',
+  /* El horario no tiene ninguna clase */
+  VACIO: 'vacio',
+}
+
+/* La primera clase de los dias que vienen, y cuantos dias faltan. Da la
+   vuelta a la semana: un viernes por la tarde, la proxima es la del lunes. Si
+   solo hay clase el mismo dia de hoy, es la de dentro de siete dias. */
+function proximaDe(porDia, dia) {
+  for (let dentroDe = 1; dentroDe <= 7; dentroDe++) {
+    const delDia = porDia[(dia + dentroDe) % 7] ?? []
+    if (delDia.length) return { clase: [...delDia].sort(porInicio)[0], dentroDe }
+  }
+  return null
+}
+
+/**
+ * Que toca ahora y que viene despues.
+ *
+ * Es lo primero que dice el horario al abrirlo, y sale entero de dos datos:
+ * las clases y la hora. Aqui no se formatea nada; se decide en cual de los
+ * cuatro momentos se esta y se devuelve lo que hace falta para contarlo.
+ *
+ * @param {object[][]} porDia  las clases de cada dia, de lunes a viernes
+ * @param {{ dia: number, minuto: number }} ahora  dia 0 es lunes y 6 domingo
+ */
+export function momentoDe(porDia, ahora) {
+  if (!porDia.some((delDia) => delDia.length)) return { tipo: MOMENTO.VACIO }
+
+  const hoy = [...(porDia[ahora.dia] ?? [])].sort(porInicio)
+  const porVenir = hoy.filter((s) => s.inicio > ahora.minuto)
+  const actual = hoy.find((s) => s.inicio <= ahora.minuto && ahora.minuto < s.fin)
+
+  if (actual) {
+    return {
+      tipo: MOMENTO.EN_CURSO,
+      clase: actual,
+      avance: (ahora.minuto - actual.inicio) / (actual.fin - actual.inicio),
+      quedan: actual.fin - ahora.minuto,
+      despues: porVenir[0] ?? null,
+    }
+  }
+
+  if (porVenir.length) {
+    return {
+      tipo: MOMENTO.LUEGO,
+      clase: porVenir[0],
+      faltan: porVenir[0].inicio - ahora.minuto,
+      despues: porVenir[1] ?? null,
+    }
+  }
+
+  return {
+    tipo: MOMENTO.LIBRE,
+    /* Si hoy hubo clases y ya pasaron, o si no habia ninguna: no se dice igual */
+    terminado: hoy.length > 0,
+    proxima: proximaDe(porDia, ahora.dia),
+  }
+}
+
+/** Donde es una clase y con quien, en un renglon: "A-12 · Sec. 01 · Pérez" */
+export const lugarDe = (sesion) =>
+  [sesion.aula, sesion.seccion && `Sec. ${sesion.seccion}`, sesion.profesor]
+    .filter(Boolean)
+    .join(' · ')
+
+/** El nombre de cualquier dia de la semana, tambien de los que no tienen clase */
+export const nombreDelDia = (dia) => [...DIAS, 'Sábado', 'Domingo'][dia]

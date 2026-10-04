@@ -35,3 +35,25 @@ export async function compartirArchivo(archivo, { titulo, texto }) {
     return false
   }
 }
+
+/** Si este navegador sabe poner una imagen en el portapapeles */
+export const puedeCopiarImagen = () =>
+  typeof ClipboardItem !== 'undefined' && Boolean(navigator.clipboard?.write)
+
+/**
+ * Pone la imagen en el portapapeles, lista para pegarla en un chat. Es el
+ * compartir del ordenador. Devuelve si se pudo; como compartir, nunca falla.
+ *
+ * Recibe la PROMESA del archivo y no el archivo. Safari solo deja escribir en
+ * el portapapeles dentro del gesto de quien pulso, y esperar a que la imagen
+ * se dibuje ya es salirse de el: dandole la promesa, la escritura se pide en
+ * el acto y el contenido llega cuando esta.
+ */
+export async function copiarImagen(archivo) {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': Promise.resolve(archivo) })])
+    return true
+  } catch {
+    return false
+  }
+}

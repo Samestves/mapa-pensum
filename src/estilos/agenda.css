@@ -1,0 +1,549 @@
+/* ---- El horario como agenda -----------------------------------------------
+   Lo que se lee con el horario ya armado: el momento -que toca ahora y que
+   viene-, la semana en miniatura y la lista de un dia. Sin cajas: las cosas
+   se separan con aire y con el riel de cada clase, no con marcos.
+
+   El lenguaje es uno solo, el de un trayecto. Una clase sale de un punto
+   lleno y llega a un anillo, unidos por una linea de su color. En la lista va
+   de pie, de la hora de entrada a la de salida; en el momento va tumbado y se
+   llena con lo que lleva la clase.
+
+   --c es el color de la materia. --fondo-agenda es el del sitio donde esta
+   puesta la pieza -el horario, o su panel en escritorio-: el anillo y el
+   contorno de la cabeza se pintan con el para recortarse sobre la linea. */
+.agenda-horario {
+  --fondo-agenda: var(--panel-suave);
+  --ancho-hora: 72px;
+  --hilo: color-mix(in oklab, var(--tinta) 15%, transparent);
+}
+
+/* El panel de hoy, en escritorio: una superficie mas honda que el resto */
+.panel-hoy {
+  --fondo-agenda: var(--panel);
+  --ancho-hora: 70px;
+}
+
+.rotulo-horario {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tinta-tenue);
+}
+
+.rotulo-horario b {
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+/* El meridiano al lado de una hora: pequeño y en versalitas. La hora es el
+   numero; "AM" solo desambigua. */
+.meridiano {
+  margin-left: 3px;
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--tinta-tenue);
+}
+
+/* ---- El momento ---------------------------------------------------------- */
+
+/* El punto junto a "En curso": dice que esto esta pasando ahora. Late hacia
+   fuera, despacio. En modo ligero se queda quieto, que ahi nada se mueve
+   solo. */
+.pulso-ahora {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.pulso-ahora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--c);
+  animation: latir-ahora 2600ms cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+@keyframes latir-ahora {
+  from {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+[data-ligero] .pulso-ahora::after {
+  animation: none;
+  opacity: 0;
+}
+
+/* El trayecto tumbado: de la hora de entrada a la de salida. */
+.trayecto {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trayecto-hora {
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--tinta-suave);
+}
+
+.trayecto-via {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--hilo);
+}
+
+.trayecto-via::before,
+.trayecto-via::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+}
+
+.trayecto-via::before {
+  left: -1px;
+  background: var(--c);
+}
+
+.trayecto-via::after {
+  right: -1px;
+  background: var(--fondo-agenda);
+  box-shadow: inset 0 0 0 1.5px var(--c);
+}
+
+/* Lo que lleva la clase, y la cabeza que marca por donde va. Se mueven una
+   vez por minuto, y lo hacen deslizandose: un salto de un pixel cada minuto
+   se ve como un fallo. */
+.trayecto-via > i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--c);
+  transform-origin: left center;
+  transform: scaleX(var(--avance));
+  transition: transform 800ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.trayecto-via > b {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: calc(var(--avance) * 100%);
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 3px var(--fondo-agenda);
+  transition: left 800ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La marca de color de la clase que viene despues: su riel, en pequeño */
+.marca-materia {
+  width: 3px;
+  height: 13px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--c);
+  transform: translateY(2px);
+}
+
+/* ---- La semana en miniatura ---------------------------------------------
+   Cinco columnas que son cinco botones. Lo que las hace leerse como un mando
+   y no como un dibujo es la lente: la pieza que marca el dia elegido y se
+   desliza hasta el que se toca, igual que la del selector de vistas. Cada
+   columna tiene ademas su carril, de modo que un dia sin clases sigue siendo
+   un sitio donde tocar y no un hueco. */
+.tira-semana {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-inline: -7px;
+}
+
+.tira-lente {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 20%;
+  padding-inline: 2px;
+  pointer-events: none;
+  transform: translateX(calc(var(--dia) * 100%));
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.tira-lente::before {
+  content: '';
+  display: block;
+  height: 100%;
+  border-radius: 13px;
+  background: color-mix(in oklab, var(--tinta) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tinta) 8%, transparent);
+}
+
+[data-tema='claro'] .tira-lente::before {
+  background: var(--panel);
+  box-shadow:
+    0 1px 3px rgb(23 26 32 / 0.1),
+    0 0 0 0.5px rgb(23 26 32 / 0.08);
+}
+
+.tira-semana > button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 11px 9px 9px;
+  color: var(--tinta-tenue);
+  transition: color 200ms ease;
+}
+
+.tira-semana > button[aria-pressed='true'] {
+  color: var(--tinta);
+}
+
+.tira-dia {
+  position: relative;
+  align-self: center;
+  padding-left: 0.2em;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Hoy lleva un punto colgado a la izquierda de su nombre: fuera de la caja
+   del texto, para que "LUN" siga centrado sobre su columna. */
+[data-hoy] > .tira-dia::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 3px 0 0;
+  border-radius: 50%;
+  background: var(--estado-rojo);
+}
+
+.tira-columna {
+  position: relative;
+  height: 66px;
+  border-radius: 5px;
+  background: color-mix(in oklab, var(--tinta) 4%, transparent);
+}
+
+.tira-columna > i {
+  position: absolute;
+  min-height: 3px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--c) 58%, var(--fondo-agenda));
+}
+
+[data-tema='claro'] .tira-columna > i {
+  background: color-mix(in oklab, var(--c) 52%, var(--panel));
+}
+
+/* La hora de ahora, cruzando la columna de hoy */
+.tira-columna > b {
+  position: absolute;
+  inset-inline: -3px;
+  height: 1px;
+  background: var(--estado-rojo);
+}
+
+.tira-columna > b::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--estado-rojo);
+}
+
+/* ---- La lista del dia ----------------------------------------------------
+   Tres columnas que comparten todos los renglones: la hora, el riel y lo que
+   es. Asi el riel de una clase, los puntos del tramo libre y el mas de añadir
+   caen en la misma vertical, y el dia se lee de arriba abajo como una sola
+   linea. */
+.fila-clase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.fila-clase + .fila-clase {
+  margin-top: 12px;
+}
+
+.fila-toque,
+.tramo-libre,
+.anadir-clase {
+  display: grid;
+  grid-template-columns: var(--ancho-hora) 9px minmax(0, 1fr);
+  column-gap: 12px;
+  text-align: left;
+}
+
+.fila-toque {
+  min-height: 58px;
+  border-radius: 10px;
+  transition: opacity 160ms ease;
+}
+
+.fila-toque:active {
+  opacity: 0.6;
+}
+
+/* La hora: la de entrada grande y arriba, la de salida pequeña y abajo, cada
+   una a la altura de su extremo del riel. Los numeros se alinean entre si por
+   la derecha y los meridianos van en su propia columna, para que "8:40" caiga
+   debajo de "7:00" y no debajo de "AM". */
+.fila-hora {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-content: space-between;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fila-hora > * {
+  text-align: right;
+}
+
+.fila-hora .meridiano {
+  margin-left: 0;
+  text-align: left;
+  padding-left: 3px;
+}
+
+.hora-entrada {
+  font-size: 21px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--tinta);
+}
+
+.hora-salida {
+  font-size: 12.5px;
+  line-height: 1;
+  color: var(--tinta-tenue);
+}
+
+/* El riel de pie. El punto queda a la altura de la hora de entrada y el
+   anillo a la de la de salida: son la misma cosa dicha dos veces. */
+.riel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 7px 3px;
+}
+
+.riel::before,
+.riel::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.riel::before {
+  background: var(--c);
+}
+
+.riel::after {
+  box-shadow: inset 0 0 0 1.5px var(--c);
+}
+
+.riel > i {
+  width: 2px;
+  flex: 1;
+  margin-block: 2px;
+  border-radius: 1px;
+  background: var(--c);
+}
+
+/* La que esta en curso lleva hecho lo que lleva: el resto del riel se queda
+   en hilo. Es el mismo dibujo que el trayecto de arriba, de pie. */
+.fila-clase[data-momento='curso'] .riel > i {
+  background: linear-gradient(to bottom, var(--c) calc(var(--avance) * 100%), var(--hilo) 0);
+}
+
+/* Las que ya pasaron hoy se apagan un punto: siguen ahi, pero ya no tocan */
+.fila-clase[data-momento='pasada'] .hora-entrada {
+  color: var(--tinta-tenue);
+}
+
+.fila-clase[data-momento='pasada'] .riel {
+  opacity: 0.45;
+}
+
+.fila-clase[data-momento='pasada'] .fila-nombre {
+  color: var(--tinta-suave);
+}
+
+/* Los tres puntos, y el mas de un tramo libre: la misma columna, a la derecha */
+.fila-mas {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -6px -10px 0 0;
+  border-radius: 50%;
+  color: var(--tinta-tenue);
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.fila-mas[aria-expanded='true'] {
+  color: var(--tinta);
+  background: color-mix(in oklab, var(--tinta) 9%, transparent);
+}
+
+/* Lo que queda libre entre dos clases: el riel sigue, en puntos. Si cabe una
+   clase, el renglon entero es el boton de ponerla. */
+.tramo-libre {
+  grid-template-columns: var(--ancho-hora) 9px minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+  transition: color 160ms ease;
+}
+
+.tramo-libre[data-corto] {
+  min-height: 26px;
+}
+
+.riel-libre {
+  justify-self: center;
+  width: 0;
+  height: calc(100% - 8px);
+  min-height: 18px;
+  border-left: 2px dotted color-mix(in oklab, var(--tinta) 24%, transparent);
+}
+
+.tramo-libre > svg {
+  margin-right: -1px;
+  opacity: 0.85;
+}
+
+.anadir-clase {
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  transition: color 160ms ease;
+}
+
+.anadir-clase > svg {
+  grid-column: 2;
+  justify-self: center;
+}
+
+@media (hover: hover) {
+  .fila-toque:hover .fila-nombre {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--tinta) 30%, transparent);
+    text-underline-offset: 3px;
+  }
+
+  .fila-mas:hover,
+  button.tramo-libre:hover,
+  .anadir-clase:hover {
+    color: var(--tinta);
+  }
+
+  .fila-mas:hover {
+    background: color-mix(in oklab, var(--tinta) 9%, transparent);
+  }
+}
+
+/* ---- Las acciones del horario --------------------------------------------
+   Compartir, descargar y lo demas. Calladas: un icono sin fondo en el
+   telefono, un icono con su palabra en escritorio. No compiten con la clase
+   que esta en curso, que es lo que se viene a mirar. */
+.accion-horario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--tinta-suave);
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.accion-horario[data-con-texto] {
+  padding-inline: 12px;
+}
+
+.accion-horario:active {
+  transform: scale(0.94);
+}
+
+.accion-horario[aria-expanded='true'] {
+  color: var(--tinta);
+  background: color-mix(in oklab, var(--tinta) 9%, transparent);
+}
+
+@media (hover: hover) {
+  .accion-horario:hover {
+    color: var(--tinta);
+    background: color-mix(in oklab, var(--tinta) 8%, transparent);
+  }
+}
+
+/* El boton que borra: el mismo cuerpo que el callado, en rojo. No va lleno:
+   lo que destruye no es la accion que se quiere facil. */
+.boton-rojo {
+  background: color-mix(in oklab, var(--estado-rojo) 13%, transparent);
+  color: var(--estado-rojo);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .boton-rojo:hover {
+    background: color-mix(in oklab, var(--estado-rojo) 19%, transparent);
+  }
+}

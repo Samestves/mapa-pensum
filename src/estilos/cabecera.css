@@ -241,28 +241,6 @@
   color: var(--tinta);
 }
 
-/* Una clase del horario (BloqueClase), teñida del color de su materia
-   (--c): el fondo apenas, el contorno algo mas y la hora del todo. En claro
-   el tinte va sobre blanco y no sobre el lienzo, para que la tarjeta se
-   despegue de las celdas igual que en oscuro. */
-.bloque-clase {
-  background: color-mix(in oklab, var(--c) 17%, var(--lienzo-mapa));
-  border-color: color-mix(in oklab, var(--c) 34%, transparent);
-}
-
-[data-tema='claro'] .bloque-clase {
-  background: color-mix(in oklab, var(--c) 12%, var(--panel));
-  border-color: color-mix(in oklab, var(--c) 30%, transparent);
-}
-
-.bloque-clase:hover {
-  box-shadow: 0 8px 22px -12px color-mix(in oklab, var(--c) 55%, transparent);
-}
-
-.hora-clase {
-  color: color-mix(in oklab, var(--c) 78%, var(--tinta));
-}
-
 /* ---- La paleta de busqueda (PaletaComandos) -----------------------------
 
    El mismo cristal que las islas de la cabecera -mismo filo de luz, mismo

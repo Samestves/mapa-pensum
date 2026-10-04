@@ -103,7 +103,8 @@
   .lector-lineas > *,
   .lector-cara,
   .lector-arco,
-  .clase-leida {
+  .clase-leida,
+  .pulso-ahora::after {
     animation: none;
   }
 
