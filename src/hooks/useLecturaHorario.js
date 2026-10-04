@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import {
   FalloLectura,
   comoFallo,
+  esFiable,
   leerHorarioDeImagen,
+  leerHorarioEnElAparato,
   prepararImagen,
+  valeElBorrador,
 } from '../data/leerHorario.js'
 import { revisar } from '../layout/importarHorario.js'
 
@@ -48,6 +51,11 @@ const dormir = (ms, senal) =>
  * lector tiene cola se espera y se vuelve con LA MISMA imagen ya preparada, y
  * lo mismo si alguien pulsa reintentar. Con un solo efecto, cada vuelta
  * volvia a decodificar y comprimir una foto de varios megas.
+ *
+ * Leer tiene a su vez dos sitios, y en este orden: el propio aparato, que es
+ * gratis y no tiene cupo pero solo entiende la captura del sistema de la
+ * universidad, y el servidor, que entiende cualquier foto pero atiende unas
+ * veinte al dia. Si el aparato lee sin dudas, al servidor no se le llama.
  *
  * @returns {{
  *   fase: string, fallo: Error|undefined,
@@ -97,8 +105,21 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
     const control = new AbortController()
     const cortado = () => control.signal.aborted
 
+    const revisarFilas = (filas) => {
+      setCandidatas(revisar(filas, materias, sesiones))
+      setEstado({ fase: FASE.REVISAR })
+    }
+
     ;(async () => {
       setEstado({ fase: FASE.LEYENDO })
+
+      const enElAparato = await leerHorarioEnElAparato({
+        archivo,
+        materias,
+        senal: control.signal,
+      })
+      if (cortado()) return
+      if (esFiable(enElAparato)) return revisarFilas(enElAparato.clases)
 
       for (let vuelta = 0; ; vuelta++) {
         try {
@@ -112,9 +133,7 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
           /* Sin ninguna clase no hay nada que revisar: es un fallo de la
              foto, y se cuenta como los demas. */
           if (!filas.length) throw new FalloLectura('sin-clases')
-          setCandidatas(revisar(filas, materias, sesiones))
-          setEstado({ fase: FASE.REVISAR })
-          return
+          return revisarFilas(filas)
         } catch (error) {
           if (cortado()) return
           const fallo = comoFallo(error)
@@ -123,6 +142,10 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
           if (fallo.tecnico) console.warn(`[lector] ${fallo.codigo} · ${fallo.tecnico}`)
 
           if (fallo.espera == null || vuelta >= VUELTAS_SOLAS) {
+            /* El servidor no pudo -casi siempre, el cupo del dia- pero el
+               aparato habia sacado algo: mejor un borrador que revisar que
+               un "vuelve mañana". Lo que le falte sale marcado. */
+            if (valeElBorrador(enElAparato, fallo)) return revisarFilas(enElAparato.clases)
             setEstado({ fase: FASE.ERROR, fallo })
             return
           }
@@ -136,7 +159,8 @@ export function useLecturaHorario({ archivo, materias, sesiones }) {
     })()
 
     return () => control.abort()
-    /* Solo la imagen y el intento. `materias` y `sesiones` se calculan con
+    /* Solo la imagen y el intento. `archivo` cambia siempre antes que la
+       imagen -es de donde sale-. `materias` y `sesiones` se calculan con
        useMemo arriba pero cambian de identidad si la carrera se repinta, y
        volver a llamar a la lectura por eso costaria otra peticion -y otro
        trozo de cupo- por nada. */

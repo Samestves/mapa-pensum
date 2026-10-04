@@ -1,7 +1,8 @@
-/* El lado del navegador de la lectura de horarios: reducir la imagen y
-   preguntar. La clave no esta aqui ni puede estarlo -Vite sustituye las
-   VITE_* dentro del bundle, o sea a la vista de cualquiera-, asi que quien
-   habla con Google es api/leer-horario.js, en el servidor. */
+/* El lado del navegador de la lectura de horarios: reducir la imagen, leerla
+   aqui mismo si se puede y, si no, preguntar. La clave no esta aqui ni puede
+   estarlo -Vite sustituye las VITE_* dentro del bundle, o sea a la vista de
+   cualquiera-, asi que quien habla con Google es api/leer-horario.js, en el
+   servidor. */
 
 /* Lado largo maximo al que se reduce antes de subir.
 
@@ -283,3 +284,89 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
 
   return datos?.clases ?? []
 }
+
+/* Lo que se espera al lector del aparato antes de darlo por perdido. La
+   primera vez tiene que bajarse varios megas, y en un telefono viejo leer
+   cuesta varios segundos; pero pasado este rato es mejor preguntarle al
+   servidor que seguir con la pantalla de "leyendo" sin moverse. */
+const TOPE_LOCAL_MS = 30000
+
+/* Lo ya leido en el aparato, por archivo. Reintentar vuelve a pasar por aqui
+   con la misma imagen, y releerla serian varios segundos para llegar al mismo
+   sitio. Solo se guarda lo que salio bien: un fallo -sin red para bajar el
+   lector- puede no repetirse a la segunda. */
+const YA_LEIDAS = new WeakMap()
+
+/**
+ * Lee el horario en el propio aparato, sin servidor, sin cupo y sin que la
+ * imagen salga de el.
+ *
+ * Solo entiende la captura del sistema de la universidad. Devuelve las mismas
+ * filas que el servidor y, al lado, sus `dudas`: si no hay ninguna, la
+ * lectura vale tal cual; si hay, es un borrador que solo sirve cuando el
+ * servidor no contesta.
+ *
+ * Nunca revienta. Si el lector no carga -sin red, un navegador viejo- o
+ * tarda demasiado, devuelve null y se sigue por el servidor como si esto no
+ * existiera.
+ *
+ * @param {object} p
+ * @param {Blob} p.archivo  la imagen original, no la preparada para subir
+ * @param {{codigo: string}[]} p.materias  el pensum abierto
+ * @param {AbortSignal} p.senal
+ * @returns {Promise<{clases: object[], dudas: string[]}|null>}
+ */
+export async function leerHorarioEnElAparato({ archivo, materias, senal }) {
+  if (YA_LEIDAS.has(archivo)) return YA_LEIDAS.get(archivo)
+
+  const control = new AbortController()
+  const cortar = () => control.abort()
+  const reloj = setTimeout(cortar, TOPE_LOCAL_MS)
+  senal.addEventListener('abort', cortar, { once: true })
+
+  try {
+    /* El lector entero -tesseract y lo suyo- vive en un trozo aparte que solo
+       se pide aqui: quien no sube una foto no se lo baja nunca. */
+    const { leerEnElAparato } = await import('./lectorLocal.js')
+    const lectura = leerEnElAparato(archivo, {
+      codigos: new Set(materias.map((m) => m.codigo)),
+      senal: control.signal,
+    })
+    /* Cortar el trabajador a media lectura puede dejar su promesa sin
+       resolver: se compite contra la señal para no quedarse esperandola. */
+    const cortado = new Promise((_, fallar) =>
+      control.signal.addEventListener('abort', () => fallar(new Error('cortado o sin tiempo')), {
+        once: true,
+      }),
+    )
+    const leido = await Promise.race([lectura, cortado])
+    YA_LEIDAS.set(archivo, leido)
+    return leido
+  } catch (error) {
+    if (!senal.aborted) {
+      console.warn(
+        `[lector] en el aparato no se pudo · ${error?.message ?? error ?? 'sin detalle'}`,
+      )
+    }
+    return null
+  } finally {
+    clearTimeout(reloj)
+    senal.removeEventListener('abort', cortar)
+  }
+}
+
+/**
+ * Si lo leido en el aparato se puede usar sin preguntarle al servidor: se
+ * reconocio la rejilla y cada bloque salio con su codigo, su dia y sus horas.
+ */
+export const esFiable = (leido) => Boolean(leido?.clases.length) && leido.dudas.length === 0
+
+/**
+ * Si lo leido en el aparato, aun con dudas, es mejor que enseñar este fallo
+ * del servidor. Casi siempre lo es: la revision marca lo que falta y se
+ * arregla en dos toques, y un "vuelve mañana" no se arregla. La excepcion es
+ * cuando el servidor SI leyo y no vio clases: ahi el borrador del aparato es
+ * ruido de una imagen que no es un horario.
+ */
+export const valeElBorrador = (leido, fallo) =>
+  Boolean(leido?.clases.length) && fallo.codigo !== 'sin-clases'

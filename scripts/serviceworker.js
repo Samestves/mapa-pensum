@@ -89,9 +89,27 @@ const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz|300|400)-normal/
    alguien entra a /panel, se descarga ahi mismo. */
 const SOLO_PARA_MI = /PanelUso-[^/]+\.js$/
 
+/* El lector de horarios que corre en el aparato: tesseract, su nucleo en
+   WebAssembly y el modelo del idioma. Son unos cuatro megas y medio que solo
+   usa quien sube una foto de su horario, asi que no se precargan: se bajan en
+   ese momento.
+
+   Pero una vez bajados no se tiran con cada despliegue. La cache de la
+   aplicacion lleva la version en el nombre y se borra entera al publicar; si
+   el lector viviera ahi, cada commit le costaria otros cuatro megas de datos
+   a quien ya lo tenia, por unos archivos que no cambian mas que cuando se
+   actualiza tesseract. Por eso van a una cache aparte, con nombre fijo, de la
+   que solo se quita lo que el build de hoy ya no trae. */
+const DEL_LECTOR = /^\/(lector\/|assets\/(lectorLocal|worker\.min|tesseract-core)[^/]*$)/
+const lector = todos
+  .map(aUrl)
+  .filter((u) => DEL_LECTOR.test(u))
+  .sort()
+
 const recursos = todos
   .map(aUrl)
   .filter((u) => !FUERA.has(u))
+  .filter((u) => !DEL_LECTOR.test(u))
   .filter((u) => !u.endsWith('.woff2') || SUBCONJUNTO_QUE_USAMOS.test(u))
   /* IBM Plex Mono trae, ademas de cada woff2, su copia en woff: el formato
      viejo, para navegadores sin woff2. Todo navegador con service worker lee
@@ -120,6 +138,9 @@ const sw = `/* Generado por scripts/serviceworker.js. No editar a mano. */
 const VERSION = ${JSON.stringify(VERSION)}
 const CACHE = 'mapa-pensum-' + VERSION
 const RECURSOS = ${JSON.stringify(recursos, null, 2)}
+// El lector de horarios: no se precarga, y lo bajado sobrevive a los despliegues
+const CACHE_LECTOR = 'mapa-pensum-lector'
+const LECTOR = ${JSON.stringify(lector, null, 2)}
 
 self.addEventListener('install', (e) => {
   // No se usa addAll: si un solo recurso falla, addAll tira toda la
@@ -136,7 +157,25 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((claves) => Promise.all(claves.filter((c) => c !== CACHE).map((c) => caches.delete(c))))
+      .then((claves) =>
+        Promise.all(
+          claves.filter((c) => c !== CACHE && c !== CACHE_LECTOR).map((c) => caches.delete(c)),
+        ),
+      )
+      // Del lector solo se tira lo que este build ya no usa
+      .then(() => caches.open(CACHE_LECTOR))
+      .then((cache) =>
+        cache
+          .keys()
+          .then((guardadas) =>
+            Promise.all(
+              guardadas
+                .filter((p) => !LECTOR.includes(new URL(p.url).pathname))
+                .map((p) => cache.delete(p)),
+            ),
+          ),
+      )
+      .catch(() => {})
       .then(() => self.clients.claim()),
   )
 })
@@ -176,7 +215,8 @@ self.addEventListener('fetch', (e) => {
           const esPagina = (res.headers.get('content-type') ?? '').includes('text/html')
           if (res.ok && res.type === 'basic' && !esPagina) {
             const copia = res.clone()
-            caches.open(CACHE).then((c) => c.put(e.request, copia)).catch(() => {})
+            const donde = LECTOR.includes(url.pathname) ? CACHE_LECTOR : CACHE
+            caches.open(donde).then((c) => c.put(e.request, copia)).catch(() => {})
           }
           return res
         }),
@@ -186,4 +226,6 @@ self.addEventListener('fetch', (e) => {
 `
 
 writeFileSync(join(DIST, 'sw.js'), sw)
-console.log(`  sw.js   ${recursos.length} recursos  version ${VERSION}`)
+console.log(
+  `  sw.js   ${recursos.length} recursos  version ${VERSION}  (lector aparte: ${lector.length})`,
+)

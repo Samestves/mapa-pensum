@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -49,7 +50,48 @@ function precargarFuentes() {
   }
 }
 
+/* El modelo de idioma del lector de horarios (src/data/lectorLocal.js), en la
+   carpeta de la que sale y en la ruta publica donde se sirve. La version va en
+   la ruta: si un dia cambia el modelo, cambia la direccion y nadie se queda
+   con el viejo guardado. */
+const IDIOMA_LECTOR = {
+  origen: 'node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz',
+  ruta: 'lector/4.0.0_best_int/eng.traineddata.gz',
+}
+
+/**
+ * Publica el modelo de idioma del lector con su nombre de siempre.
+ *
+ * Los demas archivos de tesseract se importan con `?url` y Vite les pone su
+ * hash. Este no puede: tesseract arma la direccion el solo, como
+ * `<carpeta>/eng.traineddata.gz`, y con un hash en el nombre no lo encuentra.
+ * (Pasarle los datos ya bajados, que seria lo limpio, esta roto en
+ * tesseract.js 7: al inicializar usa los datos como si fueran el nombre.)
+ *
+ * Se copia desde node_modules en cada build en vez de vivir en public/: son
+ * tres megas de binario que no pintan nada en el repositorio.
+ */
+function idiomaDelLector() {
+  return {
+    name: 'idioma-del-lector',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: IDIOMA_LECTOR.ruta,
+        source: readFileSync(IDIOMA_LECTOR.origen),
+      })
+    },
+    // En `npm run dev` no hay bundle: se sirve directo
+    configureServer(servidor) {
+      servidor.middlewares.use(`/${IDIOMA_LECTOR.ruta}`, (_peticion, respuesta) => {
+        respuesta.setHeader('content-type', 'application/gzip')
+        respuesta.end(readFileSync(IDIOMA_LECTOR.origen))
+      })
+    },
+  }
+}
+
 // Tailwind v4 entra como plugin de Vite: no hace falta postcss.config ni tailwind.config
 export default defineConfig({
-  plugins: [react(), tailwindcss(), precargarFuentes()],
+  plugins: [react(), tailwindcss(), precargarFuentes(), idiomaDelLector()],
 })
