@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { ImageUp, PencilLine, RotateCw, X } from 'lucide-react'
 import { useEsTelefono } from '../hooks/useEsTelefono'
-import { FASE, useLecturaHorario } from '../hooks/useLecturaHorario'
+import { FASE, MOTOR, useLecturaHorario } from '../hooks/useLecturaHorario'
 import { FORMATOS, SALIDA } from '../data/leerHorario'
 import { aSesiones, corregir, incluir } from '../layout/importarHorario'
 import { SITUACION } from '../layout/situacion'
@@ -10,6 +10,7 @@ import { IconoSituacion } from './IconoSituacion'
 import LectorAviso from './LectorAviso'
 import LectorLeyendo from './LectorLeyendo'
 import LectorRevision from './LectorRevision'
+import MotorLector from './MotorLector'
 import Ventana from './Ventana'
 
 const ETIQUETA = 'Leer mi horario de una imagen'
@@ -19,6 +20,21 @@ const ETIQUETA = 'Leer mi horario de una imagen'
 const ANCHO_CON_FOTO = 960
 
 const enKilos = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} kB`
+
+/* Las dudas del lector del aparato que la lista no puede enseñar: un bloque
+   que no se leyo no es una fila con aviso, es una fila que no esta. */
+const PUEDE_FALTAR = ['sin-leer', 'de-menos', 'pegadas']
+
+/* La guia de la revision, debajo del titulo */
+function guiaDeRevision(porMirar, puedeFaltar) {
+  if (puedeFaltar) return 'Puede faltar alguna clase: compárala con la foto.'
+  if (!porMirar) return 'Compárala con la foto. Toca una materia para ajustarla.'
+  const cuales =
+    porMirar === 1
+      ? 'Una clase necesita que la mires'
+      : `${porMirar} clases necesitan que las mires`
+  return `${cuales}. El resto está listo.`
+}
 
 /* Lo que va dentro del anillo cuando algo no salio. El reloj de arena es el
    mismo de "todavia no" del mapa: el lector vuelve solo. La raya, para lo que
@@ -72,7 +88,8 @@ function Cabecera({ miniatura, alCerrar, children }) {
  * layout/importarHorario.js, que es funcion pura y tiene sus pruebas.
  *
  * Las caras son tres: LectorLeyendo mientras se lee, LectorAviso cuando hay
- * cola o no se pudo, y LectorRevision con lo leido.
+ * cola o no se pudo, y LectorRevision con lo leido. Las tres dicen quien lee
+ * o quien leyo: el OCR del aparato o la IA (ver MotorLector).
  */
 function ImportarHorario({
   archivo,
@@ -85,11 +102,19 @@ function ImportarHorario({
 }) {
   const telefono = useEsTelefono()
   const refArchivo = useRef(null)
-  const { fase, fallo, espera, imagen, candidatas, setCandidatas, reintentar } = useLecturaHorario({
-    archivo,
-    materias,
-    sesiones,
-  })
+  const {
+    fase,
+    motor,
+    avance,
+    porQue,
+    dudas: dudasDelAparato,
+    fallo,
+    espera,
+    imagen,
+    candidatas,
+    setCandidatas,
+    reintentar,
+  } = useLecturaHorario({ archivo, materias, sesiones })
 
   /* Lo que hay que hacer cuando la hoja termine de irse. En el telefono la
      hoja baja antes de desaparecer, y cerrar, importar o pasar a armarlo a
@@ -109,17 +134,23 @@ function ImportarHorario({
   const meter = (ids, dentro) => setCandidatas((previas) => incluir(previas, ids, dentro, sesiones))
 
   /* Lo que ofrece cada fallo, ademas de cerrar. Una salida llena -la que lo
-     arregla- y, si acaso, otra debajo: ver SALIDA en data/leerHorario.js. */
+     arregla: ver SALIDA en data/leerHorario.js- y las demas debajo, como
+     texto. Armarlo a mano esta siempre: el dia de la inscripcion nadie puede
+     quedarse sin su horario porque una foto no se deja leer. */
+  const otraImagen = { texto: 'Probar otra imagen', alPulsar: elegirOtra }
+  const crearloAMano = { texto: 'Crearlo a mano', alPulsar: aMano }
   const salidas = {
     [SALIDA.REINTENTAR]: {
       principal: { texto: 'Reintentar', icono: RotateCw, alPulsar: reintentar },
-      otras: [{ texto: 'Probar otra imagen', alPulsar: elegirOtra }],
+      otras: [otraImagen, crearloAMano],
     },
     [SALIDA.OTRA_IMAGEN]: {
-      principal: { texto: 'Probar otra imagen', icono: ImageUp, alPulsar: elegirOtra },
+      principal: { ...otraImagen, icono: ImageUp },
+      otras: [crearloAMano],
     },
     [SALIDA.A_MANO]: {
-      principal: { texto: 'Crearlo a mano', icono: PencilLine, alPulsar: aMano },
+      principal: { ...crearloAMano, icono: PencilLine },
+      otras: [otraImagen],
     },
   }
 
@@ -137,7 +168,18 @@ function ImportarHorario({
      cabecera, un cuerpo que se desplaza y, a veces, un pie que se queda. */
   const cara = () => {
     if (fase === FASE.LEYENDO) {
-      return { cuerpo: <LectorLeyendo imagen={imagen} alCancelar={cerrar} /> }
+      return {
+        cuerpo: (
+          <LectorLeyendo
+            imagen={imagen}
+            motor={motor}
+            avance={avance}
+            porQue={porQue}
+            telefono={telefono}
+            alCancelar={cerrar}
+          />
+        ),
+      }
     }
     if (fase === FASE.ESPERANDO) {
       return {
@@ -145,10 +187,11 @@ function ImportarHorario({
         cuerpo: (
           <LectorAviso
             espera={espera}
-            titulo="Hay cola en el lector"
+            etiqueta={<MotorLector motor={MOTOR.IA} telefono={telefono} />}
+            titulo="Hay cola en la IA"
             detalle="Mucha gente está leyendo su horario a la vez. Se vuelve a intentar sola."
             // Quien no quiere esperar la cola tiene la otra forma de hacerlo
-            otras={[{ texto: 'Crearlo a mano', alPulsar: aMano }]}
+            otras={[crearloAMano]}
           />
         ),
       }
@@ -161,6 +204,7 @@ function ImportarHorario({
             glifo={fallo.aplazado ? GLIFO.aplazado : GLIFO.fallo}
             titulo={fallo.titulo}
             detalle={fallo.consejo}
+            nota={fallo.nota}
             {...salidas[fallo.salida]}
           />
         ),
@@ -168,20 +212,22 @@ function ImportarHorario({
     }
 
     const listas = candidatas.filter((c) => c.incluir && !c.avisos.length).length
-    const dudas = candidatas.filter((c) => c.avisos.length).length
+    const porMirar = candidatas.filter((c) => c.avisos.length).length
+    const puedeFaltar = dudasDelAparato?.some((d) => PUEDE_FALTAR.includes(d))
     return {
       /* Con la foto al lado hace falta sitio: en escritorio la ventana se
          ensancha para darle su columna. Las demas caras siguen en 560. */
       ancho: imagen ? ANCHO_CON_FOTO : undefined,
       cabecera: (
         <Cabecera alCerrar={cerrar}>
-          <h2 className="text-[17px] leading-tight font-medium tracking-[-0.015em] text-tinta">
-            Revisa tu semana
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[17px] leading-tight font-medium tracking-[-0.015em] text-tinta">
+              Revisa tu semana
+            </h2>
+            <MotorLector motor={motor} telefono={telefono} compacto />
+          </div>
           <p className="mt-1 text-[12px] leading-snug text-tinta-suave">
-            {dudas
-              ? `${dudas === 1 ? 'Una clase necesita que la mires' : `${dudas} clases necesitan que las mires`}. El resto está listo.`
-              : 'Compárala con la foto. Toca una materia para ajustarla.'}
+            {guiaDeRevision(porMirar, puedeFaltar)}
           </p>
         </Cabecera>
       ),

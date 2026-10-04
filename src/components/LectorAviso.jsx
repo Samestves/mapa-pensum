@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 
 /* El anillo se dibuja en los mismos pixeles que ocupa, para que su trazo
    mida lo que dice y no lo que salga de escalarlo. */
@@ -77,25 +78,35 @@ function Anillo({ espera, children }) {
  * @param {object} props
  * @param {{ hasta: number, plazo: number }} [props.espera]  la cola, si es una cuenta atras
  * @param {import('react').ReactNode} [props.glifo]  lo que va dentro del anillo cuando no lo es
+ * @param {import('react').ReactNode} [props.etiqueta]  encima del titulo: quien lee
+ * @param {string} [props.nota]  debajo del detalle, aparte: lo que pasa con la IA
+ *   cuando lo que se cuenta es lo del aparato
  * @param {{ texto: string, icono?: Function, alPulsar: Function }} [props.principal]
  * @param {{ texto: string, alPulsar: Function }[]} [props.otras]
  */
-function LectorAviso({ espera, glifo, titulo, detalle, principal, otras = [] }) {
+function LectorAviso({ espera, glifo, etiqueta, titulo, detalle, nota, principal, otras = [] }) {
   const Icono = principal?.icono
 
   return (
     <div className="lector-cara mx-auto flex w-full max-w-[380px] flex-col items-center px-5 pt-4 pb-6 text-center">
       <Anillo espera={espera}>{glifo}</Anillo>
 
+      {etiqueta && <div className="mt-4">{etiqueta}</div>}
       <h2
         aria-live="polite"
-        className="mt-4 text-[18px] leading-tight font-medium tracking-[-0.015em] text-tinta"
+        className={`${etiqueta ? 'mt-3' : 'mt-4'} text-[18px] leading-tight font-medium tracking-[-0.015em] text-tinta`}
       >
         {titulo}
       </h2>
-      <p className="mt-2 max-w-[30ch] text-[13px] leading-normal text-balance text-tinta-suave">
+      <p className="mt-2 max-w-[32ch] text-[13px] leading-normal text-balance text-tinta-suave">
         {detalle}
       </p>
+      {nota && (
+        <p className="mt-3 flex max-w-[32ch] items-start gap-1.5 text-left text-[12px] leading-snug text-tinta-tenue">
+          <Sparkles size={12} strokeWidth={1.75} aria-hidden="true" className="mt-[2px] shrink-0" />
+          {nota}
+        </p>
+      )}
 
       {principal && (
         <button type="button" onClick={principal.alPulsar} className="boton-tinta mt-6 w-full">

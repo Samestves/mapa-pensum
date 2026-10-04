@@ -297,7 +297,7 @@ test('lo que merece una segunda lectura de cerca', async (t) => {
     const { dudas, repasos } = leerRejilla(sinLunes, conCabecera(celdaDe))
     assert.deepEqual(dudas, ['sin-dia'])
     // La linea mide 3 aqui: el recorte se mete eso por cada lado
-    assert.deepEqual(repasos, [{ x0: 3, x1: 98, ...fila(0) }])
+    assert.deepEqual(repasos, [{ zona: { x0: 3, x1: 98, ...fila(0) }, motivo: 'dia' }])
   })
 
   await t.test('dos bloques de la misma fila piden el dia una sola vez', () => {
@@ -313,7 +313,60 @@ test('lo que merece una segunda lectura de cerca', async (t) => {
     const { clases, dudas, repasos } = leerRejilla(sinAula, celdaDe)
     assert.equal(clases[0].aula, '')
     assert.deepEqual(dudas, [])
-    assert.deepEqual(repasos, [{ x0: columna(1).x0, x1: columna(2).x1, ...fila(0) }])
+    assert.deepEqual(repasos, [
+      { zona: { x0: columna(1).x0, x1: columna(2).x1, ...fila(0) }, motivo: 'detalle' },
+    ])
+  })
+
+  /* Toda la rejilla tiene celdas: la cabecera, la columna de los dias y los
+     bloques. Y los pixeles se fingen: una casilla esta ocupada si cae dentro
+     de algun bloque, se haya leido o no. */
+  const conDias = (celdaDe) => (caja) =>
+    conCabecera(celdaDe)(caja) ??
+    (caja.x1 < 100
+      ? [0, 1, 2]
+          .map((j) => ({ x0: 2, x1: 98, ...fila(j) }))
+          .find((c) => caja.y0 >= c.y0 && caja.y1 <= c.y1)
+      : null)
+  const pintadas = (bloques) => (casillas) =>
+    casillas.filter((c) =>
+      bloques.some((b) => {
+        const celda = bloque(b).celda
+        return c.x0 >= celda.x0 && c.x1 <= celda.x1 && c.y0 >= celda.y0 && c.y1 <= celda.y1
+      }),
+    )
+
+  await t.test('un bloque pintado que no se leyo pide leerse entero, y es una duda', () => {
+    const ancho = { ...DIBUJO, desde: 1, hasta: 2 }
+    const { palabras, celdaDe } = rejilla([ALGEBRA, ancho])
+    // De Dibujo no se leyo ni una palabra: el OCR se salto el bloque entero
+    const suyas = new Set(bloque(ancho).palabras.map((p) => `${p.texto}@${p.x0},${p.y0}`))
+    const leidas = palabras.filter((p) => !suyas.has(`${p.texto}@${p.x0},${p.y0}`))
+    const { clases, dudas, repasos } = leerRejilla(leidas, conDias(celdaDe), {
+      ocupadas: pintadas([ALGEBRA, ancho]),
+    })
+    assert.equal(clases.length, 1)
+    assert.deepEqual(dudas, ['sin-leer'])
+    // Las dos casillas seguidas del bloque son un solo tramo, y va primero
+    assert.deepEqual(repasos[0], {
+      zona: { x0: columna(1).x0, y0: fila(2).y0, x1: columna(2).x1, y1: fila(2).y1 },
+      motivo: 'bloque',
+    })
+  })
+
+  await t.test('sin ningun codigo leido, los bloques pintados siguen pidiendo leerse', () => {
+    const { palabras, celdaDe } = rejilla([ALGEBRA])
+    const sinCodigo = palabras.filter((p) => p.texto !== ALGEBRA.codigo)
+    const leido = leerRejilla(sinCodigo, conDias(celdaDe), { ocupadas: pintadas([ALGEBRA]) })
+    assert.deepEqual(leido.dudas, ['sin-clases', 'sin-leer'])
+    assert.equal(leido.repasos.length, 1)
+  })
+
+  await t.test('lo pintado que ya se leyo no se repasa', () => {
+    const { palabras, celdaDe } = rejilla([ALGEBRA, DIBUJO])
+    const leido = leerRejilla(palabras, conDias(celdaDe), { ocupadas: pintadas([ALGEBRA, DIBUJO]) })
+    assert.deepEqual(leido.dudas, [])
+    assert.deepEqual(leido.repasos, [])
   })
 
   await t.test('sustituir cambia solo las palabras de la zona', () => {

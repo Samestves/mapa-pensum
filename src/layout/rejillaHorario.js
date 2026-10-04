@@ -201,16 +201,113 @@ function textoDelBloque(ancla, palabras, celda) {
 }
 
 const mismaCelda = (a, b) => a && b && a.x0 === b.x0 && a.y0 === b.y0 && a.x1 === b.x1
+const solapan = (a, b) => a.y0 <= b.y1 && b.y0 <= a.y1
+
+/**
+ * Pone nombre a las filas que no lo tienen por su sitio entre las que si.
+ *
+ * Los dias de la rejilla van seguidos y en orden: si entre el Lunes y el
+ * Miercoles hay justo una fila sin nombre, es el Martes. Solo se nombra lo
+ * que encaja exacto. Si entre dos dias leidos no caben justas las filas que
+ * hay, o la fila esta antes del primero o despues del ultimo, se queda sin
+ * nombre y se repasa su celda.
+ *
+ * @param {{dia: string|null}[]} filas  de arriba abajo
+ */
+export function nombrarFilas(filas) {
+  const nombradas = filas.map((f) => ({ ...f }))
+  const conNombre = nombradas.map((f, i) => [i, DIAS.indexOf(f.dia)]).filter(([, d]) => d >= 0)
+  for (let k = 1; k < conNombre.length; k++) {
+    const [desde, diaDesde] = conNombre[k - 1]
+    const [hasta, diaHasta] = conNombre[k]
+    if (hasta - desde !== diaHasta - diaDesde) continue
+    for (let i = desde + 1; i < hasta; i++) nombradas[i].dia = DIAS[diaDesde + i - desde]
+  }
+  return nombradas
+}
+
+/**
+ * Las filas de la rejilla, de arriba abajo, cada una con su dia o sin el.
+ *
+ * Las de los dias leidos salen de la celda de su nombre. Pero un dia que el
+ * OCR no leyo dejaba su fila fuera de todo, y con ella cualquier bloque que
+ * tampoco se leyera. Por eso, si se puede, la columna de los dias se recorre
+ * por pixeles y aparecen tambien las filas sin nombre (ver nombrarFilas).
+ */
+function filasDeLaRejilla({ dias, celdaDe, filasEnColumna, columnaDias }) {
+  const leidas = new Map()
+  for (const { dia, caja } of dias) {
+    // Sin una celda que medir, la fila es el propio renglon del nombre
+    const { y0, y1 } = celdaDe(caja) ?? caja
+    leidas.set(y0, { y0, y1, dia })
+  }
+  const conNombre = [...leidas.values()]
+  if (!filasEnColumna || !columnaDias || !dias.length) {
+    return conNombre.sort((a, b) => a.y0 - b.y0)
+  }
+  const sinNombre = filasEnColumna(columnaDias, dias[0].caja)
+    .filter((medida) => !conNombre.some((fila) => solapan(fila, medida)))
+    .map(({ y0, y1 }) => ({ y0, y1, dia: null }))
+  return nombrarFilas([...conNombre, ...sinNombre].sort((a, b) => a.y0 - b.y0))
+}
+
+/**
+ * Los bloques de clase que la lectura de la pagina se salto entera.
+ *
+ * Pasa, y sin dejar rastro: el OCR pasa la captura a blanco y negro con un
+ * solo umbral para toda la imagen, y segun el color de un bloque, sus letras
+ * blancas caen del mismo lado que su fondo y desaparecen. Sin su codigo no hay
+ * clase, y sin clase no hay ninguna duda que avise de que falta: el
+ * estudiante añadiria su semana a medias creyendola entera.
+ *
+ * Asi que se mira la rejilla casilla por casilla -la columna de cada franja
+ * por cada fila- y se buscan las que tienen color de clase (ver `ocupadas`)
+ * sin que las tape ninguna clase leida. Las seguidas de una misma fila se
+ * juntan en un tramo, que suele ser un solo bloque, y cada tramo se vuelve a
+ * leer recortado: con un solo color de fondo, el umbral ya no falla.
+ *
+ * @returns {{zona: object, fila: object}[]}
+ */
+function bloquesSinLeer({ franjas, filas, celdas, celdaDe, ocupadas }) {
+  if (!ocupadas || !filas.length) return []
+  const columnas = franjas.map((f) => celdaDe(f.caja))
+  if (columnas.some((c) => !c)) return []
+
+  const libres = filas
+    .flatMap((fila) =>
+      columnas.map((columna, j) => ({
+        j,
+        fila,
+        caja: { x0: columna.x0, y0: fila.y0, x1: columna.x1, y1: fila.y1 },
+      })),
+    )
+    .filter(({ caja }) => !celdas.some((celda) => celda && dentro(celda, caja)))
+  const llenas = new Set(ocupadas(libres.map((l) => l.caja)))
+
+  const tramos = []
+  for (const { j, fila, caja } of libres) {
+    if (!llenas.has(caja)) continue
+    const ultimo = tramos[tramos.length - 1]
+    if (ultimo && ultimo.fila === fila && ultimo.j === j - 1) {
+      ultimo.zona.x1 = caja.x1
+      ultimo.j = j
+    } else {
+      tramos.push({ j, fila, zona: { ...caja } })
+    }
+  }
+  return tramos
+}
 
 /**
  * Las clases de una rejilla de horario.
  *
  * `dudas` es lo que decide si el resultado se usa tal cual o si se pregunta
- * al servidor: vacia quiere decir que se encontro la rejilla y que cada
- * bloque tiene su codigo, su dia y sus horas.
+ * a la IA: vacia quiere decir que se encontro la rejilla y que cada bloque
+ * tiene su codigo, su dia y sus horas.
  *
  *   'sin-rejilla'  no hay cabecera de franjas: no es este formato
  *   'sin-clases'   hay rejilla pero ningun codigo de materia
+ *   'sin-leer'     un bloque con color de clase en el que no se leyo nada
  *   'sin-dia'      un bloque no cae en la fila de ningun dia
  *   'sin-hora'     un bloque no tapa ninguna franja, o no se supo cuanto mide
  *   'pegadas'      dos codigos en la misma celda: dos bloques sin separar
@@ -218,17 +315,28 @@ const mismaCelda = (a, b) => a && b && a.x0 === b.x0 && a.y0 === b.y0 && a.x1 ==
  *   'no-esta'      un codigo que no es de este pensum: una cifra mal leida
  *
  * `repasos` son las zonas que merece la pena volver a leer de cerca, cada una
- * por separado: la celda del dia de un bloque que se quedo sin dia, y el
- * bloque al que le falta la seccion o el aula. Leyendo la pagina entera el
- * OCR se salta a veces una palabra suelta; recortada, no.
+ * por separado y con su motivo. Leyendo la pagina entera el OCR se salta a
+ * veces una palabra suelta, o un bloque entero; recortado, no. Van en orden
+ * de lo que hacen falta, por si no da tiempo a todas:
+ *
+ *   'bloque'   un bloque sin leer: sin el falta una clase
+ *   'dia'      la celda del dia de una fila sin nombre que tiene clases: sin
+ *              dia, la clase no se puede añadir
+ *   'detalle'  un bloque al que le falta la seccion o el aula: sin ellas, si
  *
  * @param {{texto: string, x0: number, y0: number, x1: number, y1: number}[]} palabras
  * @param {(caja: object) => object|null} celdaDe  la celda que rodea a una caja
  * @param {object} [opciones]
  * @param {Set<string>} [opciones.codigos]  los codigos del pensum abierto
- * @returns {{clases: object[], dudas: string[], repasos: object[]}}
+ * @param {(casillas: object[]) => object[]} [opciones.ocupadas]  de unas
+ *   casillas de la rejilla, las que tienen color de clase. Sin ella no se
+ *   buscan bloques sin leer.
+ * @param {(columna: object, muestra: object) => {y0: number, y1: number}[]} [opciones.filasEnColumna]
+ *   las filas de una columna de la rejilla, medidas por pixeles a partir del
+ *   color de fondo de `muestra`. Sin ella solo hay las filas de los dias leidos.
+ * @returns {{clases: object[], dudas: string[], repasos: {zona: object, motivo: string}[]}}
  */
-export function leerRejilla(palabras, celdaDe, { codigos } = {}) {
+export function leerRejilla(palabras, celdaDe, { codigos, ocupadas, filasEnColumna } = {}) {
   const franjas = franjasDe(palabras)
   if (!franjas.length) return { clases: [], dudas: ['sin-rejilla'], repasos: [] }
 
@@ -243,14 +351,6 @@ export function leerRejilla(palabras, celdaDe, { codigos } = {}) {
     .map((p) => ({ dia: diaDe(p.texto), caja: p }))
     .filter((d) => d.dia)
 
-  const anclas = debajo
-    .map((p) => ({ palabra: p, codigo: codigoDe(p.texto) }))
-    .filter((a) => a.codigo)
-  if (!anclas.length) return { clases: [], dudas: ['sin-clases'], repasos: [] }
-
-  const dudas = new Set()
-  const repasos = new Map()
-  const celdas = anclas.map((a) => celdaDe(a.palabra))
   /* Donde acaba la columna de los dias: en el borde de la primera celda de
      la cabecera. Sin ese borde no se repasa ningun dia: recortar a ojo meteria
      en el recorte el texto del primer bloque de la fila. */
@@ -261,22 +361,56 @@ export function leerRejilla(palabras, celdaDe, { codigos } = {}) {
      porque una linea vertical en el borde el OCR la lee como una "l". */
   const linea = primera && segunda ? Math.max(0, segunda.x0 - primera.x1 - 1) : 0
   const bordeDias = (primera?.x0 ?? 0) - 1 - linea
+  const hayColumnaDias = Boolean(primera) && bordeDias > linea
+  const celdaDelDia = (fila) => ({ x0: linea, y0: fila.y0, x1: bordeDias, y1: fila.y1 })
+
+  const filas = filasDeLaRejilla({
+    dias,
+    celdaDe,
+    filasEnColumna,
+    columnaDias: hayColumnaDias && { x0: linea, y0: primera.y1 + 1, x1: bordeDias },
+  })
+
+  const anclas = debajo
+    .map((p) => ({ palabra: p, codigo: codigoDe(p.texto) }))
+    .filter((a) => a.codigo)
+  const celdas = anclas.map((a) => celdaDe(a.palabra))
+
+  const repasosDeDias = new Map()
+  const repasarDia = (fila) => {
+    if (hayColumnaDias) repasosDeDias.set(fila.y0, { zona: celdaDelDia(fila), motivo: 'dia' })
+  }
+  const sinLeer = bloquesSinLeer({ franjas, filas, celdas, celdaDe, ocupadas }).map(
+    ({ zona, fila }) => {
+      if (!fila.dia) repasarDia(fila)
+      return { zona, motivo: 'bloque' }
+    },
+  )
+
+  if (!anclas.length) {
+    return {
+      clases: [],
+      dudas: sinLeer.length ? ['sin-clases', 'sin-leer'] : ['sin-clases'],
+      repasos: [...sinLeer, ...repasosDeDias.values()],
+    }
+  }
+
+  const dudas = new Set(sinLeer.length ? ['sin-leer'] : [])
+  const repasosDeDetalles = []
 
   const clases = anclas.map(({ palabra, codigo }, i) => {
     const celda = celdas[i]
     const tapadas = celda
       ? franjas.filter((f) => centroX(f.caja) >= celda.x0 && centroX(f.caja) <= celda.x1)
       : []
-    const dia = celda
-      ? dias.find((d) => centroY(d.caja) >= celda.y0 && centroY(d.caja) <= celda.y1)
+    const fila = celda
+      ? filas.find((f) => f.dia && centroY(f) >= celda.y0 && centroY(f) <= celda.y1)
       : null
 
     if (!tapadas.length) dudas.add('sin-hora')
-    if (!dia) {
+    if (!fila) {
       dudas.add('sin-dia')
-      if (celda && bordeDias > linea) {
-        repasos.set(`dia-${celda.y0}`, { x0: linea, y0: celda.y0, x1: bordeDias, y1: celda.y1 })
-      }
+      if (celda) repasarDia(celda)
     }
     if (celdas.some((otra, j) => j !== i && mismaCelda(otra, celda))) dudas.add('pegadas')
     if (codigos && !codigos.has(codigo)) dudas.add('no-esta')
@@ -284,11 +418,13 @@ export function leerRejilla(palabras, celdaDe, { codigos } = {}) {
     const texto = celda
       ? textoDelBloque(palabra, debajo, celda)
       : { nombre: '', seccion: '', aula: '' }
-    if (celda && !(texto.seccion && texto.aula)) repasos.set(`bloque-${i}`, celda)
+    if (celda && !(texto.seccion && texto.aula)) {
+      repasosDeDetalles.push({ zona: celda, motivo: 'detalle' })
+    }
     return {
       codigo,
       ...texto,
-      dia: dia?.dia ?? '',
+      dia: fila?.dia ?? '',
       inicio: tapadas[0]?.inicio ?? '',
       fin: tapadas[tapadas.length - 1]?.fin ?? '',
       profesor: '',
@@ -297,5 +433,9 @@ export function leerRejilla(palabras, celdaDe, { codigos } = {}) {
 
   if (debajo.filter(esSeccion).length > anclas.length) dudas.add('de-menos')
 
-  return { clases, dudas: [...dudas], repasos: [...repasos.values()] }
+  return {
+    clases,
+    dudas: [...dudas],
+    repasos: [...sinLeer, ...repasosDeDias.values(), ...repasosDeDetalles],
+  }
 }

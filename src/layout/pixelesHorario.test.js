@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { celdaDe, colorDeFondo } from './pixelesHorario.js'
+import { celdaDe, colorDeFondo, colorDeZona, ocupadas } from './pixelesHorario.js'
 
 /* Una imagen pintada a mano, con los mismos campos que un ImageData */
 function lienzo(ancho, alto, color) {
@@ -99,5 +99,31 @@ test('la celda de una palabra', async (t) => {
       x1: 59,
       y1: 29,
     })
+  })
+})
+
+test('las casillas con color de clase', async (t) => {
+  /* Las seis casillas de la escena, sueltas: arriba las tapan los dos bloques
+     azules, abajo estan vacias */
+  const casillas = [2, 64].flatMap((y0) =>
+    [2, 104, 206].map((x0) => ({ x0, y0, x1: x0 + 99, y1: y0 + 59 })),
+  )
+
+  await t.test('el color de una casilla es el de su fondo, aunque tenga letras', () => {
+    const { imagen } = escena()
+    assert.deepEqual(colorDeZona(imagen, casillas[1]), AZUL)
+    assert.deepEqual(colorDeZona(imagen, casillas[4]), VACIA)
+  })
+
+  await t.test('ocupadas son las que no tienen el color que mas se repite', () => {
+    const { imagen } = escena()
+    // Sin las del bloque leido: las tres vacias y la del bloque de la derecha
+    const libres = [casillas[2], casillas[3], casillas[4], casillas[5]]
+    assert.deepEqual(ocupadas(imagen, libres), [casillas[2]])
+  })
+
+  await t.test('si todas son del mismo color, no hay ninguna ocupada', () => {
+    const { imagen } = escena()
+    assert.deepEqual(ocupadas(imagen, casillas.slice(3)), [])
   })
 })

@@ -1,8 +1,8 @@
 /* El lado del navegador de la lectura de horarios: reducir la imagen, leerla
-   aqui mismo si se puede y, si no, preguntar. La clave no esta aqui ni puede
-   estarlo -Vite sustituye las VITE_* dentro del bundle, o sea a la vista de
-   cualquiera-, asi que quien habla con Google es api/leer-horario.js, en el
-   servidor. */
+   aqui mismo si se puede y, si no, preguntarle a la IA. La clave no esta aqui
+   ni puede estarlo -Vite sustituye las VITE_* dentro del bundle, o sea a la
+   vista de cualquiera-, asi que quien habla con Google es api/leer-horario.js,
+   en el servidor. */
 
 /* Lado largo maximo al que se reduce antes de subir.
 
@@ -39,12 +39,12 @@ export const SALIDA = {
   A_MANO: 'a-mano',
 }
 
-/* Las averias del lector -un modelo jubilado, una clave sin permiso- se dicen
+/* Las averias de la IA -un modelo jubilado, una clave sin permiso- se dicen
    igual todas. A quien quiere su horario le da lo mismo cual sea, y lo unico
    que tiene que saber es que no es por su foto. Cual fue queda en la consola
    y en el registro del servidor, para quien lo arregla. */
 const AVERIA = {
-  titulo: 'El lector está fuera de servicio',
+  titulo: 'La IA está fuera de servicio',
   consejo: 'No es por tu imagen. Mientras vuelve, puedes armar el horario a mano.',
   salida: SALIDA.A_MANO,
 }
@@ -53,34 +53,34 @@ const AVERIA = {
  * Cada fallo, en cristiano: que paso, que hacer y con que salida. La vista
  * los enseña tal cual.
  *
- * `aplazado` marca los que no son un error sino un "todavia no": el lector
- * vuelve solo, mañana o dentro de una hora. Se dibujan con el reloj de arena
+ * `aplazado` marca los que no son un error sino un "todavia no": la IA
+ * vuelve sola, mañana o dentro de una hora. Se dibujan con el reloj de arena
  * y no con el aviso.
  */
 const FALLOS = {
   /* Cola y cuota son cosas distintas y hay que decirlo: la primera se pasa
-     en segundos -el lector atiende unas veinte lecturas por minuto, o Google
+     en segundos -la IA atiende unas veinte lecturas por minuto, o Google
      esta lleno un momento- y la segunda mañana. Con el mismo mensaje nadie
      sabe si quedarse mirando la pantalla. */
   cola: {
     titulo: 'Sigue habiendo cola',
-    consejo: 'Lo intenté varias veces y no hubo sitio. Tu imagen sigue aquí.',
+    consejo: 'Lo intenté varias veces y la IA no tuvo sitio. Tu imagen sigue aquí.',
     salida: SALIDA.REINTENTAR,
   },
   cuota: {
-    titulo: 'El lector vuelve mañana',
-    consejo: 'Hoy ya se leyeron todos los horarios que permite. Tu horario no se ha tocado.',
+    titulo: 'La IA vuelve mañana',
+    consejo: 'Hoy ya leyó todos los horarios que permite. Tu horario no se ha tocado.',
     salida: SALIDA.A_MANO,
     aplazado: true,
   },
   muchas: {
     titulo: 'Muchas lecturas seguidas',
-    consejo: 'El lector te deja volver dentro de una hora. Mientras, puedes armarlo a mano.',
+    consejo: 'La IA te deja volver dentro de una hora. Mientras, puedes armarlo a mano.',
     salida: SALIDA.A_MANO,
     aplazado: true,
   },
   red: {
-    titulo: 'Sin conexión con el lector',
+    titulo: 'Sin conexión',
     consejo: 'Revisa tu conexión y vuelve a intentarlo. Tu imagen sigue aquí.',
     salida: SALIDA.REINTENTAR,
   },
@@ -143,9 +143,40 @@ const FALLOS = {
     salida: SALIDA.A_MANO,
   },
   'sin-servidor': {
-    titulo: 'El lector no está aquí',
+    titulo: 'La IA no está aquí',
     consejo: 'En desarrollo local hace falta arrancar con "vercel dev".',
     salida: SALIDA.A_MANO,
+  },
+
+  /* Los del lector del aparato. Solo se ven si la IA tampoco pudo, y por eso
+     no hablan de ella: lo que dicen es lo que el estudiante puede arreglar. */
+  'ocr-red': {
+    titulo: 'No se pudo bajar el lector',
+    consejo: 'La primera vez hace falta conexión; después lee sin internet. Tu imagen sigue aquí.',
+    salida: SALIDA.REINTENTAR,
+  },
+  'ocr-lento': {
+    titulo: 'La lectura se hizo muy larga',
+    consejo: 'Cierra otras aplicaciones y vuelve a intentarlo: la segunda vez va más rápido.',
+    salida: SALIDA.REINTENTAR,
+  },
+  'ocr-fallo': {
+    titulo: 'Este navegador no pudo leerla',
+    consejo: 'Prueba desde Chrome actualizado, o arma el horario a mano.',
+    salida: SALIDA.A_MANO,
+  },
+  /* El lector del aparato leyo, pero no lo que esperaba */
+  formato: {
+    titulo: 'No reconocí tu horario',
+    consejo:
+      'Sin la IA solo leo la captura del sistema de la UDO: la tabla con los días a la izquierda y las horas arriba.',
+    salida: SALIDA.OTRA_IMAGEN,
+  },
+  'sin-codigos': {
+    titulo: 'No pude leer los códigos',
+    consejo:
+      'Encontré la tabla, pero no los códigos de las materias. Prueba con una captura más nítida y sin recortar.',
+    salida: SALIDA.OTRA_IMAGEN,
   },
 }
 
@@ -156,8 +187,10 @@ export class FalloLectura extends Error {
    * @param {object} [extra]
    * @param {string} [extra.tecnico]  lo que dijo el servidor, para quien lo arregla
    * @param {number} [extra.espera]   segundos tras los que merece la pena volver
+   * @param {string} [extra.nota]     una linea aparte sobre la IA, cuando el
+   *   fallo es del aparato pero la IA tampoco estaba (ver falloDeLosDos)
    */
-  constructor(codigo, { tecnico, espera } = {}) {
+  constructor(codigo, { tecnico, espera, nota } = {}) {
     const { titulo, consejo, salida, aplazado = false } = FALLOS[codigo] ?? AVERIA
     super(titulo)
     this.codigo = codigo
@@ -167,6 +200,7 @@ export class FalloLectura extends Error {
     this.aplazado = aplazado
     this.tecnico = tecnico
     this.espera = espera
+    this.nota = nota
   }
 }
 
@@ -285,88 +319,135 @@ export async function leerHorarioDeImagen({ base64, tipo, materias, senal }) {
   return datos?.clases ?? []
 }
 
-/* Lo que se espera al lector del aparato antes de darlo por perdido. La
-   primera vez tiene que bajarse varios megas, y en un telefono viejo leer
-   cuesta varios segundos; pero pasado este rato es mejor preguntarle al
-   servidor que seguir con la pantalla de "leyendo" sin moverse. */
-const TOPE_LOCAL_MS = 30000
+/* ---- En el aparato -------------------------------------------------------- */
 
 /* Lo ya leido en el aparato, por archivo. Reintentar vuelve a pasar por aqui
    con la misma imagen, y releerla serian varios segundos para llegar al mismo
-   sitio. Solo se guarda lo que salio bien: un fallo -sin red para bajar el
+   sitio. Solo se guarda lo que se leyo: un fallo -sin red para bajar el
    lector- puede no repetirse a la segunda. */
 const YA_LEIDAS = new WeakMap()
 
+/* Tesseract cuenta su avance decenas de veces por segundo, y cada aviso
+   repinta la hoja. Pasa siempre el primero de cada paso y, dentro de un paso,
+   unos pocos por segundo: un telefono modesto tiene mejores cosas que hacer
+   mientras lee que repintar una barra. */
+const RITMO_MS = 150
+
+function aRitmo(alAvance) {
+  let paso = null
+  let cuando = 0
+  return (avance) => {
+    const ahora = performance.now()
+    if (avance.paso === paso && ahora - cuando < RITMO_MS) return
+    paso = avance.paso
+    cuando = ahora
+    alAvance(avance)
+  }
+}
+
 /**
- * Lee el horario en el propio aparato, sin servidor, sin cupo y sin que la
+ * Empieza a bajar el lector del aparato antes de que haga falta.
+ *
+ * Se llama al tocar "Subir una foto": mientras se busca la captura en la
+ * galeria, que son unos segundos, el lector ya va llegando. Con el ahorro de
+ * datos activado no se adelanta nada; se bajara al leer, si hace falta.
+ */
+export function precalentarLector() {
+  if (navigator.connection?.saveData) return
+  import('./lectorLocal.js').then((lector) => lector.precargar()).catch(() => {})
+}
+
+/**
+ * Lee el horario en el propio aparato: sin servidor, sin cupo y sin que la
  * imagen salga de el.
  *
  * Solo entiende la captura del sistema de la universidad. Devuelve las mismas
- * filas que el servidor y, al lado, sus `dudas`: si no hay ninguna, la
- * lectura vale tal cual; si hay, es un borrador que solo sirve cuando el
- * servidor no contesta.
+ * filas que la IA y, al lado, sus `dudas` (ver valorDe).
  *
- * Nunca revienta. Si el lector no carga -sin red, un navegador viejo- o
- * tarda demasiado, devuelve null y se sigue por el servidor como si esto no
- * existiera.
+ * Revienta con un FalloLectura 'ocr-*' si no puede, y con un AbortError si se
+ * corta con `senal`. Por donde va lo cuenta con `alAvance` (ver
+ * leerEnElAparato en lectorLocal.js).
  *
  * @param {object} p
  * @param {Blob} p.archivo  la imagen original, no la preparada para subir
  * @param {{codigo: string}[]} p.materias  el pensum abierto
  * @param {AbortSignal} p.senal
- * @returns {Promise<{clases: object[], dudas: string[]}|null>}
+ * @param {(avance: object) => void} [p.alAvance]
+ * @returns {Promise<{clases: object[], dudas: string[]}>}
  */
-export async function leerHorarioEnElAparato({ archivo, materias, senal }) {
+export async function leerHorarioEnElAparato({ archivo, materias, senal, alAvance = () => {} }) {
   if (YA_LEIDAS.has(archivo)) return YA_LEIDAS.get(archivo)
 
-  const control = new AbortController()
-  const cortar = () => control.abort()
-  const reloj = setTimeout(cortar, TOPE_LOCAL_MS)
-  senal.addEventListener('abort', cortar, { once: true })
+  /* El lector entero -tesseract y lo suyo- vive en un trozo aparte que solo
+     se pide aqui y al ir a subir una foto: quien no sube ninguna no se lo
+     baja nunca. */
+  let lector
+  try {
+    lector = await import('./lectorLocal.js')
+  } catch (error) {
+    throw new FalloLectura('ocr-red', { tecnico: String(error?.message ?? error) })
+  }
 
   try {
-    /* El lector entero -tesseract y lo suyo- vive en un trozo aparte que solo
-       se pide aqui: quien no sube una foto no se lo baja nunca. */
-    const { leerEnElAparato } = await import('./lectorLocal.js')
-    const lectura = leerEnElAparato(archivo, {
+    const leido = await lector.leerEnElAparato(archivo, {
       codigos: new Set(materias.map((m) => m.codigo)),
-      senal: control.signal,
+      senal,
+      alAvance: aRitmo(alAvance),
     })
-    /* Cortar el trabajador a media lectura puede dejar su promesa sin
-       resolver: se compite contra la señal para no quedarse esperandola. */
-    const cortado = new Promise((_, fallar) =>
-      control.signal.addEventListener('abort', () => fallar(new Error('cortado o sin tiempo')), {
-        once: true,
-      }),
-    )
-    const leido = await Promise.race([lectura, cortado])
     YA_LEIDAS.set(archivo, leido)
     return leido
   } catch (error) {
-    if (!senal.aborted) {
-      console.warn(
-        `[lector] en el aparato no se pudo · ${error?.message ?? error ?? 'sin detalle'}`,
-      )
-    }
-    return null
-  } finally {
-    clearTimeout(reloj)
-    senal.removeEventListener('abort', cortar)
+    if (error?.name === 'AbortError' || error instanceof FalloLectura) throw error
+    throw new FalloLectura('ocr-fallo', { tecnico: String(error?.message ?? error) })
   }
 }
 
-/**
- * Si lo leido en el aparato se puede usar sin preguntarle al servidor: se
- * reconocio la rejilla y cada bloque salio con su codigo, su dia y sus horas.
- */
-export const esFiable = (leido) => Boolean(leido?.clases.length) && leido.dudas.length === 0
+/** Lo que vale una lectura del aparato (ver valorDe) */
+export const VALOR = {
+  /* Se reconocio la rejilla y cada bloque salio con su codigo, su dia y sus
+     horas: se revisa tal cual, y la IA no añadiria nada */
+  LISTO: 'listo',
+  /* Hay clases, pero tambien dudas: es un borrador. Se le pregunta a la IA
+     una vez y, si no puede, se revisa el borrador, que la revision marca lo
+     que falta y se arregla en dos toques. */
+  BORRADOR: 'borrador',
+  /* No hay nada que revisar: o no se pudo leer, o no es la captura del
+     sistema. Solo queda la IA. */
+  NADA: 'nada',
+}
+
+/** @param {{clases: object[], dudas: string[]}} [leido] */
+export function valorDe(leido) {
+  if (!leido?.clases.length) return VALOR.NADA
+  return leido.dudas.length ? VALOR.BORRADOR : VALOR.LISTO
+}
+
+/* Lo que se dice de la IA cuando el fallo que se enseña es el del aparato */
+const NOTA_DE_LA_IA = {
+  cuota: 'La IA ya leyó hoy todos los horarios que permite.',
+  muchas: 'La IA te deja volver dentro de una hora.',
+}
+const LA_IA_NO_ESTA = 'La IA no está disponible ahora.'
 
 /**
- * Si lo leido en el aparato, aun con dudas, es mejor que enseñar este fallo
- * del servidor. Casi siempre lo es: la revision marca lo que falta y se
- * arregla en dos toques, y un "vuelve mañana" no se arregla. La excepcion es
- * cuando el servidor SI leyo y no vio clases: ahi el borrador del aparato es
- * ruido de una imagen que no es un horario.
+ * El fallo que se enseña cuando no pudieron ni el aparato ni la IA.
+ *
+ * Si lo de la IA se arregla ahora mismo -reintentando, con otra imagen-, o si
+ * leyo y no vio clases, manda la IA: eso es lo que hay que hacer. Pero si la
+ * IA no esta -se acabo el cupo del dia, una averia-, decir solo eso no le
+ * sirve a nadie: lo que el estudiante puede arreglar es lo que le paso al
+ * aparato, y lo de la IA va en una nota aparte.
+ *
+ * @param {{leido?: {dudas: string[]}, fallo?: FalloLectura}} local
+ *   lo que salio del aparato: lo leido, sin clases, o por que no leyo
+ * @param {FalloLectura} ia
  */
-export const valeElBorrador = (leido, fallo) =>
-  Boolean(leido?.clases.length) && fallo.codigo !== 'sin-clases'
+export function falloDeLosDos(local, ia) {
+  if (ia.salida !== SALIDA.A_MANO) return ia
+  const codigo =
+    local.fallo?.codigo ?? (local.leido?.dudas.includes('sin-clases') ? 'sin-codigos' : 'formato')
+  return new FalloLectura(codigo, {
+    tecnico: local.fallo?.tecnico,
+    nota: NOTA_DE_LA_IA[ia.codigo] ?? LA_IA_NO_ESTA,
+  })
+}

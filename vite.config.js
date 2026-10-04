@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -59,8 +59,21 @@ const IDIOMA_LECTOR = {
   ruta: 'lector/4.0.0_best_int/eng.traineddata.gz',
 }
 
+/* Lo que mide cada archivo del lector, para que la pantalla pueda decir
+   cuanto va de la bajada. El servidor los manda comprimidos y sin decir
+   cuanto miden ya abiertos, que es lo que se cuenta al bajarlos (ver
+   precargar en src/data/lectorLocal.js). */
+const PESOS_DEL_LECTOR = 'virtual:pesos-del-lector'
+const ARCHIVOS_DEL_LECTOR = {
+  trabajador: 'node_modules/tesseract.js/dist/worker.min.js',
+  nucleoRapido: 'node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js',
+  nucleoLento: 'node_modules/tesseract.js-core/tesseract-core-lstm.wasm.js',
+  idioma: IDIOMA_LECTOR.origen,
+}
+
 /**
- * Publica el modelo de idioma del lector con su nombre de siempre.
+ * Publica el modelo de idioma del lector con su nombre de siempre, y le da a
+ * la aplicacion lo que pesa cada archivo del lector.
  *
  * Los demas archivos de tesseract se importan con `?url` y Vite les pone su
  * hash. Este no puede: tesseract arma la direccion el solo, como
@@ -71,9 +84,17 @@ const IDIOMA_LECTOR = {
  * Se copia desde node_modules en cada build en vez de vivir en public/: son
  * tres megas de binario que no pintan nada en el repositorio.
  */
-function idiomaDelLector() {
+function lectorDeHorarios() {
   return {
-    name: 'idioma-del-lector',
+    name: 'lector-de-horarios',
+    resolveId(id) {
+      return id === PESOS_DEL_LECTOR ? `\0${id}` : null
+    },
+    load(id) {
+      if (id !== `\0${PESOS_DEL_LECTOR}`) return null
+      const pesos = Object.entries(ARCHIVOS_DEL_LECTOR).map(([k, ruta]) => [k, statSync(ruta).size])
+      return `export default ${JSON.stringify(Object.fromEntries(pesos))}`
+    },
     generateBundle() {
       this.emitFile({
         type: 'asset',
@@ -93,5 +114,5 @@ function idiomaDelLector() {
 
 // Tailwind v4 entra como plugin de Vite: no hace falta postcss.config ni tailwind.config
 export default defineConfig({
-  plugins: [react(), tailwindcss(), precargarFuentes(), idiomaDelLector()],
+  plugins: [react(), tailwindcss(), precargarFuentes(), lectorDeHorarios()],
 })

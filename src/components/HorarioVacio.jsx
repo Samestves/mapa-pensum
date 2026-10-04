@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { ImagePlus, Plus } from 'lucide-react'
-import { FORMATOS } from '../data/leerHorario'
+import { FORMATOS, precalentarLector } from '../data/leerHorario'
 import { SITUACION } from '../layout/situacion'
 import { ASPECTO } from '../theme/situacion'
 import { IconoSituacion } from './IconoSituacion'
@@ -198,7 +198,11 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
         >
           <button
             type="button"
-            onClick={() => refArchivo.current?.click()}
+            onClick={() => {
+              // El lector va llegando mientras se busca la captura en la galeria
+              precalentarLector()
+              refArchivo.current?.click()
+            }}
             onPointerEnter={() => setFoco(null)}
             onFocus={() => setFoco(null)}
             className="boton-tinta h-[52px] w-full rounded-2xl text-[15px]"

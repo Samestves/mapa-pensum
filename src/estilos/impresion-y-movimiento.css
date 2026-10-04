@@ -101,10 +101,19 @@
   .lectura-muestra,
   .lector-barrido,
   .lector-lineas > *,
+  .lector-relevo,
   .lector-cara,
   .lector-arco,
+  .lector-progreso-relleno,
   .pulso-ahora::after {
     animation: none;
+  }
+
+  /* Sin ir y venir, la raya sin medida se queda entera y tenue: dice que
+     algo pasa sin fingir cuanto falta. */
+  .lector-progreso[data-indeterminado] .lector-progreso-relleno {
+    width: 100%;
+    opacity: 0.3;
   }
 
   /* La de salida se deja: sin ella el aviso se quedaria en pantalla los
@@ -129,7 +138,8 @@
   .materia-chevron,
   .casilla-leida,
   .casilla-leida::after,
-  .casilla-leida > svg {
+  .casilla-leida > svg,
+  .lector-progreso-relleno {
     transition: none;
   }
 

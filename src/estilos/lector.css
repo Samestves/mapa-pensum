@@ -107,6 +107,73 @@
   }
 }
 
+/* Al cambiar de paso, el titulo nuevo entra igual que entro el primero, pero
+   mas corto: es lo que dice que algo avanzo. */
+.lector-relevo {
+  animation: lector-entrar 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* ---- Quien lee ----
+   Una pastilla discreta con el nombre en tinta y el donde en suave. No lleva
+   color: el OCR y la IA no son mejor ni peor, son sitios distintos, y el
+   icono basta para distinguirlos de un vistazo. */
+.motor-lector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--panel-borde);
+  border-radius: 999px;
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--tinta-suave);
+  white-space: nowrap;
+}
+
+.motor-lector > svg {
+  flex-shrink: 0;
+  color: var(--tinta-tenue);
+}
+
+/* ---- El avance ----
+   Una raya fina: el riel y lo que va del paso, que crece con transform para
+   no repintar nada. Cuando no se sabe cuanto falta, un trozo va y viene. */
+.lector-progreso {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--tinta) 12%, transparent);
+}
+
+.lector-progreso-relleno {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--tinta);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms ease-out;
+}
+
+.lector-progreso[data-indeterminado] .lector-progreso-relleno {
+  right: auto;
+  width: 34%;
+  transition: none;
+  animation: lector-ir-y-venir 1600ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes lector-ir-y-venir {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
 /* Al cambiar de cara, la nueva se funde en vez de aparecer de golpe. */
 .lector-cara {
   animation: lector-fundir 320ms ease both;
@@ -125,6 +192,7 @@
    entrar es una capa mas que el telefono tiene que crear (ver data/ligero.js).
    La linea de lectura se queda: es lo unico que dice que se esta leyendo. */
 [data-ligero] .lector-lineas > *,
+[data-ligero] .lector-relevo,
 [data-ligero] .lector-cara {
   animation: none;
 }

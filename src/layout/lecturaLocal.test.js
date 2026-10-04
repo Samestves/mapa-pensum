@@ -164,3 +164,134 @@ test('leer una captura', async (t) => {
     assert.equal(leido.clases.length, 1)
   })
 })
+
+/* Sin el dia y sin el aula: hay dos repasos, y el del dia va primero */
+const SIN_DIA_NI_AULA = {
+  pagina: [...CABECERA, CODIGO, NOMBRE, ...DETALLE.slice(0, 2)],
+  zonas: [[DIA], [CODIGO, NOMBRE, ...DETALLE]],
+}
+
+test('los repasos tienen un plazo', async (t) => {
+  await t.test('con tiempo se repasa todo', async () => {
+    const leido = await leerCaptura(captura(SIN_DIA_NI_AULA))
+    assert.deepEqual(leido, { clases: [CLASE], dudas: [], lecturas: 3 })
+  })
+
+  await t.test('sin tiempo se repasa lo que hace falta, y no los detalles', async () => {
+    // Un reloj que avanza cada vez que se mira, y ningun plazo
+    let reloj = 0
+    const leido = await leerCaptura(captura(SIN_DIA_NI_AULA), {
+      plazoDeRepasos: 0,
+      ahora: () => (reloj += 10),
+    })
+    assert.deepEqual(leido, { clases: [{ ...CLASE, aula: '' }], dudas: [], lecturas: 2 })
+  })
+
+  await t.test('cuenta cada paso al empezarlo', async () => {
+    const pasos = []
+    await leerCaptura(captura(SIN_DIA_NI_AULA), { alAvance: (a) => pasos.push(a) })
+    assert.deepEqual(pasos, [
+      { paso: 'leyendo' },
+      { paso: 'repasando', motivo: 'dia', hechos: 0, total: 2 },
+      { paso: 'repasando', motivo: 'detalle', hechos: 1, total: 2 },
+    ])
+  })
+
+  await t.test(
+    'con dudas y letra pequeña se lee otra vez mas grande, y se cuenta aparte',
+    async () => {
+      // La cabecera con letra de 4 en una captura de 300: sale pequeña aun ampliada
+      const chica = CABECERA.map((p) => ({ ...p, y1: p.y0 + 4 }))
+      const pasos = []
+      await leerCaptura(captura({ pagina: [...chica, CODIGO, NOMBRE, ...DETALLE] }), {
+        alAvance: (a) => pasos.push(a.paso),
+      })
+      assert.deepEqual(pasos.slice(0, 2), ['leyendo', 'acercando'])
+    },
+  )
+
+  await t.test('si lo leido ya vale, no se vuelve a leer aunque la letra sea pequeña', async () => {
+    const chica = CABECERA.map((p) => ({ ...p, y1: p.y0 + 4 }))
+    const c = captura({ pagina: [...chica, DIA, CODIGO, NOMBRE, ...DETALLE] })
+    assert.equal((await leerCaptura(c)).lecturas, 1)
+  })
+})
+
+/* La misma tabla, en medio de una pagina lisa mas grande: `arriba` y
+   `izquierda` es donde empieza. Cada lectura de la pagina devuelve las
+   palabras que se le digan, ya en medidas del recorte que se pidio. */
+const FONDO = [18, 20, 22]
+
+function capturaEn({ ancho, alto, arriba, izquierda }, lecturas) {
+  const pendientes = [...lecturas]
+  const pedidas = []
+  return {
+    pedidas,
+    ancho,
+    alto,
+    ampliar: async (f, zona = { x0: 0, y0: 0, x1: ancho - 1, y1: alto - 1 }) => {
+      pedidas.push({ f, zona })
+      const [w, h] = [
+        Math.round((zona.x1 - zona.x0 + 1) * f),
+        Math.round((zona.y1 - zona.y0 + 1) * f),
+      ]
+      const tabla = pintar(f)
+      const datos = new Uint8ClampedArray(w * h * 4)
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const tx = x + Math.round((zona.x0 - izquierda) * f)
+          const ty = y + Math.round((zona.y0 - arriba) * f)
+          const dentro = tx >= 0 && ty >= 0 && tx < tabla.ancho && ty < tabla.alto
+          const i = (ty * tabla.ancho + tx) * 4
+          datos.set(dentro ? tabla.datos.slice(i, i + 4) : [...FONDO, 255], (y * w + x) * 4)
+        }
+      }
+      const enElRecorte = (p) =>
+        escalar(
+          {
+            ...p,
+            x0: p.x0 + izquierda - zona.x0,
+            x1: p.x1 + izquierda - zona.x0,
+            y0: p.y0 + arriba - zona.y0,
+            y1: p.y1 + arriba - zona.y0,
+          },
+          f,
+        )
+      return {
+        imagen: { ancho: w, alto: h, datos },
+        leer: async (z) => (z ? [] : (pendientes.shift() ?? []).map(enElRecorte)),
+      }
+    },
+  }
+}
+
+const TODO = [...CABECERA, DIA, CODIGO, NOMBRE, ...DETALLE]
+
+/* La zona pedida es la tabla y poco mas */
+function esLaTabla(zona, { arriba, izquierda }) {
+  assert.ok(zona.y0 >= arriba - 6 && zona.y0 <= arriba, `empieza en ${zona.y0}`)
+  assert.ok(zona.y1 >= arriba + 99 && zona.y1 <= arriba + 106, `acaba en ${zona.y1}`)
+  assert.ok(zona.x0 >= izquierda - 6 && zona.x0 <= izquierda, `entra en ${zona.x0}`)
+  assert.ok(zona.x1 >= izquierda + 299 && zona.x1 <= izquierda + 306, `sale en ${zona.x1}`)
+}
+
+test('una tabla pequeña en una imagen grande', async (t) => {
+  await t.test('en la captura de un telefono, la primera lectura ya va recortada', async () => {
+    const donde = { ancho: 300, alto: 400, arriba: 150, izquierda: 0 }
+    const c = capturaEn(donde, [TODO])
+    assert.deepEqual(await leerCaptura(c), { clases: [CLASE], dudas: [], lecturas: 1 })
+    // La primera vez solo se miran los pixeles; la que se lee ya es la tabla
+    assert.equal(c.pedidas[0].f, 1)
+    esLaTabla(c.pedidas[1].zona, donde)
+  })
+
+  await t.test('apaisada, si la primera lectura no basta, la segunda va recortada', async () => {
+    const donde = { ancho: 900, alto: 300, arriba: 100, izquierda: 300 }
+    const c = capturaEn(donde, [[...CABECERA, CODIGO], TODO])
+    assert.deepEqual(await leerCaptura(c), { clases: [CLASE], dudas: [], lecturas: 2 })
+    assert.equal(c.pedidas[0].zona.x1, 899)
+    esLaTabla(c.pedidas[1].zona, donde)
+    // Como el recorte es menor, cabe ampliarlo lo mismo o mas
+    assert.ok(c.pedidas[1].f >= c.pedidas[0].f)
+  })
+})

@@ -12,7 +12,7 @@ import {
   puedeCopiarImagen,
 } from '../data/compartir'
 import { imagenDelHorario, MENSAJE_DEL_HORARIO } from '../data/exportarHorario'
-import { FORMATOS } from '../data/leerHorario'
+import { FORMATOS, precalentarLector } from '../data/leerHorario'
 import { colorClase, coloresDelHorario } from '../theme/areas'
 import HorarioSemana from './HorarioSemana'
 import HorarioAgenda from './HorarioAgenda'
@@ -194,7 +194,10 @@ function Horario({ carrera, estados }) {
       id: 'foto',
       etiqueta: 'Añadir desde una foto',
       icono: ImagePlus,
-      alPulsar: () => refArchivo.current?.click(),
+      alPulsar: () => {
+        precalentarLector()
+        refArchivo.current?.click()
+      },
     },
     hayClases && {
       id: 'borrar',
