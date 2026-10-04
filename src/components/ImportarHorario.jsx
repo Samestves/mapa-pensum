@@ -14,6 +14,10 @@ import Ventana from './Ventana'
 
 const ETIQUETA = 'Leer mi horario de una imagen'
 
+/* El ancho de la ventana al revisar, en px: la foto en una columna y la
+   lista en otra */
+const ANCHO_CON_FOTO = 960
+
 const enKilos = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} kB`
 
 /* Lo que va dentro del anillo cuando algo no salio. El reloj de arena es el
@@ -51,7 +55,7 @@ function Cabecera({ miniatura, alCerrar, children }) {
         type="button"
         onClick={alCerrar}
         aria-label="Cerrar"
-        className="grid size-8 shrink-0 place-items-center rounded-full bg-panel-suave text-tinta-suave transition-colors hover:text-tinta"
+        className="relative grid size-8 shrink-0 place-items-center rounded-full bg-panel-suave text-tinta-suave transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:text-tinta"
       >
         <X size={16} strokeWidth={1.5} />
       </button>
@@ -166,6 +170,9 @@ function ImportarHorario({
     const listas = candidatas.filter((c) => c.incluir && !c.avisos.length).length
     const dudas = candidatas.filter((c) => c.avisos.length).length
     return {
+      /* Con la foto al lado hace falta sitio: en escritorio la ventana se
+         ensancha para darle su columna. Las demas caras siguen en 560. */
+      ancho: imagen ? ANCHO_CON_FOTO : undefined,
       cabecera: (
         <Cabecera alCerrar={cerrar}>
           <h2 className="text-[17px] leading-tight font-medium tracking-[-0.015em] text-tinta">
@@ -174,7 +181,7 @@ function ImportarHorario({
           <p className="mt-1 text-[12px] leading-snug text-tinta-suave">
             {dudas
               ? `${dudas === 1 ? 'Una clase necesita que la mires' : `${dudas} clases necesitan que las mires`}. El resto está listo.`
-              : 'Así queda con lo que leí. Toca una materia para ajustarla.'}
+              : 'Compárala con la foto. Toca una materia para ajustarla.'}
           </p>
         </Cabecera>
       ),
@@ -184,6 +191,7 @@ function ImportarHorario({
           candidatas={candidatas}
           materias={materias}
           sesiones={sesiones}
+          enColumnas={!telefono}
           alCambiar={cambiar}
           alIncluir={meter}
         />
@@ -193,7 +201,7 @@ function ImportarHorario({
           <button
             type="button"
             onClick={cerrar}
-            className="px-3 py-2.5 text-[14px] font-medium text-tinta-suave transition-colors hover:text-tinta"
+            className="px-3 py-3.5 text-[14px] font-medium text-tinta-suave transition-colors hover:text-tinta"
           >
             Cancelar
           </button>
@@ -210,7 +218,7 @@ function ImportarHorario({
     }
   }
 
-  const { cabecera, cuerpo, pie } = cara()
+  const { ancho, cabecera, cuerpo, pie } = cara()
 
   return (
     <>
@@ -226,7 +234,7 @@ function ImportarHorario({
           {cuerpo}
         </HojaInferior>
       ) : (
-        <Ventana etiqueta={ETIQUETA} alCerrar={cerrar} cabecera={cabecera} pie={pie}>
+        <Ventana etiqueta={ETIQUETA} ancho={ancho} alCerrar={cerrar} cabecera={cabecera} pie={pie}>
           {cuerpo}
         </Ventana>
       )}

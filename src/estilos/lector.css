@@ -2,17 +2,21 @@
    La hoja que se abre al subir la foto del horario. Tiene dos caras:
 
    Leyendo, la imagen ES la hoja: va de borde a borde, una linea la recorre
-   de arriba abajo y el texto queda debajo a la izquierda, sobre un velo que
-   la funde con el panel. Es lo unico que pasa en ese rato y se enseña entero.
+   de arriba abajo y el texto queda debajo a la izquierda. Es lo unico que
+   pasa en ese rato y se enseña entero.
 
    Todo lo demas -la cola, lo que no se pudo- va centrado alrededor de un
    anillo fino que cuenta o que avisa, con una sola accion llena.
+
+   Revisando, la foto se queda arriba mientras se mira la lista, y cada
+   materia es una fila con su casilla, su cuerpo y su chevron.
    ------------------------------------------------------------------------ */
 
 /* La foto de un horario casi siempre es una captura blanca. En oscuro, a toda
    luz, deslumbra y se come el texto de debajo: se apaga un poco. Con un velo
    y no con filter, que obligaria a recalcular la imagen entera. */
-.lector-foto::after {
+.lector-foto::after,
+.foto-leida::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -20,41 +24,39 @@
   pointer-events: none;
 }
 
-[data-tema='claro'] .lector-foto::after {
+[data-tema='claro'] .lector-foto::after,
+[data-tema='claro'] .foto-leida::after {
   background: none;
-}
-
-/* El velo sobre el que se lee el texto. Es el fondo del propio bloque de
-   texto, que se monta sobre el borde de abajo de la foto: nada arriba, el
-   panel entero un poco mas abajo. Asi la foto se funde con la hoja mida lo
-   que mida, y sirve igual en los dos temas porque sale del panel. */
-.lector-velo {
-  background: linear-gradient(
-    to bottom,
-    transparent 0,
-    color-mix(in oklab, var(--panel) 70%, transparent) 52px,
-    var(--panel) 96px
-  );
 }
 
 /* La linea de lectura. Mide lo que la foto y lleva la luz en su borde de
    abajo: asi recorrerla entera es un transform de -100% a 0, que el navegador
-   mueve sin repintar nada. La cola es una sombra y la linea, clara con un filo
-   oscuro debajo: se ve sobre una captura blanca y sobre una foto oscura. */
+   mueve sin repintar nada. Detras va una estela corta y tenue, una sombra; la
+   linea es clara con un filo oscuro debajo: se ve sobre una captura blanca y
+   sobre una foto oscura.
+
+   Dos animaciones a la vez, las dos de compositor: el recorrido (transform) y
+   un asomar y apagarse en los extremos (opacity). Sin lo segundo, la linea se
+   queda un instante parada contra el borde de arriba y otro contra el de
+   abajo, y el bucle se nota como un corte. Va por encima del velo oscuro de
+   la foto (z-index) para que en el tema oscuro no se apague con ella. */
 .lector-barrido {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     to bottom,
-    transparent calc(100% - 84px),
-    rgb(0 0 0 / 0.14) calc(100% - 2px),
-    rgb(255 255 255 / 0.92) calc(100% - 2px),
-    rgb(255 255 255 / 0.92) calc(100% - 1px),
-    rgb(0 0 0 / 0.4) calc(100% - 1px)
+    transparent calc(100% - 72px),
+    rgb(0 0 0 / 0.1) calc(100% - 2px),
+    rgb(255 255 255 / 0.9) calc(100% - 2px),
+    rgb(255 255 255 / 0.9) calc(100% - 1px),
+    rgb(0 0 0 / 0.36) calc(100% - 1px)
   );
-  animation: lector-barrer 3200ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  animation:
+    lector-barrer 3000ms cubic-bezier(0.37, 0, 0.63, 1) infinite,
+    lector-asomar 3000ms linear infinite;
   pointer-events: none;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 @keyframes lector-barrer {
@@ -63,6 +65,17 @@
   }
   to {
     transform: translateY(0);
+  }
+}
+
+@keyframes lector-asomar {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 1;
   }
 }
 
@@ -145,13 +158,185 @@
 }
 
 /* ---- La revision de lo leido ---------------------------------------------
-   Una semana en miniatura arriba y, debajo, una fila por materia. Nada lleva
-   caja: las filas se separan con una linea, y lo unico lleno es la marca de
-   "esta entra" y la accion del pie.
+   La foto arriba y, debajo, una fila por materia. Nada lleva caja ni linea:
+   las filas se separan con aire, la abierta se tiñe apenas, y lo unico lleno
+   es la casilla de "esta entra" y la accion del pie.
    ------------------------------------------------------------------------ */
 
-/* El selector de pocas opciones: "Tu semana | La foto", o los cinco dias. La
-   pieza elegida es la del selector de tema (ver .lente-tema en hojas.css). */
+/* El margen de la hoja es el de su cabecera: px-5, y px-6 desde sm (ver
+   Cabecera en ImportarHorario.jsx). Foto y lista lo comparten. */
+.lector-revision {
+  --margen-lector: 20px;
+}
+
+@media (min-width: 640px) {
+  .lector-revision {
+    --margen-lector: 24px;
+  }
+}
+
+/* La foto se queda arriba mientras la lista pasa por debajo. El fondo es el
+   del panel, opaco: lo que pasa por debajo no se transparenta. Y el borde de
+   abajo se desvanece en vez de cortar las filas en seco. */
+.lector-foto-pegada {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 4px var(--margen-lector) 12px;
+  background: var(--panel);
+}
+
+.lector-foto-pegada::after {
+  content: '';
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 14px;
+  background: linear-gradient(to bottom, var(--panel), transparent);
+  pointer-events: none;
+}
+
+/* El margen de la lista es 8 px menos: las filas llevan ese relleno por
+   dentro, y asi su texto cae en el mismo borde que el de la foto y la
+   cabecera, mientras que la tinta de la fila abierta respira hacia afuera. */
+.lector-lista {
+  padding: 4px calc(var(--margen-lector) - 8px) 20px;
+}
+
+/* Escritorio: la foto a la izquierda, la lista a la derecha. La foto sigue
+   pegada, pero ya no hay nada que pase por debajo de ella. */
+.lector-revision[data-columnas] {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.lector-revision[data-columnas] .lector-foto-pegada {
+  z-index: auto;
+  padding: 4px 12px 20px var(--margen-lector);
+  background: none;
+}
+
+.lector-revision[data-columnas] .lector-foto-pegada::after {
+  display: none;
+}
+
+.lector-revision[data-columnas] .lector-lista {
+  padding-inline: 0 16px;
+}
+
+/* Al enfocar un campo, el navegador lo trae a la vista: que no quede debajo
+   de la foto pegada. */
+.lector-revision:not([data-columnas]) :is(.campo-lector, .materia-cuerpo, .casilla-area) {
+  scroll-margin-top: 232px;
+}
+
+/* ---- La foto ----
+   Una ventanita de esquinas redondas con la foto dentro, que se desplaza en
+   los dos ejes sin barras. Los botones son hermanos de lo que se desplaza, no
+   hijos: la foto se mueve, ellos no. */
+.foto-leida {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--panel-suave);
+  height: clamp(132px, 24vh, 200px);
+  height: clamp(132px, 24dvh, 200px);
+  transition: height 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.foto-leida[data-alargada] {
+  height: min(58vh, 480px);
+  height: min(58dvh, 480px);
+}
+
+.foto-leida-visor {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.foto-leida-visor::-webkit-scrollbar {
+  display: none;
+}
+
+.foto-leida-visor:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--tinta) 40%, transparent);
+  outline-offset: -2px;
+  border-radius: 14px;
+}
+
+.foto-leida-visor img {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+.foto-leida[data-acercada] .foto-leida-visor img {
+  width: 220%;
+}
+
+/* En escritorio la foto no tiene alto fijo: es tan alta como es, hasta lo
+   que cabe en la ventana, y a partir de ahi se desplaza. */
+.foto-leida[data-columna] {
+  --alto-maximo: min(calc(88vh - 11rem), 640px);
+  height: auto;
+  max-height: var(--alto-maximo);
+  transition: none;
+}
+
+.foto-leida[data-columna] .foto-leida-visor {
+  height: auto;
+  max-height: var(--alto-maximo);
+}
+
+.foto-leida-botones {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  z-index: 1;
+  display: flex;
+}
+
+/* El boton mide 44 (la zona de toque) y el circulo, 32 */
+.foto-leida-boton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.foto-leida-boton > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--panel) 82%, transparent);
+  color: var(--tinta);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.foto-leida-boton:active > span {
+  transform: scale(0.9);
+}
+
+.foto-leida-boton:focus-visible {
+  outline: none;
+}
+
+.foto-leida-boton:focus-visible > span {
+  outline: 2px solid var(--tinta-suave);
+  outline-offset: 2px;
+}
+
+/* ---- Los controles de una fila abierta ---- */
+
+/* Los cinco dias: pieza elegida como la del selector de tema (ver
+   .lente-tema en hojas.css). Cada uno mide 40 y su zona de toque llega a 44. */
 .segmentos {
   display: flex;
   gap: 2px;
@@ -161,9 +346,10 @@
 }
 
 .segmentos > button {
+  position: relative;
   flex: 1;
   min-width: 0;
-  height: 32px;
+  height: 40px;
   border-radius: 9px;
   font-size: 12.5px;
   font-weight: 500;
@@ -171,6 +357,12 @@
   transition:
     background-color 200ms ease,
     color 200ms ease;
+}
+
+.segmentos > button::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
 }
 
 .segmentos > button[aria-pressed='true'] {
@@ -187,7 +379,7 @@
 
 /* Un campo: la materia, una hora */
 .campo-lector {
-  height: 40px;
+  height: 44px;
   padding-inline: 12px;
   border-radius: 11px;
   background: color-mix(in oklab, var(--tinta) 7%, transparent);
@@ -201,65 +393,196 @@
   color: var(--tinta);
 }
 
-/* La semana leida: las lineas de las horas y las clases */
-.hora-leida {
-  position: absolute;
-  inset-inline: 0;
-  height: 1px;
-  background: color-mix(in oklab, var(--tinta) 8%, transparent);
+/* ---- Las filas ----
+   Tres zonas: la casilla, el cuerpo -que abre la fila- y el chevron. Sin
+   lineas entre filas: las separa el espacio. Abierta, un fondo apenas mas
+   claro que el panel y esquinas de 16. */
+.lista-leida {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.clase-leida {
-  position: absolute;
-  overflow: hidden;
-  border-radius: 4px;
-  background: color-mix(in oklab, var(--color) 26%, var(--panel));
-  /* backwards y no both: al terminar, la animacion tiene que soltar la
-     opacidad. Si la retuviera, una clase que se saca no se apagaria nunca. */
-  animation: colocar-clase 520ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
-  /* top y height tambien: al corregir una hora, o cuando entra una clase que
-     alarga el dia, las demas se recolocan en vez de saltar. Pasa una vez,
-     al tocar algo. */
-  transition:
-    opacity 260ms ease,
-    transform 320ms cubic-bezier(0.32, 0.72, 0, 1),
-    top 320ms cubic-bezier(0.32, 0.72, 0, 1),
-    height 320ms cubic-bezier(0.32, 0.72, 0, 1),
-    left 320ms cubic-bezier(0.32, 0.72, 0, 1);
+.materia-leida {
+  padding-inline: 8px;
+  border-radius: 16px;
+  transition: background-color 240ms ease;
 }
 
-.clase-leida::before {
+.materia-leida[data-abierta] {
+  background: color-mix(in oklab, var(--tinta) 4%, transparent);
+}
+
+@media (hover: hover) {
+  .materia-leida:not([data-abierta]):hover {
+    background: color-mix(in oklab, var(--tinta) 3%, transparent);
+  }
+}
+
+/* La casilla mide 44 de zona y 24 de circulo. Con el margen negativo el
+   circulo queda al borde del texto, y el cuerpo empieza 36 px dentro: de ahi
+   sale la sangria del editor (ver .materia-editor). */
+.casilla-area {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  margin-right: 2px;
+}
+
+.casilla-area:focus-visible {
+  outline: none;
+}
+
+.casilla-area:focus-visible .casilla-leida {
+  outline: 2px solid var(--tinta-suave);
+  outline-offset: 3px;
+}
+
+/* El circulo: dentro, un disco de tinta con un check del color del lienzo;
+   fuera, solo un aro fino. Aro y disco son capas que se funden, y el check
+   crece: nada cambia de tamaño y todo va por opacity y transform. */
+.casilla-leida {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--lienzo);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.casilla-leida::before,
+.casilla-leida::after {
   content: '';
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: var(--color);
+  inset: 0;
+  border-radius: 50%;
 }
 
-/* La que se saco se apaga en su sitio: se ve que hueco deja */
-.clase-leida[data-fuera] {
-  opacity: 0.16;
-  transform: scale(0.94);
+.casilla-leida::before {
+  box-shadow: inset 0 0 0 1.5px var(--tinta-tenue);
+  transition: opacity 180ms ease;
 }
 
-/* Las que se pisan: translucidas para que se vea la de debajo, y con el filo
-   del mismo ambar que su aviso */
-.clase-leida[data-choca] {
-  background: color-mix(in oklab, var(--color) 30%, transparent);
-  box-shadow: inset 0 0 0 1px var(--estado-cursando);
+.casilla-leida::after {
+  background: var(--tinta);
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 160ms ease,
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Las filas de materia, separadas por una linea */
-.lista-leida > li + li {
-  border-top: 1px solid var(--panel-borde);
+.casilla-leida > svg {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 160ms ease,
+    transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.materia-leida[data-fuera] .resumen-leido {
-  opacity: 0.45;
+.casilla-leida[data-activa]::before {
+  opacity: 0;
 }
 
-.resumen-leido {
+.casilla-leida[data-activa]::after,
+.casilla-leida[data-activa] > svg {
+  opacity: 1;
+  transform: none;
+}
+
+.casilla-area:active .casilla-leida {
+  transform: scale(0.88);
+}
+
+/* Sin ninguna clase sana no hay casilla: un punto ambar que solo avisa */
+.punto-aviso {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--estado-cursando) 16%, transparent);
+  color: var(--estado-cursando);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* El cuerpo es el boton que abre la fila, de borde a borde: la barrita, el
+   texto y el chevron. */
+.materia-cuerpo {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 12px;
+  text-align: left;
+}
+
+.materia-cuerpo:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--tinta) 35%, transparent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.materia-barra {
+  align-self: stretch;
+  flex: none;
+  width: 3px;
+  border-radius: 9999px;
+  background: var(--barra);
+  transition: background-color 220ms ease;
+}
+
+.materia-texto {
+  display: block;
+  flex: 1;
+  min-width: 0;
   transition: opacity 220ms ease;
+}
+
+/* La materia que no entra se apaga: texto a media luz y la barra, gris. El
+   chevron no: es lo que dice que se puede abrir, y sigue valiendo. */
+.materia-leida[data-fuera] .materia-texto {
+  opacity: 0.5;
+}
+
+.materia-leida[data-fuera] .materia-barra {
+  background: color-mix(in oklab, var(--tinta) 22%, transparent);
+}
+
+.materia-chevron {
+  flex: none;
+  color: var(--tinta-tenue);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.materia-leida[data-abierta] .materia-chevron {
+  transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .materia-cuerpo:hover .materia-chevron {
+    color: var(--tinta-suave);
+  }
+}
+
+/* Lo que se corrige, con aire. Empieza donde la barrita, alineado con el
+   cuerpo de la fila. */
+.materia-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 0 18px 36px;
 }
 
 /* Lo que hay que mirar: en ambar, el color de "en curso". No en rojo: no es
@@ -268,32 +591,8 @@
   color: var(--estado-cursando);
 }
 
-/* La marca de "esta entra": un circulo que se llena de tinta */
-.marca-leida {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  color: transparent;
-  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tinta) 30%, transparent);
-  transition:
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease,
-    transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.marca-leida[data-activa] {
-  background: var(--tinta);
-  color: var(--lienzo);
-  box-shadow: none;
-}
-
-button:active > .marca-leida {
-  transform: scale(0.86);
-}
-
-[data-ligero] .clase-leida {
-  animation: none;
+/* En modo ligero la foto cambia de alto de golpe: crecer con una transicion
+   obliga a maquetar la lista entera en cada cuadro (ver data/ligero.js). */
+[data-ligero] .foto-leida {
+  transition: none;
 }

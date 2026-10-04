@@ -1,4 +1,5 @@
 import { DIAS, MOMENTO, duracion, enDoceHoras, partesDeHora } from '../layout/horario'
+import Trozos, { Entero } from './Trozos'
 
 const ROTULO = {
   [MOMENTO.EN_CURSO]: 'En curso',
@@ -63,7 +64,9 @@ function Trayecto({ inicio, fin, avance }) {
   )
 }
 
-/* Una clase dicha en un renglon: su color, su nombre, cuando y donde */
+/* Una clase dicha en un renglon: su color, su nombre, cuando y donde.
+   El nombre es lo unico que se parte -puede ocupar dos renglones-; cuando y
+   donde son una unidad que, si no cabe detras del nombre, baja entera. */
 function EnUnRenglon({ rotulo, clase, aspectoDe }) {
   const { nombre, color } = aspectoDe(clase)
 
@@ -73,9 +76,15 @@ function EnUnRenglon({ rotulo, clase, aspectoDe }) {
       <p className="mt-2.5 flex items-baseline gap-2.5 text-[14px] leading-snug text-tinta-suave">
         <i className="marca-materia" aria-hidden="true" style={{ '--c': color }} />
         <span className="min-w-0">
-          <b className="font-medium text-tinta">{nombre}</b>
-          <span className="tabular-nums"> · {enDoceHoras(clase.inicio)}</span>
-          {clase.aula && ` · ${clase.aula}`}
+          <Trozos>
+            <b className="font-medium text-tinta">{nombre}</b>
+            <Entero>
+              <Trozos>
+                <span className="tabular-nums">{enDoceHoras(clase.inicio)}</span>
+                {clase.aula}
+              </Trozos>
+            </Entero>
+          </Trozos>
         </span>
       </p>
     </div>
@@ -124,11 +133,15 @@ function AhoraYDespues({ momento, ahora, aspectoDe, aLaDerecha }) {
       {clase && (
         <>
           <p className="mt-2.5 text-[14px] text-tinta-suave">
-            {enCurso ? 'Quedan ' : 'Empieza en '}
-            <b className="font-medium text-tinta tabular-nums">
-              {duracion(enCurso ? momento.quedan : momento.faltan)}
-            </b>
-            {clase.aula && ` · ${clase.aula}`}
+            <Trozos>
+              <Entero>
+                {enCurso ? 'Quedan ' : 'Empieza en '}
+                <b className="font-medium text-tinta tabular-nums">
+                  {duracion(enCurso ? momento.quedan : momento.faltan)}
+                </b>
+              </Entero>
+              {clase.aula && <Entero>{clase.aula}</Entero>}
+            </Trozos>
           </p>
           <Trayecto
             inicio={clase.inicio}

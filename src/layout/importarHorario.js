@@ -41,9 +41,13 @@ export function aDia(crudo) {
  * La hora como minutos desde medianoche, o null.
  *
  * Acepta "7:00", "07:00", "7:00 AM", "1:40 PM" y "7.00". El meridiano importa
- * de verdad: un horario universitario va de siete a siete, asi que un "1:40" a
- * secas son las 13:40 y no las de la madrugada. Sin esa regla, media tarde de
- * cualquier horario aterrizaria antes de que abra la facultad.
+ * de verdad: un horario universitario va de la apertura (ABRE) al cierre, asi
+ * que un "1:40" a secas son las 13:40 y no las de la madrugada. Sin esa regla,
+ * media tarde de cualquier horario aterrizaria antes de que abra la facultad.
+ *
+ * La consecuencia es que sin meridiano nada cae antes de ABRE: "5:30" se lee
+ * como las 17:30. Para que una hora madrugadora se lea de la mañana y quede
+ * fuera de la jornada hay que escribirla con su meridiano: "5:30 AM".
  */
 export function aHora(crudo) {
   const t = normalizar(crudo).replace(/\./g, '')
@@ -62,8 +66,8 @@ export function aHora(crudo) {
   if (tarde && h < 12) h += 12
   else if (manana && h === 12) h = 0
   /* Sin meridiano, una hora que caeria antes de que abra la facultad se lee
-     como de la tarde: es la unica lectura posible de "1:40" en un horario que
-     empieza a las siete. */
+     como de la tarde: es la unica lectura posible de "1:40" dentro de la
+     jornada. */
   else if (!tarde && !manana && h * 60 + min < ABRE) h += 12
 
   const total = h * 60 + min

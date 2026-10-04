@@ -152,6 +152,10 @@ const ESQUEMA = {
  * se salta el emparejamiento por parecido, que es la parte donde se cuelan
  * los errores. Y como el codigo se valida despues contra el pensum de verdad,
  * inventarse uno no cuela nada.
+ *
+ * LA JORNADA de la regla 3 es la de la rejilla (ABRE y CIERRA, en
+ * src/layout/horario.js). Esta funcion no importa de src/, asi que va escrita
+ * aqui, y una prueba vigila que las dos coincidan.
  */
 const instrucciones = (materias) => `Eres un lector de horarios universitarios.
 
@@ -164,7 +168,7 @@ Reglas:
 2. "dia" en español y completo: Lunes, Martes, Miércoles, Jueves o Viernes.
    Si una clase cae en sábado o domingo, inclúyela igual con ese nombre.
 3. "inicio" y "fin" en formato HH:MM de 24 horas. Un horario universitario va
-   de las 07:00 a las 19:00: si la imagen dice "1:40" sin meridiano, son las
+   de las 06:00 a las 19:00: si la imagen dice "1:40" sin meridiano, son las
    13:40.
 4. "codigo": elige el de la lista de abajo cuya materia sea la misma, aunque
    en la imagen esté abreviada. Fíjate en el número romano final: "I" y "II"

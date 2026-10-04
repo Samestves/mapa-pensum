@@ -2,6 +2,7 @@ import test, { mock } from 'node:test'
 import assert from 'node:assert/strict'
 import handler from './leer-horario.js'
 import { TOPE_POR_HORA } from './_turno.js'
+import { ABRE, CIERRA, aTexto } from '../src/layout/horario.js'
 
 /* Las averias se escriben en el registro, que es donde se van a buscar en
    produccion. Aqui se provocan a proposito y solo ensuciarian la salida. */
@@ -197,6 +198,15 @@ test('la peticion que se le manda a Google', async (t) => {
     const texto = visto.cuerpo.contents[0].parts[0].text
     assert.ok(texto.includes('0081814 — Matemáticas I'))
     assert.ok(texto.includes('0051324 — Física I'))
+  })
+
+  await t.test('la jornada que se le dice al modelo es la de la rejilla', async () => {
+    const visto = conFetch(respuestaDeGoogle('{"clases":[]}'))
+    const { req, res } = llamar(cuerpoValido())
+    await handler(req, res)
+
+    const texto = visto.cuerpo.contents[0].parts[0].text
+    assert.ok(texto.includes(`de las ${aTexto(ABRE)} a las ${aTexto(CIERRA)}`))
   })
 
   await t.test('pide JSON con esquema y sin creatividad', async () => {

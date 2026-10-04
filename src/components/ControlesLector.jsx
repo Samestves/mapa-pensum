@@ -5,8 +5,8 @@ import { DIAS, DIAS_CORTOS, aTexto } from '../layout/horario'
    uno recibe un valor y avisa del cambio. */
 
 /**
- * Un selector de pocas opciones a la vista, todas a un toque: los cinco dias,
- * o "Semana | Foto". La elegida lleva la misma pieza que el selector de tema.
+ * Un selector de pocas opciones a la vista, todas a un toque: los cinco dias.
+ * La elegida lleva la misma pieza que el selector de tema.
  *
  * @param {{ valor: any, texto: string, nombre?: string }[]} props.opciones
  */
@@ -95,22 +95,22 @@ export function CampoHoras({ inicio, fin, alCambiar }) {
 }
 
 /**
- * La marca de "esta entra": un circulo que se llena. Es un interruptor, no
- * una casilla: se pulsa con el pulgar, asi que su zona es de 44 px aunque el
- * circulo mida 24.
+ * La casilla de "esta entra": un circulo que se llena de tinta. Se pulsa con
+ * el pulgar, asi que su zona es de 44 px aunque el circulo mida 24 (ver
+ * .casilla-area en estilos/lector.css, que tambien la saca al borde).
  */
-export function Marca({ activa, alPulsar, etiqueta }) {
+export function Casilla({ activa, alPulsar, etiqueta }) {
   return (
     <button
       type="button"
-      role="switch"
+      role="checkbox"
       aria-checked={activa}
       aria-label={etiqueta}
       onClick={alPulsar}
-      className="-my-2 -mr-2.5 grid size-11 shrink-0 place-items-center"
+      className="casilla-area"
     >
-      <span className="marca-leida" data-activa={activa || undefined}>
-        <Check size={14} strokeWidth={2.75} />
+      <span className="casilla-leida" data-activa={activa || undefined}>
+        <Check size={14} strokeWidth={2.75} aria-hidden="true" />
       </span>
     </button>
   )

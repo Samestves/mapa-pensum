@@ -7,11 +7,12 @@ import {
   enDoceHoras,
   franjaNueva,
   franjaPropuesta,
-  lugarDe,
   partesDeHora,
+  trozosDeLugar,
 } from '../layout/horario'
+import Trozos, { Entero } from './Trozos'
 
-/* Lo que se propone si el dia esta lleno de siete a siete: la ficha se abre
+/* Lo que se propone si el dia esta lleno de punta a punta: la ficha se abre
    igual y es ella la que dice que no cabe. */
 const PRIMERA_HORA = { inicio: ABRE, fin: ABRE + 60 }
 
@@ -40,7 +41,7 @@ function FilaClase({ sesion, aspecto, minuto, conAncla, menuAbierto, alEditar, a
   const salida = partesDeHora(sesion.fin)
   const momento = momentoDeFila(sesion, minuto)
   const enCurso = momento === EN_CURSO
-  const lugar = lugarDe(sesion)
+  const lugar = trozosDeLugar(sesion)
 
   return (
     <article
@@ -70,7 +71,15 @@ function FilaClase({ sesion, aspecto, minuto, conAncla, menuAbierto, alEditar, a
           <span className="fila-nombre text-[15.5px] leading-[1.3] font-medium tracking-[-0.012em] text-balance text-tinta">
             {aspecto.nombre}
           </span>
-          {lugar && <span className="text-[13px] leading-snug text-tinta-suave">{lugar}</span>}
+          {lugar.length > 0 && (
+            <span className="text-[13px] leading-snug text-tinta-suave">
+              <Trozos>
+                {lugar.map((trozo) => (
+                  <Entero key={trozo}>{trozo}</Entero>
+                ))}
+              </Trozos>
+            </span>
+          )}
           <span className="text-[12px] leading-snug text-tinta-tenue tabular-nums">
             {enCurso
               ? `En curso · quedan ${duracion(sesion.fin - minuto)}`

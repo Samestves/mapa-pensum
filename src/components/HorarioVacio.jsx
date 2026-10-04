@@ -101,7 +101,7 @@ function SemanaMuestra({ foco }) {
 /**
  * El horario cuando todavia no hay nada.
  *
- * Una rejilla vacia de doce horas por cinco dias no es una pantalla vacia
+ * Una rejilla vacia de toda la jornada por cinco dias no es una pantalla vacia
  * cualquiera: es una pantalla que PARECE terminada. No hay nada roto ni
  * ningun hueco evidente, asi que quien llega por primera vez no ve que le
  * toca a el, y lo que hace es irse. De ahi que esto tape la rejilla en vez de

@@ -12,6 +12,7 @@ import {
   revisar,
   rivalDe,
 } from './importarHorario.js'
+import { ABRE, aTexto, enDoceHoras } from './horario.js'
 
 const MATERIAS = [
   { codigo: '0071814', nombre: 'Matemática I' },
@@ -58,11 +59,18 @@ test('las horas', async (t) => {
   })
 
   await t.test('sin meridiano, lo que caeria antes de abrir es de la tarde', () => {
-    // Un horario que va de 7 a 19: "1:40" solo puede ser la una y cuarenta
+    // La jornada no abre de madrugada: "1:40" solo puede ser la una y cuarenta
     assert.equal(aHora('1:40'), 13 * 60 + 40)
     assert.equal(aHora('3:20'), 15 * 60 + 20)
-    // Pero las 7:00 son las de la mañana: ya estan dentro de la jornada
-    assert.equal(aHora('7:00'), 7 * 60)
+    // Pero la hora de apertura es de la mañana: ya esta dentro de la jornada
+    assert.equal(aHora(aTexto(ABRE)), ABRE)
+    assert.equal(aHora(enDoceHoras(ABRE)), ABRE)
+  })
+
+  await t.test('una hora de antes de abrir solo se lee de la mañana si lo dice', () => {
+    // "5:30" a secas es la media de la tarde; "5:30 AM" es la de la madrugada
+    assert.equal(aHora('5:30'), 17 * 60 + 30)
+    assert.equal(aHora('5:30 AM'), 5 * 60 + 30)
   })
 
   await t.test('basura fuera', () => {
@@ -154,6 +162,22 @@ test('la revision', async (t) => {
   await t.test('fuera de la jornada de la rejilla', () => {
     const [c] = revisar([fila({ inicio: '5:00 AM', fin: '6:00 AM' })], MATERIAS)
     assert.ok(c.avisos.includes('fuera'))
+  })
+
+  await t.test('una clase a las 6:00 AM es valida y una a las 5:30 AM queda fuera', () => {
+    const [alAbrir] = revisar([fila({ inicio: '6:00 AM', fin: '7:40 AM' })], MATERIAS)
+    assert.deepEqual(alAbrir.avisos, [])
+    assert.equal(alAbrir.inicio, ABRE)
+
+    const [antes] = revisar([fila({ inicio: '5:30 AM', fin: '7:00 AM' })], MATERIAS)
+    assert.ok(antes.avisos.includes('fuera'))
+  })
+
+  await t.test('lo que el lector devuelve en 24 horas a la hora de apertura cabe', () => {
+    // Es el formato que se le pide al modelo: "06:00", con el cero delante
+    const [c] = revisar([fila({ inicio: aTexto(ABRE), fin: aTexto(ABRE + 100) })], MATERIAS)
+    assert.deepEqual(c.avisos, [])
+    assert.equal(c.inicio, ABRE)
   })
 
   await t.test('el fin antes del inicio es una hora sin sentido, no una clase', () => {

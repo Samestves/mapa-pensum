@@ -103,7 +103,6 @@
   .lector-lineas > *,
   .lector-cara,
   .lector-arco,
-  .clase-leida,
   .pulso-ahora::after {
     animation: none;
   }
@@ -125,7 +124,12 @@
   .plegable,
   .selector-pastilla,
   .riel-tramo,
-  .barra-semestre {
+  .barra-semestre,
+  .foto-leida,
+  .materia-chevron,
+  .casilla-leida,
+  .casilla-leida::after,
+  .casilla-leida > svg {
     transition: none;
   }
 

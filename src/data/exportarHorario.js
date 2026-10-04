@@ -93,7 +93,7 @@ const enHoras = (minutos) => {
 
 /**
  * Que franja del dia sale en la imagen: de la hora en punto de la primera
- * clase a la de despues de la ultima. Las doce horas siempre dejaban el
+ * clase a la de despues de la ultima. La jornada entera siempre dejaba el
  * horario pequeño entre filas vacias, y la imagen alta en vez de apaisada.
  */
 function franjaUtil(sesiones) {

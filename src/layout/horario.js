@@ -6,11 +6,15 @@
 export const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
 
-/* La jornada: de siete de la mañana a siete de la tarde. Doce filas y doce
+/* La jornada: de seis de la mañana a siete de la tarde. Trece filas y trece
    etiquetas, una por fila, la ultima de las cuales dice 6:00 PM y ocupa su
-   propio cuadro. La linea de las siete cierra la rejilla y no lleva etiqueta:
-   una hora suelta bajo la ultima fila rompe el ritmo de una en una y se lee
-   como que el horario sigue.
+   propio cuadro. La linea de las siete de la tarde cierra la rejilla y no
+   lleva etiqueta: una hora suelta bajo la ultima fila rompe el ritmo de una
+   en una y se lee como que el horario sigue.
+
+   Hay clases desde las seis, asi que la jornada abre ahi. Todo lo demas -la
+   rejilla, la validacion, lo que acepta el lector de fotos- sale de ABRE y
+   de CIERRA: ninguna otra parte escribe la hora de apertura a mano.
 
    Esto es lo unico que define el final, para dibujar Y para validar. Antes
    habia dos numeros -uno para pintar y otro para aceptar- y esa diferencia
@@ -18,13 +22,13 @@ export const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
    dejaba mas alla de lo dibujado, la rejilla crecia para cubrirla, y con la
    rejilla mas larga se podia volver a arrastrar mas abajo. Un solo cierre
    corta el bucle de raiz. */
-export const ABRE = 7 * 60
+export const ABRE = 6 * 60
 export const CIERRA = 19 * 60
 
 /* Alto de una fila de hora en escritorio.
 
    Ha tenido dos reglas y las dos fallaban por un lado. La primera repartia el
-   alto de la ventana entre las doce horas: la jornada cabia, pero el bloque
+   alto de la ventana entre las horas de la jornada: cabia, pero el bloque
    de entonces -hora, nombre, aula, seccion y profesor- no cabia en filas de
    66 px. La segunda fijo la fila por tramos de ancho, de 100 a 144 px: los
    bloques respiraban y la jornada dejo de caber. Para saber a que hora era
@@ -132,24 +136,24 @@ export const FILAS = (CIERRA - ABRE) / 60
 /**
  * El fondo con las lineas de hora de una columna de dia.
  *
- * Una rejilla de doce filas tiene TRECE lineas, y cada una tiene que tener un
+ * Una rejilla de N filas tiene N + 1 lineas, y cada una tiene que tener un
  * solo dueño. Aqui se repartian mal: la cabecera de dias dibujaba su borde
  * inferior y el degradado dibujaba ademas una linea en su pixel cero, o sea
- * que la de las siete la pintaban los dos. Pegadas y del mismo color se
+ * que la de la apertura la pintaban los dos. Pegadas y del mismo color se
  * sumaban en una linea de dos pixeles, y solo se notaba con el
  * desplazamiento arriba del todo: en cuanto se bajaba un poco, la del
  * degradado se metia debajo de la cabecera -que es opaca y va por encima- y
  * la linea volvia a su grosor. De ahi que se viera mas oscura solo a veces.
  *
  * El reparto ahora no se solapa:
- *   - la de las 7:00 es el borde inferior de la cabecera, que es el limite de
- *     arriba de la rejilla;
- *   - las once de dentro -8:00 a 6:00 PM- las pinta este degradado, con la
- *     linea al FINAL de cada hora y no al principio;
- *   - la de las 7:00 PM es el borde inferior de la rejilla, que cruza tambien
- *     la columna de las horas y cierra la esquina.
+ *   - la de la apertura es el borde inferior de la cabecera, que es el limite
+ *     de arriba de la rejilla;
+ *   - las de dentro -de la segunda hora a las 6:00 PM- las pinta este
+ *     degradado, con la linea al FINAL de cada hora y no al principio;
+ *   - la del cierre, las 7:00 PM, es el borde inferior de la rejilla, que
+ *     cruza tambien la columna de las horas y cierra la esquina.
  *
- * El area pintada se limita a once horas -no doce- justamente para que el
+ * El area pintada se limita a FILAS - 1 horas -no a todas- justamente para que el
  * degradado no llegue a dibujar la ultima: si llegara, volveria a chocar con
  * ese borde de abajo y habriamos movido el problema en vez de resolverlo.
  */
@@ -328,7 +332,7 @@ const porInicio = (a, b) => a.inicio - b.inicio || a.fin - b.fin
 
 /**
  * De que hora a que hora van unas clases, en horas enteras: de la primera a
- * la ultima. No la jornada -de siete a siete-, que en un dibujo pequeño
+ * la ultima. No la jornada entera -de seis a siete-, que en un dibujo pequeño
  * dejaria media tarde vacia y las clases apretadas arriba.
  *
  * `minimo` es lo menos que abarca: con una sola clase de hora y media, sin el
@@ -458,11 +462,18 @@ export function momentoDe(porDia, ahora) {
   }
 }
 
+/**
+ * Donde es una clase y con quien, en trozos: ["A-12", "Sec. 01", "Pérez"].
+ *
+ * Los que no se saben no estan. Se da por trozos y no ya unido para que quien
+ * lo pinte pueda impedir que un renglon corto se parta DENTRO de uno -"A-" y
+ * debajo "12"- y solo lo haga entre uno y otro.
+ */
+export const trozosDeLugar = (sesion) =>
+  [sesion.aula, sesion.seccion && `Sec. ${sesion.seccion}`, sesion.profesor].filter(Boolean)
+
 /** Donde es una clase y con quien, en un renglon: "A-12 · Sec. 01 · Pérez" */
-export const lugarDe = (sesion) =>
-  [sesion.aula, sesion.seccion && `Sec. ${sesion.seccion}`, sesion.profesor]
-    .filter(Boolean)
-    .join(' · ')
+export const lugarDe = (sesion) => trozosDeLugar(sesion).join(' · ')
 
 /** El nombre de cualquier dia de la semana, tambien de los que no tienen clase */
 export const nombreDelDia = (dia) => [...DIAS, 'Sábado', 'Domingo'][dia]

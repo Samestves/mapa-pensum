@@ -6,12 +6,17 @@ import { X } from 'lucide-react'
  * Durante esos segundos no hay nada que decidir ni que tocar, asi que se
  * enseña lo unico que importa -la foto que se subio, para comprobar de un
  * vistazo que es la buena- y una linea que la recorre. El texto va debajo a
- * la izquierda, sin caja, montado sobre el borde de la foto con un velo que
- * la funde con la hoja.
+ * la izquierda, sin caja.
  *
  * La foto va a todo el ancho y con su proporcion, y la hoja mide lo que mida
  * ella: una captura apaisada da una hoja baja; una foto en vertical se corta
- * a media pantalla, y el texto cae sobre su parte de abajo.
+ * a media pantalla.
+ *
+ * El texto NO se monta sobre la foto. Antes lo hacia, con un velo que la
+ * fundia con la hoja, y ese velo se comia la mitad de abajo de una captura
+ * apaisada -que en un telefono mide unos 180 px- y con ella la linea: parecia
+ * que el barrido empezaba a media foto. La linea tiene que verse recorrerla
+ * entera, asi que la foto acaba donde acaba y el texto empieza despues.
  *
  * Antes de que la imagen este lista -reducirla tarda un instante en un
  * telefono modesto- su hueco ya esta ahi, para que la hoja no de un salto
@@ -33,14 +38,14 @@ function LectorLeyendo({ imagen, alCancelar }) {
         type="button"
         onClick={alCancelar}
         aria-label="Cerrar"
-        className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-[color-mix(in_oklab,var(--panel)_72%,transparent)] text-tinta transition-colors hover:bg-panel"
+        className="absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full bg-[color-mix(in_oklab,var(--panel)_72%,transparent)] text-tinta transition-colors hover:bg-panel"
       >
         <X size={16} strokeWidth={1.5} />
       </button>
 
       <div
         role="status"
-        className="lector-lineas lector-velo relative -mt-24 flex flex-col items-start gap-2.5 px-5 pt-28 pb-5 sm:px-7 sm:pb-6"
+        className="lector-lineas flex flex-col items-start gap-2.5 px-5 pt-7 pb-5 sm:px-7 sm:pb-6"
       >
         <p className="font-ui text-[10.5px] font-medium tracking-[0.26em] text-tinta-tenue uppercase">
           Leyendo

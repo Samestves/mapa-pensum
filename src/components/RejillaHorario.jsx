@@ -22,8 +22,8 @@ import HuecoPropuesto from './HuecoPropuesto'
 const LINEA = 'border-[var(--horario-linea)]'
 
 /* Lo que mide la fila de los dias, pegada arriba, y el aire que hay entre
-   ella y la primera linea: sin el, la etiqueta de las siete -que va centrada
-   en su linea- quedaria cortada por la mitad. */
+   ella y la primera linea: sin el, la etiqueta de la primera hora -que va
+   centrada en su linea- quedaria cortada por la mitad. */
 const ALTO_DIAS = 40
 const AIRE = 12
 
@@ -210,7 +210,7 @@ function RejillaHorario({
 
         <div className="flex" style={{ paddingBlock: AIRE }}>
           {/* El carril de las horas. Cada etiqueta va centrada en su linea,
-              que es como se lee una regla: la marca ES la linea. Las trece,
+              que es como se lee una regla: la marca ES la linea. Todas,
               tambien la del cierre: aqui las lineas no abren filas, marcan
               horas. */}
           <div
@@ -247,8 +247,8 @@ function RejillaHorario({
           {/* Los cinco dias. El puntero se sigue aqui y no columna por columna:
               el dia sale de una division, no de cinco manejadores iguales.
               Las lineas de las horas se pintan una vez, en este contenedor:
-              las once de dentro el degradado, y la de las siete y la del
-              cierre sus dos bordes (ver lineasDeHora). */}
+              las de dentro el degradado, y la de la apertura y la del cierre
+              sus dos bordes (ver lineasDeHora). */}
           <div
             ref={refDias}
             onPointerMove={seguirPuntero}

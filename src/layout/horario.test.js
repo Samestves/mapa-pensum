@@ -17,10 +17,12 @@ import {
   franjaNueva,
   franjaPropuesta,
   horaEnPunto,
+  horasEnPunto,
   huecoEn,
   imantar,
   imantarInicio,
   lineasDeHora,
+  lugarDe,
   momentoDe,
   partesDeHora,
   posicionValida,
@@ -28,6 +30,7 @@ import {
   repartirEnCarriles,
   resumenDe,
   solapan,
+  trozosDeLugar,
 } from './horario.js'
 
 /* Estas pruebas no cubren la hoja entera a proposito. Van a donde el codigo
@@ -78,11 +81,38 @@ describe('el tiempo como minutos', () => {
   })
 })
 
+describe('la jornada', () => {
+  test('va de las seis de la mañana a las siete de la tarde, una fila por hora', () => {
+    // Es el unico sitio que fija las cifras: el resto del codigo lee ABRE y CIERRA
+    assert.equal(ABRE, h(6))
+    assert.equal(CIERRA, h(19))
+    assert.equal(FILAS, 13)
+    // La etiqueta de cada fila es la hora en que empieza: de las 6:00 a las 6:00 PM
+    assert.deepEqual(
+      horasEnPunto(),
+      Array.from({ length: 13 }, (_, i) => h(6 + i)),
+    )
+  })
+
+  test('una clase a las 6:00 es valida y una a las 5:30 queda fuera', () => {
+    // En un dia vacio, lo unico que decide es la jornada: null es "no cabe"
+    const alAbrir = clase(h(6), h(7))
+    assert.deepEqual(posicionValida([], alAbrir), alAbrir)
+    assert.equal(posicionValida([], clase(h(5, 30), h(6, 30))), null)
+  })
+
+  test('al cierre, una clase que acaba a las 7:00 PM cabe y una que lo pasa no', () => {
+    const alCerrar = clase(h(18), h(19))
+    assert.deepEqual(posicionValida([], alCerrar), alCerrar)
+    assert.equal(posicionValida([], clase(h(18, 30), h(19, 30))), null)
+  })
+})
+
 describe('la escala de la rejilla', () => {
   test('el alto de la hora reparte el alto libre, con suelo y con techo', () => {
-    // Cabe entera: doce filas en lo que hay
-    assert.equal(altoHoraPara(12 * 66), 66)
-    assert.equal(altoHoraPara(12 * 66 + 11), 66)
+    // Cabe entera: todas las filas en lo que hay
+    assert.equal(altoHoraPara(FILAS * 66), 66)
+    assert.equal(altoHoraPara(FILAS * 66 + FILAS - 1), 66)
     // Pantalla baja: no se aplasta, se desplaza
     assert.equal(altoHoraPara(400), 52)
     // Pantalla muy alta: no se estira hasta dejar los bloques vacios
@@ -374,5 +404,21 @@ describe('ahora y despues', () => {
     assert.deepEqual(momentoDe([[], [], [], [], []], { dia: 0, minuto: h(9) }), {
       tipo: MOMENTO.VACIO,
     })
+  })
+})
+
+describe('donde es una clase', () => {
+  const completa = { aula: 'A-46', seccion: '02', profesor: 'Pérez' }
+
+  test('los trozos son los que se saben, en orden', () => {
+    assert.deepEqual(trozosDeLugar(completa), ['A-46', 'Sec. 02', 'Pérez'])
+    assert.deepEqual(trozosDeLugar({ aula: '', seccion: '01', profesor: '' }), ['Sec. 01'])
+    assert.deepEqual(trozosDeLugar({ aula: '', seccion: '', profesor: '' }), [])
+  })
+
+  test('el renglon es esos mismos trozos unidos', () => {
+    assert.equal(lugarDe(completa), 'A-46 · Sec. 02 · Pérez')
+    assert.equal(lugarDe({ aula: 'A-12', seccion: '', profesor: '' }), 'A-12')
+    assert.equal(lugarDe({}), '')
   })
 })
