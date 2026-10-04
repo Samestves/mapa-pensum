@@ -169,13 +169,13 @@ const FALLOS = {
   formato: {
     titulo: 'No reconocí tu horario',
     consejo:
-      'Sin la IA solo leo la captura del sistema de la UDO: la tabla con los días a la izquierda y las horas arriba.',
+      'Sin la IA solo leo la tabla de INTRADACE. Usa el PNG de «Descargar Horario» o una captura de pantalla, no una foto.',
     salida: SALIDA.OTRA_IMAGEN,
   },
   'sin-codigos': {
     titulo: 'No pude leer los códigos',
     consejo:
-      'Encontré la tabla, pero no los códigos de las materias. Prueba con una captura más nítida y sin recortar.',
+      'Encontré la tabla, pero no los códigos de las materias. El PNG de «Descargar Horario» de INTRADACE se lee mejor que una foto.',
     salida: SALIDA.OTRA_IMAGEN,
   },
 }

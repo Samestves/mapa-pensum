@@ -25,15 +25,18 @@ const enKilos = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} kB`
    que no se leyo no es una fila con aviso, es una fila que no esta. */
 const PUEDE_FALTAR = ['sin-leer', 'de-menos', 'pegadas']
 
-/* La guia de la revision, debajo del titulo */
-function guiaDeRevision(porMirar, puedeFaltar) {
-  if (puedeFaltar) return 'Puede faltar alguna clase: compárala con la foto.'
+/* La guia de la revision, debajo del titulo. Si lo leyo el aparato y le
+   quedaron dudas, casi siempre es por la imagen -una foto de la pantalla-, y
+   se dice cual se lee bien. */
+function guiaDeRevision(porMirar, puedeFaltar, borrador) {
+  const otraVez = borrador ? ' Con el PNG de «Descargar Horario» de INTRADACE sale mejor.' : ''
+  if (puedeFaltar) return `Puede faltar alguna clase: compárala con la foto.${otraVez}`
   if (!porMirar) return 'Compárala con la foto. Toca una materia para ajustarla.'
   const cuales =
     porMirar === 1
       ? 'Una clase necesita que la mires'
       : `${porMirar} clases necesitan que las mires`
-  return `${cuales}. El resto está listo.`
+  return `${cuales}.${otraVez || ' El resto está listo.'}`
 }
 
 /* Lo que va dentro del anillo cuando algo no salio. El reloj de arena es el
@@ -227,7 +230,7 @@ function ImportarHorario({
             <MotorLector motor={motor} telefono={telefono} compacto />
           </div>
           <p className="mt-1 text-[12px] leading-snug text-tinta-suave">
-            {guiaDeRevision(porMirar, puedeFaltar)}
+            {guiaDeRevision(porMirar, puedeFaltar, dudasDelAparato?.length > 0)}
           </p>
         </Cabecera>
       ),

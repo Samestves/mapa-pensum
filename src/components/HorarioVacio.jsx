@@ -225,7 +225,8 @@ function HorarioVacio({ disponibles, alSubir, alCrear }) {
           className="lista-entrar mt-4 max-w-[34ch] text-[12px] leading-relaxed text-balance text-tinta-tenue"
           style={{ animationDelay: '210ms' }}
         >
-          Vale una captura. Nada entra a tu horario sin que lo revises
+          Se lee mejor el PNG de «Descargar Horario» de INTRADACE, o una captura de la tabla. Nada
+          entra a tu horario sin que lo revises
           <span className="hidden sm:inline">, y también puedes arrastrar la imagen aquí</span>.
         </p>
 

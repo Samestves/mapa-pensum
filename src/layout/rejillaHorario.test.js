@@ -6,6 +6,7 @@ import {
   diaDe,
   franjasDe,
   leerRejilla,
+  nombrarFilas,
   sustituir,
 } from './rejillaHorario.js'
 import { revisar } from './importarHorario.js'
@@ -114,16 +115,55 @@ test('las franjas de la cabecera', async (t) => {
     assert.deepEqual([franja.inicio, franja.fin], ['07:00', '07:45'])
   })
 
-  await t.test('si falta una hora no hay cabecera: no se adivina', () => {
+  await t.test('una cabecera partida en renglones se entiende igual', () => {
+    /* Como la saca el sistema en columnas estrechas: el inicio arriba y el
+       fin abajo, o en tres renglones con el guion en medio, y las celdas de
+       un solo renglon pegadas abajo */
+    const franjas = franjasDe([
+      palabra('07:00', 120, 14),
+      ...renglon('- 07:45', 116, 34),
+      ...renglon('07:50 -', 330, 14),
+      palabra('08:35', 334, 34),
+      palabra('09:30', 540, 0),
+      palabra('-', 556, 17),
+      palabra('10:15', 540, 34),
+      ...renglon('10:20 - 11:05', 740, 34),
+    ])
     assert.deepEqual(
-      franjasDe([...renglon('07:00 - 07:45', 120, 14), palabra('07:50', 340, 14)]),
-      [],
+      franjas.map((f) => `${f.inicio}-${f.fin}`),
+      ['07:00-07:45', '07:50-08:35', '09:30-10:15', '10:20-11:05'],
+    )
+    // La caja abarca los renglones de su celda: es la que dice la columna
+    assert.deepEqual([franjas[2].caja.y0, franjas[2].caja.y1], [0, 46])
+  })
+
+  await t.test('una hora sola basta para saber su franja', () => {
+    // Una columna tan estrecha que del inicio solo se ve el guion
+    const franjas = franjasDe([
+      ...renglon('09:30 - 10:15', 120, 14),
+      palabra('-', 360, 0),
+      palabra('11:05', 340, 14),
+    ])
+    assert.deepEqual(
+      franjas.map((f) => `${f.inicio}-${f.fin}`),
+      ['09:30-10:15', '10:20-11:05'],
     )
   })
 
-  await t.test('si las horas no avanzan, tampoco', () => {
+  await t.test('la hora del reloj de la pantalla, lejos de la cabecera, no cuenta', () => {
+    const franjas = franjasDe([...renglon('07:00 - 07:45', 120, 14), palabra('8:40', 900, 700)])
+    assert.deepEqual(
+      franjas.map((f) => f.inicio),
+      ['07:00'],
+    )
+  })
+
+  await t.test('una hora que no cae en la rejilla de la UDO no cuenta', () => {
+    assert.deepEqual(franjasDe(renglon('07:13 - 08:02', 120, 14)), [])
+  })
+
+  await t.test('si las horas no avanzan, no es una cabecera', () => {
     assert.deepEqual(franjasDe(renglon('07:50 - 08:35 07:00 - 07:45', 120, 14)), [])
-    assert.deepEqual(franjasDe(renglon('08:35 - 07:50', 120, 14)), [])
   })
 
   await t.test('sin horas, nada', () => {
@@ -272,6 +312,25 @@ test('leer la rejilla', async (t) => {
     assert.deepEqual(todos.dudas, [])
   })
 
+  await t.test('el aula partida en dos renglones se lee entera', () => {
+    for (const [arriba, abajo, aula] of [
+      ['Secc: 02 - Aula: A-', '80', 'A-80'],
+      ['Secc: 04 - Aula:', 'LC-05', 'LC-05'],
+    ]) {
+      const { palabras, celdaDe } = rejilla([ALGEBRA])
+      const { celda } = bloque(ALGEBRA)
+      // Los renglones de la seccion y del correo, cambiados por los partidos
+      const sinDetalle = palabras.filter((p) => p.y0 < celda.y0 + 30)
+      const partido = [
+        ...renglon(arriba, celda.x0 + 20, celda.y0 + 26),
+        ...renglon(abajo, celda.x0 + 20, celda.y0 + 42),
+        ...renglon('Correo:', celda.x0 + 20, celda.y0 + 58),
+      ]
+      const [clase] = leerRejilla([...sinDetalle, ...partido], celdaDe).clases
+      assert.equal(clase.aula, aula)
+    }
+  })
+
   await t.test('un dia escrito dentro del nombre de una materia no cuenta como fila', () => {
     const { palabras, celdaDe } = rejilla([{ ...ALGEBRA, nombre: 'Seminario Viernes' }])
     const { clases, dudas } = leerRejilla(palabras, celdaDe)
@@ -381,5 +440,38 @@ test('lo que merece una segunda lectura de cerca', async (t) => {
   await t.test('el alto de la letra sale de la cabecera', () => {
     assert.equal(altoDeLetra(cabecera()), 12)
     assert.equal(altoDeLetra(dias()), 0)
+  })
+})
+
+test('los dias de las filas', async (t) => {
+  await t.test('vale el principio de un dia que el OCR corto', () => {
+    assert.equal(diaDe('Lune'), 'Lunes')
+    assert.equal(diaDe('Miérco'), 'Miércoles')
+    assert.equal(diaDe('Vie'), null)
+  })
+
+  await t.test('una fila sin nombre entre dos leidas se nombra por su sitio', () => {
+    const filas = nombrarFilas([
+      { dia: 'Lunes' },
+      { dia: null },
+      { dia: 'Miércoles' },
+      { dia: null },
+    ])
+    assert.deepEqual(
+      filas.map((f) => f.dia),
+      ['Lunes', 'Martes', 'Miércoles', null],
+    )
+  })
+
+  await t.test('sin ningun dia leido, cinco filas son de lunes a viernes', () => {
+    const filas = nombrarFilas(Array.from({ length: 5 }, () => ({ dia: null })))
+    assert.deepEqual(
+      filas.map((f) => f.dia),
+      ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    )
+    assert.deepEqual(
+      nombrarFilas([{ dia: null }, { dia: null }]).map((f) => f.dia),
+      [null, null],
+    )
   })
 })

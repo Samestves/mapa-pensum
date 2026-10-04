@@ -67,50 +67,115 @@ function enRenglones(cosas, cajaDe = (c) => c) {
   return renglones.map((r) => r.cosas.sort((a, b) => cajaDe(a).x0 - cajaDe(b).x0))
 }
 
+/* La rejilla de la UDO: clases de 45 minutos que empiezan cada 50, desde las
+   siete. Con ella, una hora leida sola dice de que franja es y si es su
+   inicio o su fin. Hace falta: en una columna estrecha la cabecera parte
+   "07:00 - 07:45" en dos o tres renglones, y a veces el inicio ni se ve. */
+const PRIMERA_FRANJA = 7 * 60
+const CADA = 50
+const DURA = 45
+
+/* Cuanto pueden separarse en vertical dos horas seguidas de la cabecera, en
+   altos de letra. Una celda partida en tres renglones ("09:30", "-",
+   "10:15") deja dos de distancia entre sus horas; la hora del reloj de la
+   barra de tareas, en una foto de la pantalla, queda mucho mas lejos. */
+const SALTO_EN_LA_CABECERA = 3
+
+/* Que franja de la rejilla es una hora, y si es su inicio o su fin. null si
+   no cae en la rejilla: una cifra mal leida, o una hora que no es de la
+   cabecera. */
+function lugarDe(minutos) {
+  const desde = minutos - PRIMERA_FRANJA
+  if (desde >= 0 && desde % CADA === 0) return desde / CADA
+  if (desde >= DURA && (desde - DURA) % CADA === 0) return (desde - DURA) / CADA
+  return null
+}
+
+const aHora = (minutos) => `${dosCifras(Math.floor(minutos / 60))}:${dosCifras(minutos % 60)}`
+const mediana = (valores) => [...valores].sort((a, b) => a - b)[valores.length >> 1]
+
+/* Las horas de la cabecera: el grupo mas grande de horas de la rejilla que
+   estan juntas en vertical. Dentro de los bloques no hay ninguna, pero en una
+   foto de la pantalla puede colarse la del reloj del sistema. */
+function horasDeLaCabecera(palabras) {
+  const horas = palabras
+    .flatMap(horasDe)
+    .filter((h) => lugarDe(aMinutos(h.hora)) != null)
+    .sort((a, b) => centroY(a.caja) - centroY(b.caja))
+  if (!horas.length) return []
+  const salto = mediana(horas.map((h) => alto(h.caja))) * SALTO_EN_LA_CABECERA
+  const grupos = [[horas[0]]]
+  for (const hora of horas.slice(1)) {
+    const grupo = grupos[grupos.length - 1]
+    if (centroY(hora.caja) - centroY(grupo[grupo.length - 1].caja) <= salto) grupo.push(hora)
+    else grupos.push([hora])
+  }
+  return grupos.sort((a, b) => b.length - a.length)[0]
+}
+
+/* De unas franjas en orden de izquierda a derecha, las que van hacia
+   delante: la secuencia creciente mas larga. Una hora mal leida que cae en
+   otra franja de la rejilla queda fuera, y el resto sigue valiendo. */
+function enAvance(franjas) {
+  const largo = franjas.map(() => 1)
+  const previa = franjas.map(() => -1)
+  for (let i = 0; i < franjas.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (franjas[j].lugar < franjas[i].lugar && largo[j] + 1 > largo[i]) {
+        largo[i] = largo[j] + 1
+        previa[i] = j
+      }
+    }
+  }
+  const quedan = []
+  for (let i = largo.indexOf(Math.max(...largo)); i >= 0; i = previa[i]) quedan.unshift(franjas[i])
+  return quedan
+}
+
 /**
  * Las franjas de la cabecera, de izquierda a derecha.
  *
- * La cabecera es el renglon con mas horas de toda la imagen: dentro de los
- * bloques no hay ninguna. Las horas van por parejas, inicio y fin.
+ * Cada hora de la cabecera dice su franja por si sola (ver lugarDe): no hace
+ * falta que el inicio y el fin esten en el mismo renglon, ni siquiera que se
+ * lean los dos. Las horas de una misma franja se juntan en una caja, que es
+ * la que dice en que columna esta.
  *
- * Devuelve [] si no cuadran -un numero impar de horas, una franja que acaba
- * antes de empezar, dos que se pisan-: una cabecera mal leida descoloca todas
- * las clases, y eso no se arregla adivinando.
+ * Devuelve [] si la cabecera no avanza de izquierda a derecha: si mas de un
+ * tercio de las franjas esta fuera de su sitio, no es una cabecera mal leida
+ * sino otra cosa, y eso no se arregla adivinando.
  *
  * @param {{texto: string, x0: number, y0: number, x1: number, y1: number}[]} palabras
  * @returns {{inicio: string, fin: string, caja: object}[]}
  */
 export function franjasDe(palabras) {
-  const horas = palabras.flatMap(horasDe)
-  const renglones = enRenglones(horas, (h) => h.caja)
-  const cabecera = renglones.sort((a, b) => b.length - a.length)[0] ?? []
-  if (cabecera.length < 2 || cabecera.length % 2) return []
-
-  const franjas = []
-  for (let i = 0; i < cabecera.length; i += 2) {
-    const [a, b] = [cabecera[i], cabecera[i + 1]]
-    franjas.push({ inicio: a.hora, fin: b.hora, caja: unir(a.caja, b.caja) })
+  const porLugar = new Map()
+  for (const { hora, caja } of horasDeLaCabecera(palabras)) {
+    const lugar = lugarDe(aMinutos(hora))
+    porLugar.set(lugar, porLugar.has(lugar) ? unir(porLugar.get(lugar), caja) : caja)
   }
+  const todas = [...porLugar]
+    .map(([lugar, caja]) => ({ lugar, caja }))
+    .sort((a, b) => centroX(a.caja) - centroX(b.caja))
+  const franjas = enAvance(todas)
+  if (franjas.length * 3 < todas.length * 2) return []
 
-  const enOrden = franjas.every(
-    (f, i) =>
-      aMinutos(f.fin) > aMinutos(f.inicio) &&
-      (i === 0 || aMinutos(f.inicio) >= aMinutos(franjas[i - 1].fin)),
-  )
-  return enOrden ? franjas : []
+  return franjas.map(({ lugar, caja }) => {
+    const inicio = PRIMERA_FRANJA + lugar * CADA
+    return { inicio: aHora(inicio), fin: aHora(inicio + DURA), caja }
+  })
 }
 
 /**
  * Cuanto mide de alto la letra de la cabecera, o 0 si no hay cabecera.
  *
  * Es la regla con la que se decide si la imagen hay que ampliarla mas: un OCR
- * lee bien una letra de veintitantos pixeles y falla con una de doce.
+ * lee bien una letra de veintitantos pixeles y falla con una de doce. Se mide
+ * en cada hora y no en la caja de la franja, que con la cabecera partida en
+ * renglones abarca dos o tres.
  */
 export function altoDeLetra(palabras) {
-  const altos = franjasDe(palabras)
-    .map((f) => alto(f.caja))
-    .sort((a, b) => a - b)
-  return altos[altos.length >> 1] ?? 0
+  const horas = horasDeLaCabecera(palabras)
+  return horas.length ? mediana(horas.map((h) => alto(h.caja))) : 0
 }
 
 /**
@@ -147,12 +212,22 @@ function distancia(a, b) {
  *
  * La "rn" leida como "m" se prueba aparte porque son dos letras por una, y es
  * justo lo que le pasa a "Viernes" en letra pequeña: sale "Viemes".
+ *
+ * Y vale el principio de un dia, desde cuatro letras: en una foto de la
+ * pantalla el final de la palabra se pierde a menudo ("Lune", "Miérco"), y
+ * ninguno de los dias empieza como otro.
  */
 export function diaDe(texto) {
   const letras = sinTildes(texto).replace(/[^a-z]/g, '')
-  if (letras.length < 5) return null
+  if (letras.length < 4) return null
   const lecturas = [letras, letras.replace(/m/g, 'rn')]
-  return DIAS.find((dia) => lecturas.some((leido) => distancia(leido, sinTildes(dia)) <= 1)) ?? null
+  const parecido = (dia) =>
+    lecturas.some(
+      (leido) =>
+        (leido.length >= 5 && distancia(leido, sinTildes(dia)) <= 1) ||
+        sinTildes(dia).startsWith(leido),
+    )
+  return DIAS.find(parecido) ?? null
 }
 
 /** El codigo de materia que dice una palabra -siete cifras-, o null. */
@@ -172,6 +247,19 @@ export function codigoDe(texto) {
 const SECCION = /\bSec\w*\s*[:.;]?\s*([A-Za-z0-9]{1,3})\b/i
 const AULA = /\bAu\w{0,3}\s*[:.;]?\s*([A-Za-z0-9][\w-]*)/i
 const esSeccion = (palabra) => /^sec/i.test(palabra.texto)
+const textoDe = (renglon) => renglon.map((p) => p.texto).join(' ')
+
+/* En un bloque estrecho, el renglon de la seccion parte por donde puede:
+   "Aula: A-" y "80" debajo, o "Aula:" y "LC-05". Si acaba en una etiqueta o
+   en un guion, sigue en el renglon de abajo, salvo que ese ya sea el correo. */
+function detalleDe(renglones, deSeccion) {
+  const detalle = textoDe(renglones[deSeccion])
+  const siguiente = renglones[deSeccion + 1]
+  if (!siguiente || /^correo/i.test(siguiente[0].texto)) return detalle
+  if (/-$/.test(detalle)) return detalle + textoDe(siguiente)
+  if (/:$/.test(detalle)) return `${detalle} ${textoDe(siguiente)}`
+  return detalle
+}
 
 /* Lo que dice un bloque ademas del codigo. El renglon del correo no se toca:
    ni se guarda ni se enseña, y por eso el nombre solo se toma de lo que hay
@@ -192,7 +280,7 @@ function textoDelBloque(ancla, palabras, celda) {
     .map((p) => p.texto)
     .join(' ')
 
-  const detalle = deSeccion >= 0 ? renglones[deSeccion].map((p) => p.texto).join(' ') : ''
+  const detalle = deSeccion >= 0 ? detalleDe(renglones, deSeccion) : ''
   return {
     nombre: nombre.trim(),
     seccion: detalle.match(SECCION)?.[1] ?? '',
@@ -212,11 +300,17 @@ const solapan = (a, b) => a.y0 <= b.y1 && b.y0 <= a.y1
  * hay, o la fila esta antes del primero o despues del ultimo, se queda sin
  * nombre y se repasa su celda.
  *
+ * Si no se leyo ningun dia y las filas son cinco o seis, son de lunes a
+ * viernes, o a sabado: es como las pone el sistema.
+ *
  * @param {{dia: string|null}[]} filas  de arriba abajo
  */
 export function nombrarFilas(filas) {
   const nombradas = filas.map((f) => ({ ...f }))
   const conNombre = nombradas.map((f, i) => [i, DIAS.indexOf(f.dia)]).filter(([, d]) => d >= 0)
+  if (!conNombre.length && (filas.length === 5 || filas.length === 6)) {
+    return nombradas.map((f, i) => ({ ...f, dia: DIAS[i] }))
+  }
   for (let k = 1; k < conNombre.length; k++) {
     const [desde, diaDesde] = conNombre[k - 1]
     const [hasta, diaHasta] = conNombre[k]
@@ -232,9 +326,11 @@ export function nombrarFilas(filas) {
  * Las de los dias leidos salen de la celda de su nombre. Pero un dia que el
  * OCR no leyo dejaba su fila fuera de todo, y con ella cualquier bloque que
  * tampoco se leyera. Por eso, si se puede, la columna de los dias se recorre
- * por pixeles y aparecen tambien las filas sin nombre (ver nombrarFilas).
+ * por pixeles y aparecen tambien las filas sin nombre (ver nombrarFilas). El
+ * color de sus celdas sale de `muestra`: un dia leido o, si no hay ninguno,
+ * el "Día" de la cabecera.
  */
-function filasDeLaRejilla({ dias, celdaDe, filasEnColumna, columnaDias }) {
+function filasDeLaRejilla({ dias, celdaDe, filasEnColumna, columnaDias, muestra }) {
   const leidas = new Map()
   for (const { dia, caja } of dias) {
     // Sin una celda que medir, la fila es el propio renglon del nombre
@@ -242,10 +338,10 @@ function filasDeLaRejilla({ dias, celdaDe, filasEnColumna, columnaDias }) {
     leidas.set(y0, { y0, y1, dia })
   }
   const conNombre = [...leidas.values()]
-  if (!filasEnColumna || !columnaDias || !dias.length) {
+  if (!filasEnColumna || !columnaDias || !muestra) {
     return conNombre.sort((a, b) => a.y0 - b.y0)
   }
-  const sinNombre = filasEnColumna(columnaDias, dias[0].caja)
+  const sinNombre = filasEnColumna(columnaDias, muestra)
     .filter((medida) => !conNombre.some((fila) => solapan(fila, medida)))
     .map(({ y0, y1 }) => ({ y0, y1, dia: null }))
   return nombrarFilas([...conNombre, ...sinNombre].sort((a, b) => a.y0 - b.y0))
@@ -364,11 +460,15 @@ export function leerRejilla(palabras, celdaDe, { codigos, ocupadas, filasEnColum
   const hayColumnaDias = Boolean(primera) && bordeDias > linea
   const celdaDelDia = (fila) => ({ x0: linea, y0: fila.y0, x1: bordeDias, y1: fila.y1 })
 
+  const rotulo = palabras.find(
+    (p) => p.x1 < margen && /^dias?$/.test(sinTildes(p.texto).replace(/[^a-z]/g, '')),
+  )
   const filas = filasDeLaRejilla({
     dias,
     celdaDe,
     filasEnColumna,
     columnaDias: hayColumnaDias && { x0: linea, y0: primera.y1 + 1, x1: bordeDias },
+    muestra: dias[0]?.caja ?? rotulo,
   })
 
   const anclas = debajo
