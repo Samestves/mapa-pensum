@@ -95,6 +95,9 @@ function RejillaHorario({
   const aY = (min) => (min - ABRE) * pxPorMinuto
 
   const ahoraSeVe = ahora.dia < DIAS.length && ahora.minuto >= ABRE && ahora.minuto <= CIERRA
+  /* En pixeles enteros. La linea de ahora mide uno, y a caballo entre dos
+     filas el navegador la reparte entre las dos: sale gris y no roja. */
+  const yDeAhora = Math.round(aY(ahora.minuto))
 
   /* La primera vez, la semana se abre por donde empiezan las clases. En una
      pantalla baja la jornada no cabe entera, y quien solo tiene clases de
@@ -216,7 +219,7 @@ function RejillaHorario({
           >
             {[...horasEnPunto(), CIERRA].map((min) => {
               const { hora, meridiano } = horaEnPunto(min)
-              const tapada = ahoraSeVe && Math.abs(aY(min) - aY(ahora.minuto)) < CERCA_DE_AHORA
+              const tapada = ahoraSeVe && Math.abs(aY(min) - yDeAhora) < CERCA_DE_AHORA
               return (
                 <span
                   key={min}
@@ -233,7 +236,7 @@ function RejillaHorario({
 
             {ahoraSeVe && (
               <span
-                style={{ top: aY(ahora.minuto) }}
+                style={{ top: yDeAhora }}
                 className="absolute right-3 -translate-y-1/2 text-[12px] leading-none font-semibold text-[var(--estado-rojo)] tabular-nums"
               >
                 {partesDeHora(ahora.minuto).hora}
@@ -301,11 +304,7 @@ function RejillaHorario({
                 ))}
 
                 {ahoraSeVe && i === ahora.dia && (
-                  <span
-                    aria-hidden="true"
-                    className="ahora-linea"
-                    style={{ top: aY(ahora.minuto) }}
-                  />
+                  <span aria-hidden="true" className="ahora-linea" style={{ top: yDeAhora }} />
                 )}
               </div>
             ))}
