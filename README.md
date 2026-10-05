@@ -208,7 +208,9 @@ Medido con la CPU frenada, antes y después:
 | Pasar el ratón por el mapa (CPU ×4) | cuadros de 150 ms, hilo principal al 65 % | sin filtros por tarjeta ni re-render de la pantalla |
 | Pellizco en un teléfono de gama baja (CPU ×6) | peor cuadro 83–133 ms | **16,8 ms**, con todo el texto visible |
 
-`npm run rendimiento` repite esas medidas en Chrome sobre el build y **sale con código 1 si un gesto se pasa de su presupuesto**: veces que se repinta, milisegundos maquetando y de JavaScript. Es lo que evita que el mapa vuelva a ponerse lento sin que nada falle.
+`npm run rendimiento` repite esas medidas en Chrome sobre el build y **sale con código 1 si algo se pasa de su presupuesto**. Mide tres cosas en `scripts/banco/`: el arranque en frío y el uso (cambiar de vista, marcar, desplazar) en un teléfono modesto simulado, y los gestos del mapa. Se juzga lo que no depende de lo ocupado que esté el equipo —veces que se repinta, elementos que se restilan, objetos que se maquetan, tamaño del documento— y los milisegundos se enseñan como referencia. Es lo que evita que la aplicación vuelva a ponerse lenta sin que nada falle.
+
+El peso va aparte y en cada build: `scripts/peso.js` lo tumba si lo que se descarga para arrancar pasa de su tope. El plan de lo que queda por optimizar, con su línea base, está en [`docs/plan-rendimiento.md`](docs/plan-rendimiento.md).
 
 </details>
 
@@ -387,10 +389,10 @@ npm run dev
 | `npm run dev` | Normaliza los datos y arranca el servidor de desarrollo |
 | `npm run datos` | Genera `src/data/carreras/` desde `datos/` |
 | `npm run validar` | Valida los pensums normalizados |
-| `npm run build` | Normaliza, valida, compila, genera la miniatura y prerenderiza |
+| `npm run build` | Normaliza, valida, compila, genera la miniatura, prerenderiza y comprueba el peso |
 | `npm run preview` | Sirve el build ya compilado |
 | `npm run lint` | oxlint |
-| `npm run rendimiento` | Mide los gestos del mapa sobre el build y falla si alguno se pasa de presupuesto |
+| `npm run rendimiento` | Mide arranque, uso y gestos del mapa sobre el build y falla si algo se pasa de presupuesto |
 | `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
 `src/data/carreras/` está generado y no se versiona: sale minificado y su diff sería una sola línea gigante.
