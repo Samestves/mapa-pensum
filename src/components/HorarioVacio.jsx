@@ -15,42 +15,38 @@ const SELLO =
   'M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z'
 
 /**
- * El sello que separa el texto de las acciones: dice, sin ponerse a explicar
- * nada, que el lector esta hecho para ESTE horario y no para cualquier foto.
- * Va encima del boton lleno porque es lo que respalda la promesa de ese boton.
+ * El sello que cierra las acciones: dice, sin ponerse a explicar nada, que el
+ * lector esta hecho para ESTE horario y no para cualquier foto.
+ *
+ * Va escrito como una frase y no en versalitas: en escritorio queda a un
+ * palmo de tres rotulos en versalitas, y con la misma letra era uno mas. Lo
+ * unico espaciado es el nombre, que se lee como la marca que es.
  *
  * Monocromo: el azul de esta app esta reservado para lo que se puede
  * inscribir, y un sello azul se leeria como un estado.
- *
- * En el telefono es una linea centrada con un hilo a cada lado; en escritorio,
- * donde las acciones son una columna a la derecha, va a la izquierda de ella y
- * el unico hilo sigue hasta el borde.
  */
 function SelloIntradace() {
   return (
-    <p className="mb-3.5 flex w-full items-center gap-3 font-ui text-[10.5px] font-medium tracking-[0.22em] text-tinta-suave uppercase [--hilo:color-mix(in_oklab,var(--tinta)_14%,transparent)] before:h-px before:flex-1 before:bg-(--hilo) after:h-px after:flex-1 after:bg-(--hilo) lg:before:hidden">
-      {/* El -mr es el espacio que el tracking deja detras de la ultima letra:
-          sin quitarlo la linea queda dos pixeles descentrada. */}
-      <span className="-mr-[0.22em] inline-flex items-center gap-2">
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" className="shrink-0">
-          <path
-            d={SELLO}
-            className="fill-tinta stroke-tinta"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-          <path
-            d="m9 12 2 2 4-4"
-            fill="none"
-            className="stroke-panel-suave"
-            strokeWidth="2.25"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span>
-          Optimizado para <b className="font-medium text-tinta">INTRADACE</b>
-        </span>
+    <p className="mt-3.5 inline-flex items-center gap-2 font-ui text-[13.5px] leading-none tracking-[0.01em] text-tinta-suave">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" className="shrink-0">
+        <path
+          d={SELLO}
+          className="fill-tinta stroke-tinta"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="m9 12 2 2 4-4"
+          fill="none"
+          className="stroke-panel-suave"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span>
+        Optimizado para{' '}
+        <b className="ml-0.5 text-[11.5px] font-semibold tracking-[0.16em] text-tinta">INTRADACE</b>
       </span>
     </p>
   )
@@ -76,8 +72,8 @@ function SelloIntradace() {
  * clases a mano.
  *
  * La captura es la accion llena porque resuelve el caso de casi todo el mundo
- * en un gesto; armarlo a mano va debajo como texto callado, sin caja: se ve,
- * pero no compite.
+ * en un gesto; armarlo a mano va debajo con el mismo cuerpo y solo un
+ * contorno: se ve que es un boton, pero no compite.
  *
  * Tiene que caber entera sin desplazarse, tambien en un telefono: una
  * pantalla de bienvenida con scroll esconde justo lo que viene a ofrecer.
@@ -152,7 +148,6 @@ function HorarioVacio({ alSubir, alCrear }) {
             className="lista-entrar mt-7 flex w-full flex-col items-center lg:col-start-3 lg:mt-0 lg:items-start"
             style={{ animationDelay: '140ms' }}
           >
-            <SelloIntradace />
             <button
               type="button"
               onClick={() => {
@@ -168,21 +163,16 @@ function HorarioVacio({ alSubir, alCrear }) {
             <button
               type="button"
               onClick={alCrear}
-              className="group mt-1.5 inline-flex h-11 items-center gap-[9px] rounded-xl px-2.5 text-[14.5px] font-medium text-tinta-suave transition-[color,transform] duration-200 hover:text-tinta active:scale-[0.985] lg:px-0"
+              className="boton-contorno group mt-2.5 h-[52px] w-full rounded-2xl text-[15px]"
             >
               <Pencil
-                size={16}
+                size={17}
                 strokeWidth={1.75}
-                className="text-tinta-tenue transition-colors duration-200 group-hover:text-tinta"
+                className="text-tinta-suave transition-[color,rotate] duration-300 ease-out group-hover:-rotate-12 group-hover:text-tinta"
               />
               Crearlo manualmente
             </button>
-            {/* De donde sale la mejor lectura. Solo donde sobra alto: en un
-                telefono bajo, lo primero es que los botones quepan sin
-                desplazarse. */}
-            <p className="mt-3 hidden max-w-[36ch] text-center text-[12px] leading-relaxed text-balance text-tinta-tenue lg:text-left [@media(min-height:720px)]:block">
-              Se lee mejor el PNG de «Descargar Horario» de INTRADACE, o una captura de la tabla.
-            </p>
+            <SelloIntradace />
           </div>
         </div>
 

@@ -70,7 +70,7 @@
      se sigue leyendo igual un poco mas bajo; un boton no. */
   height: clamp(
     104px,
-    calc(100dvh - var(--reserva-cabecera) - var(--reserva-barra) - 372px),
+    calc(100dvh - var(--reserva-cabecera) - var(--reserva-barra) - 384px),
     212px
   );
 }

@@ -1,12 +1,17 @@
-/* ---- Los dos botones del horario ------------------------------------------
+/* ---- Los botones del horario ----------------------------------------------
    La accion llena es tinta sobre lienzo: blanca en oscuro y negra en claro,
    sin color. El color de estas pantallas se guarda para lo que significa
    algo -una materia, un aviso-. Hay una por pantalla: la que resuelve.
 
    La callada es su pareja: el mismo tamaño, apenas un velo de tinta. Se ve
-   igual de pronto, pero no compite. */
+   igual de pronto, pero no compite.
+
+   La de contorno es el otro camino de una pantalla: el velo y ademas un aro
+   (el de .boton-aro), para que tenga cuerpo de boton sin pesar lo que la
+   llena que lleva encima. */
 .boton-tinta,
-.boton-sordo {
+.boton-sordo,
+.boton-contorno {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,7 +23,8 @@
   transition:
     transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
     opacity 200ms ease,
-    background-color 200ms ease;
+    background-color 200ms ease,
+    border-color 200ms ease;
 }
 
 .boton-tinta {
@@ -32,8 +38,16 @@
   font-weight: 500;
 }
 
+.boton-contorno {
+  border: 1px solid color-mix(in oklab, var(--tinta) 16%, transparent);
+  background: color-mix(in oklab, var(--tinta) 5%, transparent);
+  color: var(--tinta);
+  font-weight: 500;
+}
+
 .boton-tinta:active,
-.boton-sordo:active {
+.boton-sordo:active,
+.boton-contorno:active {
   transform: scale(0.985);
 }
 
@@ -44,6 +58,11 @@
 @media (hover: hover) {
   .boton-sordo:hover {
     background: color-mix(in oklab, var(--tinta) 11%, transparent);
+  }
+
+  .boton-contorno:hover {
+    border-color: color-mix(in oklab, var(--tinta) 28%, transparent);
+    background: color-mix(in oklab, var(--tinta) 9%, transparent);
   }
 }
 
