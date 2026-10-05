@@ -15,6 +15,7 @@
     "prepare": "git config core.hooksPath .githooks || exit 0",
     "preview": "vite preview",
     "rendimiento": "node scripts/rendimiento.js",
+    "comparar": "node scripts/comparar.js",
     "test": "node --test \"src/**/*.test.js\" \"api/**/*.test.js\""
   },
   "dependencies": {

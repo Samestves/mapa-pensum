@@ -19,11 +19,11 @@ const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '../..')
 /* El build que se mide. Por defecto el del repo; con DIST se apunta a otro,
    que es como se comparan dos versiones con las mismas medidas: el build de
    un commit viejo, o el de una prueba, en otra carpeta. */
-const DIST = process.env.DIST ? resolve(process.env.DIST) : join(RAIZ, 'dist')
+export const DIST = process.env.DIST ? resolve(process.env.DIST) : join(RAIZ, 'dist')
 
 /* Una carrera grande y un avance tipico: hay materias aprobadas, una en
    curso y frontera, asi que hay luces corriendo por los cables. */
-const CARRERA = 'ingenieria-de-sistemas'
+export const CARRERA = 'ingenieria-de-sistemas'
 
 /* La direccion de esa carrera, con la barra final: asi el servidor de vista
    previa entrega su pagina prerenderizada, que es la que sirve Vercel y la
@@ -31,7 +31,7 @@ const CARRERA = 'ingenieria-de-sistemas'
    la portada generica, y la carrera se media con una espera en cadena que en
    produccion no existe. */
 export const RUTA_CARRERA = `${CARRERA}/`
-const MARCAS = {
+export const MARCAS = {
   '0021111': 'aprobada',
   '0061013': 'aprobada',
   '0071823': 'aprobada',
@@ -121,31 +121,37 @@ function cabecerasDeVercel() {
   }
 }
 
-/** Sirve el build y abre Chrome. Devuelve la direccion y como cerrarlo todo. */
-export async function prepararBanco() {
-  if (!existsSync(join(DIST, 'index.html'))) {
-    console.error(`No hay build en ${DIST}. Corre primero: npm run build`)
+/** Sirve un build como lo sirve produccion. Devuelve su direccion y como apagarlo. */
+export async function servirBuild(build, puerto) {
+  if (!existsSync(join(build, 'index.html'))) {
+    console.error(`No hay build en ${build}. Corre primero: npm run build`)
     process.exit(1)
   }
   const servidor = await preview({
     root: RAIZ,
     logLevel: 'silent',
     plugins: [cabecerasDeVercel()],
-    build: { outDir: DIST },
-    preview: { port: 4180 },
+    build: { outDir: build },
+    preview: { port: puerto },
   })
+  return { url: servidor.resolvedUrls.local[0], cerrar: () => servidor.close() }
+}
+
+/** Sirve el build y abre Chrome. Devuelve la direccion y como cerrarlo todo. */
+export async function prepararBanco() {
+  const servidor = await servirBuild(DIST, 4180)
   const navegador = await lanzarChrome()
   return {
     navegador,
-    url: servidor.resolvedUrls.local[0],
+    url: servidor.url,
     async cerrar() {
       await navegador.close()
-      await servidor.close()
+      await servidor.cerrar()
     },
   }
 }
 
-async function lanzarChrome() {
+export async function lanzarChrome() {
   if (process.env.CHROME) return chromium.launch({ executablePath: process.env.CHROME })
   try {
     return await chromium.launch({ channel: 'chrome' })

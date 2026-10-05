@@ -22,10 +22,11 @@ No es código espagueti: la base es buena y ya tiene mucho trabajo de rendimient
 
 ## 2. Cómo se mide
 
-Dos instrumentos, los dos en el repo:
+Tres instrumentos, los tres en el repo:
 
 - **`npm run rendimiento`** — Chrome real simulando un teléfono modesto (360×740 a 2x, CPU ×6, 4G lenta de 1,6 Mbps y 150 ms) y un portátil (CPU ×4). Tres medidas en `scripts/banco/`: `arranque`, `uso` y `gestos`. Enseña la mediana de tres pasadas y sale con código 1 si algo se pasa de su tope. Hay que correrlo antes de pasar nada a `main`. El servidor del banco entrega la página prerenderizada de la carrera y las cabeceras de caché de `vercel.json`, como producción.
 - **`scripts/peso.js`** — al final de cada `npm run build`. Tumba el build si lo que se descarga para arrancar pasa de su tope.
+- **`npm run comparar -- <build de antes>`** — fotografía 20 pantallas en ese build y en `dist/` y dice cuáles no salen idénticas píxel a píxel. Es la comprobación de todo cambio que no debe verse: fuentes, reparto de CSS, mover reglas.
 
 ### Qué se juzga y qué no
 

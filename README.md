@@ -394,6 +394,7 @@ npm run dev
 | `npm run preview` | Sirve el build ya compilado |
 | `npm run lint` | oxlint |
 | `npm run rendimiento` | Mide arranque, uso y gestos del mapa sobre el build y falla si algo se pasa de presupuesto |
+| `npm run comparar -- <build>` | Compara píxel a píxel las pantallas de otro build con las de `dist/` |
 | `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
 `src/data/carreras/` y `src/fuentes/` están generados y no se versionan.
