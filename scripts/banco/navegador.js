@@ -8,7 +8,7 @@
  * al ejecutable).
  */
 
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright-core'
@@ -23,7 +23,14 @@ const DIST = process.env.DIST ? resolve(process.env.DIST) : join(RAIZ, 'dist')
 
 /* Una carrera grande y un avance tipico: hay materias aprobadas, una en
    curso y frontera, asi que hay luces corriendo por los cables. */
-export const CARRERA = 'ingenieria-de-sistemas'
+const CARRERA = 'ingenieria-de-sistemas'
+
+/* La direccion de esa carrera, con la barra final: asi el servidor de vista
+   previa entrega su pagina prerenderizada, que es la que sirve Vercel y la
+   que trae pedido de antemano el codigo de la vista. Sin la barra entregaba
+   la portada generica, y la carrera se media con una espera en cadena que en
+   produccion no existe. */
+export const RUTA_CARRERA = `${CARRERA}/`
 const MARCAS = {
   '0021111': 'aprobada',
   '0061013': 'aprobada',
@@ -71,6 +78,49 @@ export const APARATOS = {
   },
 }
 
+/**
+ * Le pone al servidor de vista previa las cabeceras que vercel.json le pone a
+ * produccion.
+ *
+ * Sin esto el banco medía otra aplicacion: la vista previa lo sirve todo con
+ * `no-cache`, y entonces un archivo ya bajado -una fuente pedida por
+ * adelantado- se vuelve a preguntar al servidor cada vez que se usa, y llega
+ * tarde. En produccion los archivos con hash no caducan y salen de la memoria
+ * en el acto.
+ *
+ * Se leen de vercel.json para que no haya dos listas que mantener iguales.
+ */
+function cabecerasDeVercel() {
+  const { headers = [] } = JSON.parse(readFileSync(join(RAIZ, 'vercel.json'), 'utf8'))
+  const reglas = headers.map((regla) => ({
+    patron: new RegExp(`^${regla.source}$`),
+    cabeceras: regla.headers,
+  }))
+  return {
+    name: 'cabeceras-de-vercel',
+    configurePreviewServer(servidor) {
+      servidor.middlewares.use((peticion, respuesta, seguir) => {
+        const ruta = peticion.url.split('?')[0]
+        const suyas = reglas.filter((r) => r.patron.test(ruta)).flatMap((r) => r.cabeceras)
+        if (suyas.length) {
+          /* El servidor pone las suyas justo al responder y pisarian a las de
+             aqui: se cambian en ese momento, sobre las que va a enviar. */
+          const responder = respuesta.writeHead
+          respuesta.writeHead = (codigo, ...resto) => {
+            const enviadas = resto.find((r) => r && typeof r === 'object')
+            for (const { key, value } of suyas) {
+              if (enviadas) enviadas[key] = value
+              else respuesta.setHeader(key, value)
+            }
+            return responder.call(respuesta, codigo, ...resto)
+          }
+        }
+        seguir()
+      })
+    },
+  }
+}
+
 /** Sirve el build y abre Chrome. Devuelve la direccion y como cerrarlo todo. */
 export async function prepararBanco() {
   if (!existsSync(join(DIST, 'index.html'))) {
@@ -80,6 +130,7 @@ export async function prepararBanco() {
   const servidor = await preview({
     root: RAIZ,
     logLevel: 'silent',
+    plugins: [cabecerasDeVercel()],
     build: { outDir: DIST },
     preview: { port: 4180 },
   })

@@ -8,7 +8,7 @@
  */
 
 import {
-  CARRERA,
+  RUTA_CARRERA,
   abrirPagina,
   bloqueoDe,
   contarTrabajo,
@@ -28,7 +28,9 @@ const REPOSO_MS = 3000
  *
  *  - peticiones: cuantas cosas se piden. Una de mas puede ser otro viaje de
  *    150 ms en cadena.
- *  - nodos: tamaño del documento.
+ *  - nodos: tamaño del documento. En una carrera cuenta tambien el texto
+ *    prerenderizado para buscadores, que se maqueta antes de que React lo
+ *    sustituya.
  *  - restilados, objetos: elementos a los que se les calcula estilo y objetos
  *    que se maquetan hasta que la pantalla se queda quieta. En la portada los
  *    restilados no se juzgan: sus animaciones de entrada los hacen bailar
@@ -49,21 +51,21 @@ const ESCENARIOS = [
     nombre: 'portada',
     ruta: '',
     listo: '.tarjeta-carrera',
-    presupuesto: { peticiones: 9, nodos: 900, objetos: 820, cpu: 1000 },
+    presupuesto: { peticiones: 9, nodos: 905, objetos: 820, cpu: 1000 },
   },
   {
     nombre: 'carrera por la lista',
-    ruta: CARRERA,
+    ruta: RUTA_CARRERA,
     vista: 'lista',
     listo: 'button[aria-label^="Marcar"]',
-    presupuesto: { peticiones: 12, nodos: 4050, restilados: 2300, objetos: 2880, cpu: 1150 },
+    presupuesto: { peticiones: 12, nodos: 4460, restilados: 2735, objetos: 3690, cpu: 1150 },
   },
   {
     nombre: 'carrera por el mapa',
-    ruta: CARRERA,
+    ruta: RUTA_CARRERA,
     vista: 'mapa',
     listo: '.plano-base > svg > g',
-    presupuesto: { peticiones: 12, nodos: 2430, restilados: 1880, objetos: 2790, cpu: 1150 },
+    presupuesto: { peticiones: 12, nodos: 2840, restilados: 2320, objetos: 3600, cpu: 1150 },
   },
 ]
 

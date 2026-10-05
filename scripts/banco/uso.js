@@ -8,7 +8,7 @@
  */
 
 import {
-  CARRERA,
+  RUTA_CARRERA,
   abrirPagina,
   bloqueoDe,
   contarTrabajo,
@@ -76,7 +76,7 @@ const PASOS = [
     nombre: 'marcar una materia',
     marcar: true,
     reposo: 2500,
-    presupuesto: { restilados: 380, objetos: 980, cpu: 300, nodos: 6080 },
+    presupuesto: { restilados: 380, objetos: 980, cpu: 300, nodos: 6490 },
   },
 ]
 
@@ -204,7 +204,7 @@ export const uso = {
       navegador,
       ...(await abrirPagina(navegador, 'modesto', { vista: 'lista', espia: espiaDePagina })),
     }
-    await sesion.pagina.goto(`${url}${CARRERA}`)
+    await sesion.pagina.goto(`${url}${RUTA_CARRERA}`)
     await sesion.pagina.waitForSelector(MARCAR)
     await sesion.pagina.waitForTimeout(2500)
     await sesion.frenar()

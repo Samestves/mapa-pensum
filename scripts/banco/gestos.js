@@ -13,7 +13,7 @@
  * enseñan y no se juzgan (ver metricas en navegador.js).
  */
 
-import { CARRERA, abrirPagina, metricas } from './navegador.js'
+import { RUTA_CARRERA, abrirPagina, metricas } from './navegador.js'
 import { resumenDeCuadros } from './presupuesto.js'
 
 /**
@@ -165,7 +165,7 @@ async function medir(navegador, url, escenario) {
   const { pagina, cdp, frenar, cerrar } = await abrirPagina(navegador, escenario.aparato, {
     vista: 'mapa',
   })
-  await pagina.goto(`${url}${CARRERA}`)
+  await pagina.goto(`${url}${RUTA_CARRERA}`)
   await pagina.waitForSelector('.plano-base > svg > g')
   await pagina.waitForTimeout(2500)
   await frenar()
