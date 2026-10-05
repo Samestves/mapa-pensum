@@ -1,181 +1,616 @@
-/* ---- Horario vacio: la semana que se lee sola -----------------------------
-   El dibujo que abre la pantalla cuenta lo que va a pasar con tu foto: una
-   semana con sus clases, y una linea que la recorre y las va encendiendo.
+/* ---- Horario vacio: de la captura a tu semana ------------------------------
+   El dibujo que abre la pantalla (DibujoCaptura) cuenta lo que va a pasar con
+   tu captura de INTRADACE: una hoja oscura con sus bloques azules, una linea
+   que la lee, y cada clase que sale a su sitio en tu semana.
 
-   Todo se mueve con transform y opacity. Los tiempos van en variables porque
-   tres animaciones tienen que ir acompasadas: la linea que baja y la luz de
-   cada clase, que se enciende justo cuando la linea le pasa por encima.
+   Todo lo que se mueve es transform y opacity, y los fotogramas son estaticos:
+   el layout no se toca en ningun cuadro. Cada clase esta maquetada en su sitio
+   FINAL de la semana y de ahi se lleva al de la captura con un transform
+   precalculado (--dx, --dy, --ex, --ey, ver DibujoCaptura). El cambio de color
+   -azul en la captura, el de su materia en la semana- no se anima: son dos
+   capas que se funden con opacity.
+
+   Sin ninguna animacion el dibujo ya esta en su estado final: la semana
+   armada. Por eso cada animacion arranca de un estado "de captura" con
+   fill-mode both, y el estilo base de cada pieza es el de la semana ya hecha.
    ------------------------------------------------------------------------ */
-.semana-muestra {
-  /* El alto de cada fila, que es lo primero que cede en pantallas bajas para
-     que la bienvenida quepa sin desplazarse. Aqui y no en clases de Tailwind:
-     las dos consultas se solapan, y solo en este orden gana la mas estrecha. */
-  --fila-muestra: 19px;
-  /* Cada cuanto se vuelve a leer la semana, cuanto tarda la primera lectura
-     en empezar -lo que tardan las clases en colocarse- y lo que tarda la
-     linea en cruzar una fila. La bajada entera es un cuarto del ciclo (ver
-     leer-semana): con cinco filas, un veinteavo por fila. */
-  --ciclo: 6400ms;
-  --arranque: 1200ms;
-  --por-fila: calc(var(--ciclo) / 20);
-}
+.dibujo {
+  /* Una vuelta completa: la captura entra, se lee, las clases cruzan, la
+     semana se queda un rato y todo se funde antes de volver a empezar. Los
+     fotogramas de abajo van en % de estos 12 s. */
+  --ciclo: 12s;
+  /* En un telefono el dibujo corre una sola vez y se queda en la semana ya
+     armada: 0.89 de vuelta es justo donde termina la espera (89.17%), con las
+     clases en su sitio y todo lo demas apagado. Ver [data-ligero] abajo. */
+  --vueltas: infinite;
 
-@media (max-height: 760px) {
-  .semana-muestra {
-    --fila-muestra: 14px;
-  }
-}
+  /* La captura de INTRADACE: una hoja oscura con bloques azules. Es una
+     imagen, asi que se ve igual en los dos temas de la app. */
+  --hoja: #0c0e11;
+  --hoja-borde: rgb(255 255 255 / 0.08);
+  --hoja-linea: rgb(255 255 255 / 0.065);
+  --hoja-texto: rgb(255 255 255 / 0.3);
+  --intra: #2e6fd3;
+  /* El bloque sin leer, y el eco que queda en la captura al irse la clase */
+  --intra-apagado: color-mix(in oklab, #21427a 62%, var(--hoja));
+  --raya-hoja: rgb(255 255 255 / 0.66);
+  --raya-apagada: rgb(255 255 255 / 0.26);
 
-@media (max-height: 660px) {
-  .semana-muestra {
-    --fila-muestra: 10px;
-  }
-}
+  /* La semana: las lineas de las horas y cuanto del color de la materia lleva
+     el relleno de cada clase */
+  --linea: color-mix(in oklab, var(--tinta) 9%, transparent);
+  --tinte: 27%;
 
-/* La rejilla se desvanece hacia abajo en vez de acabar en un borde: no es
-   una tarjeta, es un trozo de semana que sale del fondo. */
-.rejilla-muestra {
-  -webkit-mask-image: linear-gradient(to bottom, #000 48%, rgb(0 0 0 / 0.16));
-  mask-image: linear-gradient(to bottom, #000 48%, rgb(0 0 0 / 0.16));
-}
+  /* Medidas de las clases: renglon, separacion entre renglones, margen
+     interior, esquina, filo de color, aire entre clases, trazo de la captura
+     y estela de la linea de lectura */
+  --raya: 2px;
+  --paso: 6px;
+  --margen: 7px;
+  --radio: 4px;
+  --filo: 2px;
+  --hueco: 3px;
+  --trazo: 1.5px;
+  --estela: 60px;
+  /* Cuanto se estira una clase al llevarla a la captura. 1 = no se estira:
+     lo usan las piezas que no viajan, y cada clase lo sobreescribe. */
+  --ex: 1;
+  --ey: 1;
 
-/* Las lineas de las horas, detras de todo: es lo que hace que cinco columnas
-   de rectangulos se lean como una semana y no como un mosaico. */
-.hora-muestra {
-  position: absolute;
-  inset-inline: 0;
-  height: 1px;
-  background: color-mix(in oklab, var(--tinta) 7%, transparent);
-}
-
-/* Una clase: el relleno diluido y una barra fina a color pleno, como en
-   cualquier calendario. Entra subiendo un paso corto, sin rebote. */
-.clase-muestra {
   position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-  /* Opaca: tapa las lineas de las horas, como una clase de verdad */
-  background: color-mix(in oklab, var(--color) 21%, var(--panel-suave));
-  animation: colocar-clase 640ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  display: block;
+  width: 100%;
+  /* container-type da las unidades cqw y cqh: el viaje de cada clase se
+     expresa en % de esta caja, que un translate() no puede (sus porcentajes
+     son de la propia clase). Pide alto explicito, y lo tiene. */
+  container-type: size;
+  pointer-events: none;
+  /* El alto cede primero para que la bienvenida quepa sin desplazarse en un
+     telefono: lo que sobra de la pantalla una vez puesto el resto. Un dibujo
+     se sigue leyendo igual un poco mas bajo; un boton no. */
+  height: clamp(
+    104px,
+    calc(100dvh - var(--reserva-cabecera) - var(--reserva-barra) - 372px),
+    212px
+  );
 }
 
-.clase-muestra::before {
+[data-tema='claro'] .dibujo {
+  --hoja: #14171c;
+  --hoja-borde: transparent;
+  --tinte: 20%;
+}
+
+@media (min-width: 1024px) {
+  .dibujo {
+    height: clamp(180px, 36dvh, 288px);
+  }
+}
+
+/* Modo ligero (todo aparato tactil, ver data/ligero.js): se lee una vez y se
+   queda quieta. Es el saludo, no un adorno que corre mientras decides. */
+[data-ligero] .dibujo {
+  --vueltas: 0.89;
+}
+
+/* Lo que tienen en comun todas las piezas que se mueven. Con prefers-reduced-
+   motion se les quita la animacion entera (impresion-y-movimiento.css) y se
+   quedan como las deja su estilo base: en la semana ya armada. */
+.dibujo-hoja,
+.dibujo-semana,
+.dibujo-eco::after,
+.dibujo-clase,
+.dibujo-clase::after,
+.dibujo-lector,
+.dibujo-fase {
+  animation-duration: var(--ciclo);
+  animation-timing-function: linear;
+  animation-iteration-count: var(--vueltas);
+  animation-fill-mode: both;
+}
+
+/* ---- La captura de INTRADACE ---------------------------------------------- */
+.dibujo-hoja {
+  position: absolute;
+  top: 0;
+  left: var(--hx);
+  width: var(--hw);
+  height: 100%;
+  border-radius: calc(var(--radio) * 2);
+  background: var(--hoja);
+  outline: 1px solid var(--hoja-borde);
+  outline-offset: -1px;
+  /* Telefono: la captura solo existe mientras se lee, y la semana ya armada
+     la sustituye. */
+  opacity: 0;
+  animation-name: hoja-uno;
+}
+
+/* Escritorio: la captura se queda a la izquierda mientras la semana se arma a
+   su derecha, y en reposo sigue ahi con sus bloques apagados. El :where() es
+   para que esto no pese mas que el selector de la lista de movimiento
+   reducido: si pesara, esa lista no podria apagarlo. */
+:where([data-forma='par']) .dibujo-hoja {
+  opacity: 1;
+  animation-name: hoja-par;
+}
+
+/* La fila de arriba: los renglones de las franjas, siete columnas con dos
+   trazos cada una (22% de la columna cada uno, centrados, con 8% entre ellos) */
+.dibujo-cabecera {
+  position: absolute;
+  top: 0;
+  left: 13%;
+  width: 84%;
+  height: 16%;
+  background: linear-gradient(
+      to right,
+      transparent 24%,
+      var(--hoja-texto) 24% 46%,
+      transparent 46% 54%,
+      var(--hoja-texto) 54% 76%,
+      transparent 76%
+    )
+    0 50% / calc(100% / 7) var(--trazo) repeat-x;
+}
+
+/* La columna de los dias: un trazo por fila, pegado a la derecha. Cada
+   gradiente es un trazo y va en el centro de su fila (10%, 30%... del alto). */
+.dibujo-dias {
+  position: absolute;
+  top: 16%;
+  left: 0;
+  width: 13%;
+  height: 79%;
+  padding-right: 2.6%;
+  background:
+    linear-gradient(var(--hoja-texto), var(--hoja-texto)) 100% 10% / 50% var(--trazo) no-repeat,
+    linear-gradient(var(--hoja-texto), var(--hoja-texto)) 100% 30% / 58% var(--trazo) no-repeat,
+    linear-gradient(var(--hoja-texto), var(--hoja-texto)) 100% 50% / 80% var(--trazo) no-repeat,
+    linear-gradient(var(--hoja-texto), var(--hoja-texto)) 100% 70% / 58% var(--trazo) no-repeat,
+    linear-gradient(var(--hoja-texto), var(--hoja-texto)) 100% 90% / 66% var(--trazo) no-repeat;
+  background-origin: content-box;
+}
+
+/* La rejilla: siete franjas por cinco dias. Las lineas de dentro son
+   gradientes y las de los bordes derecho e inferior, dos pseudoelementos:
+   asi una rejilla de cuarenta y tantas lineas es un solo nodo. */
+.dibujo-rejilla {
+  position: absolute;
+  top: 16%;
+  left: 13%;
+  width: 84%;
+  height: 79%;
+  background:
+    linear-gradient(to right, var(--hoja-linea) 1px, transparent 1px) 0 0 / calc(100% / 7) 100%
+      repeat-x,
+    linear-gradient(to bottom, var(--hoja-linea) 1px, transparent 1px) 0 0 / 100% 20% repeat-y;
+}
+
+.dibujo-rejilla::before,
+.dibujo-rejilla::after {
   content: '';
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: var(--color);
+  background: var(--hoja-linea);
 }
 
-/* El nombre de la clase, reducido a un trazo */
-.clase-muestra > i {
+.dibujo-rejilla::before {
+  inset: 0 0 0 auto;
+  width: 1px;
+}
+
+.dibujo-rejilla::after {
+  inset: auto 0 0 0;
+  height: 1px;
+}
+
+/* Los renglones que sustituyen al texto de un bloque: tres, uno bajo otro,
+   cada uno un gradiente liso. Sirven a tres piezas -el eco apagado de la
+   captura, su capa encendida y la cara de la clase que viaja-, que solo
+   cambian de color (--r). Lo de dividir entre --ex y --ey es para la ultima:
+   la clase viaja estirada, y asi sus renglones se ven del grueso de siempre
+   en vez de deformados. */
+.dibujo-eco,
+.dibujo-eco::after,
+.dibujo-clase::after {
+  background-image:
+    linear-gradient(var(--r), var(--r)), linear-gradient(var(--r), var(--r)),
+    linear-gradient(var(--r), var(--r));
+  background-repeat: no-repeat;
+  background-size:
+    56% calc(var(--raya) / var(--ey)),
+    36% calc(var(--raya) / var(--ey)),
+    46% calc(var(--raya) / var(--ey));
+  background-position:
+    calc((var(--margen) + 1px) / var(--ex)) calc(var(--margen) / var(--ey)),
+    calc((var(--margen) + 1px) / var(--ex)) calc((var(--margen) + var(--paso)) / var(--ey)),
+    calc((var(--margen) + 1px) / var(--ex)) calc((var(--margen) + 2 * var(--paso)) / var(--ey));
+}
+
+/* El eco: el bloque de la captura, apagado hasta que la linea lo lee. Lo que
+   queda de el cuando la clase ya se fue a la semana. El aire entre bloques es
+   un borde transparente y el relleno se recorta al interior, para que la caja
+   mida lo que su fila y sus franjas. */
+.dibujo-eco {
+  --r: var(--raya-apagada);
   position: absolute;
-  top: 7px;
-  left: 9px;
-  width: 46%;
-  height: 2px;
-  border-radius: 1px;
-  background: color-mix(in oklab, var(--color) 62%, transparent);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radio) + 1px);
+  background-color: var(--intra-apagado);
+  background-clip: padding-box;
 }
 
-/* La luz de la clase recien leida. Lleva el mismo ciclo que la linea y un
-   retraso segun la fila en la que esta: asi se enciende cuando le toca. */
-.clase-muestra::after {
+/* La capa encendida: se funde encima cuando la linea le pasa por la fila */
+.dibujo-eco::after {
+  --r: var(--raya-hoja);
   content: '';
   position: absolute;
   inset: 0;
-  background: color-mix(in oklab, var(--color) 38%, transparent);
+  border-radius: var(--radio);
+  background-color: var(--intra);
   opacity: 0;
-  animation: encender-clase var(--ciclo) linear infinite;
-  animation-delay: calc(var(--arranque) + var(--fila) * var(--por-fila));
 }
 
-@keyframes colocar-clase {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+/* ---- La semana ------------------------------------------------------------- */
+.dibujo-semana {
+  position: absolute;
+  top: 0;
+  left: var(--wx);
+  width: var(--ww);
+  height: 100%;
+  animation-name: semana-uno;
 }
 
-@keyframes encender-clase {
-  0% {
-    opacity: 0;
-  }
-  3% {
-    opacity: 1;
-  }
-  16%,
-  100% {
-    opacity: 0;
-  }
+:where([data-forma='par']) .dibujo-semana {
+  animation-name: semana-par;
 }
 
-/* La linea de lectura. Mide lo que la rejilla y lleva la luz en su borde de
-   abajo, asi que cruzarla entera es un transform de -100% a 0. */
-.lectura-muestra {
+/* Las lineas de las horas, detras de todo: es lo que hace que cinco columnas
+   de rectangulos se lean como una semana y no como un mosaico. Siete franjas:
+   la primera linea es un gradiente suelto y las otras siete se repiten. */
+.dibujo-horas {
+  position: absolute;
+  inset: 14% 0 0 0;
+  background:
+    linear-gradient(var(--linea), var(--linea)) 0 0 / 100% 1px no-repeat,
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(100% / 7 - 1px),
+      var(--linea) calc(100% / 7 - 1px) calc(100% / 7)
+    );
+}
+
+/* ---- Una clase --------------------------------------------------------------
+   El elemento es la caja de su sitio FINAL en la semana (la celda del dia, sin
+   el aire, que ponen las caras). Tiene dos caras que se funden con opacity:
+
+   - ::before, la de la semana: relleno diluido del color de su materia, filo
+     a la izquierda a color pleno y dos renglones. Es la que se queda.
+   - ::after, la de la captura: azul con tres renglones. Es la que sale al
+     principio y se apaga durante el viaje.
+
+   La de la semana va debajo y no se anima: asi, cuando la de la captura se
+   funde, aparece la otra sin que haya que encenderla. */
+.dibujo-clase {
+  position: absolute;
+  transform-origin: 0 0;
+  /* Donde esta cuando sale de la captura: el sitio de ella, desplazado y
+     estirado desde la esquina de arriba a la izquierda. */
+  --inicio: translate(calc(var(--dx) * 1cqw), calc(var(--dy) * 1cqh)) scale(var(--ex), var(--ey));
+  animation-name: viajar-clase;
+  animation-delay: calc(var(--dia) * 140ms);
+}
+
+/* De arriba abajo: el filo, los dos renglones y el relleno. El relleno es
+   opaco -una mezcla con el fondo y no un color translucido- para que tape las
+   lineas de las horas, como una clase de verdad. */
+.dibujo-clase::before {
+  --raya-c: color-mix(in oklab, var(--c) 70%, transparent);
+  content: '';
+  position: absolute;
+  inset: 1px var(--hueco) 2px;
+  border-radius: var(--radio);
+  background:
+    linear-gradient(var(--c), var(--c)) 0 0 / var(--filo) 100% no-repeat,
+    linear-gradient(var(--raya-c), var(--raya-c)) calc(var(--margen) + 1px) var(--margen) / 56%
+      var(--raya) no-repeat,
+    linear-gradient(var(--raya-c), var(--raya-c)) calc(var(--margen) + 1px)
+      calc(var(--margen) + var(--paso)) / 36% var(--raya) no-repeat,
+    color-mix(in oklab, var(--c) var(--tinte), var(--panel-suave));
+}
+
+/* El inset y la esquina se dividen entre el estiramiento por lo mismo que los
+   renglones: el aire de 1 px y la esquina de 4 px se ven asi de verdad. */
+.dibujo-clase::after {
+  --r: var(--raya-hoja);
+  content: '';
+  position: absolute;
+  inset: calc(1px / var(--ey)) calc(1px / var(--ex));
+  border-radius: calc(var(--radio) / var(--ex)) / calc(var(--radio) / var(--ey));
+  background-color: var(--intra);
+  opacity: 0;
+  animation-name: ceder-cara;
+  animation-delay: calc(var(--dia) * 140ms);
+}
+
+/* ---- La linea de lectura ----------------------------------------------------
+   Mide lo que la captura y lleva la luz en su borde de abajo, asi que cruzarla
+   entera es un transform de -100% a 0. La caja la recorta a la forma de la
+   hoja: sin ella la estela se veria fuera, antes de entrar. */
+.dibujo-lector-caja {
+  position: absolute;
+  top: 0;
+  left: var(--hx);
+  width: var(--hw);
+  height: 100%;
+  border-radius: calc(var(--radio) * 2);
+  overflow: hidden;
+}
+
+.dibujo-lector {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
-    transparent calc(100% - 46px),
-    color-mix(in oklab, var(--tinta) 9%, transparent) calc(100% - 1px),
-    color-mix(in oklab, var(--tinta) 70%, transparent) calc(100% - 1px)
+    transparent calc(100% - var(--estela)),
+    rgb(255 255 255 / 0.1) calc(100% - 1px),
+    rgb(255 255 255 / 0.9) calc(100% - 1px)
   );
   opacity: 0;
-  pointer-events: none;
-  animation: leer-semana var(--ciclo) linear infinite;
-  animation-delay: var(--arranque);
+  transform: translateY(-100%);
+  animation-name: leer-captura;
 }
 
-@keyframes leer-semana {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  2% {
-    opacity: 1;
-  }
-  25% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  29%,
-  100% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-}
-
-/* En modo ligero se lee una vez y se queda quieta: es el saludo, no un
-   adorno que corre mientras decides (ver data/ligero.js). */
-[data-ligero] .clase-muestra::after,
-[data-ligero] .lectura-muestra {
-  animation-iteration-count: 1;
-}
-
-/* El hueco con el mas solo existe mientras miras "Crearlo a mano" */
-.hueco-muestra {
+/* El rotulo "Captura de INTRADACE" del telefono: solo mientras se ve la captura */
+.dibujo-fase {
   opacity: 0;
-  transform: scale(0.9);
-  transition:
-    opacity 280ms ease,
-    transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation-name: fase-captura;
 }
 
-.semana-muestra[data-foco='mano'] .hueco-muestra {
-  opacity: 1;
-  transform: none;
+/* ---- Fotogramas ---------------------------------------------------------------
+   Sobre una vuelta de 12 s (cada % son 0,12 s): la captura entra a los 0,4 s y
+   esta entera a 1,2 s; la linea la lee de 1,7 a 3,9 s; las clases salen a los
+   4,6 s, una columna tras otra cada 0,14 s (el animation-delay de cada clase),
+   y tardan 1,5 s en llegar; la semana se queda hasta los 10,7 s y se funde
+   hasta los 11,5 s. */
+@keyframes hoja-uno {
+  0%,
+  3.33% {
+    opacity: 0;
+    transform: translateY(6px);
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  10%,
+  37.5% {
+    opacity: 1;
+    transform: none;
+  }
+  44.17%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
 }
 
-/* Al arrastrar una imagen sobre la pantalla, la lectura se queda encendida:
-   es lo que va a pasar al soltarla. */
-.semana-muestra[data-foco='foto'] .clase-muestra::after {
-  animation: none;
-  opacity: 0.6;
+@keyframes hoja-par {
+  0%,
+  3.33% {
+    opacity: 0;
+    transform: translateY(6px);
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  10%,
+  89.17% {
+    opacity: 1;
+    transform: none;
+  }
+  95.83%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+@keyframes semana-uno {
+  0%,
+  40.83% {
+    opacity: 0;
+  }
+  50.83%,
+  89.17% {
+    opacity: 1;
+  }
+  95.83%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes semana-par {
+  0%,
+  3.33% {
+    opacity: 0;
+  }
+  10%,
+  89.17% {
+    opacity: 1;
+  }
+  95.83%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes leer-captura {
+  0%,
+  12.92% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  14.17% {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+  32.5% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  35%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fase-captura {
+  0%,
+  3.33% {
+    opacity: 0;
+  }
+  10%,
+  38.33% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* La clase sale de la captura (4,6 s), llega a la semana (6,1 s) y se queda.
+   Entra en el sitio de la captura justo encima de su eco, que a esa hora ya
+   esta encendido: son del mismo azul y no se nota el cambio. */
+@keyframes viajar-clase {
+  0%,
+  37.08% {
+    opacity: 0;
+    transform: var(--inicio);
+  }
+  38.33% {
+    opacity: 1;
+    transform: var(--inicio);
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  50.83%,
+  89.17% {
+    opacity: 1;
+    transform: none;
+  }
+  95.83%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* El azul se apaga ya casi al final del viaje: la clase llega estirada y
+   solo se ve bien una vez asentada. */
+@keyframes ceder-cara {
+  0%,
+  42.5% {
+    opacity: 1;
+  }
+  50.83%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El eco se enciende cuando la linea cruza el centro de su fila (cinco filas,
+   cinco fotogramas) y se apaga una vez la clase se ha ido. */
+@keyframes encender-0 {
+  0%,
+  17.72% {
+    opacity: 0;
+  }
+  19.38%,
+  38.33% {
+    opacity: 1;
+  }
+  46.67%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes encender-1 {
+  0%,
+  20.61% {
+    opacity: 0;
+  }
+  22.28%,
+  39.5% {
+    opacity: 1;
+  }
+  47.83%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes encender-2 {
+  0%,
+  23.51% {
+    opacity: 0;
+  }
+  25.18%,
+  40.67% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes encender-3 {
+  0%,
+  26.41% {
+    opacity: 0;
+  }
+  28.07%,
+  41.83% {
+    opacity: 1;
+  }
+  50.17%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes encender-4 {
+  0%,
+  29.3% {
+    opacity: 0;
+  }
+  30.97%,
+  43% {
+    opacity: 1;
+  }
+  51.33%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.dibujo-eco:where([data-dia='0'])::after {
+  animation-name: encender-0;
+}
+
+.dibujo-eco:where([data-dia='1'])::after {
+  animation-name: encender-1;
+}
+
+.dibujo-eco:where([data-dia='2'])::after {
+  animation-name: encender-2;
+}
+
+.dibujo-eco:where([data-dia='3'])::after {
+  animation-name: encender-3;
+}
+
+.dibujo-eco:where([data-dia='4'])::after {
+  animation-name: encender-4;
 }
 
 .riel-tramo {

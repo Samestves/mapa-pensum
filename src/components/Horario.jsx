@@ -116,15 +116,6 @@ function Horario({ carrera, estados }) {
     () => todas.filter((a) => estados[a.codigo] === ESTADO.DISPONIBLE),
     [todas, estados],
   )
-  /* Para la pantalla de inicio cuentan solo las obligatorias: con las
-     electivas del catalogo el numero se inflaria con veintitantas opciones
-     de las que se cursan unas pocas. */
-  const disponibles = useMemo(
-    () =>
-      carrera.asignaturas.filter((a) => !a.esHueco && estados[a.codigo] === ESTADO.DISPONIBLE)
-        .length,
-    [carrera, estados],
-  )
 
   /* Tres formas de llegar a la ficha, las tres con lo mismo: que clase -o que
      hueco- y de que caja de la pantalla cuelga. */
@@ -237,11 +228,7 @@ function Horario({ carrera, estados }) {
           CABE_LA_SEMANA). Los datos, la ficha y los menus son los mismos: lo
           unico que cambia es como se lee. */}
       {!hayClases && !empezado ? (
-        <HorarioVacio
-          disponibles={disponibles}
-          alSubir={setALeer}
-          alCrear={() => setEmpezado(true)}
-        />
+        <HorarioVacio alSubir={setALeer} alCrear={() => setEmpezado(true)} />
       ) : cabeLaSemana ? (
         <HorarioSemana
           {...comun}
