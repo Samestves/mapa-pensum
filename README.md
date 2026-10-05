@@ -234,7 +234,7 @@ Para que un buscador encuentre "pensum administración UDO Monagas" hace falta H
 
 Así que el build escribe un HTML por carrera con su `<title>`, canonical, Open Graph, JSON-LD y **la lista completa de materias en el markup**. React vacía ese contenido y monta la aplicación encima.
 
-Ese contenido es solo legible: lo leen los buscadores y los lectores de pantalla, pero no se dibuja. Durante un tiempo llevó además una copia a mano de la cabecera para tener algo que pintar antes que React, y esa copia envejecía con cada rediseño: al entrar se veían una décima de segundo el logo, las letras y la barra de la versión anterior. Ahora lo primero que se ve es el fondo del tema, y después la aplicación con su propia entrada. Las fuentes de la primera pantalla se precargan desde el HTML (un plugin de `vite.config.js` las busca en el bundle), así que el primer texto ya sale con su letra y no con la del sistema.
+Ese contenido es solo legible: lo leen los buscadores y los lectores de pantalla, pero no se dibuja. Durante un tiempo llevó además una copia a mano de la cabecera para tener algo que pintar antes que React, y esa copia envejecía con cada rediseño: al entrar se veían una décima de segundo el logo, las letras y la barra de la versión anterior. Ahora lo primero que se ve es el fondo del tema, y después la aplicación con su propia entrada. Las fuentes de la primera pantalla se precargan desde el HTML (un plugin de `vite.config.js` las busca en el bundle), así que el primer texto ya sale con su letra y no con la del sistema. Van recortadas al español: `scripts/fuentes.js` les quita en cada build los caracteres y los rasgos tipográficos que aquí no se usan, sin tocar el dibujo de ninguna letra, y lo que compite por el primer pintado baja de 126 a 60 kB.
 
 </details>
 
@@ -388,6 +388,7 @@ npm run dev
 |---|---|
 | `npm run dev` | Normaliza los datos y arranca el servidor de desarrollo |
 | `npm run datos` | Genera `src/data/carreras/` desde `datos/` |
+| `npm run fuentes` | Genera `src/fuentes/`: las fuentes recortadas al español |
 | `npm run validar` | Valida los pensums normalizados |
 | `npm run build` | Normaliza, valida, compila, genera la miniatura, prerenderiza y comprueba el peso |
 | `npm run preview` | Sirve el build ya compilado |
@@ -395,7 +396,7 @@ npm run dev
 | `npm run rendimiento` | Mide arranque, uso y gestos del mapa sobre el build y falla si algo se pasa de presupuesto |
 | `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
-`src/data/carreras/` está generado y no se versiona: sale minificado y su diff sería una sola línea gigante.
+`src/data/carreras/` y `src/fuentes/` están generados y no se versionan.
 
 ## Despliegue
 
