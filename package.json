@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run datos && vite",
+    "dev": "npm run datos && npm run fuentes && vite",
     "datos": "node scripts/normalizar.js",
+    "fuentes": "node scripts/fuentes.js",
     "validar": "node scripts/validar-pensum.js",
-    "build": "npm run lint && npm run datos && npm run validar && npm test && node scripts/og.js && node scripts/iconos.js && vite build && node scripts/prerenderizar.js && node scripts/serviceworker.js && node scripts/peso.js",
+    "build": "npm run lint && npm run datos && npm run fuentes && npm run validar && npm test && node scripts/og.js && node scripts/iconos.js && vite build && node scripts/prerenderizar.js && node scripts/serviceworker.js && node scripts/peso.js",
     "lint": "oxlint",
     "formato": "prettier --write \"src/**/*.{js,jsx,css}\" \"api/**/*.js\" \"scripts/**/*.js\"",
     "formato:revisar": "prettier --check \"src/**/*.{js,jsx,css}\" \"api/**/*.js\" \"scripts/**/*.js\"",
@@ -36,6 +37,7 @@
     "oxlint": "^1.75.0",
     "playwright-core": "^1.56.0",
     "prettier": "3.9.9",
+    "subset-font": "^2.9.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
   }

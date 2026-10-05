@@ -54,34 +54,24 @@ function aUrl(ruta) {
 const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png', '/sw.js'])
 
 /**
- * De las fuentes solo se precachea el subconjunto que esta aplicacion usa.
+ * De las fuentes solo se precachea lo que esta aplicacion dibuja: los cuatro
+ * recortes al español que genera scripts/fuentes.js.
  *
- * Inter, Jost e IBM Plex Mono vienen partidas en subconjuntos -latin,
- * latin-ext, cirilico, griego y vietnamita- y cada @font-face declara con
- * unicode-range que caracteres cubre. El navegador solo pide un subconjunto
- * cuando la pagina usa una letra de ese rango, asi que en una aplicacion en
- * español nunca descarga mas que los latinos.
+ * Las latinas enteras tambien estan en el build, declaradas solo para los
+ * caracteres que el recorte no trae. El navegador pide una cuando la pagina
+ * usa una letra de esas, y lo que se escribe en español sale de los recortes.
  *
  * El service worker no es tan listo: precachea la lista que se le da. Sin
- * este filtro se llevaba todos los subconjuntos, casi cuatro veces lo que hace
- * falta, en alfabetos que no se van a dibujar. En un telefono con datos caros
+ * este filtro se llevaba tambien las enteras, casi el triple de lo que hace
+ * falta, por letras que no se van a dibujar. En un telefono con datos caros
  * es descarga pagada por nada.
  *
- * Tampoco hace falta latin-ext, que cubre la Europa del este: comprobado sobre
- * los nueve pensums enteros, cero caracteres fuera del subconjunto latin en
- * las 481 materias.
- *
- * Los demas se quedan en el build a proposito, y por eso esto es un filtro de
- * precache y no un cambio en el CSS: si algun dia aparece un caracter raro
- * -un nombre en el planificador, una materia nueva- el navegador pedira ese
- * archivo y funcionara igual. Lo que se quita es traerselos por adelantado.
+ * Las enteras se quedan en el build a proposito: si algun dia aparece un
+ * caracter raro -un nombre en el horario- el navegador pedira ese archivo y
+ * funcionara igual; sin conexion, ese caracter sale con la letra del
+ * sistema. Lo que se quita es traerselas por adelantado.
  */
-/* wght es Jost. opsz es Inter, que se carga con el eje de
-   tamaño optico y por eso su archivo se llama distinto: filtrando solo por
-   wght, quedaba fuera de la precarga y sin conexion la app entera salia en la
-   letra del sistema. 300 y 400 son IBM Plex Mono, que no es variable y viene
-   en un archivo por peso. */
-const SUBCONJUNTO_QUE_USAMOS = /-latin-(wght|opsz|300|400)-normal/
+const SUBCONJUNTO_QUE_USAMOS = /\/(inter|jost|plex-mono-(300|400))-es-/
 
 /* El panel de uso es para una sola persona y se entra a mano por /panel.
    Precacharlo seria hacer que los nueve mil estudiantes se bajen -y guarden

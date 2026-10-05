@@ -3,18 +3,36 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-/* Las fuentes que pinta la primera pantalla, en el subconjunto latino (el que
-   cubre el español). Las demas -cirilico, griego, vietnamita, latin-ext- solo
-   se bajan si alguna pagina llega a usar uno de sus caracteres. */
-const FUENTES_PRIMERA_PANTALLA = [
-  /^assets\/jost-latin-wght-normal-.*\.woff2$/,
-  /^assets\/inter-latin-opsz-normal-.*\.woff2$/,
-  /^assets\/ibm-plex-mono-latin-(300|400)-normal-.*\.woff2$/,
+/* Las fuentes que se piden desde el HTML, ya recortadas al español (ver
+   scripts/fuentes.js). Las latinas enteras solo se bajan si alguna pagina
+   llega a usar un caracter de fuera del recorte.
+
+   Inter y Jost las pinta cualquier pantalla. Plex Mono solo la usa el mapa:
+   en pantallas anchas, donde el mapa es lo primero que se ve, se pide igual
+   que las otras; en un telefono, donde se entra por la lista, con prioridad
+   baja, para que no le quite datos a lo primero que se pinta. El corte es el
+   de la vista inicial, en VistaCarrera.
+
+   Se pide desde el HTML tambien en el telefono, y no al ir al mapa, porque es
+   lo unico que funciona. Probado en Chrome con datos lentos: un enlace de
+   precarga creado por script despues de cargar la pagina no se reutiliza -el
+   mapa vuelve a pedir la letra, se pinta con la del sistema y se maqueta dos
+   veces, 3 350 objetos en vez de 2 000-, y document.fonts.load la activa, que
+   obliga a maquetar de nuevo todo lo que haya en pantalla aunque no la use. */
+const FUENTES_QUE_SE_PIDEN = [
+  { patron: /^assets\/inter-es-.*\.woff2$/ },
+  { patron: /^assets\/jost-es-.*\.woff2$/ },
+  { patron: /^assets\/plex-mono-(300|400)-es-.*\.woff2$/, media: '(min-width: 768px)' },
+  {
+    patron: /^assets\/plex-mono-(300|400)-es-.*\.woff2$/,
+    media: '(max-width: 767.98px)',
+    fetchpriority: 'low',
+  },
 ]
 
 /**
- * Pide las fuentes de la primera pantalla desde el HTML, a la vez que el
- * JavaScript, en vez de esperar a que el CSS las descubra.
+ * Pide las fuentes desde el HTML, a la vez que el JavaScript, en vez de
+ * esperar a que el CSS las descubra.
  *
  * Sin esto el navegador no sabe que las necesita hasta que React pinta un
  * texto con ellas, y para entonces ya ha pintado ese texto con la fuente de
@@ -32,19 +50,22 @@ function precargarFuentes() {
     transformIndexHtml: {
       order: 'post',
       handler(_html, { bundle }) {
-        return Object.keys(bundle ?? {})
-          .filter((archivo) => FUENTES_PRIMERA_PANTALLA.some((patron) => patron.test(archivo)))
-          .map((archivo) => ({
-            tag: 'link',
-            attrs: {
-              rel: 'preload',
-              href: `/${archivo}`,
-              as: 'font',
-              type: 'font/woff2',
-              crossorigin: '',
-            },
-            injectTo: 'head',
-          }))
+        return Object.keys(bundle ?? {}).flatMap((archivo) =>
+          FUENTES_QUE_SE_PIDEN.filter(({ patron }) => patron.test(archivo)).map(
+            ({ patron: _patron, ...cuando }) => ({
+              tag: 'link',
+              attrs: {
+                rel: 'preload',
+                href: `/${archivo}`,
+                as: 'font',
+                type: 'font/woff2',
+                crossorigin: '',
+                ...cuando,
+              },
+              injectTo: 'head',
+            }),
+          ),
+        )
       },
     },
   }

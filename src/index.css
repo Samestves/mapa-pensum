@@ -1,11 +1,9 @@
 @import 'tailwindcss';
-/* Inter con el eje de tamaño optico: ver --font-sans */
-@import '@fontsource-variable/inter/opsz.css';
-/* Las dos del mapa: Jost, geometrica y fina, para nombres y rotulos, e IBM
-   Plex Mono, de maquina, para codigos y cifras. Ver --font-ui. */
-@import '@fontsource-variable/jost';
-@import '@fontsource/ibm-plex-mono/300.css';
-@import '@fontsource/ibm-plex-mono/400.css';
+/* Las fuentes, recortadas al español por scripts/fuentes.js: Inter con el eje
+   de tamaño optico (ver --font-sans) y las dos del mapa, Jost para nombres y
+   rotulos e IBM Plex Mono para codigos y cifras (ver --font-ui). La hoja se
+   genera: no esta en el repositorio hasta correr npm run fuentes. */
+@import './fuentes/fuentes.css';
 
 /* Los estilos propios, por zonas. El orden es el de la cascada: una regla
    de mas abajo gana a una de mas arriba con la misma especificidad, asi

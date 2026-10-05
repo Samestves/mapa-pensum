@@ -40,3 +40,6 @@ dist-ssr
 # No se commitea: el JSON sale minificado y su diff es una sola linea gigante,
 # asi que versionarlo no aporta revisabilidad, solo ruido.
 src/data/carreras/
+
+# Generado por scripts/fuentes.js desde las fuentes de node_modules.
+src/fuentes/

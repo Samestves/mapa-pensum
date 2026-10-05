@@ -52,8 +52,8 @@ const sumar = (archivos, medida) => archivos.reduce((suma, a) => suma + medida(a
 /**
  * Lo que se vigila, en el orden en que se descarga. `tope` en kB.
  *
- * La portada son las tres primeras filas; entrar a una carrera añade las dos
- * siguientes. El lector de horarios va aparte: solo lo baja quien sube una
+ * La portada son las cuatro primeras filas; entrar a una carrera añade las
+ * dos siguientes. El lector de horarios va aparte: solo lo baja quien sube una
  * foto, pero tiene que seguir siendo algo que se pueda bajar con datos. Su
  * motor de OCR (4 MB) no se cuenta: tiene su propia cache y no crece con
  * nuestro codigo.
@@ -70,13 +70,20 @@ const PARTIDAS = [
     tope: 26.5,
   },
   {
-    nombre: 'portada · fuentes precargadas',
-    kB: sumar(citados(portada, /<link rel="preload"[^>]+as="font"[^>]*>/g), crudo),
-    tope: 127,
+    // Las que pinta cualquier pantalla: las unicas que se piden sin condicion
+    nombre: 'portada · fuentes',
+    kB: sumar(citados(portada, /<link rel="preload"(?![^>]*media=)[^>]+as="font"[^>]*>/g), crudo),
+    tope: 62,
+  },
+  {
+    // La letra del mapa en un telefono: llega detras, con prioridad baja
+    nombre: 'portada · fuentes en segundo plano',
+    kB: sumar(citados(portada, /<link rel="preload"[^>]+fetchpriority="low"[^>]*>/g), crudo),
+    tope: 17.5,
   },
   {
     nombre: 'carrera · JS de la vista',
-    kB: sumar(citados(carrera, /<link rel="modulepreload"[^>]+>/g), comprimido),
+    kB: sumar(citados(carrera, /<link rel="modulepreload"[^>]+VistaCarrera-[^>]+>/g), comprimido),
     tope: 78,
   },
   {
@@ -101,8 +108,8 @@ for (const { nombre, kB: pesa, tope } of PARTIDAS) {
   const marca = pesa > tope ? '✗' : '✓'
   console.log(`  ${marca} ${nombre.padEnd(34)} ${pesa.toFixed(1).padStart(6)}  de ${tope}`)
 }
-const deLaPortada = sumar(PARTIDAS.slice(0, 3), (p) => p.kB)
-const deLaCarrera = sumar(PARTIDAS.slice(0, 5), (p) => p.kB)
+const deLaPortada = sumar(PARTIDAS.slice(0, 4), (p) => p.kB)
+const deLaCarrera = sumar(PARTIDAS.slice(0, 6), (p) => p.kB)
 console.log(
   `  portada ${deLaPortada.toFixed(0)} kB · entrar a una carrera ${deLaCarrera.toFixed(0)} kB`,
 )
