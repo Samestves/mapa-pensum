@@ -64,7 +64,7 @@ const ESCENARIOS = [
     ruta: RUTA_CARRERA,
     vista: 'lista',
     listo: 'button[aria-label^="Marcar"]',
-    presupuesto: { peticiones: 15, nodos: 4530, restilados: 2255, objetos: 2790, cpu: 1150 },
+    presupuesto: { peticiones: 15, nodos: 4530, restilados: 1205, objetos: 1485, cpu: 1150 },
   },
   {
     nombre: 'carrera por el mapa',

@@ -7,8 +7,9 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | 0 · Instrumentos | Hecha el 2026-10-05 |
 | 1 · Arranque: peso | Hecha el 2026-10-05. El CSS por pantalla pasó a la fase 2 |
 | 2 · Un módulo por vista | Hecha el 2026-10-06 |
-| 3 · La lista pinta lo que se ve | Siguiente |
-| 4 a 8 | Pendientes |
+| 3 · La lista pinta lo que se ve | Hecha el 2026-10-06 |
+| 4 · Cambiar de vista sin rehacer | Siguiente |
+| 5 a 8 | Pendientes |
 
 ## 1. Cómo está hecho hoy
 
@@ -42,7 +43,7 @@ Para afirmar que una fase bajó un **tiempo**, se comparan los dos builds seguid
 
 ## 3. Línea base
 
-Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 2.
+Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 3.
 
 ### Lo que el banco juzga
 
@@ -53,12 +54,12 @@ Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «h
 | Carrera: peticiones en cadena tras el HTML | 3 (el pensum y dos trocitos del código) | 0 | 0 | 1 y 2 |
 | Carrera: JS de la carrera hasta la primera vista | 75,7 kB | 30 kB por la lista, 41 por el mapa, 43 por el horario | ≤ 40 kB | 2 |
 | Carrera: descarga hasta ver la pantalla | 321 kB | 222 kB por la lista, 232 por el mapa | — | 1 y 2 |
-| Carrera por la lista: objetos maquetados | 3 581 | 2 709 | ≤ 1 500 | 2 y 3 |
-| Carrera por la lista: elementos restilados | 2 603 | 2 148 | ≤ 1 200 | 2 y 3 |
-| Carrera por la lista: nodos | 4 330 | igual | se decide en la fase 3 | 3 |
-| Volver a la lista ya montada: objetos | 2 072 | igual | ≤ 100 | 4 |
+| Carrera por la lista: objetos maquetados | 3 581 | 1 439 | ≤ 1 500 | 2 y 3 |
+| Carrera por la lista: elementos restilados | 2 603 | 1 167 | ≤ 1 200 | 2 y 3 |
+| Carrera por la lista: nodos | 4 330 | 4 377 | se quedan (ver fase 3) | 3 |
+| Volver a la lista ya montada: objetos | 2 072 | 802 | ≤ 100 | 3 y 4 |
 | Volver al mapa ya montado: objetos | 1 994 | igual | ≤ 100 | 4 |
-| Volver a una vista montada: restilados | 1 595-1 695 | igual | ≤ 150 | 4 |
+| Volver a una vista montada: restilados | 1 595-1 695 | lista 724, mapa 1 655 | ≤ 150 | 3 y 4 |
 | Marcar una materia: restilados / objetos | 325 / 829 | igual | la mitad | 5 |
 | Marcar una materia: CPU | 141 ms | igual | ≤ 70 ms | 5 |
 | Lista → mapa, primera vez: CPU | 144 ms | igual | ≤ 100 ms | 6 |
@@ -176,15 +177,44 @@ Lo que cambia sin verse, para que no sorprenda: la portada ya no define las siet
 
 Queda un riesgo conocido, que no es nuevo pero ahora tiene más sitios donde aparecer: si se pierde la conexión antes de que el service worker termine de guardar la aplicación y se toca una vista que aún no ha bajado, el fallo sigue el camino de «hay versión nueva»: borra la copia sin conexión y recarga. Bajar las vistas en reposo cierra casi toda esa ventana. Tratarlo bien —esperar a que vuelva la red sin recargar— es trabajo de otra fase.
 
-### Fase 3 — La lista pinta lo que se ve
+### Fase 3 — La lista pinta lo que se ve (hecha)
 
-1. `content-visibility: auto` con tamaño reservado por sección de semestre.
-2. Montaje por tramos: los primeros semestres en el primer cuadro y el resto en una transición. Ojo con lo aprendido en la fase 2: una transición se reinicia con cualquier actualización urgente; lo que corre en reposo tiene que esperar a que acabe.
-3. ✅ Hecho en la fase 2: el texto para buscadores ya no se maqueta.
+Lo que cambió, sin tocar un píxel (32 pantallas comparadas contra el build de la fase 2: fotos idénticas; en estilos solo cambia lo que se dice abajo):
 
-Meta: objetos maquetados al entrar 2 709 → ≤ 1 500; pantalla visible 3,6 → ≤ 2,5 s.
+1. ✅ **El panel de cada fila cerrada no se prepara.** Era la mitad de lo que costaba entrar. Cada fila lleva montado su panel —el selector Aprobada/Cursando/Sin cursar y las pastillas del camino— para plegarse suave, y aunque estaba cerrado (alto 0, opacidad 0) se maquetaba entero. Ahora `.plegable` cerrado le pone `content-visibility: hidden` a lo de dentro, con una transición discreta (`allow-discrete`) de 360 ms: al abrir se ve desde el primer cuadro y al cerrar se queda hasta que acaba el pliegue. Vale también para los semestres plegados.
+2. ✅ **El alto reservado de cada sección sale de sus filas.** `content-visibility: auto` ya estaba en cada sección, con 520 px reservados para todas. Medido: una cabecera son 50 px, cada fila 49,8. Con el valor fijo, Sistemas reservaba ~3 840 px para siete secciones que miden ~1 770, y la barra de desplazamiento encogía a saltos al bajar. Ahora `VistaLista` calcula la reserva de cada una (a ±4 px del alto real en Sistemas y en Agronómica).
+3. ✅ **El montaje por tramos se queda.** Ya existía (tres secciones en el primer cuadro y el resto en una transición). Con lo anterior se probó quitarlo y montar todo de una vez: maqueta lo mismo, pero bloquea más (ver tabla).
+4. ✅ **Comprobaciones de la lista en el repo** (`npm run verificar`, en `scripts/verificar/lista.js`): saltar a un semestre desde el resumen, «Elegir» una electiva hasta su grupo al final, ir a una materia de otro semestre desde sus pastillas, plegar y desplegar, abrir y cerrar una fila, la posición al volver del mapa y buscar en la página una materia aún sin pintar. Las siete pasan.
 
-Hay que comprobar que siguen funcionando: saltar a un semestre, buscar desde la paleta, plegar secciones, la posición al volver y «buscar en la página».
+Resultado, los tres builds seguidos en el teléfono modesto del banco (cuatro rondas alternadas, medianas; medido en la nube, que va más rápida que el equipo de Sam, así que valen las diferencias y no los valores):
+
+| Qué | Fase 2 | Fase 3 | Fase 3 sin tramos |
+| --- | --- | --- | --- |
+| Entrar por la lista: pantalla visible | 2 791 ms | 2 599 ms | 2 762 ms |
+| Entrar por la lista: bloqueo | 707 ms | 483 ms | 672 ms |
+| Mapa → lista, primera vez: bloqueo | 341 ms | 85 ms | 148 ms |
+| Mapa → lista, primera vez: objetos | 2 094 | 824 | 813 |
+
+Metas, una a una:
+
+- **Objetos al entrar 2 709 → ≤ 1 500:** 1 439. El primer cuadro de la lista pasa de 1 036 objetos a 305.
+- **Restilados 2 148 → ≤ 1 200:** 1 167. Lo que no se prepara tampoco se restila.
+- **Pantalla visible 3,6 → ≤ 2,5 s:** no. Baja unos 0,2 s (un 7 %). La lista ya entra en el documento a ~2,5 s y se pinta ~0,1 s después; lo que queda antes es red y JavaScript (descargar ~220 kB con 4G lenta y ejecutar React), que no son de la lista. Para bajar de ahí hay que tocar el peso o el arranque de React, no la lista.
+- **De regalo, adelantado de la fase 4:** volver a la lista ya montada maqueta 802 objetos en vez de 2 072 y restila 724 en vez de 1 754, porque los paneles cerrados ya no se rehacen al quitarle el `display:none`.
+- **Nodos:** se quedan (4 377). Quitar del documento lo que no se ve rompería «buscar en la página», el lector de pantalla y el plegado suave; con `content-visibility` esos nodos ya casi no cuestan.
+
+Lo que cambia sin verse, para que no sorprenda:
+
+- **El tabulador ya no entra en lo cerrado.** Antes, con el teclado, el foco caía en botones invisibles: el selector de cada fila cerrada y las filas de un semestre plegado. Era un fallo de accesibilidad; ahora se saltan. Las comprobaciones lo vigilan.
+- **«Buscar en la página» ya no encuentra lo plegado.** Antes lo encontraba, pero no se veía (alto 0 y opacidad 0); ahora no lo encuentra. Lo que está desplegado se encuentra aunque esté lejos y sin pintar. Si se quiere que la búsqueda despliegue el semestre solo, el camino es `hidden="until-found"` con su evento `beforematch`.
+- `comparar` contra un build anterior marca 7 pantallas por estilos, nunca por fotos: la transición de los paneles (`transition` sobre `content-visibility`), la reserva de cada sección (`contain-intrinsic-size`) y, por ella, el alto total de la lista mientras las secciones de abajo no se han pintado.
+
+Lo que se miró y no se hizo:
+
+- **Quitar los tramos** (ver tabla): mismo maquetado y más bloqueo.
+- **Marcar una materia sale con más objetos** (640 → 728) y no es una regresión. Después de marcar, el porcentaje del resumen se anima y cada cuadro maqueta 21 objetos durante ~600 ms; con la lista más ligera caben más cuadros en esa animación (31 contra 24). La pasada de la marca en sí baja de 67 a 50. Ese número que se maqueta en cada cuadro queda para la fase 5.
+
+Topes del banco bajados a lo medido: entrar por la lista (restilados 1 205, objetos 1 485) y volver a la lista ya montada (restilados 750, objetos 830).
 
 ### Fase 4 — Cambiar de vista sin rehacer
 
