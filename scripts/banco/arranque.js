@@ -12,13 +12,15 @@ import {
   abrirPagina,
   bloqueoDe,
   contarTrabajo,
+  descargasDePagina,
   espiaDePagina,
   metricas,
 } from './navegador.js'
 
 /* Lo que se espera, ya visible la pantalla, antes de leer las medidas: la
-   pagina sigue preparando cosas en reposo (ver components/Precalentar.jsx), y
-   ese trabajo tambien cuenta. */
+   pagina sigue preparando cosas en reposo -pinta de antemano el avance (ver
+   components/Precalentar.jsx) y baja las vistas que aun no se han abierto
+   (ver components/carreraPorTrozos.js)-, y ese trabajo tambien cuenta. */
 const REPOSO_MS = 3000
 
 /**
@@ -26,8 +28,9 @@ const REPOSO_MS = 3000
  * que este el equipo; los topes son lo medido al escribirlos con poco margen,
  * y al cerrar cada fase de docs/plan-rendimiento.md bajan a lo nuevo medido.
  *
- *  - peticiones: cuantas cosas se piden. Una de mas puede ser otro viaje de
- *    150 ms en cadena.
+ *  - peticiones: cuantas cosas se piden hasta que la pantalla esta visible.
+ *    Una de mas puede ser otro viaje de 150 ms en cadena. Lo que la pagina
+ *    baja despues, en reposo, no cuenta aqui: va en `detras`.
  *  - nodos: tamaño del documento. En una carrera cuenta tambien el texto
  *    prerenderizado para buscadores, que se maqueta antes de que React lo
  *    sustituya.
@@ -42,74 +45,64 @@ const REPOSO_MS = 3000
  * con el equipo:
  *
  *  - primerPintado: cuando deja de verse el fondo vacio.
- *  - visible: cuando esta en pantalla aquello a lo que se entro (`listo`).
+ *  - visible: cuando esta pintado aquello a lo que se entro (`listo`).
  *  - bloqueo: ms en que un toque no habria tenido respuesta.
- *  - kB: lo descargado. Quien lo vigila es scripts/peso.js, en cada build.
+ *  - kB: lo descargado hasta ver la pantalla, y `detras`, lo que llega
+ *    despues sin que nadie espere por ello. Quien vigila el peso es
+ *    scripts/peso.js, en cada build.
  */
 const ESCENARIOS = [
   {
     nombre: 'portada',
     ruta: '',
     listo: '.tarjeta-carrera',
-    presupuesto: { peticiones: 9, nodos: 905, objetos: 820, cpu: 1000 },
+    presupuesto: { peticiones: 7, nodos: 905, objetos: 820, cpu: 1000 },
   },
   {
     nombre: 'carrera por la lista',
     ruta: RUTA_CARRERA,
     vista: 'lista',
     listo: 'button[aria-label^="Marcar"]',
-    presupuesto: { peticiones: 12, nodos: 4460, restilados: 2735, objetos: 3690, cpu: 1150 },
+    presupuesto: { peticiones: 14, nodos: 4470, restilados: 2735, objetos: 3690, cpu: 1150 },
   },
   {
     nombre: 'carrera por el mapa',
     ruta: RUTA_CARRERA,
     vista: 'mapa',
     listo: '.plano-base > svg > g',
-    presupuesto: { peticiones: 12, nodos: 2840, restilados: 2320, objetos: 3600, cpu: 1150 },
+    presupuesto: { peticiones: 14, nodos: 2855, restilados: 2320, objetos: 3600, cpu: 1150 },
   },
 ]
-
-/** Cuenta lo que se pide y lo que pesa mientras dura la carga. */
-async function contarDescargas(cdp) {
-  const total = { peticiones: 0, kB: 0 }
-  await cdp.send('Network.enable')
-  cdp.on('Network.loadingFinished', (e) => {
-    total.peticiones += 1
-    total.kB += e.encodedDataLength / 1024
-  })
-  return total
-}
 
 async function medir(navegador, url, escenario) {
   const { pagina, cdp, frenar, cerrar } = await abrirPagina(navegador, 'modesto', {
     vista: escenario.vista,
     espia: espiaDePagina,
+    listo: escenario.listo,
   })
-  const descargado = await contarDescargas(cdp)
   await frenar()
 
-  let visible
   const trabajo = await contarTrabajo(navegador, pagina, async () => {
-    const salida = Date.now()
     await pagina.goto(url + escenario.ruta, { waitUntil: 'commit' })
-    await pagina.waitForSelector(escenario.listo, { timeout: 90_000 })
-    visible = Date.now() - salida
+    await pagina.waitForFunction(() => window.__espia?.visible, null, { timeout: 90_000 })
     await pagina.waitForTimeout(REPOSO_MS)
   })
 
   const espia = await pagina.evaluate(() => window.__espia)
+  const descargas = await pagina.evaluate(descargasDePagina, espia.montado)
   const { nodos, cpu } = await metricas(cdp)
   await cerrar()
 
   return {
-    peticiones: descargado.peticiones,
+    peticiones: descargas.antes.peticiones,
     nodos,
     ...trabajo,
     cpu,
     primerPintado: espia.primerPintado,
-    visible,
+    visible: espia.visible,
     bloqueo: bloqueoDe(espia.largas),
-    kB: descargado.kB,
+    kB: descargas.antes.kB,
+    detras: descargas.despues.kB,
   }
 }
 
@@ -117,7 +110,7 @@ export const arranque = {
   nombre: 'arranque',
   titulo: 'Arranque en frio · telefono modesto (360x740, CPU x6, 4G lenta)',
   leyenda:
-    'Se juzgan peticiones, nodos, restilados, objetos (veces) y cpu (ms). primerPintado, visible y bloqueo orientan.',
+    'Se juzgan peticiones, nodos, restilados, objetos (veces) y cpu (ms). primerPintado, visible y bloqueo orientan. kB es lo bajado hasta ver la pantalla; detras, lo que llega despues.',
   async pasada({ navegador, url }, quiere) {
     const filas = []
     for (const escenario of ESCENARIOS.filter((e) => quiere(e.nombre))) {

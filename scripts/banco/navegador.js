@@ -167,9 +167,10 @@ export async function lanzarChrome() {
  * medida es una primera visita, sin nada guardado de la anterior.
  *
  * `espia` es una funcion que corre dentro de la pagina antes que nada: lo que
- * haya que ir apuntando desde el primer milisegundo.
+ * haya que ir apuntando desde el primer milisegundo. `listo` es el selector de
+ * aquello a lo que se entra: el espia apunta cuando aparece.
  */
-export async function abrirPagina(navegador, aparato, { vista, espia } = {}) {
+export async function abrirPagina(navegador, aparato, { vista, espia, listo } = {}) {
   const { cpu, red, ...opciones } = APARATOS[aparato]
   const contexto = await navegador.newContext({ ...opciones, serviceWorkers: 'block' })
   const pagina = await contexto.newPage()
@@ -180,7 +181,7 @@ export async function abrirPagina(navegador, aparato, { vista, espia } = {}) {
     },
     [CARRERA, MARCAS, vista],
   )
-  if (espia) await pagina.addInitScript(espia)
+  if (espia) await pagina.addInitScript(espia, listo)
   const cdp = await contexto.newCDPSession(pagina)
   await cdp.send('Performance.enable')
 
@@ -252,12 +253,38 @@ export async function contarTrabajo(navegador, pagina, accion) {
 
 /**
  * Lo que se apunta dentro de la pagina mientras carga y mientras se usa: las
- * tareas largas, el primer pintado, y lo que tarda cada toque en verse.
+ * tareas largas, el primer pintado, lo que tarda cada toque en verse y, si se
+ * le dice que esperar (`listo`, un selector), dos momentos: cuando entra en
+ * el documento (`montado`) y cuando se pinta (`visible`).
+ *
+ * Se apuntan aqui dentro y no desde fuera por dos motivos. `montado` separa
+ * lo que se pidio para ver la pantalla de lo que la pagina adelanta despues,
+ * en reposo: desde fuera el aviso llega unos ms mas tarde, a veces con lo
+ * segundo ya empezado, y la cuenta bailaria. Y `visible` es lo que nota quien
+ * entra: entre entrar en el documento y verse van el estilo, el maquetado y
+ * el pintado de la vista entera, que en un telefono modesto es medio segundo.
  *
  * Corre en la pagina, no aqui: no puede usar nada de este archivo.
  */
-export function espiaDePagina() {
-  const yo = (window.__espia = { largas: [], toques: [], primerPintado: 0 })
+export function espiaDePagina(listo) {
+  const yo = (window.__espia = {
+    largas: [],
+    toques: [],
+    primerPintado: 0,
+    montado: 0,
+    visible: 0,
+  })
+  if (listo) {
+    const vigia = new MutationObserver(() => {
+      if (!document.querySelector(listo)) return
+      vigia.disconnect()
+      yo.montado = performance.now()
+      /* El fotograma que viene es el que lo pinta: lo primero que corre
+         despues de el ya ve la pantalla hecha. */
+      requestAnimationFrame(() => setTimeout(() => (yo.visible = performance.now())))
+    })
+    vigia.observe(document, { childList: true, subtree: true })
+  }
   const mirar = (tipo, apuntar, mas = {}) =>
     new PerformanceObserver((lista) => lista.getEntries().forEach(apuntar)).observe({
       type: tipo,
@@ -275,6 +302,26 @@ export function espiaDePagina() {
     (e) => e.interactionId && yo.toques.push({ inicio: e.startTime, dura: e.duration }),
     { durationThreshold: 16 },
   )
+}
+
+/**
+ * Lo que la pagina pidio por la red, partido por un instante (`corte`, en ms
+ * desde que se empezo a navegar): lo que se pidio antes y lo que se pidio
+ * despues. Cuenta el documento. Corre en la pagina.
+ */
+export function descargasDePagina(corte) {
+  const pedidas = [
+    ...performance.getEntriesByType('navigation'),
+    ...performance.getEntriesByType('resource'),
+  ]
+  const resumen = (lista) => ({
+    peticiones: lista.length,
+    kB: lista.reduce((suma, p) => suma + p.transferSize, 0) / 1024,
+  })
+  return {
+    antes: resumen(pedidas.filter((p) => p.startTime <= corte)),
+    despues: resumen(pedidas.filter((p) => p.startTime > corte)),
+  }
 }
 
 /* Una tarea de mas de 50 ms no deja pasar un toque: lo que sobra de 50 es el
