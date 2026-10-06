@@ -18,6 +18,7 @@ import { accionDeSemestre, marcasDeSemestres } from '../data/semestre'
 import { recordarVista, vistaInicial } from '../data/vistaInicial'
 import { VISTAS } from '../data/vistas'
 import { usePaneles } from '../hooks/usePaneles'
+import { useCapasDeVistas } from '../hooks/useCapasDeVistas'
 import { useCasillas } from '../hooks/useCasillas'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { usePensum } from '../hooks/usePensum'
@@ -159,6 +160,7 @@ function VistaCarrera({ carrera, alVolver }) {
   /* Las vistas que ya se abrieron: siguen montadas, ocultas, al dejarlas */
   const [visitadas, setVisitadas] = useState(() => new Set([vista]))
   if (!visitadas.has(vistaEnPantalla)) setVisitadas(new Set(visitadas).add(vistaEnPantalla))
+  const capas = useCapasDeVistas(vistaEnPantalla)
   useEffect(() => {
     recordarVista(vista)
     anotarVista(vista)
@@ -451,59 +453,66 @@ function VistaCarrera({ carrera, alVolver }) {
           lista, el mapa ya llega con la marca-, sin quitarselo a lo que se ve.
           Cada vista se monta la primera vez que se visita, no antes.
 
-          Al enseñarse de nuevo, la vista vuelve a entrar fundiendose: un
-          elemento que pasa de display:none a verse reinicia su animacion. La
+          Cada Activity va dentro de una capa, y la que se oculta es la capa,
+          con content-visibility: hidden: asi el navegador guarda el maquetado
+          de la vista y volver no la rehace (ver useCapasDeVistas). Al
+          enseñarse de nuevo, la vista vuelve a entrar fundiendose. La
           silueta NO entra animada: es la misma que ya estaba en pantalla
           mientras bajaba el codigo (el fallback de App), y fundirla desde
           cero la hacia parpadear justo al llegar.
 
           Y es tambien lo que se ve si el codigo de la primera vista tarda mas
           que el del cascaron: la misma silueta, sin relevo. */}
-      <div className="relative flex flex-1 overflow-hidden">
+      <div ref={capas} className="relative flex flex-1 overflow-hidden">
         <Suspense fallback={<EsqueletoMapa slug={carrera.slug} />}>
           {!mapaMontado ? (
             <EsqueletoMapa slug={carrera.slug} />
           ) : (
             <>
-              {VISTAS.filter((v) => visitadas.has(v.id)).map(({ id }) => (
-                <Activity key={id} mode={id === vistaEnPantalla ? 'visible' : 'hidden'}>
-                  <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
-                    {id === 'horario' ? (
-                      <Horario carrera={carrera} estados={estados} />
-                    ) : id === 'mapa' ? (
-                      <GrafoPensum
-                        clave={carrera.slug}
-                        layout={layout}
-                        porCodigo={porCodigo}
-                        estados={estados}
-                        descarga={descarga}
-                        toque={toque}
-                        seleccionado={seleccionado}
-                        alSeleccionar={alternarSeleccion}
-                        alMarcar={marcarYContar}
-                        marcasSemestre={marcasSemestre}
-                        alAlternarSemestre={alternarSemestre}
-                        enCasilla={enCasilla}
-                        alAbrirCasilla={abrirCasilla}
-                        casillaDe={casillaDe}
-                      />
-                    ) : (
-                      <VistaLista
-                        layout={layout}
-                        estados={estados}
-                        progreso={progreso}
-                        avanceGrupos={avanceGrupos}
-                        toque={toque}
-                        descarga={descarga}
-                        alMirar={mirar}
-                        alMarcar={marcarYContar}
-                        marcasSemestre={marcasSemestre}
-                        alAlternarSemestre={alternarSemestre}
-                      />
-                    )}
+              {VISTAS.filter((v) => visitadas.has(v.id)).map(({ id }) => {
+                const oculta = id !== vistaEnPantalla
+                return (
+                  <div key={id} data-vista={id} data-oculta={oculta} className="capa-vista">
+                    <Activity mode={oculta ? 'hidden' : 'visible'}>
+                      <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
+                        {id === 'horario' ? (
+                          <Horario carrera={carrera} estados={estados} />
+                        ) : id === 'mapa' ? (
+                          <GrafoPensum
+                            clave={carrera.slug}
+                            layout={layout}
+                            porCodigo={porCodigo}
+                            estados={estados}
+                            descarga={descarga}
+                            toque={toque}
+                            seleccionado={seleccionado}
+                            alSeleccionar={alternarSeleccion}
+                            alMarcar={marcarYContar}
+                            marcasSemestre={marcasSemestre}
+                            alAlternarSemestre={alternarSemestre}
+                            enCasilla={enCasilla}
+                            alAbrirCasilla={abrirCasilla}
+                            casillaDe={casillaDe}
+                          />
+                        ) : (
+                          <VistaLista
+                            layout={layout}
+                            estados={estados}
+                            progreso={progreso}
+                            avanceGrupos={avanceGrupos}
+                            toque={toque}
+                            descarga={descarga}
+                            alMirar={mirar}
+                            alMarcar={marcarYContar}
+                            marcasSemestre={marcasSemestre}
+                            alAlternarSemestre={alternarSemestre}
+                          />
+                        )}
+                      </div>
+                    </Activity>
                   </div>
-                </Activity>
-              ))}
+                )
+              })}
 
               {/* Lo que se deja para cuando el aparato quede en reposo va
                   AQUI DENTRO, y no es por orden. Lo que cuelga de un Suspense
