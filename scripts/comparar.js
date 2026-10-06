@@ -34,6 +34,12 @@
  * que con menos movimiento estan todas apagadas. Las fotos ahi no valen: una
  * luz que corre por un cable no cae dos veces en el mismo sitio.
  *
+ * Con --transparente=<selector> los elementos que coincidan no cuentan en el
+ * camino de sus hijos: sirve para comparar contra un build anterior cuando se
+ * ha añadido un envoltorio, que si no corre la posicion de todo lo de dentro y
+ * lo da por distinto. Por ejemplo, las capas de las vistas de la fase 4:
+ * --transparente=.capa-vista. El estilo del propio envoltorio no se compara.
+ *
  * Una palabra detras filtra las pantallas por nombre. Una toma que lleva un
  * toque puede salir distinta una vez de cada muchas por un cuadro de mas o
  * de menos; si pasa, se repite antes de alarmarse.
@@ -53,6 +59,8 @@ import {
 
 const argumentos = process.argv.slice(2)
 const CON_MOVIMIENTO = argumentos.includes('--movimiento')
+const TRANSPARENTE =
+  argumentos.find((a) => a.startsWith('--transparente='))?.slice('--transparente='.length) ?? ''
 const [antes, filtro = ''] = argumentos.filter((a) => !a.startsWith('--'))
 if (!antes) {
   console.error('Falta el build con el que comparar: npm run comparar -- ruta/al/build/de/antes')
@@ -370,7 +378,7 @@ async function diferencia([antesB64, despuesB64]) {
  *
  * Corre en la pagina.
  */
-function huellasDeEstilo() {
+function huellasDeEstilo(transparente) {
   for (const animacion of document.getAnimations()) animacion.cancel()
   const resumir = (texto) => {
     let n = 0
@@ -397,19 +405,25 @@ function huellasDeEstilo() {
         huellas[camino + pseudo] = leer(elemento, pseudo)
       }
     }
-    let i = 0
-    for (const hijo of elemento.children) {
-      if (!SIN_PINTAR.has(hijo.tagName)) andar(hijo, `${camino}/${i++}`)
-    }
+    hijosDe(elemento).forEach((hijo, i) => andar(hijo, `${camino}/${i}`))
   }
+  /* Los hijos que cuentan para el camino: sin lo que no se pinta, y con los
+     de un envoltorio transparente en su lugar */
+  const hijosDe = (elemento) =>
+    [...elemento.children]
+      .filter((h) => !SIN_PINTAR.has(h.tagName))
+      .flatMap((h) => (transparente && h.matches(transparente) ? hijosDe(h) : [h]))
   andar(document.body, '')
   return huellas
 }
 
 /** Las propiedades calculadas de unos elementos, por su camino. Corre en la pagina. */
-function estilosDe(caminos) {
+function estilosDe([caminos, transparente]) {
   const SIN_PINTAR = new Set(['SCRIPT', 'LINK', 'STYLE', 'TEMPLATE', 'NOSCRIPT'])
-  const hijos = (elemento) => [...elemento.children].filter((h) => !SIN_PINTAR.has(h.tagName))
+  const hijos = (elemento) =>
+    [...elemento.children]
+      .filter((h) => !SIN_PINTAR.has(h.tagName))
+      .flatMap((h) => (transparente && h.matches(transparente) ? hijos(h) : [h]))
   return caminos.map((camino) => {
     const [ruta, pseudo] = camino.split('::')
     let elemento = document.body
@@ -441,13 +455,16 @@ const recortar = (valor) => (String(valor).length > 60 ? `${String(valor).slice(
  * que cambia: por cada propiedad, en cuantos elementos y un ejemplo.
  */
 async function estilosDistintos(a, b) {
-  const [ha, hb] = await Promise.all([a.evaluate(huellasDeEstilo), b.evaluate(huellasDeEstilo)])
+  const [ha, hb] = await Promise.all([
+    a.evaluate(huellasDeEstilo, TRANSPARENTE),
+    b.evaluate(huellasDeEstilo, TRANSPARENTE),
+  ])
   const caminos = [...new Set([...Object.keys(ha), ...Object.keys(hb)])]
   const distintos = caminos.filter((c) => ha[c] !== hb[c])
   const muestra = distintos.slice(0, DETALLE.elementos)
   const [da, db] = await Promise.all([
-    a.evaluate(estilosDe, muestra),
-    b.evaluate(estilosDe, muestra),
+    a.evaluate(estilosDe, [muestra, TRANSPARENTE]),
+    b.evaluate(estilosDe, [muestra, TRANSPARENTE]),
   ])
   const porPropiedad = new Map()
   muestra.forEach((_, i) => {

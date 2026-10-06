@@ -251,6 +251,42 @@ await comprobar('buscar en la pagina una materia aun sin pintar', async () => {
   if (!busqueda.hallada) return `no encontro «${busqueda.nombre}»`
 })
 
+// 7. Con las tres vistas montadas: las ocultas no reciben el foco ni los toques
+await comprobar('las vistas ocultas no se tocan ni se enfocan', async () => {
+  const HORARIO = 'nav[aria-label="Vistas de la carrera"] button[aria-label*="horario"]'
+  await pagina.evaluate(() => (desplazador().scrollTop = 900))
+  await pagina.waitForTimeout(600)
+  const antes = await pagina.evaluate(() => desplazador().scrollTop)
+  await pagina.click(HORARIO)
+  await pagina.waitForSelector('.dibujo', { state: 'visible' })
+  await pagina.waitForTimeout(800)
+  await pagina.click(LISTA)
+  await pagina.waitForTimeout(800)
+  const despues = await pagina.evaluate(() => desplazador().scrollTop)
+  if (Math.abs(despues - antes) > 2)
+    return `al volver del horario la lista paso de ${antes} a ${despues} px`
+  const oculto = await pagina.evaluate(() => {
+    for (const vista of ['mapa', 'horario']) {
+      const capa = document.querySelector(`[data-vista="${vista}"]`)
+      if (!capa) return `no hay capa del ${vista}`
+      const boton = capa.querySelector('button')
+      if (boton && enfocable(boton)) return `un boton del ${vista}, oculto, se puede enfocar`
+    }
+  })
+  if (oculto) return oculto
+  /* Un toque de verdad en una fila: el clic de Playwright comprueba antes que
+     lo que recibe el toque en ese punto es la propia fila */
+  const fila = await pagina.evaluate(() => {
+    const f = [...document.querySelectorAll('li[id^="fila-"]')].find((x) => aLaVista(x))
+    return f && `#${f.id} button[aria-expanded]`
+  })
+  await pagina.click(fila, { timeout: 3000 })
+  await pagina.waitForTimeout(500)
+  const abierta = await pagina.$eval(fila, (b) => b.getAttribute('aria-expanded'))
+  if (abierta !== 'true') return 'tocar una fila tras volver no la abrio'
+  await pagina.click(fila)
+})
+
 await cerrar()
 await banco.cerrar()
 
