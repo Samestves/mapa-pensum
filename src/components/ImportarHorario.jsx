@@ -13,6 +13,7 @@ import LectorLeyendo from './LectorLeyendo'
 import LectorRevision from './LectorRevision'
 import MotorLector from './MotorLector'
 import Ventana from './Ventana'
+import '../estilos/lector.css'
 
 const ETIQUETA = 'Leer mi horario de una imagen'
 

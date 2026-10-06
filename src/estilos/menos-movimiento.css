@@ -1,0 +1,32 @@
+/* ------------------------------------------------------------------
+   Menos movimiento, para quien se lo ha pedido a su sistema.
+
+   Cada nivel de hojas apaga lo suyo, y lo hace al final: estas reglas ganan
+   por ir detras de las que ponen la animacion, no por pesar mas. Aqui, lo
+   de la portada y lo que anima el cambio de pantalla; lo de dentro de una
+   carrera, en carrera-menos-movimiento.css; lo del lector, al final de
+   lector.css.
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-entrar,
+  .logo-entrada,
+  .entrada-vista,
+  .salida-vista,
+  .entrada-panel,
+  .entra-dia-derecha,
+  .entra-dia-izquierda,
+  .esqueleto-mapa,
+  .aviso-entrando {
+    animation: none;
+  }
+
+  /* La de salida del aviso se deja: sin ella se quedaria en pantalla los
+     260 ms que tarda en desmontarse, pero congelado y sin irse nunca. */
+
+  /* Estas se mueven con transition, no con animation: hay que apagarlas
+     aparte o siguen deslizandose. */
+  .tarjeta-carrera,
+  .tarjeta-carrera > * {
+    transition: none;
+  }
+}

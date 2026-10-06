@@ -17,7 +17,7 @@
  *
  * Para que sirve. Hay cambios que no deben verse: recortar una fuente,
  * repartir una hoja de estilos, mover una regla de archivo. "No se ve nada
- * raro" no es una comprobacion; que treinta pantallas salgan con cero pixeles
+ * raro" no es una comprobacion; que treinta y tantas pantallas salgan con cero pixeles
  * y cero estilos distintos, si.
  *
  * Como se usa:
@@ -118,6 +118,17 @@ const TOMAS = [
   { nombre: 'portada · telefono claro', aparato: TELEFONO, tema: 'claro', ruta: '' },
   { nombre: 'portada · portatil oscuro', aparato: PORTATIL, tema: 'oscuro', ruta: '' },
   { nombre: 'portada · portatil claro', aparato: PORTATIL, tema: 'claro', ruta: '' },
+  {
+    /* Entrando desde la portada: el codigo y los estilos de la carrera
+       llegan con el toque, no con la pagina. */
+    nombre: 'carrera · desde la portada',
+    aparato: TELEFONO,
+    tema: 'oscuro',
+    ruta: '',
+    vista: 'lista',
+    accion: (pagina) => pagina.locator('button.tarjeta-carrera:has-text("Sistemas")').tap(),
+  },
+  { nombre: 'panel de uso · sin clave', aparato: PORTATIL, tema: 'oscuro', ruta: 'panel' },
   { nombre: 'silueta de carga · telefono', aparato: TELEFONO, tema: 'oscuro', sinVista: true },
   { nombre: 'silueta de carga · portatil', aparato: PORTATIL, tema: 'claro', sinVista: true },
   { nombre: 'lista · telefono oscuro', aparato: TELEFONO, tema: 'oscuro', vista: 'lista' },
@@ -418,26 +429,46 @@ function estilosDe(caminos) {
   })
 }
 
-/* Cuantos elementos distintos se detallan por pantalla: con los primeros
-   basta para ir a la regla, y el resto suele ser lo mismo repetido. */
-const DETALLE = 4
+/* De cuantos elementos distintos se miran las propiedades, y cuantas
+   propiedades se enseñan: lo que difiere suele ser lo mismo repetido en
+   cientos de elementos, y con eso sobra para ir a la regla. */
+const DETALLE = { elementos: 200, propiedades: 14 }
 
-/** Los elementos cuyo estilo no coincide entre las dos paginas, con lo que cambia. */
+const recortar = (valor) => (String(valor).length > 60 ? `${String(valor).slice(0, 57)}...` : valor)
+
+/**
+ * Los elementos cuyo estilo no coincide entre las dos paginas, y que es lo
+ * que cambia: por cada propiedad, en cuantos elementos y un ejemplo.
+ */
 async function estilosDistintos(a, b) {
   const [ha, hb] = await Promise.all([a.evaluate(huellasDeEstilo), b.evaluate(huellasDeEstilo)])
   const caminos = [...new Set([...Object.keys(ha), ...Object.keys(hb)])]
   const distintos = caminos.filter((c) => ha[c] !== hb[c])
-  const muestra = distintos.slice(0, DETALLE)
+  const muestra = distintos.slice(0, DETALLE.elementos)
   const [da, db] = await Promise.all([
     a.evaluate(estilosDe, muestra),
     b.evaluate(estilosDe, muestra),
   ])
-  const detalle = muestra.map((_, i) => {
-    const propiedades = Object.keys({ ...da[i].propiedades, ...db[i].propiedades })
-      .filter((p) => da[i].propiedades[p] !== db[i].propiedades[p])
-      .map((p) => `${p}: ${da[i].propiedades[p]} → ${db[i].propiedades[p]}`)
-    return `${db[i].quien === '(no esta)' ? da[i].quien : db[i].quien}\n        ${propiedades.slice(0, 6).join('\n        ') || '(solo existe en una de las dos)'}`
+  const porPropiedad = new Map()
+  muestra.forEach((_, i) => {
+    const [antes, ahora] = [da[i].propiedades, db[i].propiedades]
+    for (const p of Object.keys({ ...antes, ...ahora })) {
+      if (antes[p] === ahora[p]) continue
+      const apunte = porPropiedad.get(p) ?? {
+        veces: 0,
+        ejemplo: `${db[i].quien}: ${recortar(antes[p])} → ${recortar(ahora[p])}`,
+      }
+      apunte.veces++
+      porPropiedad.set(p, apunte)
+    }
   })
+  const detalle = [...porPropiedad]
+    .sort(([, x], [, y]) => y.veces - x.veces)
+    .slice(0, DETALLE.propiedades)
+    .map(([p, { veces, ejemplo }]) => `${p} · en ${veces} · ${ejemplo}`)
+  if (porPropiedad.size > DETALLE.propiedades) {
+    detalle.push(`y ${porPropiedad.size - DETALLE.propiedades} propiedades mas`)
+  }
   return { cuantos: distintos.length, de: caminos.length, detalle }
 }
 

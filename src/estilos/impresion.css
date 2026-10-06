@@ -1,0 +1,47 @@
+/* ------------------------------------------------------------------
+   Impresion.
+
+   Lo unico que se imprime es la copia de la hoja que PlanRuta cuelga de
+   <body> mientras dura la impresion. Cuelga ahi y no dentro de la ventana
+   porque la ventana tiene overflow:hidden y alto maximo, y un hijo suyo
+   salia recortado en el PDF.
+
+   En pantalla esa copia existe pero fuera de la vista y sin verse: tiene
+   que poder medirse para elegir su formato antes de que el navegador tome
+   la foto, y con display:none no mediria nada.
+
+   Aqui va lo que vale para cualquier pantalla. Lo que ajusta la hoja misma
+   al imprimirla esta con ella, al final de plan-ruta.css.
+   ------------------------------------------------------------------ */
+.solo-impresion {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media print {
+  /* Sin margenes del navegador: la hoja ya trae los suyos y mide lo justo
+     para caber en A4 y en carta */
+  @page {
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  /* Fuera todo lo demas: la app y las hojas que se abren en portales */
+  body > :not(.solo-impresion) {
+    display: none !important;
+  }
+
+  .solo-impresion {
+    position: static;
+    visibility: visible;
+  }
+}

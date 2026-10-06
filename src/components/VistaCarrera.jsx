@@ -42,6 +42,7 @@ import PanelProgreso from './PanelProgreso'
 import Precalentar from './Precalentar'
 import ContenidoAvance from './ContenidoAvance'
 import SelectorElectiva, { PrecalentarSelector } from './SelectorElectiva'
+import '../estilos/carrera.css'
 
 /**
  * El mapa de una carrera. Recibe el pensum ya normalizado y no sabe de donde

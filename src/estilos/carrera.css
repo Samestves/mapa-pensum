@@ -1,0 +1,21 @@
+/* Los estilos de dentro de una carrera. Los importa VistaCarrera, asi que
+   llegan con su codigo y no los paga quien solo mira la portada.
+
+   Se cargan despues de la hoja de entrada (src/index.css): todo lo de aqui
+   gana, a igual especificidad, a lo de alli. Y dentro, el orden de estas
+   lineas es el de la cascada, igual que alli: cambiarlo cambia como se ve
+   la aplicacion.
+
+   Dos cosas no estan aqui porque tienen su propio trozo de codigo y su hoja
+   viaja con el: el plan de ruta (plan-ruta.css) y la hoja que lee la foto
+   de un horario (lector.css). */
+@import './mapa.css';
+@import './lista.css';
+@import './horario-vacio.css';
+@import './cabecera.css';
+@import './mapa-foco.css';
+@import './hojas.css';
+@import './horario.css';
+@import './agenda.css';
+@import './carrera-menos-movimiento.css';
+@import './casilla-electiva.css';

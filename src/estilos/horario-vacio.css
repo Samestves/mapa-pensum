@@ -94,7 +94,7 @@
 }
 
 /* Lo que tienen en comun todas las piezas que se mueven. Con prefers-reduced-
-   motion se les quita la animacion entera (impresion-y-movimiento.css) y se
+   motion se les quita la animacion entera (carrera-menos-movimiento.css) y se
    quedan como las deja su estilo base: en la semana ya armada. */
 .dibujo-hoja,
 .dibujo-semana,

@@ -1,0 +1,63 @@
+/* Menos movimiento dentro de una carrera. Ver menos-movimiento.css. */
+@media (prefers-reduced-motion: reduce) {
+  /* Sin animacion el guion de la luz se quedaria clavado al principio del
+     cable como una mancha. Fuera. */
+  .flujo {
+    display: none;
+  }
+
+  .descarga,
+  .descarga-halo,
+  .trazar,
+  .destello,
+  .anillo-cambio,
+  .contorno-carga,
+  .icono-asentado,
+  .capa-llegando,
+  .menu-clase.ficha-saliendo,
+  .hoja-ficha.tarjeta-saliendo,
+  .surgir,
+  .bloque-clase,
+  .celda-fantasma,
+  .popover-clase,
+  .menu-clase,
+  .icono-relevo,
+  .lista-entrar,
+  .marca-pulso,
+  .fila-destello,
+  .marca-cadena,
+  .chip-entrar,
+  .dibujo-hoja,
+  .dibujo-semana,
+  .dibujo-eco::after,
+  .dibujo-clase,
+  .dibujo-clase::after,
+  .dibujo-lector,
+  .dibujo-fase,
+  .hoja-inferior,
+  .velo-hoja,
+  .panel-lateral,
+  .pulso-ahora::after {
+    animation: none;
+  }
+
+  /* Estas se mueven con transition, no con animation: hay que apagarlas
+     aparte o siguen deslizandose. */
+  .lente-cristal,
+  .selector-lente,
+  .lente-tema,
+  .arco-avance,
+  .hoja-inferior,
+  .velo-hoja,
+  .panel-lateral,
+  .plegable,
+  .selector-pastilla,
+  .riel-tramo,
+  .barra-semestre {
+    transition: none;
+  }
+
+  .hoja-ficha {
+    animation: none;
+  }
+}

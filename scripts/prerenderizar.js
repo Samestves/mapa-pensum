@@ -95,6 +95,16 @@ const pedirLaVista = `<script>
    que esa hoja termine de bajar, y este no puede esperar. */
 const SCRIPT_DE_ENTRADA = '<script type="module"'
 
+/* Los estilos de dentro de una carrera viajan con el cascaron (ver
+   src/estilos/carrera.css). En su pagina se piden como una hoja mas, detras
+   de la de entrada: el orden de las hojas es el de la cascada, y esa va
+   despues. Al pedir el cascaron, el JavaScript ve que la hoja ya esta en el
+   documento y no la vuelve a pedir. */
+const HOJA_DE_ENTRADA = /<link rel="stylesheet"[^>]*>/
+const hojasDeLaCarrera = cascaron.css
+  .map((archivo) => `\n    <link rel="stylesheet" crossorigin href="/${archivo}">`)
+  .join('')
+
 /** Sustituye una etiqueta ya presente en la plantilla, o la deja igual */
 function reemplazar(html, patron, reemplazo) {
   if (!patron.test(html)) {
@@ -227,6 +237,7 @@ function paginaDe(carrera) {
     new RegExp(SCRIPT_DE_ENTRADA),
     `${suyo}${pedirLaVista}\n    ${SCRIPT_DE_ENTRADA}`,
   )
+  html = reemplazar(html, HOJA_DE_ENTRADA, (deEntrada) => deEntrada + hojasDeLaCarrera)
 
   return html.replace(
     '<div id="root"></div>',

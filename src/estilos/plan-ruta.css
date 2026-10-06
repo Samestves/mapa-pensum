@@ -405,3 +405,21 @@
 .cifra-visor {
   contain: strict;
 }
+
+/* La hoja al imprimirse. Lo demas de la impresion -que solo salga ella- esta
+   en impresion.css; esto va aqui porque tiene que ir detras de las reglas de
+   la hoja para ganarles. */
+@media print {
+  .hoja-ruta {
+    margin: 0 auto;
+  }
+
+  /* El verde de las clave y la barra de avance son fondos y bordes de
+     color, y el navegador los descarta al imprimir salvo que se le diga que
+     son contenido. */
+  .hoja-ruta,
+  .hoja-ruta * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

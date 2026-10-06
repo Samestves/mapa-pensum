@@ -611,35 +611,6 @@ button.casilla-semestre .tilde {
   transition: background 280ms ease;
 }
 
-/* El boton redondo con aro: la X de la ficha, el tema de la portada. Uno
-   solo para todos los botones sueltos, que se hunde
-   al pulsarlo. La X era una X suelta de trazo fino y en el telefono ni
-   parecia un boton. */
-.boton-cerrar,
-.boton-aro {
-  border: 1px solid color-mix(in oklab, var(--tinta) 16%, transparent);
-  background-color: color-mix(in oklab, var(--tinta) 5%, transparent);
-  color: var(--tinta-suave);
-  transition:
-    transform 160ms cubic-bezier(0.32, 0.72, 0, 1),
-    background-color 200ms ease,
-    color 200ms ease,
-    border-color 200ms ease;
-}
-
-.boton-cerrar:hover,
-.boton-aro:hover,
-.group:hover > .boton-aro {
-  color: var(--tinta);
-  border-color: color-mix(in oklab, var(--tinta) 28%, transparent);
-  background-color: color-mix(in oklab, var(--tinta) 9%, transparent);
-}
-
-.boton-cerrar:active,
-.boton-aro:active {
-  transform: scale(0.9);
-}
-
 /* Las filas de Requiere y Desbloquea que llevan a otra materia: al pasar por
    encima entra desde la izquierda una raya fina, el resalte de los menus de
    la maqueta. Dice "esto se elige" sin caja ni flecha. */

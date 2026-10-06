@@ -23,6 +23,7 @@ import { colorArea } from '../theme/areas'
 import HojaInferior from './HojaInferior'
 import HojaPlan, { ALTO_HOJA, ANCHO_HOJA } from './HojaPlan'
 import VisorHoja from './VisorHoja'
+import '../estilos/plan-ruta.css'
 
 const CLAVE_NOMBRE = 'mapa-pensum:nombre'
 const ROTULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'

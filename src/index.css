@@ -5,23 +5,23 @@
    genera: no esta en el repositorio hasta correr npm run fuentes. */
 @import './fuentes/fuentes.css';
 
-/* Los estilos propios, por zonas. El orden es el de la cascada: una regla
-   de mas abajo gana a una de mas arriba con la misma especificidad, asi
-   que cambiar el orden de estas lineas cambia como se ve la aplicacion. */
+/* Los estilos propios de lo que se ve antes de entrar a una carrera: el
+   tema, la portada, la silueta de carga y el cambio de pantalla. Es la unica
+   hoja que espera el primer pintado, y por eso solo lleva esto.
+
+   Lo de dentro de una carrera llega con su codigo: estilos/carrera.css con
+   el cascaron, plan-ruta.css con el plan y lector.css con la hoja que lee
+   la foto. Esas hojas se cargan despues de esta, asi que todo lo de aqui va
+   antes que lo suyo en la cascada.
+
+   El orden de estas lineas es el de la cascada: una regla de mas abajo gana
+   a una de mas arriba con la misma especificidad, asi que cambiarlo cambia
+   como se ve la aplicacion. */
 @import './estilos/tema.css';
 @import './estilos/base.css';
-@import './estilos/mapa.css';
+@import './estilos/botones.css';
 @import './estilos/portada.css';
 @import './estilos/transiciones.css';
 @import './estilos/aviso-instalar.css';
-@import './estilos/lista.css';
-@import './estilos/horario-vacio.css';
-@import './estilos/cabecera.css';
-@import './estilos/mapa-foco.css';
-@import './estilos/hojas.css';
-@import './estilos/horario.css';
-@import './estilos/agenda.css';
-@import './estilos/lector.css';
-@import './estilos/plan-ruta.css';
-@import './estilos/impresion-y-movimiento.css';
-@import './estilos/casilla-electiva.css';
+@import './estilos/impresion.css';
+@import './estilos/menos-movimiento.css';

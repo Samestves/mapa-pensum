@@ -68,7 +68,8 @@ export const ImportarHorario = lector.Componente
  * serian dos bajadas en fila donde cabe una.
  */
 export const pedirVista = (id) => VISTAS[id]?.pedir()
-export const precargarVistaInicial = () => pedirVista(vistaInicial())
+/* Sin esperar la respuesta: si falla, lo dira quien la pinte al volver a pedirla */
+export const precargarVistaInicial = () => void pedirVista(vistaInicial())?.catch(() => {})
 
 /**
  * Al tocar "Subir una foto": mientras se busca la captura en la galeria, que

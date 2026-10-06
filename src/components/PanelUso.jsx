@@ -7,6 +7,9 @@ import PanelCarreras from './panel/PanelCarreras'
 import PanelGeneral from './panel/PanelGeneral'
 import { diaCorto } from './panel/formato'
 import { Hueco } from './panel/piezas'
+/* Dos piezas de dentro de una carrera -el riel de tramos y el desplazable sin
+   barra- que este panel tambien pinta, y se entra a el sin pasar por ninguna. */
+import '../estilos/carrera.css'
 
 /**
  * El panel de uso. Privado: es la unica pantalla de la aplicacion que no es

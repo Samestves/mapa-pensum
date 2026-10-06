@@ -664,3 +664,33 @@
 [data-ligero] .foto-leida {
   transition: none;
 }
+
+/* Menos movimiento. Ver menos-movimiento.css. */
+@media (prefers-reduced-motion: reduce) {
+  .lector-barrido,
+  .lector-lineas > *,
+  .lector-relevo,
+  .lector-cara,
+  .lector-arco,
+  .lector-progreso-relleno {
+    animation: none;
+  }
+
+  /* Sin ir y venir, la raya sin medida se queda entera y tenue: dice que
+     algo pasa sin fingir cuanto falta. */
+  .lector-progreso[data-indeterminado] .lector-progreso-relleno {
+    width: 100%;
+    opacity: 0.3;
+  }
+
+  /* Estas se mueven con transition, no con animation: hay que apagarlas
+     aparte o siguen deslizandose. */
+  .foto-leida,
+  .materia-chevron,
+  .casilla-leida,
+  .casilla-leida::after,
+  .casilla-leida > svg,
+  .lector-progreso-relleno {
+    transition: none;
+  }
+}

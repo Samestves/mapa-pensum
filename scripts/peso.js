@@ -71,8 +71,8 @@ const todo = (archivos) => js(archivos) + css(archivos)
  * Lo que se vigila, en el orden en que se descarga. `tope` en kB.
  *
  *  - La portada: las cuatro primeras filas.
- *  - Entrar a una carrera añade su cascaron -el estado y las barras-, su
- *    pensum y la vista con la que abre. Solo una: las otras dos llegan
+ *  - Entrar a una carrera añade su cascaron -el estado y las barras-, los
+ *    estilos de dentro, su pensum y la vista con la que abre. Solo una: las otras dos llegan
  *    despues, en reposo, con el plan y la paleta.
  *  - El lector de horarios va aparte: solo lo baja quien sube una foto, pero
  *    tiene que seguir siendo algo que se pueda bajar con datos. Su motor de
@@ -81,7 +81,7 @@ const todo = (archivos) => js(archivos) + css(archivos)
  */
 const PARTIDAS = [
   { nombre: 'portada · JS de entrada', kB: js(entrada), tope: 79.1 },
-  { nombre: 'portada · CSS', kB: css(entrada), tope: 26.5 },
+  { nombre: 'portada · CSS', kB: css(entrada), tope: 15.3 },
   {
     // Las que pinta cualquier pantalla: las unicas que se piden sin condicion
     nombre: 'portada · fuentes',
@@ -94,7 +94,8 @@ const PARTIDAS = [
     kB: sumar(fuentes(/<link rel="preload"[^>]+fetchpriority="low"[^>]*>/g), crudo),
     tope: 17.5,
   },
-  { nombre: 'carrera · cascaron', kB: todo(cascaron), tope: 25.6 },
+  { nombre: 'carrera · cascaron', kB: js(cascaron), tope: 25.6 },
+  { nombre: 'carrera · CSS', kB: css(cascaron), tope: 7.9 },
   {
     nombre: 'carrera · pensum mas pesado',
     kB: Math.max(...carreras.map((slug) => js(archivosDe(pensumDe(slug), entrada)))),
@@ -103,9 +104,9 @@ const PARTIDAS = [
   { nombre: 'vista · lista', kB: todo(vista('lista')), tope: 5.7 },
   { nombre: 'vista · mapa', kB: todo(vista('mapa')), tope: 16.3 },
   { nombre: 'vista · horario', kB: todo(vista('horario')), tope: 18.3 },
-  { nombre: 'en reposo · plan de ruta', kB: todo(archivosDe(PLAN, enLaCarrera)), tope: 11.6 },
+  { nombre: 'en reposo · plan de ruta', kB: todo(archivosDe(PLAN, enLaCarrera)), tope: 13.3 },
   { nombre: 'en reposo · paleta', kB: todo(archivosDe(PALETA, enLaCarrera)), tope: 2.4 },
-  { nombre: 'lector · la hoja que lee la foto', kB: todo(hojaDelLector), tope: 12.9 },
+  { nombre: 'lector · la hoja que lee la foto', kB: todo(hojaDelLector), tope: 15.3 },
   { nombre: 'lector · sin el motor', kB: todo(motorDelLector), tope: 18 },
 ]
 
@@ -119,7 +120,11 @@ for (const { nombre, kB: pesa, tope } of PARTIDAS) {
 }
 const deLaPortada = sumar(PARTIDAS.slice(0, 4), (p) => p.kB)
 const hastaLaVista = (id) =>
-  deLaPortada + de('carrera · cascaron') + de('carrera · pensum mas pesado') + de(`vista · ${id}`)
+  deLaPortada +
+  de('carrera · cascaron') +
+  de('carrera · CSS') +
+  de('carrera · pensum mas pesado') +
+  de(`vista · ${id}`)
 console.log(
   `  portada ${deLaPortada.toFixed(0)} kB · entrar por la lista ${hastaLaVista('lista').toFixed(0)} kB` +
     ` · por el mapa ${hastaLaVista('mapa').toFixed(0)} kB · por el horario ${hastaLaVista('horario').toFixed(0)} kB`,
