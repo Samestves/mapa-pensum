@@ -6,17 +6,19 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | --- | --- |
 | 0 · Instrumentos | Hecha el 2026-10-05 |
 | 1 · Arranque: peso | Hecha el 2026-10-05. El CSS por pantalla pasó a la fase 2 |
-| 2 · Un módulo por vista | Siguiente |
-| 3 a 8 | Pendientes |
+| 2 · Un módulo por vista | Hecha el 2026-10-06 |
+| 3 · La lista pinta lo que se ve | Siguiente |
+| 4 a 8 | Pendientes |
 
 ## 1. Cómo está hecho hoy
 
-- **Arranque.** `index` (React, portada, analítica) → al elegir carrera baja el pensum de esa carrera (2-3 kB) y el trozo `VistaCarrera`.
-- **Vistas.** `VistaCarrera` guarda todo el estado (marcas, electivas, vista, paneles) y monta mapa, lista y horario dentro de `<Activity>` de React 19: cada vista se monta la primera vez que se visita y después queda viva pero oculta.
+- **Arranque.** `index` (React, portada, analítica: 77 kB de JS y 15 de CSS) → al entrar a una carrera llegan a la vez su pensum (2-3 kB), el cascarón `VistaCarrera` (25 kB de JS y 8 de CSS) y la vista con la que abre (lista 5 kB, mapa 16, horario 18).
+- **Vistas.** `VistaCarrera` guarda todo el estado (marcas, electivas, vista, paneles) y monta mapa, lista y horario dentro de `<Activity>` de React 19: cada vista se monta la primera vez que se visita y después queda viva pero oculta. Cada una es un trozo de código aparte (`components/carreraPorTrozos.js`); las que no se abren al entrar se bajan en reposo, con el plan de ruta y la paleta.
 - **Mapa.** SVG en planos memoizados; los gestos estiran una capa ya pintada en la GPU y repintan una vez al acabar (`layout/vistaViva.js`).
 - **Modo ligero.** Todo aparato táctil va sin luces animadas ni cristal (`data/ligero.js`).
 - **Lógica.** Reglas puras en `src/layout` y `src/data`, con 456 pruebas.
-- **Lector de horario.** OCR en el aparato, cargado solo cuando se usa; el servidor es respaldo.
+- **Lector de horario.** OCR en el aparato, cargado solo cuando se usa —el motor y, desde la fase 2, también la hoja que lo enseña—; el servidor es respaldo.
+- **Estilos.** Tres niveles que se cargan en este orden: la hoja de entrada (`src/index.css`: Tailwind, tema, portada), la de la carrera (`estilos/carrera.css`, con el cascarón) y las del plan y del lector, cada una con su trozo.
 
 No es código espagueti: la base es buena y ya tiene mucho trabajo de rendimiento encima. Lo que queda es estructural y está medido abajo.
 
@@ -24,9 +26,9 @@ No es código espagueti: la base es buena y ya tiene mucho trabajo de rendimient
 
 Tres instrumentos, los tres en el repo:
 
-- **`npm run rendimiento`** — Chrome real simulando un teléfono modesto (360×740 a 2x, CPU ×6, 4G lenta de 1,6 Mbps y 150 ms) y un portátil (CPU ×4). Tres medidas en `scripts/banco/`: `arranque`, `uso` y `gestos`. Enseña la mediana de tres pasadas y sale con código 1 si algo se pasa de su tope. Hay que correrlo antes de pasar nada a `main`. El servidor del banco entrega la página prerenderizada de la carrera y las cabeceras de caché de `vercel.json`, como producción.
-- **`scripts/peso.js`** — al final de cada `npm run build`. Tumba el build si lo que se descarga para arrancar pasa de su tope.
-- **`npm run comparar -- <build de antes>`** — fotografía 20 pantallas en ese build y en `dist/` y dice cuáles no salen idénticas píxel a píxel. Es la comprobación de todo cambio que no debe verse: fuentes, reparto de CSS, mover reglas.
+- **`npm run rendimiento`** — Chrome real simulando un teléfono modesto (360×740 a 2x, CPU ×6, 4G lenta de 1,6 Mbps y 150 ms) y un portátil (CPU ×4). Tres medidas en `scripts/banco/`: `arranque`, `uso` y `gestos`. Enseña la mediana de tres pasadas y sale con código 1 si algo se pasa de su tope. Hay que correrlo antes de pasar nada a `main`. El servidor del banco entrega la página prerenderizada de la carrera y las cabeceras de caché de `vercel.json`, como producción. En el arranque cuenta aparte lo que se pide hasta ver la pantalla y lo que la página baja después, en reposo.
+- **`scripts/peso.js`** — al final de cada `npm run build`. Tumba el build si la entrada, el cascarón de la carrera, una vista o el lector pasan de su tope.
+- **`npm run comparar -- <build de antes>`** — abre 32 pantallas en ese build y en `dist/` y compara dos cosas: la foto, píxel a píxel, y los estilos calculados de cada elemento, propiedad a propiedad. Con `--movimiento` repite los estilos con las animaciones puestas. Es la comprobación de todo cambio que no debe verse: fuentes, reparto de CSS, mover reglas.
 
 ### Qué se juzga y qué no
 
@@ -34,24 +36,25 @@ El 2026-10-05 se midió lo mismo dos veces con una hora de diferencia y los tiem
 
 - **Veces** (se juzgan, margen del 3-15 %): peticiones, nodos del documento, elementos a los que se les recalcula el estilo (`restilados`), objetos que se maquetan (`objetos`), repintados del mapa. Entre corridas, los objetos salen idénticos y los restilados varían un 1-3 %.
 - **CPU** (se juzga con el doble de lo medido): ms de procesador del hilo principal. Se mueve menos que el reloj, pero se mueve.
-- **Reloj** (se enseña, no se juzga): primer pintado, tiempo hasta ver la pantalla, respuesta al toque, bloqueo.
+- **Reloj** (se enseña, no se juzga): primer pintado, tiempo hasta ver la pantalla, respuesta al toque, bloqueo. Desde la fase 2 «ver la pantalla» es el momento en que la vista se pinta, apuntado dentro de la página; antes se medía desde fuera y salía unas décimas más alto.
 
 Para afirmar que una fase bajó un **tiempo**, se comparan los dos builds seguidos en la misma sesión (`DIST=ruta/al/otro/build npm run rendimiento -- uso`), sin nada más abierto.
 
 ## 3. Línea base
 
-Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 1.
+Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 2.
 
 ### Lo que el banco juzga
 
 | Qué | Al empezar | Hoy | Meta | Fase |
 | --- | --- | --- | --- | --- |
-| Portada: peso que compite por el primer pintado | 228 kB (76 JS + 26 CSS + 126 fuentes) | 161 kB (76 + 25 + 60) | ≤ 150 kB | 1 y 2 |
+| Portada: peso que compite por el primer pintado | 228 kB (76 JS + 26 CSS + 126 fuentes) | 152 kB (77 + 15 + 60) | ≤ 150 kB | 1 y 2 |
 | Portada: peso en segundo plano | 0 | 17 kB (letra del mapa) | — | — |
-| Carrera: peticiones en cadena tras el HTML | 1 (el pensum) | 0 | 0 | 1 |
-| Carrera: JS de la vista | 75,7 kB | igual | ≤ 40 kB hasta la primera vista | 2 |
-| Carrera por la lista: objetos maquetados | 3 581 | igual | ≤ 1 500 | 3 |
-| Carrera por la lista: elementos restilados | 2 603 | igual | ≤ 1 200 | 3 |
+| Carrera: peticiones en cadena tras el HTML | 3 (el pensum y dos trocitos del código) | 0 | 0 | 1 y 2 |
+| Carrera: JS de la carrera hasta la primera vista | 75,7 kB | 30 kB por la lista, 41 por el mapa, 43 por el horario | ≤ 40 kB | 2 |
+| Carrera: descarga hasta ver la pantalla | 321 kB | 222 kB por la lista, 232 por el mapa | — | 1 y 2 |
+| Carrera por la lista: objetos maquetados | 3 581 | 2 709 | ≤ 1 500 | 2 y 3 |
+| Carrera por la lista: elementos restilados | 2 603 | 2 148 | ≤ 1 200 | 2 y 3 |
 | Carrera por la lista: nodos | 4 330 | igual | se decide en la fase 3 | 3 |
 | Volver a la lista ya montada: objetos | 2 072 | igual | ≤ 100 | 4 |
 | Volver al mapa ya montado: objetos | 1 994 | igual | ≤ 100 | 4 |
@@ -63,13 +66,23 @@ Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «h
 | Gestos del mapa: repintados | rueda 3, arrastre 1, pellizco 6, dedo 1 | igual | mantener | — |
 | Desplazar la lista: maquetados | 0 | igual | mantener | — |
 
-Los objetos, restilados y nodos de la carrera salen más altos que en la primera versión de esta tabla (2 791, 2 183, 3 930) sin que la aplicación haya cambiado: el banco abría la portada genérica y no la página prerenderizada de la carrera, que trae además el texto para buscadores. Se corrigió en la fase 1.
+Los objetos, restilados y nodos de la carrera salen más altos que en la primera versión de esta tabla (2 791, 2 183, 3 930) sin que la aplicación haya cambiado: el banco abría la portada genérica y no la página prerenderizada de la carrera, que trae además el texto para buscadores. Se corrigió en la fase 1. En la fase 2 ese texto dejó de maquetarse, y de ahí la bajada de objetos y restilados.
 
 ### Tiempos de referencia
 
-Con el freno puesto, medianas de tres pasadas con el equipo tranquilo. Orientan; no son topes. Los de arranque son de una comparación seguida entre el build de antes y el de después de la fase 1.
+Con el freno puesto, medianas de tres pasadas con el equipo tranquilo. Orientan; no son topes. Los de arranque de «al empezar» y de la fase 1 son de una comparación seguida entre los dos builds, medidos desde fuera de la página.
 
-| Qué | Al empezar | Hoy | Meta |
+La fase 2 cambió la vara de «pantalla visible» (ver arriba), así que su comparación va aparte, los dos builds seguidos y con la vara nueva:
+
+| Qué | Tras la fase 1 | Tras la fase 2 |
+| --- | --- | --- |
+| Portada: pantalla visible | 2,5 s | 2,3 s |
+| Carrera por la lista: pantalla visible | 3,8 s | 3,6 s |
+| Carrera por el mapa: pantalla visible | 3,9 s | 3,7 s |
+
+Y la tabla de siempre, con la vara vieja:
+
+| Qué | Al empezar | Tras la fase 1 | Meta |
 | --- | --- | --- | --- |
 | Portada: primer pintado | 2,15 s | 1,97 s | ≤ 1,5 s |
 | Portada: pantalla visible | 2,25 s | 2,05 s | ≤ 1,7 s |
@@ -90,9 +103,9 @@ Uso real (Vercel Speed Insights, dicho por Sam el 2026-10-05): puntuación 95-10
 - **Volver a una vista montada:** `<Activity>` la oculta con `display:none`, que descarta el maquetado. Al volver, Chrome recalcula estilos y maqueta la vista entera.
 - **Marcar:** el JS propio es poco (decenas de ms); el costo es estilo, maquetado y capas de lo que cambia, más el mapa oculto poniéndose al día.
 - **Peso:** las fuentes eran el 55 % de la portada (resuelto en la fase 1). Lo que queda es React: `react-dom` es el 62 % del JS de entrada, y el código propio de la portada, un 25 %.
-- **Texto para buscadores:** la página de cada carrera trae el pensum en HTML legible, que el navegador maqueta (unos 790 objetos) antes de que React lo sustituya.
-- **Un solo trozo:** `VistaCarrera` lleva mapa, lista, horario, plan, paleta y exportadores. Quien solo usa la lista descarga y compila todo.
-- **CSS en un solo archivo:** 690 reglas para todas las pantallas. Cada recálculo de estilo las recorre: el mapa quieto restila lo mismo que el 2026-10-01 (4 elementos por cuadro) pero cada recálculo cuesta un ~23 % más, porque entonces había 403 reglas.
+- **Texto para buscadores** (resuelto en la fase 2): la página de cada carrera trae el pensum en HTML legible, que el navegador maquetaba —443 cajas, dos veces o más— antes de que React lo sustituyera.
+- **Un solo trozo** (resuelto en la fase 2): `VistaCarrera` llevaba mapa, lista, horario, plan, paleta y exportadores. Quien solo usaba la lista descargaba y compilaba todo.
+- **CSS en un solo archivo** (resuelto a medias en la fase 2): eran 690 reglas para todas las pantallas. La portada ya no carga las de la carrera, ni la carrera las del plan y el lector. Lo que no se pudo partir son las utilidades de Tailwind, unos 12 kB que comparten todas las pantallas.
 
 ### Deuda de código
 
@@ -132,23 +145,44 @@ Lo que se probó y no se hizo:
 - **Aligerar el JS de entrada.** No hay de dónde: el 62 % es `react-dom`. La analítica de Vercel es el 2 % y ya se inyecta después del primer pintado; diferirla más arriesga perder visitas cortas a cambio de 1,6 kB. La meta de 65 kB se retira.
 - **CSS por pantalla.** Pasa a la fase 2: la frontera de cada hoja es la del trozo de código que la usa, y partirla dos veces es el doble de riesgo. Además hay clases compartidas (`.boton-aro` vive en `mapa.css` y la usa la portada) que hay que reubicar con cuidado.
 
-### Fase 2 — Un módulo por vista
+### Fase 2 — Un módulo por vista (hecha)
 
-Partir `VistaCarrera` en un cascarón (estado, barras) y un trozo por vista: lista, mapa, horario, plan, paleta, selector de electiva. Cada uno se descarga al necesitarse y se precalienta en reposo o al tocar su pestaña, para que el primer cambio no enseñe una espera.
+Lo que cambió, sin tocar un píxel (32 pantallas comparadas antes y después: fotos idénticas y, salvo lo que se dice abajo, estilos idénticos):
 
-Y con cada trozo, su CSS: la portada deja de cargar las reglas del mapa, la agenda, el lector y el plan (hoy 690 reglas en una sola hoja que bloquea el primer pintado).
+1. ✅ **Un trozo por vista** (`components/carreraPorTrozos.js`). El cascarón —estado y barras— son 25 kB y llega con la vista que se va a pintar. Las otras dos, el plan de ruta y la paleta se bajan en reposo, con la primera ya en pantalla; si esa bajada falla no pasa nada, se vuelve a pedir cuando haga falta.
+2. ✅ **La hoja del lector de horarios, aparte.** Era un tercio del trozo del horario (26 → 18 kB) y se usa una vez por semestre. Empieza a bajar al tocar «Subir una foto».
+3. ✅ **La página de cada carrera pide desde el HTML lo que va a necesitar**: cascarón, estilos, pensum y la vista con la que abre. La vista depende de lo guardado en el navegador, así que la decide un script suelto, como el del tema.
+4. ✅ **Reparto en archivos gobernado** (`TROZOS` en `vite.config.js`). El empaquetador hacía un archivo por cada módulo compartido: 49 archivos, 17 peticiones solo para el cascarón. Con dos grupos son 25 y el cascarón, dos. De paso desapareció una espera en cadena que ya existía y no se había visto: dos trocitos que `VistaCarrera` importaba y nadie pedía por adelantado.
+5. ✅ **CSS por niveles.** La portada carga 15 kB en vez de 25; los estilos de la carrera (8 kB) llegan con el cascarón, y los del plan y el lector con su trozo. Las reglas de «menos movimiento» y de impresión se repartieron con las hojas a las que apagan, porque ganan por ir detrás.
+6. ✅ **El texto para buscadores ya no se maqueta** (adelantado de la fase 3). Con `content-visibility: hidden` sigue en el documento pero el navegador no lo prepara: 443 cajas menos por pasada, y eran entre dos y cinco pasadas. Sin JavaScript se le devuelve a los lectores de pantalla.
+7. ✅ **Los instrumentos**: `comparar` compara también los estilos calculados, el banco separa lo que se pide para ver la pantalla de lo que llega después, y `peso.js` vigila cada trozo.
 
-Metas: JS hasta la primera vista 152 → ≤ 105 kB; CSS de la portada 25 → ≤ 13 kB; analizar y compilar −40 %; que el recálculo del mapa quieto vuelva a costar lo que el 2026-10-01.
+Resultado medido, los dos builds seguidos en el teléfono modesto del banco (cuatro rondas alternadas, medianas): el primer pintado de una carrera llega ~0,2 s antes y la vista entera entre 0,1 y 0,2 s antes, que en este equipo es menos de lo que baila una pasada de otra (una tanda anterior, sin el reparto del CSS, dio 0,3-0,4 s). Lo que no baila: 40-50 kB menos de descarga hasta ver la pantalla, un 24 % menos de objetos maquetados, un 18 % menos de elementos restilados y ninguna petición en cadena.
 
-Riesgos: parpadeo al cambiar por primera vez (el banco ya mide ese primer cambio con red lenta) y reglas que cambian de orden al repartirse (se comprueba con la comparación de pantallas píxel a píxel, incluida la silueta de carga).
+Metas, una a una:
+
+- **JS hasta la primera vista 152 → ≤ 105 kB:** 107 por la lista, 118 por el mapa. Casi. Lo que falta está en el cascarón: el selector de electiva (1,8 kB) se queda porque partirlo rompía su precalentado.
+- **CSS de la portada 25 → ≤ 13 kB:** 14,8. El resto son las utilidades de Tailwind, que usan todas las pantallas y no se pueden repartir en dos hojas sin que cambie cuál gana.
+- **Analizar y compilar −40 %:** no se midió por separado. El procesador total del arranque quedó igual o algo por debajo; lo que baja es lo que se descarga y cuándo.
+- **Recálculo del mapa quieto:** sin cambio medible. La carrera sigue cargando casi todas sus reglas; queda para la fase 6, que ataca la causa (un recálculo por cuadro).
+
+Lo que se probó y no se hizo:
+
+- **Montar la primera vista en una transición de React.** Bloquea el hilo la mitad, pero la vista llega más tarde (~0,3 s por la lista) y gasta más procesador, y cualquier actualización urgente que caiga en medio la reinicia: el precalentado del avance la interrumpía y la lista se preparaba dos veces. Se queda síncrono, como estaba. Tiene sentido volver a mirarlo en la fase 3, con la lista montándose por tramos.
+- **Dejar que el empaquetador reparta solo, o por quién usa cada módulo** (`entriesAware`). De 31 a 49 archivos de cien bytes. Los dos grupos explícitos son más simples y dan menos peticiones.
+- **Partir las utilidades de Tailwind por pantalla.** El orden entre utilidades decide cuál gana (`px-2` sobre `p-4`), y en dos hojas ese orden se rompe.
+
+Lo que cambia sin verse, para que no sorprenda: la portada ya no define las siete variables `--cristal-*`, que solo usa la cabecera de la carrera; `comparar` contra un build anterior a esta fase las lista como diferencia en las cuatro pantallas de la portada.
+
+Queda un riesgo conocido, que no es nuevo pero ahora tiene más sitios donde aparecer: si se pierde la conexión antes de que el service worker termine de guardar la aplicación y se toca una vista que aún no ha bajado, el fallo sigue el camino de «hay versión nueva»: borra la copia sin conexión y recarga. Bajar las vistas en reposo cierra casi toda esa ventana. Tratarlo bien —esperar a que vuelva la red sin recargar— es trabajo de otra fase.
 
 ### Fase 3 — La lista pinta lo que se ve
 
 1. `content-visibility: auto` con tamaño reservado por sección de semestre.
-2. Montaje por tramos: los primeros semestres en el primer cuadro y el resto en una transición.
-3. Que el texto para buscadores de la página de carrera no se maquete (unos 790 objetos antes de que React arranque).
+2. Montaje por tramos: los primeros semestres en el primer cuadro y el resto en una transición. Ojo con lo aprendido en la fase 2: una transición se reinicia con cualquier actualización urgente; lo que corre en reposo tiene que esperar a que acabe.
+3. ✅ Hecho en la fase 2: el texto para buscadores ya no se maqueta.
 
-Meta: objetos maquetados al entrar 3 581 → ≤ 1 500; pantalla visible 3,2 → ≤ 2,5 s.
+Meta: objetos maquetados al entrar 2 709 → ≤ 1 500; pantalla visible 3,6 → ≤ 2,5 s.
 
 Hay que comprobar que siguen funcionando: saltar a un semestre, buscar desde la paleta, plegar secciones, la posición al volver y «buscar en la página».
 

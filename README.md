@@ -210,7 +210,7 @@ Medido con la CPU frenada, antes y después:
 
 `npm run rendimiento` repite esas medidas en Chrome sobre el build y **sale con código 1 si algo se pasa de su presupuesto**. Mide tres cosas en `scripts/banco/`: el arranque en frío y el uso (cambiar de vista, marcar, desplazar) en un teléfono modesto simulado, y los gestos del mapa. Se juzga lo que no depende de lo ocupado que esté el equipo —veces que se repinta, elementos que se restilan, objetos que se maquetan, tamaño del documento— y los milisegundos se enseñan como referencia. Es lo que evita que la aplicación vuelva a ponerse lenta sin que nada falle.
 
-El peso va aparte y en cada build: `scripts/peso.js` lo tumba si lo que se descarga para arrancar pasa de su tope. El plan de lo que queda por optimizar, con su línea base, está en [`docs/plan-rendimiento.md`](docs/plan-rendimiento.md).
+El peso va aparte y en cada build: `scripts/peso.js` lo tumba si la entrada, el cascarón de la carrera, cualquiera de las vistas o el lector pasan de su tope. El plan de lo que queda por optimizar, con su línea base, está en [`docs/plan-rendimiento.md`](docs/plan-rendimiento.md).
 
 </details>
 
@@ -323,6 +323,8 @@ node scripts/validar-pensum.js ruta/a/otra/carpeta
 
 Cada carrera es un chunk aparte (~2,5 kB comprimidos) que se baja al entrar, y que **se empieza a bajar al pasar el cursor por su tarjeta**, décimas de segundo antes del click. El click no lo espera: con el dedo no hay *hover*, y un botón que se queda pulsado sin que pase nada se lee como que la web se colgó. El build genera además `sitemap.xml` y `robots.txt`.
 
+El código tampoco llega de una vez. La portada baja lo suyo; al entrar a una carrera llegan el cascarón —el estado y las barras—, sus estilos y **solo la vista con la que abre**: la lista en un teléfono, el mapa en una pantalla ancha, o la última que usaste. Las otras dos vistas, el plan de ruta y la paleta se bajan después, con el aparato en reposo, y el lector de horarios cuando vas a subir una foto. Un solo archivo sabe dónde se parte (`src/components/carreraPorTrozos.js`), y la página de cada carrera pide desde el HTML lo que va a necesitar para no perder una ida y vuelta.
+
 ## Se guarda en el teléfono y abre sin internet
 
 La aplicación se puede instalar. Una vez instalada **abre sin conexión y no vuelve a gastar datos** para consultar el pensum: el service worker guarda las nueve carreras completas, la tipografía y los iconos, unos 780 kB una sola vez.
@@ -394,7 +396,7 @@ npm run dev
 | `npm run preview` | Sirve el build ya compilado |
 | `npm run lint` | oxlint |
 | `npm run rendimiento` | Mide arranque, uso y gestos del mapa sobre el build y falla si algo se pasa de presupuesto |
-| `npm run comparar -- <build>` | Compara píxel a píxel las pantallas de otro build con las de `dist/` |
+| `npm run comparar -- <build>` | Compara 30 pantallas de otro build con las de `dist/`: la foto píxel a píxel y los estilos calculados de cada elemento |
 | `npm test` | Las pruebas de los módulos puros de `src/layout/` |
 
 `src/data/carreras/` y `src/fuentes/` están generados y no se versionan.
