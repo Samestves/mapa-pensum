@@ -6,10 +6,10 @@ import {
   falloDeLosDos,
   leerHorarioDeImagen,
   leerHorarioEnElAparato,
-  precalentarLector,
   prepararImagen,
   valorDe,
 } from '../data/leerHorario.js'
+import { precalentarLector } from '../data/subirHorario.js'
 import { revisar } from '../layout/importarHorario.js'
 
 export const FASE = {

@@ -20,13 +20,6 @@ const TIPO_SUBIDA = 'image/jpeg'
 
 const TAMANO_MAXIMO = 12 * 1024 * 1024
 
-/* Lo que el selector de archivos deja elegir. Sin esto, en el telefono se
-   abre el explorador entero y hay que ir a buscar la foto entre los PDF.
-   Lo piden dos pantallas -la bienvenida y el reintento de la revision- y
-   estaba escrito en las dos: dos listas que se separan el dia que alguien
-   añada un formato en una sola. */
-export const FORMATOS = 'image/png,image/jpeg,image/webp,image/heic,image/heif'
-
 /* Lo que se le ofrece a quien le fallo la lectura. Una salida por fallo: la
    que de verdad lo arregla. Ofrecer "prueba otra foto" ante un servicio lleno
    es mandar a buscar el problema donde no esta. */
@@ -343,18 +336,6 @@ function aRitmo(alAvance) {
     cuando = ahora
     alAvance(avance)
   }
-}
-
-/**
- * Empieza a bajar el lector del aparato antes de que haga falta.
- *
- * Se llama al tocar "Subir una foto": mientras se busca la captura en la
- * galeria, que son unos segundos, el lector ya va llegando. Con el ahorro de
- * datos activado no se adelanta nada; se bajara al leer, si hace falta.
- */
-export function precalentarLector() {
-  if (navigator.connection?.saveData) return
-  import('./lectorLocal.js').then((lector) => lector.precargar()).catch(() => {})
 }
 
 /**

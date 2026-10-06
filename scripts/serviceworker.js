@@ -50,8 +50,10 @@ function aUrl(ruta) {
    porque no se dibuja en ninguna pantalla -solo vive en una etiqueta meta-.
    Precachearla eran 59 kB por usuario para una imagen que no va a ver.
    Y sw.js, el propio service worker: si este script corre sobre un dist que
-   ya lo tiene, se precacheaba a si mismo. */
-const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png', '/sw.js'])
+   ya lo tiene, se precacheaba a si mismo.
+   El manifiesto de Vite es para los scripts del build (ver trozos.js): el
+   navegador no lo pide nunca. */
+const FUERA = new Set(['/sitemap.xml', '/robots.txt', '/og.png', '/sw.js', '/.vite/manifest.json'])
 
 /**
  * De las fuentes solo se precachea lo que esta aplicacion dibuja: los cuatro

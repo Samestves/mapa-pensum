@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { Suspense, memo, useCallback, useMemo, useRef, useState } from 'react'
 import { Copy, ImagePlus, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
 import { useConsulta } from '../hooks/useConsulta'
@@ -12,7 +12,7 @@ import {
   puedeCopiarImagen,
 } from '../data/compartir'
 import { imagenDelHorario, MENSAJE_DEL_HORARIO } from '../data/exportarHorario'
-import { FORMATOS, precalentarLector } from '../data/leerHorario'
+import { FORMATOS } from '../data/subirHorario'
 import { colorClase, coloresDelHorario } from '../theme/areas'
 import HorarioSemana from './HorarioSemana'
 import HorarioAgenda from './HorarioAgenda'
@@ -20,7 +20,7 @@ import AccionesHorario from './AccionesHorario'
 import PopoverClase from './PopoverClase'
 import MenuClase from './MenuClase'
 import HorarioVacio from './HorarioVacio'
-import ImportarHorario from './ImportarHorario'
+import { ImportarHorario, prepararLector } from './carreraPorTrozos'
 import ConfirmarBorrado from './ConfirmarBorrado'
 
 /* El nombre que el estudiante puso al exportar su plan de ruta. Se reutiliza
@@ -186,7 +186,7 @@ function Horario({ carrera, estados }) {
       etiqueta: 'Añadir desde una foto',
       icono: ImagePlus,
       alPulsar: () => {
-        precalentarLector()
+        prepararLector()
         refArchivo.current?.click()
       },
     },
@@ -289,29 +289,35 @@ function Horario({ carrera, estados }) {
         />
       )}
 
+      {/* La hoja que lee la foto vive en su propio trozo (ver
+          carreraPorTrozos.js), que empieza a bajar al tocar "Subir una foto".
+          Con su propio Suspense, y vacio: sin el, esperar ese trozo
+          cambiaria el horario entero por la silueta de carga. */}
       {aLeer && (
-        <ImportarHorario
-          /* Sin key: elegir otra imagen cambia el archivo y la lectura
-             empieza de cero ella sola (ver useLecturaHorario). Con una key
-             la hoja se desmontaba y volvia a subir entre una foto y otra. */
-          archivo={aLeer}
-          materias={todas}
-          sesiones={sesiones}
-          alImportar={(nuevas) => {
-            guardarVarias(nuevas)
-            setEmpezado(true)
-            setALeer(null)
-          }}
-          alCambiarImagen={setALeer}
-          /* La otra salida de la bienvenida, sin volver a ella: cuando el
-             lector no puede -hay cola, o se acabo por hoy- lo que queda es
-             armarlo, y se entra directo a la semana vacia. */
-          alCrearAMano={() => {
-            setEmpezado(true)
-            setALeer(null)
-          }}
-          alCerrar={() => setALeer(null)}
-        />
+        <Suspense fallback={null}>
+          <ImportarHorario
+            /* Sin key: elegir otra imagen cambia el archivo y la lectura
+               empieza de cero ella sola (ver useLecturaHorario). Con una key
+               la hoja se desmontaba y volvia a subir entre una foto y otra. */
+            archivo={aLeer}
+            materias={todas}
+            sesiones={sesiones}
+            alImportar={(nuevas) => {
+              guardarVarias(nuevas)
+              setEmpezado(true)
+              setALeer(null)
+            }}
+            alCambiarImagen={setALeer}
+            /* La otra salida de la bienvenida, sin volver a ella: cuando el
+               lector no puede -hay cola, o se acabo por hoy- lo que queda es
+               armarlo, y se entra directo a la semana vacia. */
+            alCrearAMano={() => {
+              setEmpezado(true)
+              setALeer(null)
+            }}
+            alCerrar={() => setALeer(null)}
+          />
+        </Suspense>
       )}
 
       {/* La foto que se sube con el horario ya empezado, desde su menu */}

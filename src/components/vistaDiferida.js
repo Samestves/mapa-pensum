@@ -1,5 +1,6 @@
 import { lazy } from 'react'
 import { conRecarga } from '../data/versionNueva'
+import { precargarVistaInicial } from './carreraPorTrozos'
 
 /* Un solo sitio sabe donde se parte el codigo, y por eso existe este archivo
    en vez de dos lineas sueltas dentro de App.
@@ -13,8 +14,15 @@ import { conRecarga } from '../data/versionNueva'
 
    La misma funcion sirve para las dos cosas porque import() ya cachea: la
    primera llamada baja el chunk y las siguientes devuelven la promesa que ya
-   existe. Precargar mil veces baja una. */
-const importar = conRecarga(() => import('./VistaCarrera'))
+   existe. Precargar mil veces baja una.
+
+   Con el cascaron se pide a la vez la vista con la que va a abrir, que vive
+   en su propio trozo (ver carreraPorTrozos.js): van juntos o no hay nada que
+   pintar. */
+const importar = conRecarga(() => {
+  precargarVistaInicial()
+  return import('./VistaCarrera')
+})
 
 /**
  * La vista de una carrera, bajada aparte.

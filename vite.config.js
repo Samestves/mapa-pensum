@@ -133,7 +133,44 @@ function lectorDeHorarios() {
   }
 }
 
+/* Lo que solo comparten trozos que se piden a mano, y que no debe viajar con
+   lo comun de la carrera (ver TROZOS): el lienzo de las imagenes que se
+   comparten -lo usan el exportador del horario y el de la ruta- y la lectura
+   de horarios -la hoja que lee la foto y el lector del aparato-. Cada uno va
+   en su trozo, que solo baja quien exporta o quien lee. */
+const SOLO_A_MANO = /[\\/]src[\\/]data[\\/](lienzo|leerHorario)\.js$/
+
+/**
+ * Como se reparte el JavaScript en archivos.
+ *
+ * Por su cuenta, el empaquetador hace un archivo por cada modulo que comparten
+ * dos trozos: con las vistas de la carrera partidas (ver
+ * src/components/carreraPorTrozos.js) salian veintitantos archivos de cien
+ * bytes -un icono, un hook- y el cascaron de la carrera eran diecisiete
+ * peticiones. Dos grupos lo dejan en lo que se quiere:
+ *
+ *   inicio   lo que alcanza la entrada. Se queda en el archivo principal:
+ *            sin este grupo, el siguiente se llevaria tambien React, que lo
+ *            comparten todos.
+ *   carrera  lo que comparten dos o mas trozos de dentro de una carrera -el
+ *            cascaron y las vistas-, en un solo archivo que llega con el
+ *            cascaron.
+ *
+ * Lo que usa un solo trozo va en el suyo, como siempre. El resultado lo
+ * vigila scripts/peso.js en cada build.
+ */
+const TROZOS = {
+  groups: [
+    { name: 'inicio', tags: ['$initial'], priority: 2 },
+    { name: 'carrera', minShareCount: 2, priority: 1, test: (id) => !SOLO_A_MANO.test(id) },
+  ],
+}
+
 // Tailwind v4 entra como plugin de Vite: no hace falta postcss.config ni tailwind.config
 export default defineConfig({
   plugins: [react(), tailwindcss(), precargarFuentes(), lectorDeHorarios()],
+  build: {
+    manifest: true,
+    rolldownOptions: { output: { codeSplitting: TROZOS } },
+  },
 })

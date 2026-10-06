@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { ImageIcon, Pencil } from 'lucide-react'
-import { FORMATOS, precalentarLector } from '../data/leerHorario'
+import { FORMATOS } from '../data/subirHorario'
 import { useConsulta } from '../hooks/useConsulta'
+import { prepararLector } from './carreraPorTrozos'
 import DibujoCaptura from './DibujoCaptura'
 
 /* Desde donde hay sitio para ver la captura y la semana a la vez, y la pantalla
@@ -152,7 +153,7 @@ function HorarioVacio({ alSubir, alCrear }) {
               type="button"
               onClick={() => {
                 // El lector va llegando mientras se busca la captura en la galeria
-                precalentarLector()
+                prepararLector()
                 refArchivo.current?.click()
               }}
               className="boton-tinta h-[52px] w-full rounded-2xl text-[15px]"

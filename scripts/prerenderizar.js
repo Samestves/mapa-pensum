@@ -24,6 +24,7 @@
  */
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { CASCARON, ENTRADA, VISTAS, archivosDe, juntar, pensumDe } from './trozos.js'
 
 const DIST = 'dist'
 const DATOS = 'src/data/carreras'
@@ -38,18 +39,61 @@ const escapar = (t) =>
 
 const plantilla = readFileSync(join(DIST, 'index.html'), 'utf8')
 
-/**
- * El chunk de la vista de carrera, que se baja aparte del principal.
- *
- * Se busca por nombre en vez de fijarlo porque Vite le pone un hash distinto
- * en cada build; si se escribiera a mano, el preload apuntaria a un archivo
- * que ya no existe en cuanto cambie una linea.
- */
-const activos = readdirSync(join(DIST, 'assets'))
-const chunkVista = activos.find((f) => f.startsWith('VistaCarrera-') && f.endsWith('.js'))
+/* Lo que una carrera necesita ademas de la entrada, que ya va en la
+   plantilla. Los nombres llevan el hash del build: se preguntan, no se
+   escriben (ver trozos.js).
 
-/** El pensum de una carrera, que tambien es un chunk aparte y lleva su slug por nombre. */
-const chunkDelPensum = (slug) => activos.find((f) => f.startsWith(`${slug}-`) && f.endsWith('.js'))
+   El cascaron -el estado y las barras- lo necesita siempre. La vista con la
+   que abre depende de quien entra, y por eso van las tres: la pagina decide
+   cual pedir (ver pedirLaVista). */
+const entrada = archivosDe(ENTRADA)
+const cascaron = archivosDe(CASCARON, entrada)
+const yaConElCascaron = juntar(entrada, cascaron)
+const vistas = Object.fromEntries(
+  Object.entries(VISTAS).map(([id, modulo]) => [
+    id,
+    archivosDe(modulo, yaConElCascaron).js.map((archivo) => `/${archivo}`),
+  ]),
+)
+
+/**
+ * El script que pide, desde el HTML, el codigo de la vista con la que va a
+ * abrir la carrera.
+ *
+ * Cada vista es un trozo aparte y cual toca depende del navegador: la ultima
+ * que se uso o, la primera vez, la lista en un telefono y el mapa en una
+ * pantalla ancha. Eso no se puede declarar con una etiqueta, asi que lo
+ * decide un script suelto, como el del tema y por lo mismo: importarlo seria
+ * aplazarlo, y para cuando el JavaScript principal llega a saber que vista
+ * pintar ya se ha perdido una ida y vuelta.
+ *
+ * Repite la regla de src/data/vistaInicial.js. Si cambia alli, cambia aqui;
+ * si un dia se separan no se rompe nada -la vista se pide igual al pintarla-,
+ * solo se pierde el adelanto.
+ */
+const pedirLaVista = `<script>
+      ;(function (trozos) {
+        var vista
+        try {
+          vista = localStorage.getItem('mapa-pensum:vista')
+        } catch (e) {
+          /* Sin almacen, la del aparato */
+        }
+        var suyos = trozos[vista] || trozos[innerWidth < 768 ? 'lista' : 'mapa']
+        suyos.forEach(function (href) {
+          var enlace = document.createElement('link')
+          enlace.rel = 'modulepreload'
+          enlace.href = href
+          document.head.appendChild(enlace)
+        })
+      })(${JSON.stringify(vistas)})
+    </script>`
+
+/* Donde empieza lo que Vite añade a la cabecera: su script y, detras, la hoja
+   de estilos. Lo de una carrera se mete justo delante. Tiene que ser delante
+   de la hoja: un script suelto que va detras de una hoja de estilos espera a
+   que esa hoja termine de bajar, y este no puede esperar. */
+const SCRIPT_DE_ENTRADA = '<script type="module"'
 
 /** Sustituye una etiqueta ya presente en la plantilla, o la deja igual */
 function reemplazar(html, patron, reemplazo) {
@@ -162,9 +206,9 @@ function paginaDe(carrera) {
     `Confirma siempre con control de estudios.</p>` +
     `</main>`
 
-  /* Una pagina de carrera SABE que va a necesitar el chunk de la vista y el
-     de su pensum, asi que se piden desde el HTML en vez de esperar a que el
-     JavaScript principal los descubra al ejecutarse.
+  /* Una pagina de carrera SABE que va a necesitar el cascaron, su pensum y
+     la vista con la que abre, asi que se piden desde el HTML en vez de
+     esperar a que el JavaScript principal los descubra al ejecutarse.
 
      Sin esto van en serie: medido en local, el de la vista no empezaba a
      bajar hasta 52 ms despues de que terminara el principal, y en una red
@@ -175,14 +219,18 @@ function paginaDe(carrera) {
      Solo en las paginas de carrera. En la portada seria contraproducente:
      ahi no hacen falta hasta que se elige una, que es justo lo que se buscaba
      al partirlos. */
-  const preload = [chunkVista, chunkDelPensum(carrera.slug)]
-    .filter(Boolean)
-    .map((chunk) => `<link rel="modulepreload" href="/assets/${chunk}" />\n    `)
+  const suyo = [...cascaron.js, ...archivosDe(pensumDe(carrera.slug), entrada).js]
+    .map((archivo) => `<link rel="modulepreload" href="/${archivo}" />\n    `)
     .join('')
+  html = reemplazar(
+    html,
+    new RegExp(SCRIPT_DE_ENTRADA),
+    `${suyo}${pedirLaVista}\n    ${SCRIPT_DE_ENTRADA}`,
+  )
 
   return html.replace(
     '<div id="root"></div>',
-    `${preload}<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>\n` +
+    `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>\n` +
       `    <div id="root">${contenido}</div>`,
   )
 }

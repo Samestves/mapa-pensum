@@ -1,7 +1,7 @@
 import { ChevronRight, GraduationCap } from 'lucide-react'
 import { avanceDe } from '../data/avance'
 import { textoCarga } from '../data/cargaPlan'
-import { mesCorto } from '../data/exportarPlan'
+import { mesCorto } from '../data/meses'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import SelectorTema from './SelectorTema'

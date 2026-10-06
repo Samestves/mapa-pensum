@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-
-/* Cuando el telefono no tiene nada mejor que hacer. Sin requestIdleCallback
-   (Safari), un rato despues de montar. */
-const enReposo = (fn) =>
-  'requestIdleCallback' in window
-    ? { cancelar: cancelIdleCallback.bind(null, requestIdleCallback(fn, { timeout: 4000 })) }
-    : { cancelar: clearTimeout.bind(null, setTimeout(fn, 2500)) }
+import { enReposo } from '../data/reposo'
 
 /**
  * Pinta `children` una vez, invisible, cuando el aparato esta en reposo, y
@@ -27,7 +21,7 @@ export default function Precalentar({ children }) {
   const [fase, setFase] = useState('esperando')
 
   useEffect(() => {
-    if (fase === 'esperando') return enReposo(() => setFase('pintando')).cancelar
+    if (fase === 'esperando') return enReposo(() => setFase('pintando'))
     if (fase === 'pintando') {
       const id = requestAnimationFrame(() => setFase('hecho'))
       return () => cancelAnimationFrame(id)

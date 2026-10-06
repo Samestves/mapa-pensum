@@ -15,30 +15,7 @@ import {
   redondeado,
   resolverColores,
 } from './lienzo.js'
-
-const MESES_CORTOS = [
-  'Ene',
-  'Feb',
-  'Mar',
-  'Abr',
-  'May',
-  'Jun',
-  'Jul',
-  'Ago',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dic',
-]
-
-/** "Octubre de 2030" */
-export const MES = (fecha) => {
-  const texto = fecha?.toLocaleDateString('es-VE', { month: 'long', year: 'numeric' })
-  return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : ''
-}
-
-/** "Oct 2030": la fecha de grado cuando va en grande y tiene que caber */
-export const mesCorto = (fecha) => `${MESES_CORTOS[fecha.getMonth()]} ${fecha.getFullYear()}`
+import { MES, mesCorto } from './meses.js'
 
 /* La imagen de la ruta: la que se manda por WhatsApp o se sube a un estado.
 

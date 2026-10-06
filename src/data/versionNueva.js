@@ -11,6 +11,9 @@ const CLAVE = 'mapa-pensum:recarga-por-version'
    recarga cae en ella. */
 const ESPERA_NAVEGACION_MS = 400
 
+/* Cuantos imports adelantados hay en vuelo (ver adelantar). */
+let adelantados = 0
+
 /**
  * Cuando un trozo de la aplicacion no se puede bajar, recarga la pagina una
  * vez, ya con la version publicada.
@@ -28,6 +31,11 @@ const ESPERA_NAVEGACION_MS = 400
  * dinamico o lo que este necesita.
  */
 export function recargarSiHayVersionNueva(evento) {
+  /* Lo que se adelanta en reposo no lo espera nadie: si falla -se fue la
+     conexion- se deja pasar. Recargar tiraria la pantalla que ya se esta
+     usando, y sin conexion no volveria. */
+  if (adelantados) return
+
   let ultima = 0
   try {
     ultima = Number(sessionStorage.getItem(CLAVE)) || 0
@@ -61,3 +69,14 @@ export function recargarSiHayVersionNueva(evento) {
  */
 export const conRecarga = (importar) => () =>
   importar().then((modulo) => modulo ?? new Promise(() => {}))
+
+/**
+ * Adelanta un import que todavia no hace falta. Si falla no pasa nada: se
+ * volvera a pedir cuando haga falta de verdad, y ahi si rige lo de arriba.
+ */
+export function adelantar(importar) {
+  adelantados++
+  importar()
+    .catch(() => {})
+    .finally(() => adelantados--)
+}

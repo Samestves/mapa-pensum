@@ -1,6 +1,13 @@
-import { Activity, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import {
+  Activity,
+  Suspense,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { ArrowLeft, GraduationCap, Moon, Sun } from 'lucide-react'
-import { guardar, leer } from '../data/almacen'
 import { anotarMarca, anotarMateria, anotarVista } from '../data/latido'
 import { calcularLayout } from '../layout/calcularLayout'
 import { FRANJA } from '../layout/constantes'
@@ -8,6 +15,7 @@ import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { ESTADO } from '../data/estados'
 import { accionDeSemestre, marcasDeSemestres } from '../data/semestre'
+import { recordarVista, vistaInicial } from '../data/vistaInicial'
 import { VISTAS } from '../data/vistas'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
@@ -15,22 +23,25 @@ import { useEsTelefono } from '../hooks/useEsTelefono'
 import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
+import AlPedirlo from './AlPedirlo'
 import PanelAvisos from './AvisosCarrera'
 import BarraInferior from './BarraInferior'
 import BarraSuperior from './BarraSuperior'
+import {
+  GrafoPensum,
+  Horario,
+  PaletaComandos,
+  PedirElResto,
+  PlanRuta,
+  VistaLista,
+  pedirVista,
+} from './carreraPorTrozos'
 import EsqueletoMapa from './EsqueletoMapa'
-import GrafoPensum from './GrafoPensum'
 import HojaAvance from './HojaAvance'
 import PanelProgreso from './PanelProgreso'
 import Precalentar from './Precalentar'
 import ContenidoAvance from './ContenidoAvance'
-import Horario from './Horario'
-import PlanRuta from './PlanRuta'
-import PaletaComandos from './PaletaComandos'
 import SelectorElectiva, { PrecalentarSelector } from './SelectorElectiva'
-import VistaLista from './VistaLista'
-
-const CLAVE_VISTA = 'mapa-pensum:vista'
 
 /**
  * El mapa de una carrera. Recibe el pensum ya normalizado y no sabe de donde
@@ -132,22 +143,23 @@ function VistaCarrera({ carrera, alVolver }) {
   // la resuelva por su profundidad sin recibir el color por props.
   const tonos = useMemo(() => variablesDeTono(carrera, tema), [carrera, tema])
 
-  // En movil la lista es la vista util: el mapa completo solo cabe a 0.10
-  const [vista, setVista] = useState(
-    () => leer(CLAVE_VISTA) ?? (window.innerWidth < 768 ? 'lista' : 'mapa'),
-  )
+  const [vista, setVista] = useState(vistaInicial)
   /* La vista que se ve va un paso por detras de la elegida. El selector
      responde en el acto; la vista nueva se prepara despues, por tramos que
      dejan pasar cualquier toque, y se cambia cuando esta lista. La primera
      visita al mapa son mil seiscientos elementos: preparados de un golpe en
      el mismo toque, el telefono se quedaba medio segundo sin responder y sin
-     enseñar siquiera que el toque habia llegado. */
+     enseñar siquiera que el toque habia llegado.
+
+     Por lo mismo, si el codigo de la vista nueva aun no ha bajado -cada una
+     es un trozo aparte, ver carreraPorTrozos.js- la que hay sigue en pantalla
+     hasta que llega: no se cambia una vista hecha por una silueta. */
   const vistaEnPantalla = useDeferredValue(vista)
   /* Las vistas que ya se abrieron: siguen montadas, ocultas, al dejarlas */
   const [visitadas, setVisitadas] = useState(() => new Set([vista]))
   if (!visitadas.has(vistaEnPantalla)) setVisitadas(new Set(visitadas).add(vistaEnPantalla))
   useEffect(() => {
-    guardar(CLAVE_VISTA, vista)
+    recordarVista(vista)
     anotarVista(vista)
   }, [vista])
 
@@ -210,19 +222,31 @@ function VistaCarrera({ carrera, alVolver }) {
   // en el mismo fotograma del click, el click no enseñaria nada durante todo
   // ese rato. Asi la cabecera con el nombre de la carrera sale de inmediato y
   // el mapa entra encima de su propia silueta.
+  //
+  // Y espera tambien al codigo de la vista, que es un trozo aparte (ver
+  // carreraPorTrozos.js) y puede tardar mas que el cascaron. La silueta sigue
+  // en pantalla, la misma, hasta que hay con que sustituirla: montando antes,
+  // React la cambiaria por la de reserva del Suspense, que es igual, y serian
+  // dos siluetas montadas para no ver nada distinto.
   const [mapaMontado, setMapaMontado] = useState(false)
   useEffect(() => {
-    const cuadro = requestAnimationFrame(() => setMapaMontado(true))
-    // Red de seguridad: en una pestaña oculta requestAnimationFrame no se
-    // dispara NUNCA. Sin esto, abrir una carrera en una pestaña de fondo la
-    // dejaria en la silueta para siempre. Se comprobo de verdad, no es una
-    // precaucion teorica.
-    const red = setTimeout(() => setMapaMontado(true), 200)
+    if (mapaMontado) return
+    let vigente = true
+    const fotograma = new Promise((seguir) => {
+      requestAnimationFrame(seguir)
+      // Red de seguridad: en una pestaña oculta requestAnimationFrame no se
+      // dispara NUNCA. Sin esto, abrir una carrera en una pestaña de fondo la
+      // dejaria en la silueta para siempre. Se comprobo de verdad, no es una
+      // precaucion teorica.
+      setTimeout(seguir, 200)
+    })
+    /* Tambien si el codigo no llega: montada, la vista lo vuelve a pedir y
+       el fallo sale por el limite de error, en vez de quedarse en la silueta. */
+    Promise.allSettled([fotograma, pedirVista(vista)]).then(() => vigente && setMapaMontado(true))
     return () => {
-      cancelAnimationFrame(cuadro)
-      clearTimeout(red)
+      vigente = false
     }
-  }, [])
+  }, [mapaMontado, vista])
 
   // El alternar vive aqui y no en el nodo para que la funcion no dependa de
   // que hay seleccionado: con la forma de actualizacion, React le pasa el
@@ -370,28 +394,32 @@ function VistaCarrera({ carrera, alVolver }) {
         />
       </div>
 
-      <PaletaComandos
-        abierta={paletaAbierta}
-        alCerrar={() => setPaletaAbierta(false)}
-        acciones={accionesPaleta}
-        materias={layout.nodos}
-        estados={estados}
-        carreras={CARRERAS.filter((c) => c.slug !== carrera.slug)}
-        alIrAMateria={(codigo) => {
-          setVista('mapa')
-          setSeleccionado(codigo)
-        }}
-        alIrACarrera={alVolver}
-      />
+      <AlPedirlo cuando={paletaAbierta}>
+        <PaletaComandos
+          abierta={paletaAbierta}
+          alCerrar={() => setPaletaAbierta(false)}
+          acciones={accionesPaleta}
+          materias={layout.nodos}
+          estados={estados}
+          carreras={CARRERAS.filter((c) => c.slug !== carrera.slug)}
+          alIrAMateria={(codigo) => {
+            setVista('mapa')
+            setSeleccionado(codigo)
+          }}
+          alIrACarrera={alVolver}
+        />
+      </AlPedirlo>
 
-      <PlanRuta
-        abierto={planAbierto}
-        carrera={carrera}
-        marcas={marcas}
-        progreso={progreso}
-        elegidas={elegidas}
-        alCerrar={() => setPlanAbierto(false)}
-      />
+      <AlPedirlo cuando={planAbierto}>
+        <PlanRuta
+          abierto={planAbierto}
+          carrera={carrera}
+          marcas={marcas}
+          progreso={progreso}
+          elegidas={elegidas}
+          alCerrar={() => setPlanAbierto(false)}
+        />
+      </AlPedirlo>
 
       {/* Elegir que va en una casilla. Vive aqui y no dentro del mapa, que
           se remonta al cambiar de vista y lleva el transform del pan y el
@@ -426,51 +454,86 @@ function VistaCarrera({ carrera, alVolver }) {
           elemento que pasa de display:none a verse reinicia su animacion. La
           silueta NO entra animada: es la misma que ya estaba en pantalla
           mientras bajaba el codigo (el fallback de App), y fundirla desde
-          cero la hacia parpadear justo al llegar. */}
+          cero la hacia parpadear justo al llegar.
+
+          Y es tambien lo que se ve si el codigo de la primera vista tarda mas
+          que el del cascaron: la misma silueta, sin relevo. */}
       <div className="relative flex flex-1 overflow-hidden">
-        {!mapaMontado ? (
-          <EsqueletoMapa slug={carrera.slug} />
-        ) : (
-          VISTAS.filter((v) => visitadas.has(v.id)).map(({ id }) => (
-            <Activity key={id} mode={id === vistaEnPantalla ? 'visible' : 'hidden'}>
-              <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
-                {id === 'horario' ? (
-                  <Horario carrera={carrera} estados={estados} />
-                ) : id === 'mapa' ? (
-                  <GrafoPensum
-                    clave={carrera.slug}
-                    layout={layout}
-                    porCodigo={porCodigo}
+        <Suspense fallback={<EsqueletoMapa slug={carrera.slug} />}>
+          {!mapaMontado ? (
+            <EsqueletoMapa slug={carrera.slug} />
+          ) : (
+            <>
+              {VISTAS.filter((v) => visitadas.has(v.id)).map(({ id }) => (
+                <Activity key={id} mode={id === vistaEnPantalla ? 'visible' : 'hidden'}>
+                  <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
+                    {id === 'horario' ? (
+                      <Horario carrera={carrera} estados={estados} />
+                    ) : id === 'mapa' ? (
+                      <GrafoPensum
+                        clave={carrera.slug}
+                        layout={layout}
+                        porCodigo={porCodigo}
+                        estados={estados}
+                        descarga={descarga}
+                        toque={toque}
+                        seleccionado={seleccionado}
+                        alSeleccionar={alternarSeleccion}
+                        alMarcar={marcarYContar}
+                        marcasSemestre={marcasSemestre}
+                        alAlternarSemestre={alternarSemestre}
+                        enCasilla={enCasilla}
+                        alAbrirCasilla={abrirCasilla}
+                        casillaDe={casillaDe}
+                      />
+                    ) : (
+                      <VistaLista
+                        layout={layout}
+                        estados={estados}
+                        progreso={progreso}
+                        avanceGrupos={avanceGrupos}
+                        toque={toque}
+                        descarga={descarga}
+                        alMirar={mirar}
+                        alMarcar={marcarYContar}
+                        marcasSemestre={marcasSemestre}
+                        alAlternarSemestre={alternarSemestre}
+                      />
+                    )}
+                  </div>
+                </Activity>
+              ))}
+
+              {/* Lo que se deja para cuando el aparato quede en reposo va
+                  AQUI DENTRO, y no es por orden. Lo que cuelga de un Suspense
+                  no corre sus efectos hasta que todo lo de dentro esta en
+                  pantalla: asi nada de esto empieza antes de que se vea la
+                  primera vista. Fuera, con la red lenta el reposo llegaba
+                  antes que el codigo de la vista, y lo de adelantar le quitaba
+                  la red y el procesador a lo unico que se estaba esperando. */}
+              <PedirElResto />
+              {esTelefono && (
+                <>
+                  {/* La primera vez que se abren el avance y una electiva,
+                      antes de que nadie los abra: ver Precalentar. */}
+                  <Precalentar>
+                    <div className="px-5">
+                      <ContenidoAvance {...avance} />
+                    </div>
+                  </Precalentar>
+                  <PrecalentarSelector
+                    nodos={layout.nodos}
+                    grupos={grupos}
                     estados={estados}
-                    descarga={descarga}
-                    toque={toque}
-                    seleccionado={seleccionado}
-                    alSeleccionar={alternarSeleccion}
-                    alMarcar={marcarYContar}
-                    marcasSemestre={marcasSemestre}
-                    alAlternarSemestre={alternarSemestre}
-                    enCasilla={enCasilla}
-                    alAbrirCasilla={abrirCasilla}
                     casillaDe={casillaDe}
+                    alColocar={colocar}
+                    alCerrar={cerrarCasilla}
                   />
-                ) : (
-                  <VistaLista
-                    layout={layout}
-                    estados={estados}
-                    progreso={progreso}
-                    avanceGrupos={avanceGrupos}
-                    toque={toque}
-                    descarga={descarga}
-                    alMirar={mirar}
-                    alMarcar={marcarYContar}
-                    marcasSemestre={marcasSemestre}
-                    alAlternarSemestre={alternarSemestre}
-                  />
-                )}
-              </div>
-            </Activity>
-          ))
-        )}
+                </>
+              )}
+            </>
+          )}
+        </Suspense>
 
         {/* Cuelga de aqui y no de la cabecera: sus hijos llevan
             overflow:hidden para la animacion de plegado y recortarian
@@ -495,24 +558,7 @@ function VistaCarrera({ carrera, alVolver }) {
           la hoja y el panel tienen animacion de salida y no pueden
           desmontarse a medias. */}
       {esTelefono ? (
-        <>
-          <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
-          {/* La primera vez que se abren el avance y una electiva, antes de
-              que nadie los abra: ver Precalentar. */}
-          <Precalentar>
-            <div className="px-5">
-              <ContenidoAvance {...avance} />
-            </div>
-          </Precalentar>
-          <PrecalentarSelector
-            nodos={layout.nodos}
-            grupos={grupos}
-            estados={estados}
-            casillaDe={casillaDe}
-            alColocar={colocar}
-            alCerrar={cerrarCasilla}
-          />
-        </>
+        <HojaAvance {...avance} abierta={abierto === 'avance'} alCerrar={cerrar} />
       ) : (
         <PanelProgreso {...avance} abierto={abierto === 'avance'} alCerrar={cerrar} />
       )}

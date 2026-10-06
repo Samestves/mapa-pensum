@@ -133,7 +133,7 @@ function vigilante(paciencia, alSaltar) {
 /* ---- La bajada ------------------------------------------------------------ */
 
 /* La bajada en curso, si la hay. Es una para todos: la empieza el boton de
-   subir la foto (ver precalentarLector en leerHorario.js) mientras se elige
+   subir la foto (ver precalentarLector en subirHorario.js) mientras se elige
    la imagen, y la lectura se suma a ella en vez de pedir lo mismo otra vez. */
 let bajada = null
 /* Cuanto va, mientras de verdad se esta bajando algo. null si no: o no ha
