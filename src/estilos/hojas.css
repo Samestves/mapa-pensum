@@ -133,7 +133,9 @@
    maqueta y se pinta cuando esta cerca de la pantalla. Son mas de dos mil
    nodos, y entrar a la lista los maquetaba todos de una vez: medio segundo
    con el telefono congelado (CPU x4). El alto que se reserva mientras no se
-   ha pintado es una estimacion; despues se recuerda el de verdad. Por eso el
+   ha pintado es una estimacion -la de cada seccion la calcula VistaLista por
+   sus filas; este valor es solo el de respaldo-; despues se recuerda el de
+   verdad. Por eso el
    aire entre secciones va dentro de cada una y no entre ellas: la linea del
    recorrido tiene que llegar hasta la siguiente, y lo que se sale de una
    seccion contenida no se pinta. */

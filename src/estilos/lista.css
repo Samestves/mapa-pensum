@@ -22,6 +22,18 @@
 .plegable > * {
   overflow: hidden;
   min-height: 0;
+  transition: content-visibility 360ms allow-discrete;
+}
+
+/* Cerrado, lo de dentro no se prepara. Cada fila de la lista lleva su panel
+   montado -el selector y las pastillas del camino- para plegarse suave, y
+   sin esto se maquetaban todos aunque no se vieran: un tercio de lo que
+   costaba entrar a la lista. Al abrir se ve desde el primer cuadro y al
+   cerrar se queda hasta que acaba el pliegue (allow-discrete): por eso la
+   duracion es la del alto, 360 ms. De paso, lo que hay dentro deja de
+   recibir el foco con el tabulador mientras esta cerrado. */
+.plegable:not([data-abierto='true']) > * {
+  content-visibility: hidden;
 }
 
 /* Cada seccion entra subiendo un poco y fundiendose, escalonada desde fuera

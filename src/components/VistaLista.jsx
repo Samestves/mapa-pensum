@@ -417,6 +417,17 @@ function CasillaLista({ semestre, resumen, alAlternar }) {
    pantalla, y alguna de sobra. */
 const PRIMERAS_SECCIONES = 3
 
+/* El alto que se le reserva a una seccion mientras el navegador no la pinta
+   (content-visibility, ver .seccion-lista). Medido en la lista: la cabecera
+   de un semestre son 50 px, la de un grupo de electivas 44 y su riel 15;
+   cada fila, 49,8 con su separador, y la caja de las filas lleva 2 px de
+   borde. Es el alto sin el aire de abajo, que va aparte en el padding.
+   Con un valor fijo para todas (520) la lista reservaba el doble de lo que
+   media, y la barra de desplazamiento encogia a saltos al ir bajando. */
+const ALTO = { cabecera: 50, cabeceraGrupo: 44, riel: 15, fila: 49.8, caja: 2 }
+const altoDeFilas = (n) => (n ? n * ALTO.fila + ALTO.caja : 0)
+const reserva = (alto) => ({ containIntrinsicSize: `auto ${Math.round(alto)}px` })
+
 /**
  * Si ya toca pintar la lista entera. Entrar a la lista eran dos mil y pico
  * nodos de una vez, y en un telefono modesto el toque en "Lista" se quedaba
@@ -705,7 +716,15 @@ function VistaLista({
                 key={id}
                 id={`lista-${id}`}
                 className="seccion-lista lista-entrar relative scroll-mt-[var(--margen-seccion)] pb-7 pl-7"
-                style={{ animationDelay: `${Math.min(i, 6) * 35}ms` }}
+                style={{
+                  animationDelay: `${Math.min(i, 6) * 35}ms`,
+                  ...reserva(
+                    ALTO.cabecera +
+                      (plegado
+                        ? 0
+                        : altoDeFilas(s.filas.length + (filtro === 'todo' ? s.huecos.length : 0))),
+                  ),
+                }}
               >
                 {/* El recorrido: una linea que baja de este semestre al
                     siguiente, por detras del punto. */}
@@ -832,6 +851,11 @@ function VistaLista({
                   key={id}
                   id={`lista-${id}`}
                   className="seccion-lista lista-entrar scroll-mt-[var(--margen-seccion)] pb-7 pl-7"
+                  style={reserva(
+                    ALTO.cabeceraGrupo +
+                      (avance?.meta != null ? ALTO.riel : 0) +
+                      altoDeFilas(mostradas.length),
+                  )}
                 >
                   <div className="flex items-center gap-4 pb-3">
                     <h2 className="min-w-0 flex-1 truncate text-[17px] leading-tight font-light tracking-[-0.02em] text-tinta">
