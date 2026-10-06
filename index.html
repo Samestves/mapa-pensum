@@ -121,6 +121,17 @@
         })
       })()
     </script>
+    <!-- Sin JavaScript no hay aplicacion: lo unico que queda es el pensum
+         que se prerenderiza en cada pagina, que va oculto a la vista y sin
+         preparar (ver .seo-solo-lectura en estilos/base.css). Aqui se le
+         devuelve a quien lo lee con un lector de pantalla. -->
+    <noscript>
+      <style>
+        .seo-solo-lectura {
+          content-visibility: visible;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

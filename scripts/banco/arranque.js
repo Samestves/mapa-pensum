@@ -32,8 +32,9 @@ const REPOSO_MS = 3000
  *    Una de mas puede ser otro viaje de 150 ms en cadena. Lo que la pagina
  *    baja despues, en reposo, no cuenta aqui: va en `detras`.
  *  - nodos: tamaño del documento. En una carrera cuenta tambien el texto
- *    prerenderizado para buscadores, que se maqueta antes de que React lo
- *    sustituya.
+ *    prerenderizado para buscadores, hasta que React lo sustituye. Baila
+ *    unos 140 de una pasada a otra: nodos ya quitados del documento que a
+ *    veces siguen en memoria al medir.
  *  - restilados, objetos: elementos a los que se les calcula estilo y objetos
  *    que se maquetan hasta que la pantalla se queda quieta. En la portada los
  *    restilados no se juzgan: sus animaciones de entrada los hacen bailar
@@ -56,21 +57,21 @@ const ESCENARIOS = [
     nombre: 'portada',
     ruta: '',
     listo: '.tarjeta-carrera',
-    presupuesto: { peticiones: 7, nodos: 905, objetos: 820, cpu: 1000 },
+    presupuesto: { peticiones: 7, nodos: 905, objetos: 725, cpu: 1000 },
   },
   {
     nombre: 'carrera por la lista',
     ruta: RUTA_CARRERA,
     vista: 'lista',
     listo: 'button[aria-label^="Marcar"]',
-    presupuesto: { peticiones: 14, nodos: 4470, restilados: 2735, objetos: 3690, cpu: 1150 },
+    presupuesto: { peticiones: 15, nodos: 4530, restilados: 2255, objetos: 2790, cpu: 1150 },
   },
   {
     nombre: 'carrera por el mapa',
     ruta: RUTA_CARRERA,
     vista: 'mapa',
     listo: '.plano-base > svg > g',
-    presupuesto: { peticiones: 14, nodos: 2855, restilados: 2320, objetos: 3600, cpu: 1150 },
+    presupuesto: { peticiones: 15, nodos: 2960, restilados: 1840, objetos: 2705, cpu: 1150 },
   },
 ]
 

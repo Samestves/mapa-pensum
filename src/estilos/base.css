@@ -28,8 +28,18 @@
 }
 
 /* Presente para quien lee, invisible para quien mira: el contenido que se
-   prerenderiza para los buscadores y los lectores de pantalla (ver
-   scripts/prerenderizar.js). */
+   prerenderiza para los buscadores (ver scripts/prerenderizar.js).
+
+   content-visibility le dice al navegador que no lo prepare: es el pensum
+   entero, cuatrocientas y pico cajas que no se van a pintar, y se maquetaban
+   igual, una vez al llegar la hoja de estilos y otra por cada fuente que
+   llegaba despues -hasta cinco-, todo para que React lo quitase al arrancar.
+   Sigue en el documento, que es lo que lee un buscador.
+
+   Lo que si cambia: mientras carga tampoco lo lee un lector de pantalla, que
+   antes empezaba a leer una lista que desaparecia al segundo. Sin JavaScript,
+   que es cuando esa lista es lo unico que hay, se le devuelve: ver el
+   <noscript> de index.html. */
 .seo-solo-lectura {
   position: absolute;
   width: 1px;
@@ -37,6 +47,7 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+  content-visibility: hidden;
 }
 
 /* Se marca lo que si tiene sentido copiar */
