@@ -133,7 +133,7 @@ Lo que cambió, sin tocar un píxel (20 pantallas comparadas antes y después, i
 
 1. ✅ **Fuentes recortadas al español** (`scripts/fuentes.js`, se generan en cada build). 126 → 76 kB entre las cuatro. Se quitan los caracteres que el español no usa y los rasgos tipográficos que la app no enciende. Los ejes no se tocan: Inter conserva el de tamaño óptico, que es una decisión de diseño, y por eso no baja a los 45 kB que se apuntaron.
 2. ✅ **La letra del mapa deja de competir.** Plex Mono solo la usa el mapa: en un teléfono se pide con prioridad baja, detrás de lo que pinta la primera pantalla. Lo que compite por el primer pintado baja de 126 a 60 kB.
-3. ✅ **Caché permanente** para `/assets/*` y el modelo del lector en `vercel.json`.
+3. ✅ **Caché en el navegador** para `/assets/*` (una hora) y para el modelo del lector (permanente) en `vercel.json`. Para `/assets/*` se puso primero permanente y se bajó al publicarlo: Vercel le pone la misma cabecera a un 404, y un archivo que no existe —el trozo de una versión anterior, pedido desde una pestaña vieja— quedaba guardado como «no existe» un año. Si ese archivo volvía con un revert, a esa persona no le cargaba. Con una hora se conserva lo que importaba —lo pedido por adelantado se usa sin volver a preguntar— y un 404 se olvida solo; las visitas siguientes salen del service worker, no de esta caché.
 4. ✅ **El pensum se pide desde el HTML** de su carrera, a la vez que el código. Antes esperaba a que el JS principal se ejecutara: una ida y vuelta de más (~200 ms con 4G lenta).
 5. ✅ **El banco mide lo que sirve producción**: la página prerenderizada y las cabeceras de caché.
 

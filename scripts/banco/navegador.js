@@ -85,8 +85,8 @@ export const APARATOS = {
  * Sin esto el banco medía otra aplicacion: la vista previa lo sirve todo con
  * `no-cache`, y entonces un archivo ya bajado -una fuente pedida por
  * adelantado- se vuelve a preguntar al servidor cada vez que se usa, y llega
- * tarde. En produccion los archivos con hash no caducan y salen de la memoria
- * en el acto.
+ * tarde. En produccion los archivos con hash valen una hora sin preguntar y
+ * salen de la memoria en el acto.
  *
  * Se leen de vercel.json para que no haya dos listas que mantener iguales.
  */
