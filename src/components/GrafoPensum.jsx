@@ -1,4 +1,6 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useFichaSaliente } from '../hooks/useFichaSaliente'
+import { useSenalado } from '../hooks/useSenalado'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import { useMantenerRuta } from '../hooks/useMantenerRuta'
@@ -12,33 +14,18 @@ import { NODO } from '../layout/constantes'
 import { ESTADO } from '../data/estados'
 import { guardarCamara, leerCamara, semestreFrente, vistaDeColumna } from '../layout/camara'
 import { cabecerasDe } from '../layout/cabeceras'
+import {
+  MARGEN_AL_APROBAR,
+  MARGEN_AL_APROBAR_TELEFONO,
+  cajaDeMateria,
+  cajaQueAbarca,
+} from '../layout/cajas'
+import { ambos } from '../layout/manejadores'
 import { MARGEN_CAPA } from '../layout/vistaViva'
-
-/* Cuanto tiene que pararse el raton en una tarjeta para encender su ruta.
-   Encenderla monta el plano de foco y el de lo que sale (ver PlanosFoco):
-   hacerlo en cada tarjeta que el raton cruza de pasada eran cuadros de
-   hasta 90 ms al barrer el mapa. Parado, 80 ms no se notan. */
-const INTENCION_MS = 80
 
 /* Una sola lista vacia para las carreras sin franja: un [] nuevo en cada
    render cambiaria de identidad y tiraria el memo del contenido del mapa. */
 const SIN_FRANJA = []
-
-/* Dos juegos de manejadores de puntero sobre el mismo elemento: el lienzo
-   lleva el arrastre del mapa y, encima, el mantener de las tarjetas. Se
-   llaman los dos, primero `a`. */
-function ambos(a, b) {
-  const juntos = { ...a }
-  for (const evento in b) {
-    juntos[evento] = a[evento]
-      ? (e) => {
-          a[evento](e)
-          b[evento](e)
-        }
-      : b[evento]
-  }
-  return juntos
-}
 
 /* La capa pintada con margen: se sale de la ventana MARGEN_CAPA (fraccion
    de la ventana) por cada lado, y su origen de transformacion es la esquina
@@ -146,11 +133,7 @@ function GrafoPensum({
   const soltarRuta = useCallback(() => setRuta(null), [])
   const { carga, manejadores: gestosRuta, tragarToque } = useMantenerRuta(fijarRuta)
 
-  /* La materia que señala el raton. Vive aqui y no mas arriba a proposito:
-     cambia cada vez que el raton cruza una tarjeta, y en VistaCarrera cada
-     cambio repintaba la pantalla entera -cabecera, paneles, paleta- para
-     algo que solo le importa al mapa. */
-  const [senalado, alSenalar] = useState(null)
+  const { senalado, senalar, dejarDeSenalar } = useSenalado(refEnGesto, enGesto)
 
   // Manda la seleccion, luego la ruta fijada, y por ultimo el raton
   const senaladoVisible = rutaFijada ?? senalado
@@ -173,64 +156,6 @@ function GrafoPensum({
   // son las unicas props de los nodos que no son valores simples, y por eso
   // son las unicas que hay que fijar. Reciben el codigo en vez de venir ya
   // atadas a un nodo concreto: una funcion por mapa, no una por materia.
-  /* Señalar se ignora mientras el mapa se mueve: quien arrastra el mapa lo
-     esta moviendo, no inspeccionando lo que le pasa por debajo, y cada
-     tarjeta cruzada encenderia y apagaria su cadena.
-     Se consulta una ref y no el estado para no cambiar de identidad, que es
-     lo unico que mantiene vivo el memo. */
-  /* Soltar el señalado espera un poco; cambiarlo, no.
-
-     Entre dos tarjetas hay hueco, asi que al pasar de una a otra el puntero
-     SALE de la primera antes de ENTRAR en la segunda. Con el soltado
-     inmediato habia un instante sin nada señalado: el mapa entero volvia a
-     encenderse y enseguida se apagaba otra vez para la segunda, y como las
-     opacidades llevan transicion, ese ida y vuelta se veia como un destello
-     de todas las tarjetas antes del resaltado bueno.
-
-     Ahora salir solo PROGRAMA soltar, y entrar en otra tarjeta lo cancela y
-     cambia directamente de una cadena a otra. Si de verdad te fuiste al
-     lienzo vacio, a los 160 ms se suelta igual. Cruzar la fila de 26 px entre
-     dos tarjetas lleva bastante menos que eso a cualquier velocidad normal. */
-  const relojSoltar = useRef(null)
-  const relojSenalar = useRef(null)
-
-  /* Entrar en una tarjeta PROGRAMA encenderla (ver INTENCION_MS): si el
-     raton sigue de largo, salir lo cancela y no se monta nada. Lo que
-     estuviera encendido se queda hasta que la nueva se encienda, asi que
-     pasar despacio de una tarjeta a la de al lado no apaga el mapa entre
-     medias. */
-  const senalar = useCallback(
-    (codigo) => {
-      if (refEnGesto.current) return
-      clearTimeout(relojSoltar.current)
-      clearTimeout(relojSenalar.current)
-      relojSenalar.current = setTimeout(() => alSenalar(codigo), INTENCION_MS)
-    },
-    [alSenalar, refEnGesto],
-  )
-  const dejarDeSenalar = useCallback(() => {
-    clearTimeout(relojSenalar.current)
-    clearTimeout(relojSoltar.current)
-    relojSoltar.current = setTimeout(() => alSenalar(null), 160)
-  }, [alSenalar])
-
-  useEffect(
-    () => () => {
-      clearTimeout(relojSoltar.current)
-      clearTimeout(relojSenalar.current)
-    },
-    [],
-  )
-
-  /* Y al empezar a mover, lo que hubiera resaltado se apaga. Arrastrar el
-     mapa con media pantalla atenuada estorba para ver a donde se va, y de
-     paso deja el gesto con el arbol en su estado mas barato. */
-  useEffect(() => {
-    if (!enGesto) return
-    clearTimeout(relojSenalar.current)
-    clearTimeout(relojSoltar.current)
-    alSenalar(null)
-  }, [enGesto, alSenalar])
   /* La situacion de cualquier materia, tambien de las que no estan
      dibujadas -una electiva sin colocar que aparece en la ficha-. */
   const situacionDeCodigo = useCallback(
@@ -242,14 +167,7 @@ function GrafoPensum({
 
   /* El rectangulo de una materia en coordenadas del mapa, o null si no esta
      dibujada -una electiva que no has colocado-. */
-  const cajaDe = useCallback(
-    (codigo) => {
-      const a = porCodigo.get(codigo)
-      if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return null
-      return { x0: a.x, y0: a.y, x1: a.x + NODO.ancho, y1: a.y + NODO.alto }
-    },
-    [porCodigo],
-  )
+  const cajaDe = useCallback((codigo) => cajaDeMateria(porCodigo.get(codigo)), [porCodigo])
   const puedeIr = useCallback((codigo) => cajaDe(codigo) != null, [cajaDe])
 
   /* En el telefono la ficha tapa la parte de abajo del mapa. Cuando se abre
@@ -297,27 +215,7 @@ function GrafoPensum({
         enCasilla: casillaDe?.[seleccionado],
       }
     : null
-  const ultimaFicha = useRef(null)
-  const [fichaSaliente, setFichaSaliente] = useState(null)
-  const [seleccionPrevia, setSeleccionPrevia] = useState(seleccionado)
-  useLayoutEffect(() => {
-    if (fichaAbierta) ultimaFicha.current = fichaAbierta
-  })
-  /* Se ajusta DURANTE el render y no en un efecto. Con un efecto habia un
-     render entero sin ficha entre la que se cerraba y su copia saliente: la
-     ficha se desmontaba, se volvia a montar y repetia su animacion de entrada
-     encima de la de salida. Ajustado aqui, React rehace el render antes de
-     pintarlo y la ficha nunca llega a desaparecer. */
-  if (seleccionPrevia !== seleccionado) {
-    setSeleccionPrevia(seleccionado)
-    setFichaSaliente(seleccionado == null ? ultimaFicha.current : null)
-  }
-  useEffect(() => {
-    if (!fichaSaliente) return
-    const reloj = setTimeout(() => setFichaSaliente(null), 260)
-    return () => clearTimeout(reloj)
-  }, [fichaSaliente])
-  const ficha = fichaAbierta ?? fichaSaliente
+  const ficha = useFichaSaliente(fichaAbierta, seleccionado)
 
   /* En escritorio la ficha va al lado de su tarjeta, fuera de la capa del
      mapa. Mientras un gesto estira la capa, se engancha al borde derecho de
@@ -352,22 +250,13 @@ function GrafoPensum({
       const siguientes = relaciones.adelante.get(codigo) ?? []
 
       // La caja que tiene que verse: la materia y todo lo que sale de ella
-      const cajas = [codigo, ...siguientes]
-        .map((c) => porCodigo.get(c))
-        .filter((a) => a && Number.isFinite(a.x) && Number.isFinite(a.y))
-      if (cajas.length) {
+      const caja = cajaQueAbarca([codigo, ...siguientes].map((c) => porCodigo.get(c)))
+      if (caja) {
         const telefono = medida.ancho < 768
         mostrar(
-          {
-            x0: Math.min(...cajas.map((a) => a.x)),
-            y0: Math.min(...cajas.map((a) => a.y)),
-            x1: Math.max(...cajas.map((a) => a.x + NODO.ancho)),
-            y1: Math.max(...cajas.map((a) => a.y + NODO.alto)),
-          },
+          caja,
           // En el telefono, abajo queda la barra de las vistas
-          telefono
-            ? { arriba: 32, abajo: 112, izq: 24, der: 24 }
-            : { arriba: 48, abajo: 48, izq: 48, der: 48 },
+          telefono ? MARGEN_AL_APROBAR_TELEFONO : MARGEN_AL_APROBAR,
         )
       }
 
