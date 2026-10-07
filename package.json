@@ -16,7 +16,7 @@
     "preview": "vite preview",
     "rendimiento": "node scripts/rendimiento.js",
     "comparar": "node scripts/comparar.js",
-    "verificar": "node scripts/verificar/lista.js",
+    "verificar": "node scripts/verificar/lista.js && node scripts/verificar/mapa.js",
     "test": "node --test \"src/**/*.test.js\" \"api/**/*.test.js\""
   },
   "dependencies": {
