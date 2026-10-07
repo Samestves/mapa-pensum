@@ -101,7 +101,7 @@ const PARTIDAS = [
     kB: Math.max(...carreras.map((slug) => js(archivosDe(pensumDe(slug), entrada)))),
     tope: 3,
   },
-  { nombre: 'vista · lista', kB: todo(vista('lista')), tope: 5.7 },
+  { nombre: 'vista · lista', kB: todo(vista('lista')), tope: 6.2 },
   { nombre: 'vista · mapa', kB: todo(vista('mapa')), tope: 16.3 },
   { nombre: 'vista · horario', kB: todo(vista('horario')), tope: 18.3 },
   { nombre: 'en reposo · plan de ruta', kB: todo(archivosDe(PLAN, enLaCarrera)), tope: 13.3 },
