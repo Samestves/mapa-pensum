@@ -1,316 +1,29 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Info, Repeat2, X } from 'lucide-react'
+import { useLayoutEffect, useRef, useState } from 'react'
+
+import { codigoVisible } from '../data/codigoVisible'
 import { ESTADO } from '../data/estados'
 import { useEsTelefono } from '../hooks/useEsTelefono'
-import { colorNodo, etiquetaArea } from '../theme/areas'
-import { ASPECTO } from '../theme/situacion'
-import { codigoVisible } from '../data/codigoVisible'
-import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
-import PicoPopover from './PicoPopover'
 import { colocar } from '../layout/popover'
 import { SITUACION } from '../layout/situacion'
-import { IconoSituacion } from './IconoSituacion'
+import { colorNodo, etiquetaArea } from '../theme/areas'
+import { ASPECTO } from '../theme/situacion'
+
+import ListaPrelaciones, { SIN_PRELACIONES } from './ListaPrelaciones'
+import PicoPopover from './PicoPopover'
+import AvisoSituacion from './ficha/AvisoSituacion'
+import TarjetaTelefono from './ficha/TarjetaTelefono'
+import IconoMarca from './ficha/IconoMarca'
+import { Opcion, SelectorTelefono } from './ficha/SelectorMarca'
 
 const ANCHO = 320
+
 const MARGEN = 12
 
 /* La cara de la ficha: la misma rejilla fina de las tarjetas del mapa.
    Esquina de 10 y no de 16 -la tarjeta tiene 7-, borde de un pixel y la
    sombra que la separa del mapa que queda debajo. */
 const CARA_FICHA = 'relative w-full rounded-[10px] border border-panel-borde bg-panel shadow-2xl'
-
-/* El aro vacio de «sin cursar», de la misma familia que los otros dos:
-   mismo radio y mismo trazo, sin nada dentro. */
-function AroVacio({ size = 15 }) {
-  return (
-    <svg viewBox="0 0 14 14" width={size} height={size} aria-hidden="true" focusable="false">
-      <circle cx={7} cy={7} r={5.6} fill="none" stroke="currentColor" strokeWidth={1.5} />
-    </svg>
-  )
-}
-
-/**
- * Una de las tres opciones para marcar la materia. Las tres forman un solo
- * selector partido por lineas finas, y la elegida se tiñe con el color de su
- * estado: el mismo verde o ambar que el borde de la tarjeta en el mapa.
- *
- * El icono lleva su color siempre, este elegida o no: asi el selector se
- * explica solo -verde es aprobada, ambar es cursando- antes de tocarlo, y
- * elegir es encender la palabra y el fondo.
- */
-function Opcion({ icono, texto, activa, color, alPulsar }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={activa}
-      onClick={alPulsar}
-      className="flex flex-1 flex-col items-center gap-1.5 py-2.5 transition-colors"
-      style={{
-        backgroundColor: activa ? `color-mix(in oklab, ${color} 13%, transparent)` : 'transparent',
-        color: activa ? color : 'var(--tinta-tenue)',
-      }}
-    >
-      <span className="transition-opacity" style={{ color, opacity: activa ? 1 : 0.8 }}>
-        {icono}
-      </span>
-      <span className="font-ui text-[9.5px] font-medium tracking-[0.2em] uppercase">{texto}</span>
-    </button>
-  )
-}
-
-/* Las tres marcas, en el orden en que se leen */
-const MARCAS = [
-  { marca: ESTADO.APROBADA, texto: 'Aprobada', color: 'var(--estado-aprobada)' },
-  { marca: ESTADO.CURSANDO, texto: 'Cursando', color: 'var(--estado-cursando)' },
-  { marca: null, texto: 'Sin cursar', color: 'var(--tinta-suave)' },
-]
-
-const iconoDeMarca = (marca, size) =>
-  marca === ESTADO.APROBADA ? (
-    <IconoSituacion situacion={SITUACION.HECHA} size={size} />
-  ) : marca === ESTADO.CURSANDO ? (
-    <IconoSituacion situacion={SITUACION.CURSANDO} size={size} />
-  ) : (
-    <AroVacio size={size} />
-  )
-
-/**
- * Las tres marcas en el telefono: una sola fila al pie de la tarjeta, donde
- * llega el pulgar, en vez de tres cajas altas con el icono encima de la
- * palabra en medio de la ficha.
- *
- * La elegida la señala una lente que se desliza de una a otra, la misma
- * pieza que marca la vista en la barra de abajo, teñida con el color de su
- * estado. Al pulsar vibra un instante, el acuse de un mando.
- *
- * Cada icono lleva su color siempre -verde, ambar, gris- y no solo el de la
- * elegida: sin eso las dos que no estaban elegidas eran dos palabras grises
- * iguales, y habia que leerlas para saber que era cada una.
- */
-function SelectorTelefono({ marca, alMarcar }) {
-  const indice = Math.max(
-    0,
-    MARCAS.findIndex((m) => m.marca === marca),
-  )
-  const elegida = MARCAS[indice]
-
-  return (
-    <div className="relative grid h-12 grid-cols-3 rounded-[12px] border border-panel-borde p-1">
-      <span
-        aria-hidden="true"
-        className="selector-lente pointer-events-none absolute inset-y-1 left-1 rounded-[9px]"
-        style={{
-          width: 'calc((100% - 0.5rem) / 3)',
-          transform: `translateX(${indice * 100}%)`,
-          '--lente': elegida.color,
-        }}
-      />
-      {MARCAS.map((m) => {
-        const activa = m === elegida
-        return (
-          <button
-            key={m.texto}
-            type="button"
-            aria-pressed={activa}
-            onClick={() => {
-              navigator.vibrate?.(8)
-              alMarcar(m.marca)
-            }}
-            className="relative flex items-center justify-center gap-1.5 rounded-[9px] transition-colors duration-300 active:scale-[0.97]"
-            style={{ color: activa ? m.color : 'var(--tinta-suave)' }}
-          >
-            <span
-              className="transition-opacity"
-              style={{ color: m.color, opacity: activa ? 1 : 0.85 }}
-            >
-              {iconoDeMarca(m.marca, 15)}
-            </span>
-            <span className="font-ui text-[9px] font-medium tracking-[0.16em] whitespace-nowrap uppercase">
-              {m.texto}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-/* Quien falta, dicho con nombre. Una lista de dos se dice "A y B"; de tres o
-   mas, las dos primeras y cuantas quedan, para que el aviso no crezca hasta
-   repetir la lista de prelaciones que ya esta justo debajo. */
-function nombrar(materias) {
-  const n = materias.map((m) => m.asignatura.nombre)
-  if (n.length <= 2) return n.join(' y ')
-  return `${n.slice(0, 2).join(', ')} y ${n.length - 2} más`
-}
-
-/**
- * La frase que responde "¿puedo inscribirla?". A la disponible se le dice
- * que si; a la que se abre si apruebas lo que cursas, QUE tienes que aprobar
- * para meterla el semestre que viene; a la lejana, que le falta.
- */
-function AvisoSituacion({ estado, situacion, prerrequisitos }) {
-  const clase = 'flex items-start gap-2.5 text-[12.5px] leading-snug text-tinta-suave'
-  const icono = (s) => (
-    <IconoSituacion
-      situacion={s}
-      size={13}
-      className="mt-[2px] shrink-0"
-      color={ASPECTO[s].icono}
-    />
-  )
-
-  if (estado === ESTADO.DISPONIBLE) {
-    return (
-      <p className={clase}>
-        {icono(SITUACION.INSCRIBIBLE)}
-        Puedes inscribirla: tienes aprobadas todas sus prelaciones.
-      </p>
-    )
-  }
-  if (estado !== ESTADO.BLOQUEADA) return null
-
-  const pendientes = prerrequisitos.filter((p) => p.estado !== ESTADO.APROBADA)
-  const sinEmpezar = pendientes.filter((p) => p.estado !== ESTADO.CURSANDO)
-
-  if (situacion === SITUACION.PROXIMA && pendientes.length > 0) {
-    return (
-      <p className={clase}>
-        {icono(SITUACION.PROXIMA)}
-        <span>
-          Se abre el próximo semestre si apruebas{' '}
-          <span className="text-tinta">{nombrar(pendientes)}</span>.
-        </span>
-      </p>
-    )
-  }
-
-  return (
-    <p className={clase}>
-      {icono(SITUACION.LEJANA)}
-      <span>
-        {sinEmpezar.length > 0 ? (
-          <>
-            Aún te falta{sinEmpezar.length > 1 ? 'n' : ''}{' '}
-            <span className="text-tinta">{nombrar(sinEmpezar)}</span>.
-          </>
-        ) : (
-          'Te falta aprobar sus prelaciones.'
-        )}{' '}
-        Puedes marcarla igual si ya la viste.
-      </span>
-    </p>
-  )
-}
-
-/* Cuanto hay que arrastrar la tarjeta hacia abajo para cerrarla, o con que
-   velocidad -en px por ms- basta un tiron corto. */
-const CIERRE_DISTANCIA = 90
-const CIERRE_VELOCIDAD = 0.6
-
-/**
- * La ficha en el telefono: una tarjeta que flota encima de la barra de abajo,
- * separada de los bordes.
- *
- * Fue una hoja pegada al fondo de la pantalla, y la barra de cristal de
- * Mapa-Lista-Horario quedaba montada encima de ella: dos capas peleando por
- * el mismo sitio. Flotando se lee como lo que es -algo que se abrio sobre el
- * mapa y se puede apartar- y la barra sigue a mano debajo.
- *
- * Se aparta como cualquier tarjeta de telefono: arrastrandola hacia abajo
- * desde la cabecera. Solo la cabecera arrastra; la lista de prelaciones tiene
- * su propio scroll y no puede pelearse con el gesto.
- *
- * Al abrirse avisa de cuanto tapa por abajo (alTapar), y el mapa se corre
- * para que la materia pulsada quede a la vista encima de ella.
- */
-function TarjetaTelefono({ nombre, clave, alCerrar, alTapar, cabecera, filo, saliendo, children }) {
-  const ref = useRef(null)
-  const inicio = useRef(null)
-  const [bajada, setBajada] = useState(0)
-  const [arrastrando, setArrastrando] = useState(false)
-
-  useEffect(() => {
-    const tarjeta = ref.current
-    if (!tarjeta) return
-    /* Se mide cuando el navegador ya maqueto la pagina por su cuenta: el
-       primer aviso de un ResizeObserver llega justo despues de esa maqueta,
-       y leer ahi no cuesta nada. Leerlo al montarse obligaba a maquetar la
-       pagina entera a destiempo, mapa incluido: 90 ms de un toque a CPU x6.
-
-       Con offsetTop y no con getBoundingClientRect: al montarse la tarjeta
-       esta entrando desde abajo con un transform, y el rectangulo medido
-       saldria mas bajo de donde se va a quedar. offsetTop no ve el
-       transform: es el sitio final. */
-    const observador = new ResizeObserver(() => {
-      observador.disconnect()
-      const lienzo = tarjeta.offsetParent
-      if (lienzo) alTapar?.(lienzo.clientHeight - tarjeta.offsetTop)
-    })
-    observador.observe(tarjeta)
-    return () => observador.disconnect()
-    // Una vez por materia: lo que importa es donde queda al abrirse
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave])
-
-  const empezar = (e) => {
-    if (e.target.closest('button')) return
-    inicio.current = { y: e.clientY, t: performance.now() }
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-    setArrastrando(true)
-  }
-  const mover = (e) => {
-    if (!inicio.current) return
-    setBajada(Math.max(0, e.clientY - inicio.current.y))
-  }
-  const soltar = (e) => {
-    if (!inicio.current) return
-    const distancia = Math.max(0, e.clientY - inicio.current.y)
-    const velocidad = distancia / Math.max(1, performance.now() - inicio.current.t)
-    inicio.current = null
-    setArrastrando(false)
-    if (distancia > CIERRE_DISTANCIA || velocidad > CIERRE_VELOCIDAD) alCerrar()
-    else setBajada(0)
-  }
-
-  return (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label={nombre}
-      className={`hoja-ficha absolute inset-x-3 z-30 flex flex-col overflow-hidden rounded-[16px] border border-panel-borde bg-panel shadow-2xl ${
-        saliendo ? 'tarjeta-saliendo pointer-events-none' : ''
-      }`}
-      style={{
-        bottom: 'var(--reserva-barra, 0px)',
-        maxHeight: 'min(66%, calc(100% - var(--reserva-barra, 0px) - 64px))',
-        transform: bajada ? `translateY(${bajada}px)` : undefined,
-        opacity: bajada ? Math.max(0.4, 1 - bajada / 320) : undefined,
-        transition: arrastrando
-          ? 'none'
-          : 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1), opacity 240ms ease',
-      }}
-    >
-      <div
-        className="shrink-0 touch-none"
-        onPointerDown={empezar}
-        onPointerMove={mover}
-        onPointerUp={soltar}
-        onPointerCancel={soltar}
-      >
-        <span aria-hidden="true" className="ficha-filo" style={{ '--filo': filo }} />
-        {/* El asa dice "esto se arrastra" con la unica señal que ya conoce
-            cualquiera que use un telefono. */}
-        <span
-          aria-hidden="true"
-          className="mx-auto mt-2.5 block h-[5px] w-10 rounded-full bg-[color-mix(in_oklab,var(--tinta)_16%,transparent)]"
-        />
-        {cabecera}
-      </div>
-      {children}
-    </div>
-  )
-}
 
 /**
  * La ficha de la materia que se pulso en el mapa.
@@ -495,21 +208,21 @@ function DetalleAsignatura({
     <>
       <div className="mx-4 mb-4 flex shrink-0 divide-x divide-panel-borde overflow-hidden rounded-[8px] border border-panel-borde">
         <Opcion
-          icono={iconoDeMarca(ESTADO.APROBADA, 15)}
+          icono={<IconoMarca marca={ESTADO.APROBADA} size={15} />}
           texto="Aprobada"
           activa={marca === ESTADO.APROBADA}
           color="var(--estado-aprobada)"
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.APROBADA)}
         />
         <Opcion
-          icono={iconoDeMarca(ESTADO.CURSANDO, 15)}
+          icono={<IconoMarca marca={ESTADO.CURSANDO} size={15} />}
           texto="Cursando"
           activa={marca === ESTADO.CURSANDO}
           color="var(--estado-cursando)"
           alPulsar={() => alMarcar(nodo.codigo, ESTADO.CURSANDO)}
         />
         <Opcion
-          icono={iconoDeMarca(null, 15)}
+          icono={<IconoMarca marca={null} size={15} />}
           texto="Sin cursar"
           activa={marca === null}
           color="var(--tinta-suave)"
