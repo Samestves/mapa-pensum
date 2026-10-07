@@ -33,7 +33,11 @@ const animaciones = new WeakMap()
 
 function animacionDe(capa) {
   let animacion = animaciones.get(capa)
-  if (!animacion) {
+  /* Si alguien la reanudo o la cancelo -un getAnimations() que no sabia de
+     ella-, ya no mueve nada: se hace otra. Paso al volver al mapa desde otra
+     vista (ver useCapasDeVistas), y el mapa dejaba de seguir al dedo. */
+  if (!animacion || animacion.playState !== 'paused') {
+    animacion?.cancel()
     // La duracion da igual: en pausa se queda en su primer instante
     animacion = capa.animate({ transform: [QUIETA, QUIETA] }, { duration: 1000 })
     animacion.pause()
