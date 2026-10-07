@@ -118,26 +118,3 @@
 .entra-dia-izquierda {
   animation: entrar-dia-izquierda 220ms cubic-bezier(0.32, 0.72, 0, 1);
 }
-
-/* Las vistas de la carrera, apiladas: cada una ocupa todo el sitio y la que
-   no se ve se oculta sin tirar su maquetado (ver hooks/useCapasDeVistas.js).
-   Apiladas y no una detras de otra porque la oculta sigue teniendo caja: en
-   el flujo ocuparia sitio.
-
-   La oculta va por detras de la que se ve (z-index): asi los toques caen en
-   la que se ve, y el cristal de la barra de abajo se compone igual que antes
-   (con una capa oculta por encima del mapa salian veinte pixeles de borde
-   distintos). Nada que se herede -pointer-events, inert-: al cambiar de
-   vista obligaria a recalcular el estilo de la vista entera, que es justo lo
-   que esto evita (medido: de ~80 elementos a mas de 2 000). Del teclado y del
-   lector de pantalla ya la saca content-visibility: hidden. */
-.capa-vista {
-  position: absolute;
-  inset: 0;
-  display: flex;
-}
-
-.capa-vista[data-oculta='true'] {
-  content-visibility: hidden;
-  z-index: -1;
-}

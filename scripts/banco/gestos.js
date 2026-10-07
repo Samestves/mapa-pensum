@@ -128,7 +128,7 @@ const ESCENARIOS = [
     gesto: arrastrarConElDedo,
   },
   /* El mismo arrastre, despues de arrastrar, ir a la lista y volver. El mapa
-     se queda montado y oculto mientras tanto (ver hooks/useCapasDeVistas.js)
+     se queda montado y oculto mientras tanto 
      y al enseñarse otra vez tiene que seguir al dedo igual: hubo una version
      que al volver le rompia la animacion con la que se mueve la capa
      -la crea el primer arrastre, ver layout/moverCapa.js- y el mapa se

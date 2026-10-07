@@ -58,7 +58,7 @@ const PASOS = [
   {
     nombre: 'mapa → lista, ya montada',
     ir: 'lista',
-    presupuesto: { restilados: 90, objetos: 70, cpu: 150 },
+    presupuesto: { restilados: 750, objetos: 830, cpu: 150 },
   },
   {
     nombre: 'lista → horario, primera vez',
@@ -69,7 +69,7 @@ const PASOS = [
   {
     nombre: 'horario → mapa, ya montado',
     ir: 'mapa',
-    presupuesto: { restilados: 430, objetos: 40, cpu: 140 },
+    presupuesto: { restilados: 1720, objetos: 2055, cpu: 140 },
   },
   { nombre: 'mapa → lista', ir: 'lista', medido: false },
   {

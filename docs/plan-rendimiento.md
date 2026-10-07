@@ -8,9 +8,10 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | 1 · Arranque: peso | Hecha el 2026-10-05. El CSS por pantalla pasó a la fase 2 |
 | 2 · Un módulo por vista | Hecha el 2026-10-06 |
 | 3 · La lista pinta lo que se ve | Hecha el 2026-10-06 |
-| 4 · Cambiar de vista sin rehacer | Hecha el 2026-10-06 |
-| 5 · Estado granular | Siguiente |
-| 6 a 8 | Pendientes |
+| 4 · Cambiar de vista sin rehacer | Probada y retirada el 2026-10-07 |
+| 5 y 6 | Aplazadas |
+| 7 · Estructura | Siguiente |
+| 8 | Pendiente |
 
 ## 1. Cómo está hecho hoy
 
@@ -44,7 +45,7 @@ Para afirmar que una fase bajó un **tiempo**, se comparan los dos builds seguid
 
 ## 3. Línea base
 
-Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 4.
+Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «hoy», tras la fase 3.
 
 ### Lo que el banco juzga
 
@@ -58,9 +59,9 @@ Ingeniería de Sistemas con 8 marcas. «Al empezar» es el commit `ad907f0`; «h
 | Carrera por la lista: objetos maquetados | 3 581 | 1 439 | ≤ 1 500 | 2 y 3 |
 | Carrera por la lista: elementos restilados | 2 603 | 1 167 | ≤ 1 200 | 2 y 3 |
 | Carrera por la lista: nodos | 4 330 | 4 377 | se quedan (ver fase 3) | 3 |
-| Volver a la lista ya montada: objetos | 2 072 | 61 | ≤ 100 | 3 y 4 |
-| Volver al mapa ya montado: objetos | 1 994 | 35 | ≤ 100 | 4 |
-| Volver a una vista montada: restilados | 1 595-1 695 | lista 85, mapa 414 | ≤ 150 | 4 y 6 |
+| Volver a la lista ya montada: objetos | 2 072 | 802 | ≤ 100 | 3 y 4 |
+| Volver al mapa ya montado: objetos | 1 994 | igual | ≤ 100 | 4 |
+| Volver a una vista montada: restilados | 1 595-1 695 | lista 724, mapa 1 655 | ≤ 150 | 4 y 6 |
 | Marcar una materia: restilados / objetos | 325 / 829 | igual | la mitad | 5 |
 | Marcar una materia: CPU | 141 ms | igual | ≤ 70 ms | 5 |
 | Lista → mapa, primera vez: CPU | 144 ms | igual | ≤ 100 ms | 6 |
@@ -217,42 +218,15 @@ Lo que se miró y no se hizo:
 
 Topes del banco bajados a lo medido: entrar por la lista (restilados 1 205, objetos 1 485) y volver a la lista ya montada (restilados 750, objetos 830).
 
-### Fase 4 — Cambiar de vista sin rehacer (hecha)
+### Fase 4 — Cambiar de vista sin rehacer (probada y retirada)
 
-Lo que cambió, sin tocar un píxel (32 pantallas comparadas contra el build de la fase 3: fotos idénticas; estilos idénticos en 31, y en la otra solo lo que se dice abajo):
+Se probó ocultar la vista que se deja con `content-visibility: hidden` en vez de `display:none`, para que el navegador guardara su maquetado. Funcionaba en el banco —volver a la lista pasaba de ~1 300 objetos y ~0,4 s a ~75 objetos y ~35 ms, con la misma memoria— pero se retiró el 2026-10-07:
 
-1. ✅ **La vista que se deja se oculta con `content-visibility: hidden` y no con `display:none`** (`hooks/useCapasDeVistas.js`). Cada `<Activity>` va dentro de una capa, y la que se oculta es la capa. React sigue sin trabajar en lo oculto —`<Activity>` desconecta sus efectos y aplaza sus renders—, pero el navegador guarda el maquetado y volver ya no lo rehace.
-2. ✅ **El `display:none` de React se quita en cuanto lo pone.** React lo escribe en línea con `!important` sobre lo primero que hay dentro del `<Activity>`, y ningún CSS le gana. Lo vigila un `MutationObserver` —no un efecto, porque React no siempre oculta en el mismo commit: un `Suspense` que vuelve a enseñar lo suyo lo hace en otro— y corre antes del siguiente pintado.
-3. ✅ **Al volver, la vista entra animada como antes.** Salir de `display:none` reiniciaba sin pedirlo las animaciones de la vista; ahora se reinician a mano las de la capa que se enseña.
-4. ✅ **`npm run verificar` comprueba también** que, con las tres vistas montadas, las ocultas no reciben el foco ni los toques y que la lista conserva su posición al volver del horario.
-5. ✅ **`comparar --transparente=<selector>`**: los envoltorios que coincidan no cuentan en el camino de sus hijos. Sin esto, el `div` nuevo de cada vista corría la posición de todo lo de dentro y la comparación de estilos daba miles de diferencias que no lo eran.
+- **Era un parche contra React.** `<Activity>` oculta con un `display:none !important` en línea que ningún CSS vence, así que había que quitárselo a mano con un `MutationObserver` y envolver cada vista en una capa. Si React cambia cómo oculta, deja de funcionar sin avisar.
+- **Rompió el mapa en un teléfono real** sin que el banco lo viera: al reiniciar las animaciones de la vista se reanudaba la que mueve el mapa en los gestos, y el mapa dejaba de seguir al dedo al volver a él. El banco medía en Chrome emulado y el fallo solo aparecía tras ir a otra vista y volver; ahora hay comprobaciones para eso (`npm run verificar`, `gestos`).
+- **Navegadores sin `content-visibility`** (Safari anterior al 18) habrían dejado las tres vistas pintadas y apiladas.
 
-El experimento, tres maneras de ocultar con las tres vistas montadas (tres rondas alternadas en el teléfono modesto del banco, medianas; «hasta verse» es del toque al cuadro en que la vista está pintada):
-
-| Volver a… | A · `display:none` (antes) | B · `content-visibility: hidden` | C · `visibility: hidden` apiladas |
-| --- | --- | --- | --- |
-| la lista desde el mapa: objetos / hasta verse | 1 303 / 412 ms | **75 / 35 ms** | 2 209 / 557 ms |
-| el mapa desde el horario | 1 994 / 416 ms | **43 / 35 ms** | 111 / 462 ms |
-| el horario desde el mapa | 73 / 213 ms | **43 / 29 ms** | 2 003 / 581 ms |
-| la lista desde el horario | 1 303 / 497 ms | **83 / 43 ms** | 248 / 489 ms |
-
-Memoria con las tres vistas vivas, en el teléfono: igual en A y en B (9 capas pintadas, 1,8 Mpx de GPU; 5,7 MB de heap). La posición de la lista y la cámara del mapa se conservan en las tres. C se descarta: `visibility` se hereda, y cambiarla restila la vista entera.
-
-Metas, una a una:
-
-- **Objetos al volver ~2 000 → ≤ 100:** lista 61, mapa 35, horario 43.
-- **Restilados al volver ≤ 150:** la lista sí (85); el mapa no (414). Unos 86 son el reinicio de las animaciones; el resto, los efectos del propio mapa al reconectarse —`<Activity>` vuelve a correr sus efectos de maquetado al enseñarlo—. Pasa a la fase 6, que es la del mapa.
-- **De regalo:** el bloqueo al volver baja de ~100-140 ms a casi nada (0-11 ms), y la vista está en pantalla en unos 35 ms en vez de ~0,4 s.
-
-Lo que se probó y no se hizo:
-
-- **C, apilar con `visibility: hidden`** (ver tabla).
-- **`inert` y `pointer-events: none` en la capa oculta.** Parecían lo prudente para el teclado y los toques, pero los dos se heredan: al cambiar de vista obligaban a recalcular el estilo de la vista entera (más de 2 000 elementos en vez de ~80). Sobran: `content-visibility: hidden` ya saca la vista del foco y del lector de pantalla, y la capa oculta va por detrás de la que se ve (`z-index`), así que los toques no le llegan.
-- **La capa oculta por encima.** Aunque no pinta nada, por encima del mapa cambiaba cómo se compone el cristal de la barra de abajo: veinte píxeles de borde distintos en una pantalla. Por detrás, idéntica.
-
-Lo que cambia sin verse, para que no sorprenda: en `comparar` contra un build anterior, con `--transparente=.capa-vista`, «mapa · llegando desde la lista» sale con estilos distintos en la lista oculta —tiene ancho y alto donde antes, con `display:none`, tenía `auto`—. Es justo lo que se buscaba.
-
-Topes del banco bajados a lo medido: volver a la lista ya montada (restilados 90, objetos 70) y volver al mapa ya montado (restilados 430, objetos 40).
+La ganancia no compensa esa fragilidad: las vistas ya iban bien. Se conserva lo que sirvió: las comprobaciones del mapa al volver, el escenario «dedo tras volver de la lista» del banco, `comparar --transparente` y la defensa de `moverCapa`. Si algún día `<Activity>` ofrece ocultar sin `display:none`, vale la pena volver a mirarlo.
 
 ### Fase 5 — Estado granular
 

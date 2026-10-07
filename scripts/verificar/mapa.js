@@ -4,7 +4,7 @@
  *   npm run verificar            (sobre el build: hace falta npm run build)
  *
  * El mapa se queda montado y oculto mientras se mira la lista o el horario
- * (ver hooks/useCapasDeVistas.js). Al volver tiene que comportarse igual que
+ * Al volver tiene que comportarse igual que
  * la primera vez, y hubo una version en que no: el mapa se movia con la capa
  * de una animacion en pausa (layout/moverCapa.js), y al volver alguien la
  * reanudaba; a los pocos segundos acababa y el mapa se quedaba quieto bajo el
