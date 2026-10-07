@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ZOOM } from '../layout/constantes'
 import { escalaDeLectura } from '../layout/camara'
+import { ZOOM } from '../layout/constantes'
 import {
   AUMENTO_GESTO,
   AUMENTO_VIAJE,
@@ -15,6 +15,13 @@ import {
 import { moverCapa } from '../layout/moverCapa'
 import { relojAplazable } from '../layout/relojAplazable'
 import { holguraDe } from '../layout/mantenerRuta'
+import {
+  acotar,
+  acotarVista,
+  conZoom,
+  frenado,
+  velocidadDeLanzamiento,
+} from '../layout/limitesVista'
 import { esModoLigero } from '../data/ligero'
 
 const MARGEN_ENCAJE = 28
@@ -43,70 +50,11 @@ const REPOSO_MS = 150
    luces de los cables y el hover. */
 const FIN_GESTO_MS = 250
 
-const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
-
 /* El doble toque: cuanto pueden separarse los dos toques en tiempo y en
    espacio, y cuanto acerca */
 const DOBLE_TOQUE_MS = 300
 const DOBLE_TOQUE_PX = 30
 const ACERCA_DOBLE_TOQUE = 2
-/* La inercia al soltar un arrastre: la velocidad que hace falta para que
-   siga solo, y cuanto tarda en perder dos tercios de ella. 325 ms es la
-   friccion de los desplazamientos de iOS: largo y suave al final. */
-const LANZAMIENTO_MIN = 0.25
-const FRICCION_MS = 325
-
-/* Cuanto se deja pasar del borde del contenido. Un poco de aire evita que
-   llegar al final se sienta como chocar contra una pared. */
-const MARGEN_PAN = 96
-
-/**
- * Deja la vista dentro de los limites: el mapa no se puede perder.
- *
- * Sin esto se podia arrastrar indefinidamente en cualquier direccion y
- * acabar mirando una cuadricula vacia, sin nada en pantalla que dijera hacia
- * donde estaba el mapa ni cuanto habia que volver.
- *
- * No es una cuestion de rendimiento, aunque lo parezca: el contenido es un
- * <g> con un transform, siempre los mismos elementos, y el navegador descarta
- * lo que cae fuera del viewport. Medido, desplazarse a cincuenta mil pixeles
- * sale MAS barato que tener el mapa a la vista -21 ms contra 35 por sesenta
- * desplazamientos- porque no hay nada que rasterizar. Esto se arregla porque
- * se puede uno perder, no porque cueste.
- *
- * El rango se calcula igual que el de una barra de desplazamiento: el borde
- * de arriba del contenido no puede bajar mas de un margen por debajo del
- * borde de la ventana, y el de abajo no puede subir mas de un margen por
- * encima del suyo.
- *
- * Cuando el contenido es MAS PEQUEÑO que la ventana -mapa alejado- esos dos
- * limites se cruzan, y ahi el intervalo se lee al reves: en vez de dejar
- * recorrer el contenido, acota por donde puede moverse dentro de la ventana.
- * Por eso se ordenan en vez de asumir cual es cual; asumirlo daba un rango
- * vacio y clavaba el mapa en un punto.
- */
-/* En el telefono la ficha tapa la parte de abajo del mapa. Para que una
-   materia de la ultima fila pueda subir a la vista por encima de ella, el
-   mapa se deja subir mas alla de su borde inferior: hasta que ese borde
-   quede cerca de la mitad de la pantalla. En escritorio la ficha va al lado
-   y no hace falta. */
-const HOLGURA_TELEFONO = 0.62
-const ANCHO_TELEFONO = 768
-
-function acotarVista(v, medida, anchoContenido, altoContenido) {
-  if (!medida.ancho || !medida.alto) return v
-
-  const rango = (ventana, contenido, extra = 0) => {
-    const tope = MARGEN_PAN
-    const suelo = ventana - contenido - MARGEN_PAN - extra
-    return suelo <= tope ? [suelo, tope] : [tope, suelo]
-  }
-
-  const extraAbajo = medida.ancho < ANCHO_TELEFONO ? medida.alto * HOLGURA_TELEFONO : 0
-  const [minX, maxX] = rango(medida.ancho, anchoContenido * v.escala)
-  const [minY, maxY] = rango(medida.alto, altoContenido * v.escala, extraAbajo)
-  return { ...v, x: acotar(v.x, minX, maxX), y: acotar(v.y, minY, maxY) }
-}
 
 /**
  * Pan y zoom del grafo. La vista es {x, y, escala} y se aplica como un
@@ -424,13 +372,6 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     asentarViaje()
   }, [asentarViaje])
 
-  /** Donde queda la vista al aplicar un factor de zoom dejando fijo un punto */
-  const conZoom = (v, factor, puntoX, puntoY) => {
-    const escala = acotar(v.escala * factor, ZOOM.min, ZOOM.max)
-    const k = escala / v.escala
-    return { escala, x: puntoX - (puntoX - v.x) * k, y: puntoY - (puntoY - v.y) * k }
-  }
-
   // Zoom manteniendo fijo el punto bajo el cursor. Inmediato: la rueda y el
   // pellizco ya son continuos, el suavizado lo pone la mano del usuario.
   const zoomEn = useCallback(
@@ -684,16 +625,9 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   const lanzar = () => {
     const m = muestras.current
     muestras.current = []
-    if (m.length < 2) return
-    const ultimo = m[m.length - 1]
-    // Si el dedo se quedo quieto antes de soltar, no lo estaba lanzando
-    if (performance.now() - ultimo.t > 60) return
-    const primero = m.find((p) => ultimo.t - p.t <= 80) ?? m[0]
-    const dt = ultimo.t - primero.t
-    if (dt <= 0) return
-    let vx = (ultimo.x - primero.x) / dt
-    let vy = (ultimo.y - primero.y) / dt
-    if (Math.hypot(vx, vy) < LANZAMIENTO_MIN) return
+    const lanzamiento = velocidadDeLanzamiento(m, performance.now())
+    if (!lanzamiento) return
+    let { vx, vy } = lanzamiento
 
     let previo = null
     const paso = (ahora) => {
@@ -705,7 +639,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
         const llego = vistaRef.current
         if (Math.abs(llego.x - quiere.x) > 0.5) vx = 0
         if (Math.abs(llego.y - quiere.y) > 0.5) vy = 0
-        const f = Math.exp(-d / FRICCION_MS)
+        const f = frenado(d)
         vx *= f
         vy *= f
         if (Math.hypot(vx, vy) < 0.02) {
