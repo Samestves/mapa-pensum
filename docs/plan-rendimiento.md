@@ -10,7 +10,7 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | 3 · La lista pinta lo que se ve | Hecha el 2026-10-06 |
 | 4 · Cambiar de vista sin rehacer | Probada y retirada el 2026-10-07 |
 | 5 y 6 | Aplazadas |
-| 7 · Estructura | Siguiente |
+| 7 · Estructura | Hecha en parte el 2026-10-07 (ver abajo) |
 | 8 | Pendiente |
 
 ## 1. Cómo está hecho hoy
@@ -244,13 +244,25 @@ Es también el principal arreglo de clean code: `VistaCarrera` deja de ser el co
 
 Todo cambio en lo que el mapa dibuja se mide con traza (Layerize, Paint), no contando cuadros.
 
-### Fase 7 — Estructura
+### Fase 7 — Estructura (hecha en parte)
 
-1. Partir los cinco archivos grandes por responsabilidad.
-2. Extraer la lógica de `usePensum`, `useHorario` y `useCasillas` a funciones puras con pruebas.
-3. Tipos sin costo en ejecución: JSDoc y `tsc --checkJs --noEmit` en el build, empezando por asignatura, sesión y layout.
-4. Mover las comprobaciones de navegador de cada pantalla al repo (`scripts/verificar/`).
-5. Detección de código y exportaciones sin uso dentro de `npm run lint`.
+Hecho, sin cambiar nada de lo que se ve (en cada paso: build en verde, `comparar` con 32 pantallas idénticas con y sin movimiento, `verificar` y, si tocaba el mapa, el banco de gestos igual):
+
+1. ✅ **Los cinco archivos grandes, partidos por responsabilidad**, uno por commit:
+   - `VistaLista` 922 → 240 líneas: sus piezas en `components/lista/` (Selector, Camino, FilaMateria, Riel, Resumen, CasillaLista, Filtros, SeccionSemestre, SeccionGrupo, el montaje por tramos).
+   - `PlanRuta` 615 → 35: `components/plan/`.
+   - `DetalleAsignatura` 604 → 316: `components/ficha/`.
+   - `GrafoPensum` 583 → 482: dos hooks (`useSenalado`, `useFichaSaliente`).
+   - `useVistaGrafo` 898 → 831: se le saca solo lo puro; el resto es hablar con el navegador a través de refs que se comparten entre gestos, cámara y viajes, y partirlo arriesga justo lo que más cuesta de medir. Si se parte, que sea con el banco de gestos delante.
+2. ✅ **Lógica pura con pruebas** (`node:test`): filtros y cuentas de la lista, semestres y secciones, alturas reservadas (`layout/filtrosLista`, `semestresLista`, `alturaLista`), límites, zoom e inercia del mapa (`limitesVista`), cajas y manejadores (`cajas`, `manejadores`). 34 pruebas nuevas, 490 en total.
+3. ✅ **Comprobaciones de navegador en el repo**: `npm run verificar` (`scripts/verificar/lista.js` y `mapa.js`), 14 comprobaciones.
+
+Pendiente:
+
+- **Sacar la lógica de `usePensum`, `useHorario` y `useCasillas`** a funciones puras con pruebas.
+- **Tipos con JSDoc y `tsc --checkJs` en el build.** Necesita `typescript` como dependencia de desarrollo, que rompe el «cero dependencias»; falta que Sam lo confirme.
+- **Detección de código y exportaciones sin uso** dentro de `npm run lint`: `oxlint` no la trae, y las herramientas que la hacen (knip) son otra dependencia.
+- `VistaCarrera.jsx` (570 líneas) no estaba en la lista de los cinco, pero es el siguiente en tamaño; su estado es lo que cubriría la fase 5.
 
 ### Fase 8 — Teléfonos reales
 
