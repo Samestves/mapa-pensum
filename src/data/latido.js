@@ -1,3 +1,5 @@
+import { horariosGuardados } from './horarioGuardado'
+
 /**
  * El latido: lo unico que esta aplicacion cuenta de quien la usa.
  *
@@ -18,14 +20,16 @@
  *   - que carreras y que vistas se abrieron en esta visita;
  *   - que materias se miraron, para el mapa de calor;
  *   - cuantas veces se marco una materia en cada carrera, sin decir cual;
+ *   - cuantas clases tiene el horario de cada carrera, sin decir cuales;
  *   - cuanto duro la visita, si fue desde un telefono y a que hora.
  *
- * No se envia nada escrito por el estudiante, ni sus marcas, ni su horario,
- * ni su nombre ni nada con que ponerle cara al identificador.
+ * Del horario solo sale cuantas clases tiene cada carrera, nunca el horario:
+ * ni dias, ni horas, ni codigos. No se envia nada escrito por el estudiante,
+ * ni sus marcas, ni su nombre ni nada con que ponerle cara al identificador.
  *
  * Como se envia, para que no cueste nada:
- *   - dos peticiones por visita como mucho -una al entrar y otra al salir-,
- *     de unos doscientos bytes;
+ *   - pocas peticiones por visita: una al entrar, otra al salir y una por cada
+ *     horario que se crea, de unos doscientos bytes;
  *   - con sendBeacon, que el navegador manda en segundo plano y no bloquea
  *     ni el pintado ni el cierre de la pestaña;
  *   - en local no se envia nada.
@@ -63,7 +67,10 @@ function identificador() {
   }
 }
 
-/** El identificador de este navegador, si ya tiene uno. Lo lee el panel. */
+/**
+ * El identificador de este navegador, si ya tiene uno. Lo lee el panel, y lo
+ * usa avisarHorarioCreado para no mandar nada de un aparato sin id.
+ */
 export function idDeEsteAparato() {
   try {
     return localStorage.getItem(CLAVE_ID)
@@ -172,6 +179,9 @@ export function empezarLatido() {
     movil: enTelefono(),
   }
   if (!seCuentaEsteAparato()) base.yo = true
+  // Quien ya tenia un horario hecho antes de que esto existiera queda contado aqui
+  const horarios = horariosGuardados()
+  if (Object.keys(horarios).length) base.horarios = horarios
   ficha()
     .then((datos) => enviar({ ...base, ficha: datos }))
     .catch(() => enviar(base))
@@ -215,4 +225,26 @@ export const anotarVista = (vista) => vista && vistas.add(vista)
    dibuja por carrera y asi no hay que cruzarlo despues. */
 export const anotarMateria = (slug, codigo) => {
   if (slug && codigo && materias.size < TOPE_MATERIAS) materias.add(`${slug}/${codigo}`)
+}
+
+/**
+ * Avisa en el momento que se crea un horario: en que carrera y cuantas clases,
+ * nunca cuales. Se manda ya y no al cerrar la visita, porque cerrar no siempre
+ * llega: el horario puede hacerse y la pestaña morir antes del cierre.
+ */
+export function avisarHorarioCreado({ carrera, clases, origen }) {
+  try {
+    const id = idDeEsteAparato()
+    if (!id || !enProduccion()) return
+    enviar({
+      tipo: 'horario',
+      id,
+      carrera,
+      clases,
+      origen,
+      ...(seCuentaEsteAparato() ? {} : { yo: true }),
+    })
+  } catch {
+    // Un aviso que no sale no justifica estropear lo que el estudiante acaba de guardar
+  }
 }

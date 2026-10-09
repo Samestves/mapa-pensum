@@ -79,8 +79,8 @@ const leerFicha = (texto) => {
 }
 
 /**
- * Lo de toda la web: activos, dias, reloj, vistas, duracion y el ranking de
- * carreras. Es lo que se ve al entrar, y no cambia por mucho que se mire una
+ * Lo de toda la web: activos, dias, reloj, vistas, duracion, el ranking de
+ * carreras y los horarios. Es lo que se ve al entrar, y no cambia por mucho que se mire una
  * carrera u otra: cada seccion se pide aparte.
  */
 async function general(hoy, cuantos) {
@@ -108,6 +108,9 @@ async function general(hoy, cuantos) {
     ['HGETALL', k('acciones', meses.at(-1))],
     ['HGETALL', k('duracion', meses.at(-1))],
     ['ZRANGE', k('dias'), '0', '0'],
+    ['HLEN', k('horario', 'hechos')],
+    ['HMGET', k('horario', 'creados'), ...dias],
+    ['HMGET', k('horario', 'origen'), 'foto', 'mano'],
   ]
 
   const r = await pedir(comandos)
@@ -127,6 +130,10 @@ async function general(hoy, cuantos) {
   const acciones = aObjeto(r[i++])
   const duracion = aObjeto(r[i++])
   const desde = r[i++]?.[0] ?? null
+  const hechos = numero(r[i++])
+  const creados = r[i++] ?? []
+  const [foto, mano] = r[i++] ?? []
+  const creadosPorDia = dias.map((_, n) => numero(creados[n]))
 
   /* Las carreras de las que hay algo, y de cada una sus aperturas y sus
      aparatos distintos en la ventana. Cuales son solo se sabe despues de
@@ -190,6 +197,13 @@ async function general(hoy, cuantos) {
     aparato,
     acciones,
     duracion,
+    horarios: {
+      hechos,
+      creados: creadosPorDia.reduce((suma, v) => suma + v, 0),
+      porDia: creadosPorDia,
+      foto: numero(foto),
+      mano: numero(mano),
+    },
   }
 }
 

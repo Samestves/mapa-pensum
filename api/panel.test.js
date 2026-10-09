@@ -1,6 +1,7 @@
-import { test, describe } from 'node:test'
+import { test, describe, afterEach, mock } from 'node:test'
 import assert from 'node:assert/strict'
 import handler, { ultimosDias, ultimosMeses } from './panel.js'
+import { PREFIJO, fechaDe } from './latido.js'
 
 /* Un res de mentira: guarda lo que le mandan en vez de escribir en la red */
 function respuesta() {
@@ -110,5 +111,81 @@ describe('la puerta del panel', () => {
     const res = respuesta()
     await handler({ method: 'POST', query: {} }, res)
     assert.equal(res.codigo, 405)
+  })
+})
+
+const k = (...partes) => [PREFIJO, ...partes].join(':')
+
+/* Un almacen de mentira: contesta a los comandos de horarios con `datos` y al
+   resto con null, que es lo que da una clave vacia. Cuenta las peticiones. */
+function almacenCon(datos = {}) {
+  process.env.KV_REST_API_URL = 'https://almacen.falso'
+  process.env.KV_REST_API_TOKEN = 'falso'
+  return mock.method(globalThis, 'fetch', async (_url, { body }) => {
+    const resultados = JSON.parse(body).map(([, clave, ...campos]) => {
+      if (clave === k('horario', 'hechos')) return datos.hechos ?? 0
+      if (clave === k('horario', 'creados')) return campos.map((f) => datos.creados?.[f] ?? null)
+      if (clave === k('horario', 'origen')) return campos.map((f) => datos.origen?.[f] ?? null)
+      return null
+    })
+    return { ok: true, json: async () => resultados.map((result) => ({ result })) }
+  })
+}
+
+describe('los horarios en el panel', () => {
+  afterEach(() => {
+    mock.restoreAll()
+    delete process.env.KV_REST_API_URL
+    delete process.env.KV_REST_API_TOKEN
+  })
+
+  test('con datos, cuenta los horarios, los creados de los dias y su origen', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    const [ayer, hoy] = ultimosDias(2, fechaDe()).slice(-2)
+    const almacen = almacenCon({
+      hechos: 42,
+      creados: { [ayer]: 5, [hoy]: 3 },
+      origen: { foto: '7', mano: '35' },
+    })
+    const res = respuesta()
+    await handler(pedido('la-buena-de-verdad'), res)
+
+    assert.equal(res.codigo, 200)
+    assert.equal(almacen.mock.callCount(), 1, 'los horarios van en la tanda de siempre')
+    const { horarios, dias } = res.cuerpo
+    assert.equal(horarios.hechos, 42)
+    assert.equal(horarios.creados, 8)
+    assert.equal(horarios.porDia.at(-2), 5)
+    assert.equal(horarios.porDia.at(-1), 3)
+    assert.equal(horarios.foto, 7)
+    assert.equal(horarios.mano, 35)
+    assert.equal(horarios.porDia.length, dias.length)
+  })
+
+  test('sin datos, todo son ceros', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    almacenCon()
+    const res = respuesta()
+    await handler(pedido('la-buena-de-verdad'), res)
+
+    assert.equal(res.codigo, 200)
+    assert.deepEqual(res.cuerpo.horarios, {
+      hechos: 0,
+      creados: 0,
+      porDia: new Array(30).fill(0),
+      foto: 0,
+      mano: 0,
+    })
+  })
+
+  test('porDia tiene un numero por cada dia que devuelve el panel', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    almacenCon({ creados: { [fechaDe()]: 2 } })
+    const res = respuesta()
+    await handler(pedido('la-buena-de-verdad', { dias: '14' }), res)
+
+    assert.equal(res.codigo, 200)
+    assert.equal(res.cuerpo.dias.length, 14)
+    assert.equal(res.cuerpo.horarios.porDia.length, 14)
   })
 })

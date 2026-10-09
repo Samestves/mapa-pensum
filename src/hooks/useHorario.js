@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { guardarJSON, leerJSON } from '../data/almacen'
+import { claveHorario } from '../data/horarioGuardado'
 import { ABRE, CIERRA, DIAS, posicionValida, repartirEnCarriles } from '../layout/horario'
-
-const CLAVE = 'mapa-pensum:horario'
-const claveDe = (slug) => `${CLAVE}:${slug}`
 
 const texto = (v) => (typeof v === 'string' ? v : '')
 
@@ -22,7 +20,7 @@ const valida = (s) =>
   s.fin > s.inicio
 
 function leer(slug) {
-  const guardado = leerJSON(claveDe(slug), [])
+  const guardado = leerJSON(claveHorario(slug), [])
   if (!Array.isArray(guardado)) return []
   return guardado.filter(valida).map((s) => ({
     id: s.id ?? `${s.codigo}-${s.dia}-${s.inicio}`,
@@ -65,7 +63,7 @@ export function useHorario(slug) {
       return
     }
     // Si no se puede escribir se sigue usando, solo que sin recordar
-    guardarJSON(claveDe(slug), sesiones)
+    guardarJSON(claveHorario(slug), sesiones)
   }, [slug, sesiones])
 
   /** Crea o reemplaza. El id decide cual de las dos cosas es. */

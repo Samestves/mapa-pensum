@@ -76,10 +76,17 @@ const SLUG = /^[a-z0-9-]{3,48}$/
 const VISTA = /^(mapa|lista|horario)$/
 const MATERIA = /^[a-z0-9-]{3,48}\/[A-Za-z0-9-]{3,24}$/
 
+const ORIGEN = /^(foto|mano)$/
+
 const lista = (valor, patron, tope) =>
   Array.isArray(valor)
     ? valor.filter((v) => typeof v === 'string' && patron.test(v)).slice(0, tope)
     : []
+
+/* Un entero dentro de unos topes: lo que se pasa se recorta. Lo que no es un
+   entero no vale y da null. */
+const entero = (valor, minimo, maximo) =>
+  Number.isInteger(valor) ? Math.min(Math.max(valor, minimo), maximo) : null
 
 /** Deja el cuerpo en lo que se puede guardar, o null si no hay nada que guardar */
 export function validarLatido(cuerpo) {
@@ -104,6 +111,17 @@ export function validarLatido(cuerpo) {
     if (cuerpo.ficha && typeof cuerpo.ficha === 'object' && !Array.isArray(cuerpo.ficha)) {
       latido.ficha = cuerpo.ficha
     }
+    /* Las carreras donde el aparato tiene un horario guardado, con sus clases.
+       Como mucho cuatro; lo que no encaja se ignora sin mas. */
+    const horarios = {}
+    if (cuerpo.horarios && typeof cuerpo.horarios === 'object' && !Array.isArray(cuerpo.horarios)) {
+      for (const [carrera, n] of Object.entries(cuerpo.horarios)) {
+        if (Object.keys(horarios).length === 4) break
+        const clases = entero(n, 1, 60)
+        if (SLUG.test(carrera) && clases) horarios[carrera] = clases
+      }
+    }
+    if (Object.keys(horarios).length) latido.horarios = horarios
     if (yo) latido.yo = true
     return latido
   }
@@ -139,6 +157,22 @@ export function validarLatido(cuerpo) {
     if (yo) latido.yo = true
     return latido
   }
+  if (tipo === 'horario') {
+    /* Se crea un horario en una carrera. Sin carrera valida no hay nada que
+       contar; el origen, si no es foto ni mano, se queda en null pero el
+       horario cuenta igual. */
+    if (typeof cuerpo.carrera !== 'string' || !SLUG.test(cuerpo.carrera)) return null
+    const latido = {
+      tipo,
+      id,
+      carrera: cuerpo.carrera,
+      clases: entero(cuerpo.clases, 0, 60) ?? 0,
+      origen:
+        typeof cuerpo.origen === 'string' && ORIGEN.test(cuerpo.origen) ? cuerpo.origen : null,
+    }
+    if (yo) latido.yo = true
+    return latido
+  }
   return null
 }
 
@@ -167,6 +201,10 @@ export function validarLatido(cuerpo) {
  *     ultimo con campos "<id>|<carrera>".
  *   ap:vistos                         orden por ultima visita: el panel pide
  *                                     "los de los ultimos 30 dias" de aqui.
+ *   horario:hechos                    campo "<id>|<carrera>", valor las clases de
+ *                                     ese horario. HLEN es cuantos hay.
+ *   horario:creados                   campo <dia>: horarios creados ese dia.
+ *   horario:origen                    campo "foto" o "mano": de donde salieron.
  *   latido:de:<origen>                latidos de un origen en la ventana de
  *                                     diez minutos (ver TOPE_LATIDOS).
  *
@@ -194,6 +232,10 @@ export function comandosDe(latido, fecha, hora = horaDe(), ahora = Date.now()) {
       )
       if (latido.nuevo) comandos.push(['INCR', k('nuevos', fecha)])
       if (latido.pwa) comandos.push(['INCR', k('pwa', fecha)])
+      /* Los horarios del aparato. Se reescriben: el valor es el de ahora, asi
+         que HLEN sigue siendo cuantos horarios hay. */
+      for (const [carrera, n] of Object.entries(latido.horarios ?? {}))
+        comandos.push(['HSET', k('horario', 'hechos'), `${id}|${carrera}`, String(n)])
     }
 
     const instante = new Date(ahora).toISOString()
@@ -208,6 +250,22 @@ export function comandosDe(latido, fecha, hora = horaDe(), ahora = Date.now()) {
       ['HINCRBY', k('ap', 'visitas'), id, '1'],
       ['ZADD', k('ap', 'vistos'), String(ahora), id],
     )
+    return comandos
+  }
+
+  if (latido.tipo === 'horario') {
+    const comandos = []
+    if (cuenta) {
+      comandos.push(['HINCRBY', k('horario', 'creados'), fecha, '1'])
+      if (latido.origen) comandos.push(['HINCRBY', k('horario', 'origen'), latido.origen, '1'])
+      if (latido.clases > 0)
+        comandos.push([
+          'HSET',
+          k('horario', 'hechos'),
+          `${id}|${latido.carrera}`,
+          String(latido.clases),
+        ])
+    }
     return comandos
   }
 

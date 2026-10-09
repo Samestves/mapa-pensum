@@ -275,6 +275,110 @@ describe('la ficha de cada aparato', () => {
   })
 })
 
+describe('los horarios', () => {
+  const id = 'abcdefgh1234'
+  const fecha = '2026-09-15'
+  const horario = (extra) =>
+    validarLatido({ tipo: 'horario', id, carrera: 'derecho', clases: 12, origen: 'foto', ...extra })
+
+  test('un horario nuevo dice su carrera, sus clases y de donde salio', () => {
+    assert.deepEqual(horario(), {
+      tipo: 'horario',
+      id,
+      carrera: 'derecho',
+      clases: 12,
+      origen: 'foto',
+    })
+  })
+
+  test('sin carrera valida no hay horario, y un origen raro queda en null', () => {
+    assert.equal(horario({ carrera: 'NO VALE' }), null)
+    assert.equal(horario({ carrera: ['derecho'] }), null, 'un arreglo no es una carrera')
+    assert.equal(horario({ origen: 'pdf' }).origen, null)
+    assert.equal(horario({ origen: ['mano'] }).origen, null, 'un arreglo no es un origen')
+  })
+
+  test('las clases se recortan a 0..60 y lo que no es entero cuenta como 0', () => {
+    assert.equal(horario({ clases: 999 }).clases, 60)
+    assert.equal(horario({ clases: -3 }).clases, 0)
+    assert.equal(horario({ clases: 2.5 }).clases, 0)
+    assert.equal(horario({ clases: 'doce' }).clases, 0)
+  })
+
+  test('del inicio se quedan los horarios con carrera y clases validas, hasta cuatro', () => {
+    const latido = validarLatido({
+      tipo: 'inicio',
+      id,
+      horarios: {
+        'ingenieria-de-sistemas': 12,
+        'NO VALE': 5,
+        derecho: 'doce',
+        administracion: 999,
+        contaduria: 7,
+        medicina: 3,
+        biologia: 2,
+      },
+    })
+    assert.deepEqual(latido.horarios, {
+      'ingenieria-de-sistemas': 12,
+      administracion: 60,
+      contaduria: 7,
+      medicina: 3,
+    })
+  })
+
+  test('sin horarios validos o si no es un objeto, el inicio no lleva el campo', () => {
+    assert.equal(validarLatido({ tipo: 'inicio', id, horarios: [12] }).horarios, undefined)
+    assert.equal(
+      validarLatido({ tipo: 'inicio', id, horarios: { derecho: 2.5 } }).horarios,
+      undefined,
+    )
+    assert.equal(
+      validarLatido({ tipo: 'inicio', id, horarios: { derecho: 'doce' } }).horarios,
+      undefined,
+    )
+  })
+
+  test('un horario nuevo cuenta en su dia y en su origen, y sus clases quedan en hechos', () => {
+    assert.deepEqual(comandosDe(horario(), fecha), [
+      ['HINCRBY', 'mp:horario:creados', fecha, '1'],
+      ['HINCRBY', 'mp:horario:origen', 'foto', '1'],
+      ['HSET', 'mp:horario:hechos', `${id}|derecho`, '12'],
+    ])
+  })
+
+  test('sin clases no hay hechos, y sin origen valido no hay origen', () => {
+    assert.deepEqual(comandosDe(horario({ clases: 0, origen: 'mano' }), fecha), [
+      ['HINCRBY', 'mp:horario:creados', fecha, '1'],
+      ['HINCRBY', 'mp:horario:origen', 'mano', '1'],
+    ])
+    assert.deepEqual(
+      comandosDe(horario({ origen: null }), fecha).map((c) => c[1]),
+      ['mp:horario:creados', 'mp:horario:hechos'],
+    )
+  })
+
+  test('el inicio escribe los horarios de su aparato, uno por carrera', () => {
+    const comandos = comandosDe(
+      validarLatido({ tipo: 'inicio', id, horarios: { derecho: 12, medicina: 3 } }),
+      fecha,
+    )
+    assert.deepEqual(
+      comandos.filter((c) => c[1] === 'mp:horario:hechos'),
+      [
+        ['HSET', 'mp:horario:hechos', `${id}|derecho`, '12'],
+        ['HSET', 'mp:horario:hechos', `${id}|medicina`, '3'],
+      ],
+    )
+  })
+
+  test('un aparato del dueño no escribe horarios ni en el inicio ni al crear', () => {
+    assert.deepEqual(comandosDe(horario({ yo: true }), fecha), [])
+    const inicio = validarLatido({ tipo: 'inicio', id, horarios: { derecho: 12 }, yo: true })
+    assert.ok(!comandosDe(inicio, fecha).some((c) => c[1].startsWith('mp:horario')))
+  })
+})
+
 describe('el tope por origen', () => {
   const ALMACEN = 'https://almacen.test'
   const CUERPO = { tipo: 'inicio', id: 'abcdefgh1234', nuevo: false, pwa: false, movil: false }

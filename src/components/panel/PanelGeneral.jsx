@@ -195,6 +195,36 @@ function Carreras({ carreras, mes, mesAnterior, colorDe, alAbrir }) {
   )
 }
 
+/**
+ * Los horarios que se crean: cuantos hay hechos en total y, en el rango, cuantos
+ * se crearon cada dia, desde la foto o a mano.
+ */
+function Horarios({ horarios, dias }) {
+  const puntos = dias.map((d, i) => ({ ...d, creados: horarios.porDia?.[i] ?? 0 }))
+
+  return (
+    <>
+      <section className="grid grid-cols-2 gap-3">
+        <Cifra valor={horarios.hechos} rotulo="horarios hechos" />
+        <Cifra
+          valor={horarios.creados}
+          rotulo="creados"
+          nota={`desde foto ${horarios.foto} · a mano ${horarios.mano}`}
+        />
+      </section>
+      <Serie
+        puntos={puntos}
+        principal="creados"
+        detalle={(d) => (
+          <span>
+            <span className="text-tinta">{d.creados}</span> creados
+          </span>
+        )}
+      />
+    </>
+  )
+}
+
 export default function PanelGeneral({ datos, colorDe, alAbrirCarrera }) {
   const { activos, dias } = datos
   const suma = (campo) => dias.reduce((s, d) => s + d[campo], 0)
@@ -265,6 +295,15 @@ export default function PanelGeneral({ datos, colorDe, alAbrirCarrera }) {
           nota={`en ${datos.acciones?.['visitas-con-marcas'] ?? 0} visitas de ${mesLargo(datos.mes)}`}
         />
       </section>
+
+      {datos.horarios && (
+        <Bloque
+          titulo="Horarios"
+          explica="Horarios creados cada día en los últimos 30 días. Toca un día para ver su número."
+        >
+          <Horarios horarios={datos.horarios} dias={dias} />
+        </Bloque>
+      )}
 
       <Bloque titulo="Carreras" explica="Toca una para ver su detalle y su mapa de calor.">
         <Carreras

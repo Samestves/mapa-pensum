@@ -13,6 +13,7 @@ import {
 } from '../data/compartir'
 import { imagenDelHorario, MENSAJE_DEL_HORARIO } from '../data/exportarHorario'
 import { FORMATOS } from '../data/subirHorario'
+import { avisarHorarioCreado } from '../data/latido'
 import { colorClase, coloresDelHorario } from '../theme/areas'
 import HorarioSemana from './HorarioSemana'
 import HorarioAgenda from './HorarioAgenda'
@@ -228,7 +229,13 @@ function Horario({ carrera, estados }) {
           CABE_LA_SEMANA). Los datos, la ficha y los menus son los mismos: lo
           unico que cambia es como se lee. */}
       {!hayClases && !empezado ? (
-        <HorarioVacio alSubir={setALeer} alCrear={() => setEmpezado(true)} />
+        <HorarioVacio
+          alSubir={setALeer}
+          alCrear={() => {
+            setEmpezado(true)
+            avisarHorarioCreado({ carrera: carrera.slug, clases: 0, origen: 'mano' })
+          }}
+        />
       ) : cabeLaSemana ? (
         <HorarioSemana
           {...comun}
@@ -304,6 +311,7 @@ function Horario({ carrera, estados }) {
             sesiones={sesiones}
             alImportar={(nuevas) => {
               guardarVarias(nuevas)
+              avisarHorarioCreado({ carrera: carrera.slug, clases: nuevas.length, origen: 'foto' })
               setEmpezado(true)
               setALeer(null)
             }}
@@ -312,6 +320,7 @@ function Horario({ carrera, estados }) {
                lector no puede -hay cola, o se acabo por hoy- lo que queda es
                armarlo, y se entra directo a la semana vacia. */
             alCrearAMano={() => {
+              avisarHorarioCreado({ carrera: carrera.slug, clases: 0, origen: 'mano' })
               setEmpezado(true)
               setALeer(null)
             }}
