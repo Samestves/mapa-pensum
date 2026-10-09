@@ -346,7 +346,14 @@ El aviso de instalar sale abajo, a los dos segundos y medio, y se cierra para si
 
 ```
 api/
-└── leer-horario.js         Lee un horario de una imagen. La clave vive aquí, no en el front.
+├── _almacen.js             Redis en Upstash, por su API REST. Lo usan el contador, el panel y el lector.
+├── _aparato.js             Que aparato es, dicho por el propio aparato. Ficha de cada dispositivo del panel.
+├── _cuota.js               Lee el 429 de Google: que limite se paso y cuanto hay que esperar.
+├── _memoria.js             La memoria del lector: lo que ya se leyo de una foto no se vuelve a leer.
+├── _turno.js               Lo que el lector recuerda entre una peticion y la siguiente.
+├── latido.js               Recoge los latidos y los suma. Mitad servidor de src/data/latido.js.
+├── leer-horario.js         Lee un horario de una imagen. La clave vive aquí, no en el front.
+└── panel.js                Lee lo que suma latido.js y lo devuelve junto. Privado: exige la clave PANEL_CLAVE.
 datos/
 ├── crudo/                  Scrape de la DACE tal cual. No se edita.
 └── overlay.json            Color, créditos y avisos por carrera
@@ -493,4 +500,4 @@ Datos tomados de los pensums publicados por la [DACE del Núcleo de Monagas](htt
 > [!IMPORTANT]
 > Esta herramienta es un apoyo para visualizar tu carrera, **no una fuente oficial**. Confirma siempre con control de estudios antes de tomar cualquier decisión académica.
 
-Iconos de [Lucide](https://lucide.dev) y, en la cabecera y la barra de vistas, de [Phosphor Icons](https://phosphoricons.com) (MIT). Tipografías Inter, Jost, IBM Plex Mono y JetBrains Mono servidas desde el propio bundle con `@fontsource`, sin llamadas a terceros.
+Iconos de [Lucide](https://lucide.dev) y, en la cabecera y la barra de vistas, de [Phosphor Icons](https://phosphoricons.com) (MIT). Tipografías Inter, Jost e IBM Plex Mono servidas desde el propio bundle con `@fontsource`, sin llamadas a terceros.

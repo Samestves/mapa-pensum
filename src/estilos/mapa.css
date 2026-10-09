@@ -658,3 +658,9 @@ button.casilla-semestre .tilde {
     transform: translateY(0) scale(1);
   }
 }
+
+/* Sin esta regla el keyframe no corre y el panel aparece de golpe. Con
+   menos movimiento la apaga carrera-menos-movimiento.css, que va despues. */
+.surgir {
+  animation: surgir 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
