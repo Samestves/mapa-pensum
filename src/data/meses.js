@@ -23,5 +23,6 @@ export const MES = (fecha) => {
   return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : ''
 }
 
-/** "Oct 2030": la fecha de grado cuando va en grande y tiene que caber */
-export const mesCorto = (fecha) => `${MESES_CORTOS[fecha.getMonth()]} ${fecha.getFullYear()}`
+/** "Oct 2030": la fecha de grado cuando va en grande y tiene que caber. Sin fecha, vacio. */
+export const mesCorto = (fecha) =>
+  fecha ? `${MESES_CORTOS[fecha.getMonth()]} ${fecha.getFullYear()}` : ''

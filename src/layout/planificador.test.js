@@ -9,6 +9,7 @@ import {
   horasDe,
   mesEstimadoGrado,
   planificar,
+  sumarMeses,
 } from './planificador.js'
 
 /* El planificador es la funcion mas facil de romper en silencio del proyecto:
@@ -64,6 +65,40 @@ describe('mes estimado de grado', () => {
 
   test('sin semestres por delante no hay fecha que dar', () => {
     assert.equal(mesEstimadoGrado(0), null)
+  })
+})
+
+describe('sumar meses sin desbordar al mes siguiente', () => {
+  // Mes en base 1, como se lee en el calendario
+  const fecha = (anio, mes, dia) => new Date(anio, mes - 1, dia, 12)
+  const ymd = (f) => [f.getFullYear(), f.getMonth() + 1, f.getDate()]
+
+  test('31 de agosto + 6 meses cae en febrero, en año no bisiesto y en bisiesto', () => {
+    assert.deepEqual(ymd(sumarMeses(fecha(2025, 8, 31), 6)), [2026, 2, 28])
+    assert.deepEqual(ymd(sumarMeses(fecha(2027, 8, 31), 6)), [2028, 2, 29])
+  })
+
+  test('31 de enero + 1 mes es febrero, no 3 de marzo', () => {
+    assert.deepEqual(ymd(sumarMeses(fecha(2026, 1, 31), 1)), [2026, 2, 28])
+    assert.deepEqual(ymd(sumarMeses(fecha(2028, 1, 31), 1)), [2028, 2, 29])
+  })
+
+  test('un dia que existe en el mes destino se conserva', () => {
+    assert.deepEqual(ymd(sumarMeses(fecha(2026, 3, 15), 6)), [2026, 9, 15])
+  })
+
+  test('el mes de grado de 31 de agosto + un semestre es febrero, no marzo', () => {
+    const grado = mesEstimadoGrado(1, fecha(2025, 8, 31))
+    assert.equal(grado.getMonth(), 1)
+    assert.equal(grado.getFullYear(), 2026)
+  })
+
+  test('no muta la fecha de entrada', () => {
+    const entrada = fecha(2025, 8, 31)
+    const antes = entrada.getTime()
+    sumarMeses(entrada, 6)
+    mesEstimadoGrado(1, entrada)
+    assert.equal(entrada.getTime(), antes)
   })
 })
 

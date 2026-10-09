@@ -11,14 +11,16 @@ import { diaCorto, mesLargo, tinte, total, variacion } from './formato'
 function Calor({ slug, calor, color }) {
   const [pensum, setPensum] = useState(null)
   const [elegida, setElegida] = useState(null)
+  const [fallo, setFallo] = useState(false)
 
   useEffect(() => {
     let vigente = true
     setPensum(null)
     setElegida(null)
+    setFallo(false)
     cargarCarrera(slug)
       .then((datos) => vigente && setPensum(datos))
-      .catch(() => {})
+      .catch(() => vigente && setFallo(true))
     return () => {
       vigente = false
     }
@@ -69,6 +71,7 @@ function Calor({ slug, calor, color }) {
     .map(([codigo, n]) => ({ codigo, n, materia: materiaDe(codigo) }))
     .filter((t) => t.materia)
 
+  if (fallo) return <Vacio>No se pudo cargar el pensum de esta carrera.</Vacio>
   if (!pensum) return <Hueco alto={260} />
   if (!vistas) {
     return <Vacio>Nadie ha abierto todavía la ficha de una materia de esta carrera.</Vacio>

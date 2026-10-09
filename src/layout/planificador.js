@@ -45,15 +45,28 @@ export const VENTANA_NIVEL = 2
 export const etiquetaSemestre = (n) => (n === 1 ? 'Próximo semestre' : `En ${n} semestres`)
 
 /**
+ * Suma meses sin que el desborde cambie de mes. setMonth da el 3 de marzo
+ * para el 31 de agosto + 6, porque febrero no tiene dia 31: aqui el dia se
+ * baja al ultimo que tenga el mes destino. Devuelve una fecha nueva.
+ */
+export function sumarMeses(fecha, meses) {
+  const suma = new Date(fecha)
+  const dia = suma.getDate()
+  suma.setDate(1)
+  suma.setMonth(suma.getMonth() + meses)
+  const ultimoDia = new Date(suma.getFullYear(), suma.getMonth() + 1, 0).getDate()
+  suma.setDate(Math.min(dia, ultimoDia))
+  return suma
+}
+
+/**
  * Mes aproximado de grado, contando dos semestres por año desde hoy.
  * Es aritmetica de calendario, no el cronograma oficial de la UDO: no
  * contempla retrasos de inicio, intensivos ni semestres perdidos.
  */
 export function mesEstimadoGrado(semestres, desde = new Date()) {
   if (!semestres) return null
-  const fecha = new Date(desde)
-  fecha.setMonth(fecha.getMonth() + semestres * 6)
-  return fecha
+  return sumarMeses(desde, semestres * 6)
 }
 
 /* Lo que solo depende del pensum y no del avance: el grafo, cuanto cuelga de

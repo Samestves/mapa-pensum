@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useCerrarConEscape } from '../../hooks/useCerrarConEscape'
+import { useFocoAtrapado } from '../../hooks/useFocoAtrapado'
 
 /* Cuanto hay que arrastrar la tarjeta hacia abajo para cerrarla, o con que
    velocidad -en px por ms- basta un tiron corto. */
@@ -36,6 +38,9 @@ export default function TarjetaTelefono({
   const inicio = useRef(null)
   const [bajada, setBajada] = useState(0)
   const [arrastrando, setArrastrando] = useState(false)
+
+  useCerrarConEscape(alCerrar, !saliendo)
+  useFocoAtrapado(ref, !saliendo, false)
 
   useEffect(() => {
     const tarjeta = ref.current
@@ -79,6 +84,12 @@ export default function TarjetaTelefono({
     if (distancia > CIERRE_DISTANCIA || velocidad > CIERRE_VELOCIDAD) alCerrar()
     else setBajada(0)
   }
+  // Un gesto cancelado (el navegador se queda con el scroll) no es un cierre
+  const cancelar = () => {
+    inicio.current = null
+    setArrastrando(false)
+    setBajada(0)
+  }
 
   return (
     <div
@@ -103,7 +114,7 @@ export default function TarjetaTelefono({
         onPointerDown={empezar}
         onPointerMove={mover}
         onPointerUp={soltar}
-        onPointerCancel={soltar}
+        onPointerCancel={cancelar}
       >
         <span aria-hidden="true" className="ficha-filo" style={{ '--filo': filo }} />
         {/* El asa dice "esto se arrastra" con la unica señal que ya conoce

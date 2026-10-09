@@ -13,6 +13,14 @@ const CLAVE = 'mapa-pensum:vista'
  * repite en un script suelto, por lo mismo que el tema: ver
  * scripts/prerenderizar.js. Si cambia aqui, cambia alli.
  */
-export const vistaInicial = () => leer(CLAVE) ?? (window.innerWidth < 768 ? 'lista' : 'mapa')
+/* Los ids de VISTAS (ver vistas.js). Repetidos aqui y no importados: vistas.js
+   trae los iconos, y este modulo baja en el primer trozo de la app. Si se añade
+   una vista, su id va tambien aqui; hasta entonces se abre la de por defecto. */
+const VISTAS_VALIDAS = ['mapa', 'lista', 'horario']
+
+export const vistaInicial = () => {
+  const guardada = leer(CLAVE)
+  return VISTAS_VALIDAS.includes(guardada) ? guardada : window.innerWidth < 768 ? 'lista' : 'mapa'
+}
 
 export const recordarVista = (vista) => guardar(CLAVE, vista)

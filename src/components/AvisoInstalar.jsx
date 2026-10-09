@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppWindow, Download, Share, WifiOff, X } from 'lucide-react'
 import { useInstalable } from '../hooks/useInstalable'
 import Logo from './Logo'
@@ -46,6 +46,20 @@ const GUION = {
 function AvisoInstalar() {
   const { modo, instalar, descartar, porque, hayEvento, forzado } = useInstalable()
   const [saliendo, setSaliendo] = useState(false)
+  // Timer de la despedida mientras se va. Sirve tambien de guarda: un segundo
+  // toque en la X no cuenta como otra negativa.
+  const despedida = useRef(null)
+
+  // Si se desmonta a mitad de la despedida, el descarte ya es un hecho: se
+  // guarda ahora en vez de perderlo con el timer.
+  useEffect(
+    () => () => {
+      if (despedida.current === null) return
+      clearTimeout(despedida.current)
+      descartar()
+    },
+    [descartar],
+  )
 
   if (!modo) return null
 
@@ -54,8 +68,12 @@ function AvisoInstalar() {
 
   // Se despide antes de irse, igual que el cambio de ruta
   const cerrar = () => {
+    if (despedida.current !== null) return
     setSaliendo(true)
-    setTimeout(descartar, SALIDA)
+    despedida.current = setTimeout(() => {
+      despedida.current = null
+      descartar()
+    }, SALIDA)
   }
 
   return (

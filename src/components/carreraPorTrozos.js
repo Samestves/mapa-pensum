@@ -1,4 +1,4 @@
-import { lazy, useEffect } from 'react'
+import { createElement, lazy, useEffect } from 'react'
 import { enReposo } from '../data/reposo'
 import { precalentarLector } from '../data/subirHorario'
 import { adelantar, conRecarga } from '../data/versionNueva'
@@ -24,6 +24,12 @@ import { vistaInicial } from '../data/vistaInicial'
  * vista, se tira lo hecho y se vuelve a empezar. Aqui, si ya bajo, se pinta
  * en ese mismo intento: a lazy se le puede dar cualquier cosa que tenga
  * `then`, y uno que contesta en el acto no hace esperar a nadie.
+ *
+ * Y lazy guarda para siempre el fallo de su primera descarga: una vez
+ * rechazado, no vuelve a llamar a la funcion. Por eso, si la descarga falla,
+ * el lazy se cambia por uno nuevo, y el siguiente render -al volver a entrar
+ * en la vista, tras el boton de la pantalla de error- vuelve a descargar. La
+ * envoltura exportada es estable: quien la usa no nota el cambio.
  */
 function trozo(importar) {
   const traer = conRecarga(importar)
@@ -33,13 +39,24 @@ function trozo(importar) {
     (enCamino ??= traer().then(
       (llegado) => (modulo = llegado),
       (fallo) => {
-        // No se queda con el fallo: la proxima vez se vuelve a intentar
+        // Lo que falla no se queda: la proxima peticion vuelve a descargar
         enCamino = null
         throw fallo
       },
     ))
   const yaEsta = { then: (cumplir) => cumplir(modulo) }
-  return { pedir, Componente: lazy(() => (modulo ? yaEsta : pedir())) }
+  const nuevo = () =>
+    lazy(() =>
+      modulo
+        ? yaEsta
+        : pedir().catch((fallo) => {
+            Componente = nuevo()
+            throw fallo
+          }),
+    )
+  let Componente = nuevo()
+  const Envuelto = (props) => createElement(Componente, props)
+  return { pedir, Componente: Envuelto }
 }
 
 const VISTAS = {

@@ -79,15 +79,20 @@ export function usePensum(carrera) {
   )
   const codigosValidos = useMemo(() => new Set(todas.map((a) => a.codigo)), [todas])
 
-  const [marcas, setMarcas] = useState(() => leerGuardadas(slug, codigosValidos))
+  // Las marcas van junto al slug de su carrera: asi nunca quedan desalineadas
+  // y el guardado puede saber de cual son.
+  const [estado, setEstado] = useState(() => ({
+    slug,
+    marcas: leerGuardadas(slug, codigosValidos),
+  }))
+  const marcas = estado.marcas
 
-  // Al cambiar de carrera hay que traer las marcas de esa otra
-  const slugMontado = useRef(slug)
+  // Al cambiar de carrera hay que traer las marcas de esa otra. Hasta que
+  // llegan, estado.slug sigue siendo la carrera anterior.
   useEffect(() => {
-    if (slugMontado.current === slug) return
-    slugMontado.current = slug
-    setMarcas(leerGuardadas(slug, codigosValidos))
-  }, [slug, codigosValidos])
+    if (estado.slug === slug) return
+    setEstado({ slug, marcas: leerGuardadas(slug, codigosValidos) })
+  }, [slug, codigosValidos, estado.slug])
 
   // Descarga electrica de la ultima asignatura aprobada. El contador hace que
   // aprobar dos veces la misma vuelva a lanzar la animacion.
@@ -97,9 +102,12 @@ export function usePensum(carrera) {
   const contador = useRef(0)
 
   useEffect(() => {
-    // Si no se puede escribir, la app sigue funcionando sin persistir
-    guardarJSON(claveDe(slug), marcas)
-  }, [slug, marcas])
+    // Si no se puede escribir, la app sigue funcionando sin persistir.
+    // Entre el cambio de carrera y la llegada de sus marcas, estado sigue
+    // siendo de la anterior: escribirlo en la clave nueva la mezclaria.
+    if (estado.slug !== slug) return
+    guardarJSON(claveDe(slug), estado.marcas)
+  }, [slug, estado])
 
   /* La animacion entera -la luz del cable y el pulso de lo que se abre-
      acaba a los 2,1 s; despues se limpia el DOM. Con 900 ms, como antes, el
@@ -211,13 +219,13 @@ export function usePensum(carrera) {
   /* Fija varias marcas de una vez -{ codigo: marca }-, en un solo cambio de
      estado: aprobar un semestre entero, o deshacerlo. marca null desmarca. */
   const marcarVarias = useCallback((cambios) => {
-    setMarcas((previas) => {
-      const copia = { ...previas }
+    setEstado((previo) => {
+      const copia = { ...previo.marcas }
       for (const [codigo, marca] of Object.entries(cambios)) {
         if (marca) copia[codigo] = marca
         else delete copia[codigo]
       }
-      return copia
+      return { slug: previo.slug, marcas: copia }
     })
   }, [])
 
@@ -250,10 +258,10 @@ export function usePensum(carrera) {
   )
 
   const reiniciar = useCallback(() => {
-    setMarcas({})
+    setEstado({ slug, marcas: {} })
     setDescarga(null)
     setToque(null)
-  }, [])
+  }, [slug])
 
   return {
     marcas,
