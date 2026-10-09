@@ -68,8 +68,9 @@ class ErrorPanel extends Error {
 }
 
 async function consultar(clave, parametros) {
-  const url = `/api/panel?clave=${encodeURIComponent(clave)}&${new URLSearchParams(parametros)}`
-  const respuesta = await fetch(url)
+  // La clave va en la cabecera: una URL acaba en los logs del servidor y en el Referer
+  const url = `/api/panel?${new URLSearchParams(parametros)}`
+  const respuesta = await fetch(url, { headers: { Authorization: `Bearer ${clave}` } })
   if (respuesta.status === 401) throw new ErrorPanel('Esa clave no es', 401)
   if (respuesta.status === 503)
     throw new ErrorPanel('Falta configurar PANEL_CLAVE o la base de datos', 503)

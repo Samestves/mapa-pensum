@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { hayAlmacen, pedir } from './_almacen.js'
 import { leerAparato } from './_aparato.js'
 
@@ -166,6 +167,8 @@ export function validarLatido(cuerpo) {
  *     ultimo con campos "<id>|<carrera>".
  *   ap:vistos                         orden por ultima visita: el panel pide
  *                                     "los de los ultimos 30 dias" de aqui.
+ *   latido:de:<origen>                latidos de un origen en la ventana de
+ *                                     diez minutos (ver TOPE_LATIDOS).
  *
  * Lo que manda un aparato marcado como "no contar" -los del dueño- solo
  * actualiza su ficha: no entra en ningun total.
@@ -254,6 +257,51 @@ export function comandosDe(latido, fecha, hora = horaDe(), ahora = Date.now()) {
   return comandos
 }
 
+/* Latidos por origen en la ventana. Una visita manda dos como mucho -una al
+   entrar y otra al salir-, pero un origen puede ser toda una red: el wifi de
+   la universidad sale por una sola IP. 150 cubre unas 75 visitas cada diez
+   minutos desde el mismo sitio y aun corta el bucle que infla las cifras. */
+export const TOPE_LATIDOS = 150
+const VENTANA = 600
+
+/* La huella del origen, con la misma receta que el lector de horarios: HMAC de
+   la IP con un secreto del servidor. El secreto es el token del almacen, que
+   solo existe aqui; asi la huella no se puede deshacer en la IP sin el. */
+function origenDe(req) {
+  const ip = String(req.headers['x-forwarded-for'] ?? '')
+    .split(',')[0]
+    .trim()
+  if (!ip) return null
+  const secreto = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || ''
+  return createHmac('sha256', secreto).update(ip).digest('hex').slice(0, 16)
+}
+
+const claveDeOrigen = (origen) => `${PREFIJO}:latido:de:${origen}`
+
+/* Solo lee: un latido que se pasa del tope no se cuenta ni aqui ni en los
+   totales. Si el almacen no contesta se deja pasar: el tope es para el abuso y
+   no puede dejar a nadie sin latido. */
+async function pasadoElTope(origen) {
+  if (!origen) return false
+  try {
+    const [enVentana] = await pedir([['GET', claveDeOrigen(origen)]])
+    return Number(enVentana) >= TOPE_LATIDOS
+  } catch {
+    return false
+  }
+}
+
+/* La cuenta del origen va en la misma peticion que los totales del latido,
+   asi que solo cuenta lo que de verdad se escribio. Igual que el lector: la
+   ventana empieza con el primer latido y caduca sola. */
+const contarOrigen = (origen) =>
+  origen
+    ? [
+        ['SET', claveDeOrigen(origen), '0', 'EX', String(VENTANA), 'NX'],
+        ['INCR', claveDeOrigen(origen)],
+      ]
+    : []
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -274,13 +322,17 @@ export default async function handler(req, res) {
   // averigue por prueba y error que forma tiene lo que aceptamos.
   if (!latido) return res.status(204).end()
 
+  // Un origen que se pasa del tope: 429, sin contar y sin decir por que
+  const origen = hayAlmacen() ? origenDe(req) : null
+  if (await pasadoElTope(origen)) return res.status(429).end()
+
   /* La ficha del aparato se arma aqui y no en el navegador: las cabeceras
      -User-Agent y la geolocalizacion de Vercel- solo existen en el servidor. */
   if (latido.tipo === 'inicio') latido.aparato = leerAparato(latido.ficha, req.headers)
 
   try {
     const comandos = comandosDe(latido, fechaDe())
-    if (hayAlmacen() && comandos.length) await pedir(comandos)
+    if (hayAlmacen() && comandos.length) await pedir([...comandos, ...contarOrigen(origen)])
   } catch {
     // Que el almacen falle no es asunto de quien esta usando la aplicacion
   }

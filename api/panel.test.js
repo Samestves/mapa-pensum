@@ -45,11 +45,18 @@ for (const variable of [
   delete process.env[variable]
 }
 
+/* La peticion como la manda el panel: la clave en Authorization, no en la URL */
+const pedido = (clave, query = {}) => ({
+  method: 'GET',
+  query,
+  headers: clave === undefined ? {} : { authorization: `Bearer ${clave}` },
+})
+
 describe('la puerta del panel', () => {
   test('sin clave configurada no se puede entrar ni acertando', async () => {
     delete process.env.PANEL_CLAVE
     const res = respuesta()
-    await handler({ method: 'GET', query: { clave: 'loquesea' } }, res)
+    await handler(pedido('loquesea'), res)
     assert.equal(res.codigo, 503)
     assert.equal(res.cuerpo.error, 'sin-clave')
   })
@@ -58,7 +65,7 @@ describe('la puerta del panel', () => {
     process.env.PANEL_CLAVE = 'la-buena-de-verdad'
     for (const intento of ['otra', 'la-buena-de-verda', 'LA-BUENA-DE-VERDAD', undefined]) {
       const res = respuesta()
-      await handler({ method: 'GET', query: { clave: intento } }, res)
+      await handler(pedido(intento), res)
       assert.equal(res.codigo, 401, `deberia rechazar «${intento}»`)
     }
   })
@@ -66,8 +73,37 @@ describe('la puerta del panel', () => {
   test('con la clave buena pasa la puerta, y ahi ya depende del almacen', async () => {
     process.env.PANEL_CLAVE = 'la-buena-de-verdad'
     const res = respuesta()
-    await handler({ method: 'GET', query: { clave: 'la-buena-de-verdad' } }, res)
+    await handler(pedido('la-buena-de-verdad'), res)
     assert.notEqual(res.codigo, 401)
+  })
+
+  test('?clave= en la URL ya no autoriza, aunque sea la buena', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    const res = respuesta()
+    await handler({ method: 'GET', query: { clave: 'la-buena-de-verdad' }, headers: {} }, res)
+    assert.equal(res.codigo, 401)
+  })
+
+  test('la clave tiene que ir como Bearer; otro esquema no vale', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    const cabeceras = [
+      'Basic la-buena-de-verdad',
+      'Bearer',
+      'la-buena-de-verdad',
+      'Bearer  la-buena-de-verdad-y-mas',
+    ]
+    for (const authorization of cabeceras) {
+      const res = respuesta()
+      await handler({ method: 'GET', query: {}, headers: { authorization } }, res)
+      assert.equal(res.codigo, 401, `deberia rechazar «${authorization}»`)
+    }
+  })
+
+  test('una clave con tildes de la misma longitud en caracteres no rompe la comparacion', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    const res = respuesta()
+    await handler(pedido('la-buena-de-verdád'), res)
+    assert.equal(res.codigo, 401)
   })
 
   test('solo se lee: cualquier otro metodo se rechaza', async () => {

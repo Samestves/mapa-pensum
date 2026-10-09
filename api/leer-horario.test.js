@@ -69,6 +69,14 @@ function llamar(cuerpo, { metodo = 'POST', cabeceras = {} } = {}) {
   return { req, res }
 }
 
+/* Lo que se escribio en el registro desde `desde` (un callCount de console.warn).
+   El detalle tecnico va aqui y solo aqui. */
+const registroDesde = (desde) =>
+  console.warn.mock.calls
+    .slice(desde)
+    .map((c) => c.arguments.join(' '))
+    .join('\n')
+
 const cuerpoValido = () => ({ imagen: IMAGEN, tipo: 'image/jpeg', materias: MATERIAS })
 
 /** Sustituye fetch y devuelve lo que se le pidio. */
@@ -281,10 +289,10 @@ test('cuando Google esta lleno', async (t) => {
   })
 
   await t.test('por defecto hay mas de un modelo al que caer', async () => {
-    tras(99, 404)
+    const visto = tras(99, 404)
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
-    const probados = res.cuerpo.detalle.split(' · ')[1].split(', ')
+    const probados = [...new Set(modelosDe(visto.urls))]
     assert.ok(probados.length >= 2, `solo habia ${probados.join(' y ')}`)
     assert.ok(
       probados.every((m) => !m.includes('latest')),
@@ -400,16 +408,19 @@ test('cuando Google esta lleno', async (t) => {
     assert.equal(res.cuerpo.error, 'modelo')
   })
 
-  await t.test('el detalle dice QUE modelos se probaron', async (t) => {
+  await t.test('el registro dice QUE modelos se probaron, la respuesta no', async (t) => {
     process.env.GOOGLE_AI_MODELO = 'uno-que-no-existe,otro-tampoco'
     t.after(() => delete process.env.GOOGLE_AI_MODELO)
     tras(99, 404)
+    const avisos = console.warn.mock.callCount()
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
 
     // Sin esto, "no existe" no dice cual, que es lo unico que hace falta saber
-    assert.ok(res.cuerpo.detalle.includes('uno-que-no-existe'))
-    assert.ok(res.cuerpo.detalle.includes('otro-tampoco'))
+    assert.ok(registroDesde(avisos).includes('uno-que-no-existe, otro-tampoco'))
+    // Pero no a quien llama: son nombres internos
+    assert.equal('detalle' in res.cuerpo, false)
+    assert.ok(!JSON.stringify(res.cuerpo).includes('uno-que-no-existe'))
   })
 
   await t.test('una clave sin permiso para ese modelo se distingue', async () => {
@@ -449,31 +460,60 @@ test('lo que vuelve', async (t) => {
     assert.equal(res.cuerpo.clases[0].nombre, 'MATEMATICAS I')
   })
 
-  await t.test('el mensaje de Google se pasa tal cual', async () => {
+  await t.test('el mensaje de Google va al registro, no a la respuesta', async () => {
     globalThis.fetch = async () => ({
       ok: false,
       text: async () => '{"error":{"message":"models/lo-que-sea is not found"}}',
     })
+    const avisos = console.warn.mock.callCount()
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
 
     assert.equal(res.cuerpo.error, 'ia')
     assert.ok(
-      res.cuerpo.detalle.includes('is not found'),
+      registroDesde(avisos).includes('is not found'),
       'sin el mensaje, distinguir "ese modelo ya no existe" de "se acabo la cuota" seria adivinar',
     )
+    assert.equal('detalle' in res.cuerpo, false)
+    assert.ok(!JSON.stringify(res.cuerpo).includes('is not found'))
   })
 
-  await t.test('una respuesta sin texto trae el motivo', async () => {
+  await t.test(
+    'una respuesta sin texto trae el motivo al registro, no a la respuesta',
+    async () => {
+      globalThis.fetch = async () => ({
+        ok: true,
+        json: async () => ({ candidates: [{ finishReason: 'SAFETY' }] }),
+      })
+      const avisos = console.warn.mock.callCount()
+      const { req, res } = llamar(cuerpoValido())
+      await handler(req, res)
+
+      assert.equal(res.cuerpo.error, 'vacia')
+      assert.ok(registroDesde(avisos).includes('SAFETY'))
+      assert.equal('detalle' in res.cuerpo, false)
+    },
+  )
+
+  await t.test('un 502 solo lleva el codigo: ni modelos ni texto de Google', async (t) => {
+    process.env.GOOGLE_AI_MODELO = 'modelo-interno-a,modelo-interno-b'
+    t.after(() => delete process.env.GOOGLE_AI_MODELO)
+    // Un 404 no es de los que se pasan esperando: la lectura falla con 502
     globalThis.fetch = async () => ({
-      ok: true,
-      json: async () => ({ candidates: [{ finishReason: 'SAFETY' }] }),
+      ok: false,
+      status: 404,
+      text: async () => 'texto-interno-de-google',
     })
+    const avisos = console.warn.mock.callCount()
     const { req, res } = llamar(cuerpoValido())
     await handler(req, res)
 
-    assert.equal(res.cuerpo.error, 'vacia')
-    assert.ok(res.cuerpo.detalle.includes('SAFETY'))
+    assert.equal(res.codigo, 502)
+    assert.deepEqual(Object.keys(res.cuerpo), ['error'], 'nada mas que el codigo')
+    assert.ok(!JSON.stringify(res.cuerpo).includes('modelo-interno'))
+    assert.ok(!JSON.stringify(res.cuerpo).includes('texto-interno-de-google'))
+    // El registro si lo tiene: la linea del detalle, con los dos modelos juntos
+    assert.ok(registroDesde(avisos).includes('modelo-interno-a, modelo-interno-b'))
   })
 
   await t.test('un JSON roto no revienta la funcion', async () => {

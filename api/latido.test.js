@@ -1,6 +1,17 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
-import { comandosDe, fechaDe, semanaDe, validarLatido } from './latido.js'
+import handler, { TOPE_LATIDOS, comandosDe, fechaDe, semanaDe, validarLatido } from './latido.js'
+
+/* Vercel lleva el almacen en el build: estas pruebas no pueden depender de si
+   corren ahi o en local. Cada una pone el suyo, de mentira. */
+for (const variable of [
+  'KV_REST_API_URL',
+  'KV_REST_API_TOKEN',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+]) {
+  delete process.env[variable]
+}
 
 describe('las fechas', () => {
   test('el dia se corta a la medianoche de Monagas, no a la del servidor', () => {
@@ -261,5 +272,131 @@ describe('la ficha de cada aparato', () => {
         zona: 'America/Caracas',
       },
     )
+  })
+})
+
+describe('el tope por origen', () => {
+  const ALMACEN = 'https://almacen.test'
+  const CUERPO = { tipo: 'inicio', id: 'abcdefgh1234', nuevo: false, pwa: false, movil: false }
+
+  /* Un Redis de mentira con lo que usa el latido: lectura, escritura con
+     caducidad y contador. Guarda cada comando que le llega para mirar que se
+     escribio y que no. `caido` tumba solo la lectura del tope, que es la
+     peticion de un comando. */
+  function almacen({ caido = false } = {}) {
+    const llaves = new Map()
+    const recibidos = []
+    const resultado = ([orden, llave, ...resto]) => {
+      if (orden === 'GET') return llaves.get(llave)?.valor ?? null
+      if (orden === 'SET') {
+        if (resto.includes('NX') && llaves.has(llave)) return null
+        llaves.set(llave, { valor: resto[0], segundos: Number(resto[resto.indexOf('EX') + 1]) })
+        return 'OK'
+      }
+      if (orden === 'INCR') {
+        const entrada = llaves.get(llave) ?? { valor: '0' }
+        entrada.valor = String(Number(entrada.valor) + 1)
+        llaves.set(llave, entrada)
+        return Number(entrada.valor)
+      }
+      return 1
+    }
+    globalThis.fetch = async (url, opciones) => {
+      if (!String(url).startsWith(ALMACEN)) throw new Error(`peticion inesperada: ${url}`)
+      const comandos = JSON.parse(opciones.body)
+      if (caido && comandos.length === 1 && comandos[0][0] === 'GET') throw new Error('ECONNRESET')
+      recibidos.push(...comandos)
+      return { ok: true, json: async () => comandos.map((c) => ({ result: resultado(c) })) }
+    }
+    return { llaves, recibidos }
+  }
+
+  function conAlmacen(t, opciones) {
+    const antes = globalThis.fetch
+    process.env.KV_REST_API_URL = ALMACEN
+    process.env.KV_REST_API_TOKEN = 'secreto-de-mentira'
+    t.after(() => {
+      globalThis.fetch = antes
+      delete process.env.KV_REST_API_URL
+      delete process.env.KV_REST_API_TOKEN
+    })
+    return almacen(opciones)
+  }
+
+  /* Un latido de inicio desde una IP. Lo que escribe cada uno es una HSET de
+     la ficha: contarlas dice cuantos latidos se han contado. */
+  async function enviar(ip = '190.0.0.1') {
+    const res = {
+      codigo: null,
+      status(c) {
+        this.codigo = c
+        return this
+      },
+      end() {
+        return this
+      },
+    }
+    await handler({ method: 'POST', headers: { 'x-forwarded-for': ip }, body: CUERPO }, res)
+    return res
+  }
+  const contados = (redis) => redis.recibidos.filter((c) => c[0] === 'HSET').length
+  const cuentaDe = (redis) =>
+    redis.llaves.get([...redis.llaves.keys()].find((l) => l.includes(':latido:de:')))
+
+  test('dentro del tope cada latido cuenta, y la cuenta caduca a los diez minutos', async (t) => {
+    const redis = conAlmacen(t)
+    for (let i = 0; i < TOPE_LATIDOS; i++) assert.equal((await enviar()).codigo, 204)
+
+    assert.equal(contados(redis), TOPE_LATIDOS)
+    assert.equal(cuentaDe(redis).valor, String(TOPE_LATIDOS))
+    assert.equal(cuentaDe(redis).segundos, 600)
+    assert.ok(
+      [...redis.llaves.keys()].every((l) => !l.includes('190.0.0.1')),
+      'la IP no aparece en ninguna clave: solo la huella',
+    )
+  })
+
+  test('pasado el tope responde 429 y no cuenta nada', async (t) => {
+    const redis = conAlmacen(t)
+    for (let i = 0; i < TOPE_LATIDOS; i++) await enviar()
+
+    const antes = redis.recibidos.length
+    const res = await enviar()
+    assert.equal(res.codigo, 429)
+    const pasado = redis.recibidos.slice(antes)
+    assert.deepEqual(
+      pasado.map((c) => c[0]),
+      ['GET'],
+      'solo la lectura del tope: ni totales ni cuenta',
+    )
+    assert.equal(contados(redis), TOPE_LATIDOS)
+    assert.equal(cuentaDe(redis).valor, String(TOPE_LATIDOS))
+  })
+
+  test('el tope es de cada origen, no de todos', async (t) => {
+    conAlmacen(t)
+    for (let i = 0; i < TOPE_LATIDOS; i++) await enviar('190.0.0.1')
+    assert.equal((await enviar('190.0.0.1')).codigo, 429)
+    assert.equal((await enviar('190.0.0.2')).codigo, 204)
+  })
+
+  test('si el almacen falla al leer el tope, el latido sigue contando', async (t) => {
+    const redis = conAlmacen(t, { caido: true })
+    const res = await enviar()
+    assert.equal(res.codigo, 204)
+    assert.equal(contados(redis), 1, 'el tope no puede dejar a nadie sin latido')
+  })
+
+  test('sin almacen no hay tope y no se llama a ninguna parte', async (t) => {
+    const antes = globalThis.fetch
+    let llamadas = 0
+    globalThis.fetch = async () => {
+      llamadas++
+      throw new Error('no deberia llamarse')
+    }
+    t.after(() => (globalThis.fetch = antes))
+
+    for (let i = 0; i < TOPE_LATIDOS + 5; i++) assert.equal((await enviar()).codigo, 204)
+    assert.equal(llamadas, 0)
   })
 })

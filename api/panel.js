@@ -16,11 +16,22 @@ import { PREFIJO, fechaDe } from './latido.js'
 
 const k = (...partes) => [PREFIJO, ...partes].join(':')
 
-/** Compara sin filtrar por tiempo. Distinta longitud es distinto, y ya. */
+/* La clave va en la cabecera Authorization, nunca en la URL: una URL queda en
+   los logs de Vercel y en el Referer, una cabecera no. */
+function claveDeCabecera(req) {
+  const cabecera = req.headers?.authorization
+  const m = typeof cabecera === 'string' ? /^Bearer (.+)$/i.exec(cabecera) : null
+  return m ? m[1] : null
+}
+
+/** Compara sin filtrar por tiempo. Distinta longitud en bytes es distinto, y ya. */
 function claveCorrecta(recibida) {
   const buena = process.env.PANEL_CLAVE
-  if (!buena || typeof recibida !== 'string' || recibida.length !== buena.length) return false
-  return timingSafeEqual(Buffer.from(recibida), Buffer.from(buena))
+  if (!buena || typeof recibida !== 'string') return false
+  const a = Buffer.from(recibida)
+  const b = Buffer.from(buena)
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
 }
 
 /** Los ultimos n dias en fechas de Monagas, del mas viejo al de hoy */
@@ -299,7 +310,7 @@ async function aparatos(cuantos, ahora = Date.now()) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'metodo' })
   if (!process.env.PANEL_CLAVE) return res.status(503).json({ error: 'sin-clave' })
-  if (!claveCorrecta(req.query?.clave)) return res.status(401).json({ error: 'clave' })
+  if (!claveCorrecta(claveDeCabecera(req))) return res.status(401).json({ error: 'clave' })
   if (!hayAlmacen()) return res.status(503).json({ error: 'sin-almacen' })
 
   const hoy = fechaDe()

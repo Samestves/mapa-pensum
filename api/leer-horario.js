@@ -455,8 +455,11 @@ export default async function handler(req, res) {
 
   /* Las averias quedan en el registro de Vercel con el mensaje de Google: es
      donde se va a mirar cuando alguien diga "no me lee el horario". Las
-     esperas no: no son averias y ya se cuentan en el turno. */
-  if (cuerpo.detalle) console.warn(`[lector] ${cuerpo.error} · ${cuerpo.detalle}`)
+     esperas no: no son averias y ya se cuentan en el turno. El detalle no
+     viaja en la respuesta: lleva nombres de modelos y texto crudo de Google,
+     que es informacion interna y al estudiante no le sirve. */
+  const { detalle, ...publico } = cuerpo
+  if (detalle) console.warn(`[lector] ${publico.error} · ${detalle}`)
 
-  return res.status(estado).json(cuerpo)
+  return res.status(estado).json(publico)
 }
