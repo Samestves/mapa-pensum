@@ -125,12 +125,13 @@ export function parecido(a, b) {
 
   /* Una palabra corta se compara entera; a partir de tres letras vale que una
      empiece por la otra, que es como se abrevia un horario: "ING" por
-     "Inglés", "PROG" por "Programación". */
+     "Inglés", "PROG" por "Programación". Las dos tienen que llegar a tres: si
+     no, el numeral "I" de "Integración I" casaria con "Informática". */
   const resto = [...ub]
   let comunes = 0
   for (const p of ua) {
     const i = resto.findIndex(
-      (q) => q === p || (p.length >= 3 && (q.startsWith(p) || p.startsWith(q))),
+      (q) => q === p || (p.length >= 3 && q.length >= 3 && (q.startsWith(p) || p.startsWith(q))),
     )
     if (i >= 0) {
       comunes++

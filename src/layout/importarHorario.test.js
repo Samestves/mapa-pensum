@@ -132,6 +132,25 @@ test('el emparejamiento', async (t) => {
     // "Matemática" sin nivel esta a la misma distancia de la I y de la II
     assert.equal(emparejar({ nombre: 'Matemática' }, MATERIAS).materia, null)
   })
+
+  await t.test(
+    'un numeral romano no abre palabras: "I" no es el principio de "Informática"',
+    () => {
+      // Pensum real de Tecnologia de los Alimentos: no hay Informática, y antes
+      // "Informática" caia en "Matemáticas I" porque su "I" casaba por prefijo
+      const alimentos = [
+        { codigo: 'MAT1', nombre: 'Matemáticas I' },
+        { codigo: 'MAT2', nombre: 'Matemáticas II' },
+        { codigo: 'FIS', nombre: 'Física' },
+        { codigo: 'ING', nombre: 'Inglés Técnico I' },
+      ]
+      assert.equal(parecido('Informática', 'Matemáticas I'), 0)
+      assert.equal(emparejar({ nombre: 'Informática' }, alimentos).materia, null)
+      assert.equal(emparejar({ nombre: 'Inglés' }, alimentos).materia, null, 'no es Matemáticas I')
+      // Y la abreviatura de tres letras sigue valiendo
+      assert.ok(parecido('ING TEC I', 'Inglés Técnico I') > 0.9)
+    },
+  )
 })
 
 test('la revision', async (t) => {
