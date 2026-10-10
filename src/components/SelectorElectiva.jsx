@@ -4,6 +4,7 @@ import { sinTildes } from '../data/texto'
 import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { codigoVisible } from '../data/codigoVisible'
+import { useEstados } from '../hooks/useAvance'
 import { useEsTelefono } from '../hooks/useEsTelefono'
 import { tituloGrupo } from '../layout/franjaElectivas'
 import HojaInferior from './HojaInferior'
@@ -121,16 +122,8 @@ function Cabecera({ casilla, grupo, alCerrar, telefono }) {
   )
 }
 
-function Contenido({
-  casilla,
-  grupo,
-  opciones,
-  estados,
-  casillaDe,
-  aprobarAlElegir,
-  alColocar,
-  alCerrar,
-}) {
+function Contenido({ casilla, grupo, opciones, casillaDe, aprobarAlElegir, alColocar, alCerrar }) {
+  const estados = useEstados()
   const [busqueda, setBusqueda] = useState('')
 
   const puesta = opciones.find((o) => casillaDe[o.codigo] === casilla.codigo) ?? null

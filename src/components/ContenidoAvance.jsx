@@ -2,6 +2,7 @@ import { ChevronRight, GraduationCap } from 'lucide-react'
 import { avanceDe } from '../data/avance'
 import { textoCarga } from '../data/cargaPlan'
 import { mesCorto } from '../data/meses'
+import { useAvanceGrupos, useMarcas, useProgreso } from '../hooks/useAvance'
 import { useGradoEstimado } from '../hooks/useGradoEstimado'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import SelectorTema from './SelectorTema'
@@ -19,7 +20,8 @@ const TRAMOS = [
 const TITULO = 'text-[11px] font-semibold tracking-[0.14em] text-tinta-tenue uppercase'
 
 /** El porcentaje grande y, al lado, de que es ese porcentaje. */
-function Cifra({ progreso }) {
+function Cifra() {
+  const progreso = useProgreso()
   const numero = Math.round(useNumeroAnimado(avanceDe(progreso)))
   const conCreditos = progreso.porcentaje != null
 
@@ -55,7 +57,8 @@ function Cifra({ progreso }) {
 }
 
 /** Como esta repartida la carrera, en una barra y tres numeros. */
-function Reparto({ progreso }) {
+function Reparto() {
+  const progreso = useProgreso()
   if (!progreso.total) return null
 
   return (
@@ -96,7 +99,8 @@ function Reparto({ progreso }) {
  * Vive en su propio componente porque es el unico que calcula algo -el plan
  * entero-, y asi solo lo calcula mientras el avance esta abierto.
  */
-function TarjetaPlan({ carrera, marcas, elegidas, alPlanificar }) {
+function TarjetaPlan({ carrera, elegidas, alPlanificar }) {
+  const marcas = useMarcas()
   const { semestres, materias, fecha, carga } = useGradoEstimado({
     asignaturas: carrera.asignaturas,
     grupos: carrera.grupos,
@@ -165,32 +169,18 @@ function TarjetaPlan({ carrera, marcas, elegidas, alPlanificar }) {
  * electivas, que cuentan para graduarse. Y al final lo que no es avance pero
  * no tiene mejor sitio: la apariencia y reiniciar.
  */
-export default function ContenidoAvance({
-  carrera,
-  progreso,
-  avanceGrupos,
-  marcas,
-  elegidas,
-  reiniciar,
-  alPlanificar,
-  tema,
-  alternarTema,
-}) {
+export default function ContenidoAvance({ carrera, elegidas, alPlanificar, tema, alternarTema }) {
+  const avanceGrupos = useAvanceGrupos()
   /* Solo las cuotas con meta oficial: un "0 UC" sin saber de cuantas no le
      dice a nadie si le falta algo. */
   const cuotas = Object.values(avanceGrupos).filter((g) => g.meta != null)
 
   return (
     <div className="flex flex-col gap-6">
-      <Cifra progreso={progreso} />
-      <Reparto progreso={progreso} />
+      <Cifra />
+      <Reparto />
 
-      <TarjetaPlan
-        carrera={carrera}
-        marcas={marcas}
-        elegidas={elegidas}
-        alPlanificar={alPlanificar}
-      />
+      <TarjetaPlan carrera={carrera} elegidas={elegidas} alPlanificar={alPlanificar} />
 
       {cuotas.length > 0 && (
         <section>
@@ -208,7 +198,7 @@ export default function ContenidoAvance({
           <span className="text-[14px] text-tinta-suave">Apariencia</span>
           <SelectorTema tema={tema} alternarTema={alternarTema} />
         </div>
-        <BotonReinicio reiniciar={reiniciar} cuantas={Object.keys(marcas).length} />
+        <BotonReinicio />
       </footer>
     </div>
   )

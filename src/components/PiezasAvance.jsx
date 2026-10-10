@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, RotateCcw, TriangleAlert } from 'lucide-react'
+import { useAccionesAvance, useMarcas } from '../hooks/useAvance'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 
 /* Piezas del avance (ver ContenidoAvance), aparte porque tienen estado o
@@ -53,7 +54,9 @@ const ROJO_TENUE = 'color-mix(in oklab, var(--estado-rojo) 9%, transparent)'
  * cuanto se va a perder -"tus 8 materias marcadas"- y deja Cancelar del lado
  * del pulgar. Se cierra sola con Escape o pulsando fuera.
  */
-export function BotonReinicio({ reiniciar, cuantas }) {
+export function BotonReinicio() {
+  const { reiniciar } = useAccionesAvance()
+  const cuantas = Object.keys(useMarcas()).length
   const [confirmando, setConfirmando] = useState(false)
   const caja = useRef(null)
 

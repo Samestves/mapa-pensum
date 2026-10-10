@@ -1,4 +1,5 @@
 import { SITUACION } from '../../layout/situacion'
+import { useProgreso } from '../../hooks/useAvance'
 import { useNumeroAnimado } from '../../hooks/useNumeroAnimado'
 import { IconoSituacion } from '../IconoSituacion'
 import { colorSituacion } from './aspecto'
@@ -8,7 +9,8 @@ import { colorSituacion } from './aspecto'
  * una barra por semestre que se llena de abajo arriba. Tocar una lleva a ese
  * semestre.
  */
-export default function Resumen({ progreso, semestres, actual, alIr }) {
+export default function Resumen({ semestres, actual, alIr }) {
+  const progreso = useProgreso()
   const conTitulo = progreso.porcentaje != null
   const valor = useNumeroAnimado(conTitulo ? progreso.porcentaje : progreso.porcentajeObligatorias)
 

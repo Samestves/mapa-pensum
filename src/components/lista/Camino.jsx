@@ -1,3 +1,4 @@
+import { useEstados } from '../../hooks/useAvance'
 import { situacionDe } from '../../layout/situacion'
 import { IconoSituacion } from '../IconoSituacion'
 import { colorSituacion } from './aspecto'
@@ -7,7 +8,8 @@ import { colorSituacion } from './aspecto'
  * desbloquea, o un candado cerrado y las que le faltan. Cada una es un boton
  * que lleva hasta ella en la lista. Entran una tras otra al abrir la fila.
  */
-export default function Camino({ icono: Icono, rotulo, color, materias, estados, alIr }) {
+export default function Camino({ icono: Icono, rotulo, color, materias, alIr }) {
+  const estados = useEstados()
   return (
     <div className="flex flex-col gap-2">
       <p className="flex items-center gap-1.5 text-[11px] text-tinta-tenue">

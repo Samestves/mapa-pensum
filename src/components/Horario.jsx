@@ -1,6 +1,7 @@
 import { Suspense, memo, useCallback, useMemo, useRef, useState } from 'react'
 import { Copy, ImagePlus, Pencil, Trash2 } from 'lucide-react'
 import { ESTADO } from '../data/estados'
+import { useEstados } from '../hooks/useAvance'
 import { useConsulta } from '../hooks/useConsulta'
 import { useHorario } from '../hooks/useHorario'
 import { leer } from '../data/almacen'
@@ -64,7 +65,8 @@ const medioDeEnvio = () => {
  * horario, el pensum, la ficha, los menus y el lector-, y su unico trabajo es
  * conectarlas. Ni dibuja la semana ni valida nada.
  */
-function Horario({ carrera, estados }) {
+function Horario({ carrera }) {
+  const estados = useEstados()
   const { porDia, sesiones, guardar, guardarVarias, quitar, vaciar, duplicar } = useHorario(
     carrera.slug,
   )

@@ -2,11 +2,47 @@ import { memo } from 'react'
 import { Lock, LockOpen } from 'lucide-react'
 import { ESTADO } from '../../data/estados'
 import { bloqueada } from '../../layout/filtrosLista'
-import { SITUACION, situacionDe } from '../../layout/situacion'
+import { useEstados } from '../../hooks/useAvance'
+import { SITUACION } from '../../layout/situacion'
 import { IconoSituacion } from '../IconoSituacion'
 import Camino from './Camino'
 import Selector from './Selector'
 import { colorSituacion } from './aspecto'
+
+/**
+ * Lo que el desplegable de una fila cuenta del camino: lo que le falta si esta
+ * cerrada, o lo que desbloquea. Es lo unico de la fila que mira los estados de
+ * todas las demas, y por eso vive aparte: la fila no los lee, y solo este se
+ * repinta cuando cambian.
+ */
+function CaminoDeLaFila({ cerrada, aprobada, desbloquea, previas, alIr }) {
+  const estados = useEstados()
+  const faltan = previas.filter((a) => estados[a.codigo] !== ESTADO.APROBADA)
+
+  if (cerrada && faltan.length > 0) {
+    return (
+      <Camino
+        icono={Lock}
+        rotulo="Le falta"
+        color="var(--estado-cursando)"
+        materias={faltan}
+        alIr={alIr}
+      />
+    )
+  }
+  if (desbloquea.length > 0) {
+    return (
+      <Camino
+        icono={LockOpen}
+        rotulo={aprobada ? 'Desbloqueó' : 'Desbloquea'}
+        color="var(--sit-inscribible-luz)"
+        materias={desbloquea}
+        alIr={alIr}
+      />
+    )
+  }
+  return null
+}
 
 /**
  * Una materia: su icono de estado -que es tambien el boton de aprobarla de un
@@ -21,7 +57,7 @@ import { colorSituacion } from './aspecto'
 export default memo(function FilaMateria({
   nodo,
   estado,
-  estados,
+  situacion,
   relaciones,
   porCodigo,
   abierta,
@@ -34,15 +70,14 @@ export default memo(function FilaMateria({
   alAlternar,
   alIr,
 }) {
-  const situacion = situacionDe(nodo.codigo, nodo.prerrequisitos, estados)
   const aprobada = estado === ESTADO.APROBADA
 
   const desbloquea = (relaciones.adelante.get(nodo.codigo) ?? [])
     .map((c) => porCodigo.get(c))
     .filter(Boolean)
-  const faltan = (relaciones.atras.get(nodo.codigo) ?? [])
+  const previas = (relaciones.atras.get(nodo.codigo) ?? [])
     .map((c) => porCodigo.get(c))
-    .filter((a) => a && estados[a.codigo] !== ESTADO.APROBADA)
+    .filter(Boolean)
   const cerrada = bloqueada(situacion)
 
   const colorNombre = aprobada
@@ -125,25 +160,13 @@ export default memo(function FilaMateria({
                 abre la fila: el panel esta siempre montado para plegarse
                 suave, y sin esto solo animarian la primera vez. */}
             <div key={abierta ? 'abierta' : 'cerrada'}>
-              {cerrada && faltan.length > 0 ? (
-                <Camino
-                  icono={Lock}
-                  rotulo="Le falta"
-                  color="var(--estado-cursando)"
-                  materias={faltan}
-                  estados={estados}
-                  alIr={alIr}
-                />
-              ) : desbloquea.length > 0 ? (
-                <Camino
-                  icono={LockOpen}
-                  rotulo={aprobada ? 'Desbloqueó' : 'Desbloquea'}
-                  color="var(--sit-inscribible-luz)"
-                  materias={desbloquea}
-                  estados={estados}
-                  alIr={alIr}
-                />
-              ) : null}
+              <CaminoDeLaFila
+                cerrada={cerrada}
+                aprobada={aprobada}
+                desbloquea={desbloquea}
+                previas={previas}
+                alIr={alIr}
+              />
             </div>
           </div>
         </div>

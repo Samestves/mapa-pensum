@@ -14,13 +14,13 @@ import { FRANJA } from '../layout/constantes'
 import { calcularFranja } from '../layout/franjaElectivas'
 import { CARRERAS } from '../data/carreras'
 import { ESTADO } from '../data/estados'
-import { accionDeSemestre, marcasDeSemestres } from '../data/semestre'
+import { accionDeSemestre } from '../data/semestre'
 import { recordarVista, vistaInicial } from '../data/vistaInicial'
 import { VISTAS } from '../data/vistas'
 import { usePaneles } from '../hooks/usePaneles'
 import { useCasillas } from '../hooks/useCasillas'
+import { useAccionesAvance, useMarcas } from '../hooks/useAvance'
 import { useEsTelefono } from '../hooks/useEsTelefono'
-import { usePensum } from '../hooks/usePensum'
 import { useTema } from '../hooks/useTema'
 import { variablesDeTono } from '../theme/paleta'
 import AlPedirlo from './AlPedirlo'
@@ -40,9 +40,26 @@ import EsqueletoMapa from './EsqueletoMapa'
 import HojaAvance from './HojaAvance'
 import PanelProgreso from './PanelProgreso'
 import Precalentar from './Precalentar'
+import ProveedorAvance from './ProveedorAvance'
 import ContenidoAvance from './ContenidoAvance'
 import SelectorElectiva, { PrecalentarSelector } from './SelectorElectiva'
 import '../estilos/carrera.css'
+
+/* Las electivas que marcas -desde la lista, o de antes de la franja- entran
+   solas en ella. Depende tambien de `elegidas` a proposito: vaciar la
+   casilla de una electiva aprobada la devuelve, porque aprobada sigue
+   siendo parte de tu pensum.
+
+   Es un componente aparte porque es lo unico de la pantalla que tiene que
+   mirar las marcas: leerlas aqui, y no en PantallaCarrera, es lo que deja a
+   esta fuera de cada marca. */
+function AdoptarElectivasMarcadas({ adoptar, elegidas }) {
+  const marcas = useMarcas()
+  useEffect(() => {
+    adoptar(marcas)
+  }, [adoptar, marcas, elegidas])
+  return null
+}
 
 /**
  * El mapa de una carrera. Recibe el pensum ya normalizado y no sabe de donde
@@ -51,36 +68,30 @@ import '../estilos/carrera.css'
  * La clave de React debe ser el slug. Al cambiar de carrera se remonta entero
  * y el estado de vista (zoom, seleccion, paneles abiertos) arranca limpio, que
  * es lo correcto: la posicion del mapa de una carrera no significa nada en otra.
+ *
+ * Esto es solo el cascaron que da el avance (ver ProveedorAvance). La pantalla
+ * de verdad, PantallaCarrera, no lee el avance: marcar una materia no la
+ * repinta, solo a quien lo muestra.
  */
 function VistaCarrera({ carrera, alVolver }) {
+  return (
+    <ProveedorAvance carrera={carrera}>
+      <PantallaCarrera carrera={carrera} alVolver={alVolver} />
+    </ProveedorAvance>
+  )
+}
+
+function PantallaCarrera({ carrera, alVolver }) {
   const { asignaturas, grupos } = carrera
 
   // El layout es geometria pura y no depende del avance: se calcula una vez
   const layoutBase = useMemo(() => calcularLayout(asignaturas, grupos), [asignaturas, grupos])
 
-  const {
-    marcas,
-    estados,
-    progreso,
-    avanceGrupos,
-    descarga,
-    toque,
-    marcar,
-    marcarVarias,
-    reiniciar,
-  } = usePensum(carrera)
+  const { marcar, marcarVarias, leer } = useAccionesAvance()
   /* Que electiva has puesto en cada casilla del pensum. Es una decision de
      planificacion, no de avance: aprobarla la sigue llevando usePensum. */
   const { elegidas, casillaDe, colocar, adoptar } = useCasillas(carrera)
   const [casillaAbierta, setCasillaAbierta] = useState(null)
-
-  /* Las electivas que marcas -desde la lista, o de antes de la franja- entran
-     solas en ella. Depende tambien de `elegidas` a proposito: vaciar la
-     casilla de una electiva aprobada la devuelve, porque aprobada sigue
-     siendo parte de tu pensum. */
-  useEffect(() => {
-    adoptar(marcas)
-  }, [adoptar, marcas, elegidas])
 
   /* La franja de electivas de las carreras sin ruta oficial completa. Es lo unico del
      mapa que depende de lo que eligio el estudiante, asi que va aparte del
@@ -315,13 +326,6 @@ function VistaCarrera({ carrera, alVolver }) {
     [marcarVarias, carrera.slug],
   )
 
-  /* La casilla de cada semestre -cuanto llevas de el y que le falta-, la
-     misma en la cabecera del mapa y en la de la lista. */
-  const marcasSemestre = useMemo(
-    () => marcasDeSemestres(layout.nodos, enCasilla, estados),
-    [layout.nodos, enCasilla, estados],
-  )
-
   /* Pulsar la casilla de un semestre, en el mapa o en la lista (ver
      accionDeSemestre): aprueba lo que le falta, sus obligatorias y la
      electiva de cada casilla, en un solo cambio; si ya esta todo, lo desmarca.
@@ -332,10 +336,13 @@ function VistaCarrera({ carrera, alVolver }) {
      Y si lo unico que falta es una electiva sin elegir, abre su selector. Lo
      que se elija ahi queda aprobado: quien pulso la casilla queria el
      semestre completo, y dejarle la electiva puesta y sin aprobar seria
-     pedirle otro toque para acabar lo que ya pidio. */
+     pedirle otro toque para acabar lo que ya pidio.
+
+     Los estados se leen al pulsar y no se piden por props: depender de ellos
+     cambiaria esta funcion en cada marca, y con ella a las dos vistas. */
   const alternarSemestre = useCallback(
     (semestre) => {
-      const accion = accionDeSemestre(layout.nodos, semestre, enCasilla, estados)
+      const accion = accionDeSemestre(layout.nodos, semestre, enCasilla, leer().estados)
       if (!accion) return
       if (accion.tipo === 'elegir') {
         abrirCasilla(accion.casilla, { aprobar: true })
@@ -344,7 +351,7 @@ function VistaCarrera({ carrera, alVolver }) {
       const marca = accion.tipo === 'aprobar' ? ESTADO.APROBADA : null
       marcarVariasYContar(Object.fromEntries(accion.codigos.map((c) => [c, marca])))
     },
-    [layout, enCasilla, estados, marcarVariasYContar, abrirCasilla],
+    [layout, enCasilla, leer, marcarVariasYContar, abrirCasilla],
   )
 
   const alternarSeleccion = useCallback(
@@ -359,14 +366,11 @@ function VistaCarrera({ carrera, alVolver }) {
   )
 
   /* Lo que enseña el avance, igual en el panel de escritorio y en la hoja del
-     telefono (ver ContenidoAvance). */
+     telefono (ver ContenidoAvance). Solo lo que no es avance: las marcas, el
+     progreso y las cuotas las lee ContenidoAvance de su contexto. */
   const avance = {
     carrera,
-    progreso,
-    avanceGrupos,
-    marcas,
     elegidas,
-    reiniciar,
     alPlanificar: abrirPlan,
     tema,
     alternarTema,
@@ -378,12 +382,13 @@ function VistaCarrera({ carrera, alVolver }) {
       style={tonos}
       data-con-avisos={(carrera.avisos?.length ?? 0) > 0}
     >
+      <AdoptarElectivasMarcadas adoptar={adoptar} elegidas={elegidas} />
+
       {/* Las islas flotan sobre la vista: este envoltorio no ocupa sitio ni
           captura el puntero, solo lo hacen las islas que lleva dentro. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-40">
         <BarraSuperior
           carrera={carrera}
-          resumen={progreso}
           vista={vista}
           alCambiarVista={setVista}
           avanceAbierto={abierto === 'avance'}
@@ -401,7 +406,6 @@ function VistaCarrera({ carrera, alVolver }) {
           alCerrar={() => setPaletaAbierta(false)}
           acciones={accionesPaleta}
           materias={layout.nodos}
-          estados={estados}
           carreras={CARRERAS.filter((c) => c.slug !== carrera.slug)}
           alIrAMateria={(codigo) => {
             setVista('mapa')
@@ -415,8 +419,6 @@ function VistaCarrera({ carrera, alVolver }) {
         <PlanRuta
           abierto={planAbierto}
           carrera={carrera}
-          marcas={marcas}
-          progreso={progreso}
           elegidas={elegidas}
           alCerrar={() => setPlanAbierto(false)}
         />
@@ -429,12 +431,11 @@ function VistaCarrera({ carrera, alVolver }) {
         codigo={casillaAbierta}
         porCodigo={layout.porCodigo}
         grupos={grupos}
-        estados={estados}
         casillaDe={casillaDe}
         aprobarAlElegir={aprobarAlElegir}
         alColocar={(casilla, codigo) => {
           colocar(casilla, codigo)
-          if (aprobarAlElegir && codigo && estados[codigo] !== ESTADO.APROBADA) {
+          if (aprobarAlElegir && codigo && leer().estados[codigo] !== ESTADO.APROBADA) {
             marcarYContar(codigo, ESTADO.APROBADA)
           }
           setCasillaAbierta(null)
@@ -469,19 +470,15 @@ function VistaCarrera({ carrera, alVolver }) {
                 <Activity key={id} mode={id === vistaEnPantalla ? 'visible' : 'hidden'}>
                   <div className="entrada-panel relative flex min-w-0 flex-1 overflow-hidden">
                     {id === 'horario' ? (
-                      <Horario carrera={carrera} estados={estados} />
+                      <Horario carrera={carrera} />
                     ) : id === 'mapa' ? (
                       <GrafoPensum
                         clave={carrera.slug}
                         layout={layout}
                         porCodigo={porCodigo}
-                        estados={estados}
-                        descarga={descarga}
-                        toque={toque}
                         seleccionado={seleccionado}
                         alSeleccionar={alternarSeleccion}
                         alMarcar={marcarYContar}
-                        marcasSemestre={marcasSemestre}
                         alAlternarSemestre={alternarSemestre}
                         enCasilla={enCasilla}
                         alAbrirCasilla={abrirCasilla}
@@ -490,14 +487,9 @@ function VistaCarrera({ carrera, alVolver }) {
                     ) : (
                       <VistaLista
                         layout={layout}
-                        estados={estados}
-                        progreso={progreso}
-                        avanceGrupos={avanceGrupos}
-                        toque={toque}
-                        descarga={descarga}
+                        enCasilla={enCasilla}
                         alMirar={mirar}
                         alMarcar={marcarYContar}
-                        marcasSemestre={marcasSemestre}
                         alAlternarSemestre={alternarSemestre}
                       />
                     )}
@@ -525,7 +517,6 @@ function VistaCarrera({ carrera, alVolver }) {
                   <PrecalentarSelector
                     nodos={layout.nodos}
                     grupos={grupos}
-                    estados={estados}
                     casillaDe={casillaDe}
                     alColocar={colocar}
                     alCerrar={cerrarCasilla}
@@ -549,7 +540,6 @@ function VistaCarrera({ carrera, alVolver }) {
       <BarraInferior
         vista={vista}
         alCambiar={setVista}
-        resumen={progreso}
         avanceAbierto={abierto === 'avance'}
         alAlternarAvance={alternarAvance}
         alVolver={alVolver}

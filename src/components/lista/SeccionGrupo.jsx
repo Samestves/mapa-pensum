@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react'
+import { useEstados } from '../../hooks/useAvance'
 import { altoDeGrupo, reserva } from '../../layout/alturaLista'
 import { tituloGrupo } from '../../layout/franjaElectivas'
 import { situacionDe } from '../../layout/situacion'
@@ -12,7 +13,8 @@ import Riel from './Riel'
  *
  * Devuelve null si con el filtro puesto no queda nada que enseñar.
  */
-export default function SeccionGrupo({ g, filtro, entra, estados, abierto, fila, alAbrir }) {
+export default function SeccionGrupo({ g, filtro, entra, abierto, fila, alAbrir }) {
+  const estados = useEstados()
   const id = `grupo-${g.clave}`
   const candidatas = filtro === 'todo' ? g.items : g.marcadas
   const items = candidatas.filter((e) => entra(situacionDe(e.codigo, e.prerrequisitos, estados)))

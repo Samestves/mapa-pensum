@@ -6,6 +6,7 @@ import { guardarCarga, leerCarga } from '../../data/cargaPlan'
 import { compartirArchivo, descargarArchivo, puedeCompartir } from '../../data/compartir'
 import { imagenDeLaRuta, mensajeDeLaRuta } from '../../data/exportarPlan'
 import { MES } from '../../data/meses'
+import { useMarcas, useProgreso } from '../../hooks/useAvance'
 import { mesEstimadoGrado, planificar } from '../../layout/planificador'
 
 import HojaPlan from '../HojaPlan'
@@ -25,8 +26,10 @@ const CLAVE_NOMBRE = 'mapa-pensum:nombre'
  * plan se recalcula con un valor diferido: arrastrar el mando tiene que
  * responder en el acto aunque el telefono tarde un poco en rehacer la lista.
  */
-export default function Ruta({ carrera, marcas, progreso, elegidas, telefono = false, alCerrar }) {
+export default function Ruta({ carrera, elegidas, telefono = false, alCerrar }) {
   const { asignaturas, grupos } = carrera
+  const marcas = useMarcas()
+  const progreso = useProgreso()
   const [carga, setCarga] = useState(leerCarga)
   const [nombre, setNombre] = useState(() => leer(CLAVE_NOMBRE, ''))
   const cargaDelPlan = useDeferredValue(carga)

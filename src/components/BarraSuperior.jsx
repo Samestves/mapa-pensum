@@ -47,7 +47,6 @@ const CIRCULO =
  */
 function BarraSuperior({
   carrera,
-  resumen,
   vista,
   alCambiarVista,
   avanceAbierto,
@@ -124,7 +123,6 @@ function BarraSuperior({
         {/* Solo desde md: en el telefono el avance es la isla redonda de la
             barra de abajo. */}
         <CapsulaAvance
-          resumen={resumen}
           abierta={avanceAbierto}
           alPulsar={alAlternarAvance}
           className="max-md:hidden"

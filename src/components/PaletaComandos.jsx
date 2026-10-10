@@ -7,6 +7,7 @@ import { ESTADO } from '../data/estados'
 import { colorNodo } from '../theme/areas'
 import { ETIQUETA_ESTADO } from '../theme/estados'
 import { codigoVisible } from '../data/codigoVisible'
+import { useEstados } from '../hooks/useAvance'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
 
@@ -112,11 +113,11 @@ function PaletaComandos({
   alCerrar,
   acciones,
   materias,
-  estados,
   carreras,
   alIrAMateria,
   alIrACarrera,
 }) {
+  const estados = useEstados()
   const refCaja = useRef(null)
   const refEntrada = useRef(null)
   const [texto, setTexto] = useState('')

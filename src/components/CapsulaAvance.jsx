@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { avanceDe, cuantoLlevas, describirAvance } from '../data/avance'
+import { useProgreso } from '../hooks/useAvance'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import AroAvance, { CifraAro } from './AroAvance'
 
@@ -21,7 +22,8 @@ const GROSOR_ARO = 2.4
  * El aro lleva el porcentaje con su "%", igual que la isla del telefono (ver
  * CifraAro), del 0 al 100 sin salirse.
  */
-function CapsulaAvance({ resumen, abierta, alPulsar, className = '' }) {
+function CapsulaAvance({ abierta, alPulsar, className = '' }) {
+  const resumen = useProgreso()
   const avance = Math.max(0, Math.min(100, avanceDe(resumen)))
   const numero = Math.round(useNumeroAnimado(avance))
   const detalle = describirAvance(resumen)

@@ -1,9 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useEstados } from '../hooks/useAvance'
 import { useFichaSaliente } from '../hooks/useFichaSaliente'
 import { useSenalado } from '../hooks/useSenalado'
 import { useVistaGrafo } from '../hooks/useVistaGrafo'
 import { useFocoGrafo } from '../hooks/useFocoGrafo'
 import { useMantenerRuta } from '../hooks/useMantenerRuta'
+import { useMarcasSemestre } from '../hooks/useMarcasSemestre'
 import { FormasBase, Luces, Plano, PlanosFoco, TextosBase } from './PlanosGrafo'
 import { RotulosFormas, RotulosTextos } from './RotulosGrafo'
 import DefsGrafo from './DefsGrafo'
@@ -41,19 +43,18 @@ function GrafoPensum({
   clave,
   layout,
   porCodigo,
-  estados,
-  descarga,
-  toque,
   seleccionado,
   alSeleccionar,
   alMarcar,
-  marcasSemestre,
   alAlternarSemestre,
   enCasilla,
   alAbrirCasilla,
   casillaDe,
 }) {
   const { nodos, columnas, aristas, relaciones, ancho, alto } = layout
+  const estados = useEstados()
+  /* Lo que dice la casilla de cada semestre, en la cabecera de sus columnas */
+  const marcasSemestre = useMarcasSemestre(nodos, enCasilla)
   // La franja de electivas solo existe en las carreras sin casillas oficiales
   const casillasFranja = layout.casillasFranja ?? SIN_FRANJA
   const filasFranja = layout.filasFranja ?? SIN_FRANJA
@@ -317,8 +318,6 @@ function GrafoPensum({
     nodos,
     casillasFranja,
     porCodigo,
-    descarga,
-    toque,
     enCasilla,
     alAbrirCasilla,
     alSenalar: senalar,
@@ -468,5 +467,6 @@ function GrafoPensum({
 
 /* memo: VistaCarrera se repinta por cosas que a esta vista no le tocan -abrir
    el avance, cambiar el tema, la paleta-, y sin esto cada una repintaba la
-   vista entera. Sus props son estables (useCallback/useMemo arriba). */
+   vista entera. Sus props son estables (useCallback/useMemo arriba): el avance
+   no viaja por props sino por contexto (ver useAvance). */
 export default memo(GrafoPensum)

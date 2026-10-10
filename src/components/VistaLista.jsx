@@ -1,5 +1,8 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { ESTADO } from '../data/estados'
+import { useAvanceGrupos, useDescarga, useEstados, useToque } from '../hooks/useAvance'
+import { useMarcasSemestre } from '../hooks/useMarcasSemestre'
+import { situacionDe } from '../layout/situacion'
 import { FILTROS, cuentasPorFiltro } from '../layout/filtrosLista'
 import { semestreActual, semestresDeLista, seccionesDeGrupos } from '../layout/semestresLista'
 import Filtros from './lista/Filtros'
@@ -28,19 +31,13 @@ import { PRIMERAS_SECCIONES, useListaCompleta } from './lista/useListaCompleta'
  *
  * Asi "si paso esta, se me abre aquella" se ve, no se lee.
  */
-function VistaLista({
-  layout,
-  estados,
-  progreso,
-  avanceGrupos,
-  toque,
-  descarga,
-  alMirar,
-  alMarcar,
-  marcasSemestre,
-  alAlternarSemestre,
-}) {
+function VistaLista({ layout, enCasilla, alMirar, alMarcar, alAlternarSemestre }) {
   const { columnas, nodos, electivas, gruposElectivas, relaciones, porCodigo } = layout
+  const estados = useEstados()
+  const avanceGrupos = useAvanceGrupos()
+  const toque = useToque()
+  const descarga = useDescarga()
+  const marcasSemestre = useMarcasSemestre(nodos, enCasilla)
   const [filtro, setFiltro] = useState('todo')
   const completa = useListaCompleta()
   /* La materia abierta. Una sola a la vez: es la que ordena la lista a su
@@ -144,7 +141,9 @@ function VistaLista({
   )
 
   /* El contador (n) solo se le pasa a quien lo usa: darselo a todas las filas
-     repintaba la lista entera en cada marca. */
+     repintaba la lista entera en cada marca. Y por lo mismo la fila recibe su
+     situacion ya hecha y no el mapa de estados: con el mapa, cada marca
+     repintaba las sesenta, y una fila cerrada no mira nada de lo demas. */
   const fila = (nodo) => {
     const tocada = toque?.codigo === nodo.codigo
     const recienAbierta = abiertasAhora.has(nodo.codigo)
@@ -153,7 +152,7 @@ function VistaLista({
         key={nodo.codigo}
         nodo={nodo}
         estado={estados[nodo.codigo]}
-        estados={estados}
+        situacion={situacionDe(nodo.codigo, nodo.prerrequisitos, estados)}
         relaciones={relaciones}
         porCodigo={porCodigo}
         abierta={foco === nodo.codigo}
@@ -177,12 +176,7 @@ function VistaLista({
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div aria-hidden="true" className="velo-lista" />
       <div className="mx-auto flex max-w-2xl flex-col px-4 pt-[calc(var(--reserva-cabecera)+1rem)] pb-[calc(var(--reserva-barra)+3rem)] md:pb-24">
-        <Resumen
-          progreso={progreso}
-          semestres={semestres}
-          actual={actual}
-          alIr={(n) => irASeccion(`semestre-${n}`)}
-        />
+        <Resumen semestres={semestres} actual={actual} alIr={(n) => irASeccion(`semestre-${n}`)} />
 
         <Filtros
           filtro={filtro}
@@ -227,7 +221,6 @@ function VistaLista({
                 g={g}
                 filtro={filtro}
                 entra={entra}
-                estados={estados}
                 abierto={gruposAbiertos[g.clave] ?? false}
                 fila={fila}
                 alAbrir={(clave, valor) => setGruposAbiertos((a) => ({ ...a, [clave]: valor }))}
@@ -241,5 +234,6 @@ function VistaLista({
 
 /* memo: VistaCarrera se repinta por cosas que a esta vista no le tocan -abrir
    el avance, cambiar el tema, la paleta-, y sin esto cada una repintaba la
-   vista entera. Sus props son estables (useCallback/useMemo arriba). */
+   vista entera. Sus props son estables (useCallback/useMemo arriba): el avance
+   no viaja por props sino por contexto (ver useAvance). */
 export default memo(VistaLista)

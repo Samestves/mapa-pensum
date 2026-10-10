@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { avanceDe, describirAvance } from '../data/avance'
+import { useProgreso } from '../hooks/useAvance'
 import { useNumeroAnimado } from '../hooks/useNumeroAnimado'
 import AroAvance, { CifraAro } from './AroAvance'
 
@@ -22,7 +23,8 @@ const GROSOR = 2.75
  * El numero va en HTML y no en un <text> del SVG: asi hereda la fuente y el
  * suavizado del resto de la interfaz (ver CifraAro).
  */
-function IslaAvance({ resumen, abierta, alPulsar }) {
+function IslaAvance({ abierta, alPulsar }) {
+  const resumen = useProgreso()
   const avance = Math.max(0, Math.min(100, avanceDe(resumen)))
   const numero = Math.round(useNumeroAnimado(avance))
   const detalle = describirAvance(resumen)

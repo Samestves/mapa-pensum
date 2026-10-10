@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react'
 import { SITUACION, TRAMO, tramoDe } from '../layout/situacion'
 import { salidaDeFoco } from '../layout/foco'
 import { codigoVisible } from '../data/codigoVisible'
+import { useDescarga, useToque } from '../hooks/useAvance'
 import NodoAsignatura from './NodoAsignatura'
 import NodoHueco, { TextoCasilla } from './NodoHueco'
 import { TextoTarjeta } from './CaraTarjeta'
@@ -62,9 +63,13 @@ export function Plano({ vista, className, formas, textos, ...resto }) {
  * La forma de una tarjeta del mapa: una materia, o una casilla de electiva
  * -vacia o con la electiva que pusiste-. La dibujan la base y el foco con las
  * mismas props; solo cambia si esta resaltada o elegida, que en la base nunca.
+ *
+ * La descarga y el toque no vienen en `contexto`: los leen quienes dibujan
+ * (FormasBase y FormasFoco) y los pasan aqui. Asi acabar la animacion solo
+ * repinta a esos dos y no a GrafoPensum entero.
  */
-function dibujarForma(nodo, contexto, { seleccionado = null, cadena = null } = {}) {
-  const { situaciones, enCasilla, descarga, toque, alAbrirCasilla } = contexto
+function dibujarForma(nodo, contexto, { descarga, toque, seleccionado = null, cadena = null }) {
+  const { situaciones, enCasilla, alAbrirCasilla } = contexto
   const { alSenalar, alDejarDeSenalar, alVerFicha } = contexto
 
   if (nodo.esHueco) {
@@ -154,7 +159,9 @@ const todasLasTarjetas = (nodos, casillasFranja) => [
  * silencio.
  */
 function FormasBaseSinMemo(props) {
-  const { situaciones, aristas, nodos, casillasFranja, porCodigo, descarga } = props
+  const { situaciones, aristas, nodos, casillasFranja, porCodigo } = props
+  const descarga = useDescarga()
+  const toque = useToque()
   return (
     <>
       {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza que
@@ -174,7 +181,9 @@ function FormasBaseSinMemo(props) {
           )
         })}
       </g>
-      {todasLasTarjetas(nodos, casillasFranja).map((nodo) => dibujarForma(nodo, props))}
+      {todasLasTarjetas(nodos, casillasFranja).map((nodo) =>
+        dibujarForma(nodo, props, { descarga, toque }),
+      )}
     </>
   )
 }
@@ -202,6 +211,8 @@ function LucesSinMemo({ situaciones, aristas }) {
  */
 function FormasFocoSinMemo({ conjunto, cadena, mirada, seleccionado, ...contexto }) {
   const { situaciones, aristas, nodos, casillasFranja, porCodigo } = contexto
+  const descarga = useDescarga()
+  const toque = useToque()
   return (
     <>
       {aristas.map(
@@ -220,7 +231,8 @@ function FormasFocoSinMemo({ conjunto, cadena, mirada, seleccionado, ...contexto
       )}
       {todasLasTarjetas(nodos, casillasFranja).map(
         (nodo) =>
-          conjunto.nodos.has(nodo.codigo) && dibujarForma(nodo, contexto, { seleccionado, cadena }),
+          conjunto.nodos.has(nodo.codigo) &&
+          dibujarForma(nodo, contexto, { descarga, toque, seleccionado, cadena }),
       )}
     </>
   )

@@ -29,7 +29,7 @@ import { VISTAS, indiceDeVista } from '../data/vistas'
  * 75 px de ancho segun la pantalla por 46 de alto: por encima de los 44 que
  * se consideran el minimo.
  */
-function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAvance, alVolver }) {
+function BarraInferior({ vista, alCambiar, avanceAbierto, alAlternarAvance, alVolver }) {
   const indice = indiceDeVista(vista)
 
   const cambiar = (id) => {
@@ -120,7 +120,7 @@ function BarraInferior({ vista, alCambiar, resumen, avanceAbierto, alAlternarAva
         })}
       </div>
 
-      <IslaAvance resumen={resumen} abierta={avanceAbierto} alPulsar={alAlternarAvance} />
+      <IslaAvance abierta={avanceAbierto} alPulsar={alAlternarAvance} />
     </nav>
   )
 }
