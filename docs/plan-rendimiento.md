@@ -9,7 +9,7 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | 2 · Un módulo por vista | Hecha el 2026-10-06 |
 | 3 · La lista pinta lo que se ve | Hecha el 2026-10-06 |
 | 4 · Cambiar de vista sin rehacer | Probada y retirada el 2026-10-07 |
-| 5 · Estado granular | Aplazada |
+| 5 · Estado granular | Hecha el 2026-10-09, con contextos en vez de almacén (ver abajo) |
 | 6 · Mapa | El lanzamiento, hecho el 2026-10-09; lo demás, aplazado |
 | 7 · Estructura | Hecha en parte el 2026-10-07 (ver abajo) |
 | 8 | Pendiente |
@@ -229,13 +229,34 @@ Se probó ocultar la vista que se deja con `content-visibility: hidden` en vez d
 
 La ganancia no compensa esa fragilidad: las vistas ya iban bien. Se conserva lo que sirvió: las comprobaciones del mapa al volver, el escenario «dedo tras volver de la lista» del banco, `comparar --transparente` y la defensa de `moverCapa`. Si algún día `<Activity>` ofrece ocultar sin `display:none`, vale la pena volver a mirarlo.
 
-### Fase 5 — Estado granular
+### Fase 5 — Estado granular (hecha)
 
-Sacar el avance (marcas, estados, electivas) de `VistaCarrera` a un almacén pequeño con `useSyncExternalStore`. Cada fila y cada tarjeta se suscribe solo a su materia; las vistas ocultas no se suscriben y se ponen al día al mostrarse.
+El avance (marcas, estados, progreso, cuotas de electivas, el toque y la descarga) ya no lo reparte `VistaCarrera` por props. `usePensum` vive en `ProveedorAvance` y se lee por cuatro contextos que cambian en momentos distintos —avance, toque, descarga y acciones—, con un hook por dato en `hooks/useAvance.js`. `VistaCarrera` queda de cascarón: la pantalla de dentro solo actúa y lee los estados en el momento de pulsar (`leer()`), así que marcar no la repinta.
 
-Meta: marcar con la mitad de trabajo, y que cueste lo mismo con vistas ocultas que sin ellas.
+**Por qué contextos y no el almacén con `useSyncExternalStore` que decía este plan.** Las vistas ocultas viven en un `<Activity>` con los efectos desmontados, y un almacén externo se suscribe en un efecto: las dejaría sin poner al día hasta volver a ellas, y entonces todo de golpe y de forma síncrona. Con estado de React se ponen al día en segundo plano, como hasta ahora, y volver a una vista sigue siendo enseñarla.
 
-Es también el principal arreglo de clean code: `VistaCarrera` deja de ser el componente que lo sabe todo y desaparece el reparto de props en cadena.
+Lo que se hizo, cada cosa en su commit:
+
+1. **El cálculo, a funciones puras con pruebas**: `estadosDe`, `avanceDeGrupos`, `progresoDe`, `depurarMarcas` y `conMarcas` en `data/avance.js` (21 pruebas). `usePensum` pasa de 279 a 152 líneas.
+2. **El contador de cada animación, solo a quien la hace.** El del toque y el de la descarga se pasaban a las 130 tarjetas, a sus cables y a las 60 filas, y al cambiar en cada marca las repintaban todas, dos o tres veces.
+3. **Los contextos.** La fila de la lista recibe su situación ya calculada en vez del mapa entero de estados.
+4. **Lo de dentro de una fila cerrada no se monta** hasta que se abre por primera vez: las pastillas de «Le falta» y «Desbloquea» de sesenta filas que nadie ha abierto eran 745 nodos, y cada una miraba los estados de todas las demás.
+
+Medido en el teléfono modesto del banco («marcar una materia», con las tres vistas montadas):
+
+| | Antes | Ahora |
+| --- | --- | --- |
+| Del toque al pintado | 168 ms | 96 ms |
+| Tareas largas tras el toque | 69 ms | 14 ms |
+| Nodos en el documento | 6 463 | 5 718 |
+| JavaScript, perfil de CPU sin freno | 70 ms | 48 ms |
+| El golpe a los 2,4 s, al acabar la animación de aprobar | 11–17 ms | 2–3 ms |
+
+La meta era la mitad de trabajo y se queda en un tercio menos de JavaScript; lo que sí baja casi a la mitad es lo que nota quien toca. Los restilados y los objetos maquetados de ese toque no bajan (265 y 875, dentro de su tope): con las filas cerradas vacías, lo que queda por maquetar es la cabecera, el resumen y la fila tocada.
+
+Lo que cambia sin verse: `comparar` contra un build anterior da siete pantallas con «otro estilo» y las mismas fotos, por esos 745 nodos que ya no existen. `verificar` abre las filas para encontrar sus pastillas.
+
+Queda como está, a propósito: la paleta, el plan y el panel de avance leen el avance mientras están montados y se repintan con cada marca, como antes; son pocos nodos y solo existen después de abrirlos.
 
 ### Fase 6 — Mapa
 
@@ -247,6 +268,8 @@ Es también el principal arreglo de clean code: `VistaCarrera` deja de ser el co
    Medido en teléfono emulado a CPU ×6, pintados del mapa desde que se suelta hasta que queda nítido: lanzamiento normal 2 → 1, medio 2 → 2, fuerte 3 → 2, muy fuerte 5 → 2; el recorrido y lo que tarda en parar, iguales; la posición en pantalla, continua cuadro a cuadro también en el cambio de capa. Lo que la emulación **no** ve es el compositor: que en un teléfono real el deslizamiento no pierda cuadros se comprueba con el teléfono en la mano (fase 8).
 
    Queda cuadro a cuadro, como antes, lo que no puede ir así: un navegador sin animaciones, un lanzamiento tan largo que ninguna capa lo abarca, y el mapa con la ficha de escritorio enganchada.
+
+5. **El pintado nítido al parar, medido y sin cambio** (2026-10-09). Se sospechaba que pintar el mapa al quedarse quieto era el tirón del final de cada gesto. Con traza a CPU ×6, tras un arrastre y tras un pellizco: la tarea más larga dura 26–35 ms, y de eso el estilo, el maquetado y el pintado son unos 30 ms repartidos; el raster va en la GPU y no llega a 5 ms. No hay nada que repartir ni que abaratar, y pintar a menos resolución no ganaría nada: lo caro nunca fue el número de píxeles.
 
 Todo cambio en lo que el mapa dibuja se mide con traza (Layerize, Paint), no contando cuadros.
 
@@ -268,7 +291,8 @@ Pendiente:
 - **Sacar la lógica de `usePensum`, `useHorario` y `useCasillas`** a funciones puras con pruebas.
 - **Tipos con JSDoc y `tsc --checkJs` en el build.** Necesita `typescript` como dependencia de desarrollo, que rompe el «cero dependencias»; falta que Sam lo confirme.
 - **Detección de código y exportaciones sin uso** dentro de `npm run lint`: `oxlint` no la trae, y las herramientas que la hacen (knip) son otra dependencia.
-- `VistaCarrera.jsx` (570 líneas) no estaba en la lista de los cinco, pero es el siguiente en tamaño; su estado es lo que cubriría la fase 5.
+- `VistaCarrera.jsx` sigue siendo el archivo más largo después de `useVistaGrafo`. La fase 5 le quitó el avance; lo que le queda es el estado de la pantalla (vista, paneles, selección, casillas), que es suyo.
+- **El presupuesto de «portátil · rueda» del banco de gestos está en rojo desde antes del 2026-10-09** (recálculos 440–466 contra 435, igual con el build anterior a cada cambio de ese día). Cuenta recálculos por cuadro mientras gira la rueda, así que sube con los cuadros que dé el equipo: hay que juzgarlo por cuadro o buscar qué commit lo subió.
 
 ### Fase 8 — Teléfonos reales
 
