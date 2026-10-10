@@ -14,7 +14,9 @@
  *
  * En el telefono y en el portatil: arrastra, se va a las otras dos vistas,
  * vuelve y comprueba que el mapa sigue al gesto; y en el portatil, que las
- * luces se paran con una materia enfocada. Sale con codigo 1 si algo falla.
+ * luces se paran con una materia enfocada. En el telefono tambien se comprueba
+ * el lanzamiento: el mapa sigue solo al soltar un arrastre rapido, se para si
+ * se le pone un dedo y queda pintado en su sitio. Sale con codigo 1 si algo falla.
  *
  * Usa el Chrome y el servidor del banco (scripts/banco/navegador.js): mismas
  * variables, CHROME y DIST.
@@ -49,21 +51,23 @@ function desvio() {
   return Math.abs(m.e) + Math.abs(m.f) + Math.abs(m.a - 1) * 100
 }
 
+/* Un toque del dedo, por CDP: el telefono lo recibe como si alguien lo tocara */
+const toque = (cdp, type, x, y) =>
+  cdp.send('Input.dispatchTouchEvent', {
+    type,
+    touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }],
+  })
+
 /* El mayor desvio de la capa a mitad de un gesto: si el mapa sigue al gesto,
    la capa se estira mientras dura (ver layout/vistaViva.js) */
 async function arrastrarConElDedo(pagina, cdp) {
-  const toque = (type, x, y) =>
-    cdp.send('Input.dispatchTouchEvent', {
-      type,
-      touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }],
-    })
   let mayor = 0
-  await toque('touchStart', 300, 600)
+  await toque(cdp, 'touchStart', 300, 600)
   for (let i = 1; i <= 30; i++) {
-    await toque('touchMove', 300 - i * 6, 600 - i * 8)
+    await toque(cdp, 'touchMove', 300 - i * 6, 600 - i * 8)
     if (i % 10 === 0) mayor = Math.max(mayor, await pagina.evaluate(desvio))
   }
-  await toque('touchEnd')
+  await toque(cdp, 'touchEnd')
   await pagina.waitForTimeout(800)
   return mayor
 }
@@ -91,6 +95,61 @@ async function girarLaRueda(pagina) {
   }
   await pagina.waitForTimeout(800)
   return mayor
+}
+
+/* Un arrastre rapido: el dedo baja, corre deprisa hacia arriba y a la izquierda
+   y no suelta todavia. Soltar lo decide quien llama, que antes quiere medir. */
+async function arrastrarRapido(pagina, cdp) {
+  await toque(cdp, 'touchStart', 300, 560)
+  for (let i = 1; i <= 12; i++) {
+    await toque(cdp, 'touchMove', 300 - i * 14, 560 - i * 7)
+    /* Un toque cada 10 ms: a esa cadencia el gesto lleva velocidad al soltarlo */
+    await pagina.waitForTimeout(10)
+  }
+}
+
+/** Donde esta la primera tarjeta del mapa en pantalla. Corre en la pagina. */
+const posicion = (pagina) =>
+  pagina.evaluate(() => {
+    const { x, y } = document.querySelector('.capa-grafo .grupo-nodo').getBoundingClientRect()
+    return { x, y }
+  })
+
+/* Al soltar un arrastre rapido el mapa tiene que seguir solo, pararse si se le
+   pone un dedo encima y quedar pintado en su sitio. Devuelve el primer fallo. */
+async function probarLanzamiento(pagina, cdp) {
+  await arrastrarRapido(pagina, cdp)
+  const alSoltar = await posicion(pagina)
+  await toque(cdp, 'touchEnd')
+
+  /* 400 ms despues tiene que haber avanzado en el sentido del arrastre: si no,
+     el mapa se paro al soltar y no hubo lanzamiento */
+  await pagina.waitForTimeout(400)
+  const despues = await posicion(pagina)
+  if (alSoltar.x - despues.x <= 20) return 'el mapa no sigue solo al soltarlo'
+
+  /* Con el mapa ya parado, dos lecturas separadas 300 ms no difieren, y la capa
+     va sin estirar (desvio mide cuanto se aparta de su sitio) */
+  await pagina.waitForTimeout(ASENTARSE)
+  const parado = await posicion(pagina)
+  await pagina.waitForTimeout(300)
+  const luego = await posicion(pagina)
+  const sinMoverse = Math.hypot(luego.x - parado.x, luego.y - parado.y) < 1
+  if (!sinMoverse || (await pagina.evaluate(desvio)) >= 1)
+    return 'el mapa lanzado no se queda quieto y pintado'
+
+  /* Un segundo lanzamiento, y 200 ms despues de soltarlo un dedo se apoya en el
+     mapa: tiene que quedarse ahi, sin seguir el impulso que le queda */
+  await arrastrarRapido(pagina, cdp)
+  await toque(cdp, 'touchEnd')
+  await pagina.waitForTimeout(200)
+  await toque(cdp, 'touchStart', 200, 400)
+  const bajoElDedo = await posicion(pagina)
+  await pagina.waitForTimeout(300)
+  const conElDedo = await posicion(pagina)
+  await toque(cdp, 'touchEnd')
+  if (Math.hypot(conElDedo.x - bajoElDedo.x, conElDedo.y - bajoElDedo.y) >= 2)
+    return 'un dedo no para el mapa lanzado'
 }
 
 async function sesion(aparato) {
@@ -181,6 +240,15 @@ async function sesion(aparato) {
     await pagina.keyboard.press('Escape')
     if (siguen) return `${siguen} luces siguen corriendo con el foco puesto`
   })
+  await cerrar()
+}
+
+// 3. Telefono: el mapa lanzado por el dedo sigue solo, se frena y queda pintado
+{
+  const { pagina, cdp, cerrar } = await sesion('telefono')
+  await comprobar('telefono · el lanzamiento sigue, se frena y queda pintado', () =>
+    probarLanzamiento(pagina, cdp),
+  )
   await cerrar()
 }
 

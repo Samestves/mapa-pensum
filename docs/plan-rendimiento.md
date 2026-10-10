@@ -9,7 +9,8 @@ Objetivo: que Mapa de Pensum vaya fluido en un teléfono Android de gama baja co
 | 2 · Un módulo por vista | Hecha el 2026-10-06 |
 | 3 · La lista pinta lo que se ve | Hecha el 2026-10-06 |
 | 4 · Cambiar de vista sin rehacer | Probada y retirada el 2026-10-07 |
-| 5 y 6 | Aplazadas |
+| 5 · Estado granular | Aplazada |
+| 6 · Mapa | El lanzamiento, hecho el 2026-10-09; lo demás, aplazado |
 | 7 · Estructura | Hecha en parte el 2026-10-07 (ver abajo) |
 | 8 | Pendiente |
 
@@ -241,6 +242,11 @@ Es también el principal arreglo de clean code: `VistaCarrera` deja de ser el co
 1. Primera visita al mapa: montar formas y textos en cuadros separados; revisar la medición inicial de `useVistaGrafo`, que fuerza un maquetado de ~200 ms con el freno.
 2. Mapa quieto en portátil: que la luz de los cables no obligue a recalcular estilos en cada cuadro.
 3. Pendiente anterior: al alejar con el mapa llenando la pantalla se repinta en cada cuadro.
+4. ✅ **El mapa lanzado corre en la GPU** (2026-10-09). Al soltar un arrastre con velocidad, la inercia la ponía JavaScript cuadro a cuadro, y un lanzamiento normal se salía de lo pintado a medio camino: el mapa se pintaba entero con el mapa en marcha, y ese cuadro parado es lo que en un teléfono modesto se sentía como que «no frena fluido». Ahora el recorrido entero se calcula al soltar (`trayectoriaDeLanzamiento`), se pinta **una** vez lo que va a necesitar (`vistaParaLanzamiento`) y la capa lo recorre sola con una animación del compositor (`animarCapa`): lo que tarde el hilo principal —incluido ese pintado— no le quita cuadros. Un dedo lo para donde va.
+
+   Medido en teléfono emulado a CPU ×6, pintados del mapa desde que se suelta hasta que queda nítido: lanzamiento normal 2 → 1, medio 2 → 2, fuerte 3 → 2, muy fuerte 5 → 2; el recorrido y lo que tarda en parar, iguales; la posición en pantalla, continua cuadro a cuadro también en el cambio de capa. Lo que la emulación **no** ve es el compositor: que en un teléfono real el deslizamiento no pierda cuadros se comprueba con el teléfono en la mano (fase 8).
+
+   Queda cuadro a cuadro, como antes, lo que no puede ir así: un navegador sin animaciones, un lanzamiento tan largo que ninguna capa lo abarca, y el mapa con la ficha de escritorio enganchada.
 
 Todo cambio en lo que el mapa dibuja se mide con traza (Layerize, Paint), no contando cuadros.
 
