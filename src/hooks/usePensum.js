@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { guardarJSON, leerJSON } from '../data/almacen'
 import { ESTADO } from '../data/estados'
+import { avanceDeGrupos, conMarcas, depurarMarcas, estadosDe, progresoDe } from '../data/avance'
 
 const CLAVE_BASE = 'mapa-pensum:marcas'
 // Antes de las multiples carreras habia una sola clave sin sufijo. Los
@@ -10,24 +11,6 @@ const CLAVE_HEREDADA = CLAVE_BASE
 const SLUG_HEREDADO = 'ingenieria-de-sistemas'
 
 const claveDe = (slug) => `${CLAVE_BASE}:${slug}`
-const MARCAS_VALIDAS = [ESTADO.APROBADA, ESTADO.CURSANDO]
-
-// Ciclo del click: sin marcar → aprobada → cursando → sin marcar
-function siguienteMarca(actual) {
-  if (actual === ESTADO.APROBADA) return ESTADO.CURSANDO
-  if (actual === ESTADO.CURSANDO) return null
-  return ESTADO.APROBADA
-}
-
-/** Descarta lo que ya no sirva: codigos ajenos al pensum y marcas invalidas */
-function depurar(datos, codigosValidos) {
-  if (!datos || typeof datos !== 'object') return {}
-  const limpias = {}
-  for (const [codigo, marca] of Object.entries(datos)) {
-    if (codigosValidos.has(codigo) && MARCAS_VALIDAS.includes(marca)) limpias[codigo] = marca
-  }
-  return limpias
-}
 
 /**
  * Las marcas guardadas de una carrera tal cual, sin depurar: la portada solo
@@ -49,7 +32,7 @@ export function marcasGuardadasDe(slug) {
  */
 function leerGuardadas(slug, codigosValidos) {
   const guardadas = marcasGuardadasDe(slug)
-  return guardadas ? depurar(guardadas, codigosValidos) : {}
+  return guardadas ? depurarMarcas(guardadas, codigosValidos) : {}
 }
 
 /**
@@ -118,115 +101,19 @@ export function usePensum(carrera) {
     return () => clearTimeout(t)
   }, [descarga])
 
-  const estados = useMemo(() => {
-    const mapa = {}
-    for (const a of todas) {
-      const marca = marcas[a.codigo]
-      if (marca) {
-        mapa[a.codigo] = marca
-        continue
-      }
-      // Sin prerrequisitos, every() da true: nace disponible
-      const libre = (a.prerrequisitos ?? []).every((pre) => marcas[pre] === ESTADO.APROBADA)
-      mapa[a.codigo] = libre ? ESTADO.DISPONIBLE : ESTADO.BLOQUEADA
-    }
-    return mapa
-  }, [todas, marcas])
+  const estados = useMemo(() => estadosDe(todas, marcas), [todas, marcas])
 
-  /**
-   * Avance de cada grupo de electivas. No cuenta cuantas escogiste sino
-   * cuantas UC llevas de la cuota: las tecnicas de Sistemas van de 1 a 3 UC,
-   * asi que contarlas por cabeza daria un numero equivocado.
-   *
-   * Los grupos sin cuota (las carreras de las que no tenemos los creditos
-   * oficiales, y las secciones informativas como Areas de Grado) se cuentan
-   * igual pero sin meta: se dice lo que llevas, no cuanto falta.
-   */
-  const avanceGrupos = useMemo(() => {
-    const mapa = {}
-    for (const g of grupos) {
-      const elegidas = g.asignaturas.filter((e) => marcas[e.codigo] === ESTADO.APROBADA)
-      const uc = elegidas.reduce((s, e) => s + (e.uc ?? 0), 0)
-      mapa[g.clave] = {
-        clave: g.clave,
-        titulo: g.titulo,
-        tipo: g.tipo,
-        elegidas,
-        uc,
-        meta: g.cuota,
-        completa: g.cuota != null && uc >= g.cuota,
-        // Lo que sobra no suma para el titulo, pero se muestra igual
-        excedente: g.cuota != null ? Math.max(0, uc - g.cuota) : 0,
-      }
-    }
-    return mapa
-  }, [grupos, marcas])
+  const avanceGrupos = useMemo(() => avanceDeGrupos(grupos, marcas), [grupos, marcas])
 
-  const progreso = useMemo(() => {
-    let ucAprobadas = 0
-    let aprobadas = 0
-    let cursando = 0
-    // Las disponibles se guardan enteras, no solo contadas: saber que tienes
-    // once por inscribir no sirve de nada si no sabes cuales son.
-    const paraInscribir = []
-
-    for (const a of asignaturas) {
-      const estado = estados[a.codigo]
-      const uc = a.uc ?? 0
-
-      if (estado === ESTADO.APROBADA) {
-        ucAprobadas += uc
-        aprobadas += 1
-      } else if (estado === ESTADO.CURSANDO) {
-        cursando += 1
-      } else if (estado === ESTADO.DISPONIBLE) {
-        paraInscribir.push(a)
-      }
-    }
-
-    const ucTotales = asignaturas.reduce((s, a) => s + (a.uc ?? 0), 0)
-
-    // Solo cuentan las UC electivas que caben en su cuota
-    const ucElectivas = Object.values(avanceGrupos).reduce(
-      (s, g) => s + (g.meta != null ? Math.min(g.uc, g.meta) : 0),
-      0,
-    )
-
-    // Sin creditos oficiales no hay denominador honesto, y preferimos no
-    // decir nada a inventar un porcentaje. La UI lo detecta por null.
-    const ucTitulo = creditos?.titulo ?? null
-    const porcentaje = ucTitulo ? ((ucAprobadas + ucElectivas) / ucTitulo) * 100 : null
-
-    return {
-      ucAprobadas,
-      ucTotales,
-      ucTitulo,
-      ucElectivas,
-      porcentaje,
-      porcentajeObligatorias: ucTotales ? (ucAprobadas / ucTotales) * 100 : 0,
-      aprobadas,
-      cursando,
-      disponibles: paraInscribir.length,
-      // Por semestre: lo primero que ofrece es lo que llevas mas atrasado
-      paraInscribir: [...paraInscribir].sort(
-        (a, b) => (a.semestre ?? 99) - (b.semestre ?? 99) || a.nombre.localeCompare(b.nombre, 'es'),
-      ),
-      bloqueadas: asignaturas.length - aprobadas - cursando - paraInscribir.length,
-      total: asignaturas.length,
-    }
-  }, [asignaturas, estados, creditos, avanceGrupos])
+  const progreso = useMemo(
+    () => progresoDe(asignaturas, estados, creditos, avanceGrupos),
+    [asignaturas, estados, creditos, avanceGrupos],
+  )
 
   /* Fija varias marcas de una vez -{ codigo: marca }-, en un solo cambio de
      estado: aprobar un semestre entero, o deshacerlo. marca null desmarca. */
   const marcarVarias = useCallback((cambios) => {
-    setEstado((previo) => {
-      const copia = { ...previo.marcas }
-      for (const [codigo, marca] of Object.entries(cambios)) {
-        if (marca) copia[codigo] = marca
-        else delete copia[codigo]
-      }
-      return { slug: previo.slug, marcas: copia }
-    })
+    setEstado((previo) => ({ slug: previo.slug, marcas: conMarcas(previo.marcas, cambios) }))
   }, [])
 
   // Fija una marca concreta, con su anillo y su descarga. null desmarca.
@@ -245,18 +132,6 @@ export function usePensum(carrera) {
     [marcarVarias],
   )
 
-  // Click en la tarjeta: marcado tipo checklist, marcada o sin marcar.
-  // Los tres estados completos siguen estando en la ficha.
-  const alternarAprobada = useCallback(
-    (codigo) => marcar(codigo, marcas[codigo] === ESTADO.APROBADA ? null : ESTADO.APROBADA),
-    [marcar, marcas],
-  )
-
-  const alternar = useCallback(
-    (codigo) => marcar(codigo, siguienteMarca(marcas[codigo])),
-    [marcar, marcas],
-  )
-
   const reiniciar = useCallback(() => {
     setEstado({ slug, marcas: {} })
     setDescarga(null)
@@ -272,8 +147,6 @@ export function usePensum(carrera) {
     toque,
     marcar,
     marcarVarias,
-    alternar,
-    alternarAprobada,
     reiniciar,
   }
 }
