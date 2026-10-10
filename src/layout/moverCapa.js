@@ -57,3 +57,17 @@ export function moverCapa(capa, transform) {
   const valor = transform ?? QUIETA
   animacionDe(capa).effect.setKeyframes({ transform: [valor, valor] })
 }
+
+/**
+ * Deja que `capa` recorra sola `transforms` -uno por instante, repartidos
+ * por igual- en `duracion` ms, y devuelve la animacion que lo hace.
+ *
+ * Es lo contrario de moverCapa: alli cada cuadro lo pone JavaScript, y aqui
+ * el recorrido entero se le da hecho al navegador, que lo anima en el
+ * compositor. Lo que tarde el hilo principal en otra cosa -pintar el mapa,
+ * sin ir mas lejos- no le quita un cuadro. Mientras corre tapa lo que diga
+ * moverCapa; al cancelarla, la capa vuelve a donde moverCapa la dejo.
+ */
+export function animarCapa(capa, transforms, duracion) {
+  return capa.animate({ transform: transforms }, { duration: duracion, fill: 'forwards' })
+}

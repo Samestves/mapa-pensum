@@ -102,7 +102,7 @@ const PARTIDAS = [
     tope: 3,
   },
   { nombre: 'vista · lista', kB: todo(vista('lista')), tope: 6.2 },
-  { nombre: 'vista · mapa', kB: todo(vista('mapa')), tope: 16.3 },
+  { nombre: 'vista · mapa', kB: todo(vista('mapa')), tope: 17 },
   { nombre: 'vista · horario', kB: todo(vista('horario')), tope: 18.3 },
   { nombre: 'en reposo · plan de ruta', kB: todo(archivosDe(PLAN, enLaCarrera)), tope: 13.3 },
   { nombre: 'en reposo · paleta', kB: todo(archivosDe(PALETA, enLaCarrera)), tope: 2.4 },

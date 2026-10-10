@@ -17,6 +17,9 @@ export const ANCHO_TELEFONO = 768
    friccion de los desplazamientos de iOS: largo y suave al final. */
 export const LANZAMIENTO_MIN = 0.25
 export const FRICCION_MS = 325
+/* Y la velocidad, en px por ms, a la que el lanzamiento se da por parado:
+   algo mas de un pixel por cuadro. */
+const VELOCIDAD_PARADO = 0.02
 
 export const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
 
@@ -91,3 +94,50 @@ export function velocidadDeLanzamiento(muestras, ahora) {
 
 /** Lo que se queda de la velocidad tras `ms` de friccion */
 export const frenado = (ms) => Math.exp(-ms / FRICCION_MS)
+
+/**
+ * El lanzamiento entero, sabido en el momento de soltar: por donde pasa la
+ * vista en cada instante, donde acaba y cuanto tarda.
+ *
+ * La friccion es una exponencial, asi que no hace falta ir cuadro a cuadro
+ * restando velocidad para saber donde estara el mapa: a los `t` ms ha
+ * avanzado velocidad x friccion x (1 - frenado(t)). Saberlo de antemano es lo
+ * que deja pintar una sola vez lo que el viaje va a necesitar y darle el
+ * recorrido hecho a la GPU (ver lanzar en useVistaGrafo).
+ *
+ * Al llegar a un borde ese eje se para y el otro sigue. Dura hasta que el
+ * mapa va tan despacio que se da por parado, o hasta que los dos ejes han
+ * llegado a su borde, lo que pase antes: un mapa clavado en la esquina no
+ * tiene que seguir "moviendose" un segundo.
+ *
+ * Devuelve { desde, destino, duracion, en(t) }, con `t` en ms desde que se
+ * solto.
+ */
+export function trayectoriaDeLanzamiento(desde, velocidad, medida, anchoContenido, altoContenido) {
+  const { vx, vy } = velocidad
+  const libre = (t) => {
+    const avance = FRICCION_MS * (1 - frenado(t))
+    return { ...desde, x: desde.x + vx * avance, y: desde.y + vy * avance }
+  }
+  const en = (t) => acotarVista(libre(t), medida, anchoContenido, altoContenido)
+
+  const hastaParar = FRICCION_MS * Math.log(Math.hypot(vx, vy) / VELOCIDAD_PARADO)
+  const destino = en(hastaParar)
+  const sinBorde = libre(hastaParar)
+  /* Cuando llega cada eje a donde se queda: al final si nada lo para, y si lo
+     para un borde, cuando lo toca (la misma formula, despejando el tiempo). */
+  const llegada = (v, recorrido, recorridoLibre) => {
+    if (!v || !recorrido) return 0
+    if (recorrido === recorridoLibre) return hastaParar
+    const hecho = recorrido / (v * FRICCION_MS)
+    return hecho > 0 && hecho < 1 ? -FRICCION_MS * Math.log(1 - hecho) : hastaParar
+  }
+  const duracion = Math.min(
+    hastaParar,
+    Math.max(
+      llegada(vx, destino.x - desde.x, sinBorde.x - desde.x),
+      llegada(vy, destino.y - desde.y, sinBorde.y - desde.y),
+    ),
+  )
+  return { desde, destino, duracion, en }
+}

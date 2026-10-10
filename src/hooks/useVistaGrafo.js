@@ -6,20 +6,22 @@ import {
   AUMENTO_VIAJE,
   MARGEN_CAPA,
   capaCubre,
+  fotogramasDeLanzamiento,
   mismaVista,
   seMueve,
-  transformRelativo,
+  transformDeCapa,
   vistaAdelantada,
+  vistaParaLanzamiento,
   vistaParaViaje,
 } from '../layout/vistaViva'
-import { moverCapa } from '../layout/moverCapa'
+import { animarCapa, moverCapa } from '../layout/moverCapa'
 import { relojAplazable } from '../layout/relojAplazable'
 import { holguraDe } from '../layout/mantenerRuta'
 import {
   acotar,
   acotarVista,
   conZoom,
-  frenado,
+  trayectoriaDeLanzamiento,
   velocidadDeLanzamiento,
 } from '../layout/limitesVista'
 import { esModoLigero } from '../data/ligero'
@@ -112,14 +114,43 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     if (!capa) return
     const viva = vistaRef.current
     const pintada = pintadaRef.current
-    if (mismaVista(viva, pintada)) {
-      moverCapa(capa, null)
-    } else {
-      const { k, x, y } = transformRelativo(viva, pintada)
-      moverCapa(capa, `translate(${x}px, ${y}px) scale(${k})`)
-    }
+    moverCapa(capa, mismaVista(viva, pintada) ? null : transformDeCapa(viva, pintada))
     for (const [el, punto] of seguidores.current) moverSeguidor(el, punto)
   }, [moverSeguidor])
+
+  /* El lanzamiento que esta corriendo solo en la GPU, si hay uno: su
+     trayectoria, la animacion que mueve la capa y la hora a la que arranco
+     (ver lanzar). */
+  const lanzado = useRef(null)
+  /* Le da a la capa el recorrido del lanzamiento, contado desde como esta
+     pintada ahora. Se llama al soltar y cada vez que el mapa se pinta por el
+     camino: la animacion nueva lleva la hora de arranque de la primera, asi
+     que sigue por donde iba la anterior, y como llega al compositor junto con
+     lo recien pintado, en pantalla no hay ni un cuadro de salto. */
+  const animarLanzamiento = useCallback((l) => {
+    l.animacion?.cancel()
+    const animacion = animarCapa(
+      capaRef.current,
+      fotogramasDeLanzamiento(l.trayectoria, pintadaRef.current),
+      l.trayectoria.duracion,
+    )
+    l.animacion = animacion
+    animacion.onfinish = l.alAcabar
+    if (l.inicio != null) {
+      animacion.startTime = l.inicio
+      return
+    }
+    /* La hora de arranque la pone el compositor cuando de verdad empieza a
+       moverla, y hasta entonces no se sabe. */
+    animacion.ready.then(
+      () => {
+        if (l.animacion !== animacion) return
+        l.inicio = animacion.startTime
+        l.alArrancar()
+      },
+      () => {},
+    )
+  }, [])
 
   /* Un ref de React para enganchar un elemento al punto (x, y) del mapa. */
   const seguir = useCallback(
@@ -140,12 +171,15 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   useLayoutEffect(() => {
     pintadaRef.current = vista
     estirarCapa()
-  }, [vista, estirarCapa])
+    if (lanzado.current) animarLanzamiento(lanzado.current)
+  }, [vista, estirarCapa, animarLanzamiento])
 
   /* Pintar la vista a la que llego el gesto. Lo hace el reposo -el mapa
      quieto durante REPOSO_MS-, o antes quien sepa que su gesto termino, como
      levantar los dedos de un pellizco. */
   const pintarDondeQuedo = useCallback(() => {
+    // Un lanzamiento en marcha pinta lo suyo, y al parar pide su reposo
+    if (lanzado.current) return
     if (!mismaVista(vistaRef.current, pintadaRef.current)) setVista(vistaRef.current)
   }, [])
   const [reposo] = useState(() => relojAplazable(REPOSO_MS, pintarDondeQuedo))
@@ -362,15 +396,31 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
     else setVista(vistaRef.current)
   }, [estirarCapa])
 
+  /* Corta el lanzamiento donde vaya. El que corre en la GPU no va
+     apuntando por donde pasa: la vista se queda en el punto del recorrido
+     que toca a esta hora, que es donde la capa se esta viendo. */
+  const cortarLanzamiento = useCallback(() => {
+    cancelAnimationFrame(inercia.current)
+    const l = lanzado.current
+    if (!l) return
+    lanzado.current = null
+    const t = l.inicio == null ? 0 : performance.now() - l.inicio
+    vistaRef.current = l.trayectoria.en(acotar(t, 0, l.trayectoria.duracion))
+    estirarCapa()
+    l.animacion.cancel()
+    finGesto.aplazar()
+  }, [estirarCapa, finGesto])
+  useEffect(() => () => lanzado.current?.animacion.cancel(), [])
+
   /* Para lo que se este moviendo solo. La mano manda: un dedo o la rueda
      a mitad de viaje se quedan con el mapa donde iba, en vez de pelearse
      con la animacion cuadro a cuadro. */
   const detenerViaje = useCallback(() => {
     cancelAnimationFrame(animacion.current)
-    cancelAnimationFrame(inercia.current)
+    cortarLanzamiento()
     clearTimeout(redZoom.current)
     asentarViaje()
-  }, [asentarViaje])
+  }, [asentarViaje, cortarLanzamiento])
 
   // Zoom manteniendo fijo el punto bajo el cursor. Inmediato: la rueda y el
   // pellizco ya son continuos, el suavizado lo pone la mano del usuario.
@@ -400,6 +450,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
   const animarHacia = useCallback(
     (hasta, duracion) => {
       cancelAnimationFrame(animacion.current)
+      cortarLanzamiento()
       clearTimeout(redZoom.current)
       // El viaje pinta por su cuenta: que no lo pise el reposo de un gesto de antes
       reposo.cancelar()
@@ -493,6 +544,7 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
       altoContenido,
       estirarCapa,
       asentarViaje,
+      cortarLanzamiento,
       aplicarVista,
       marcarGesto,
       reposo,
@@ -620,38 +672,99 @@ export function useVistaGrafo(anchoContenido, altoContenido, vistaInicial) {
      arrastre largo pedia tres o cuatro arrastres cortos. Si choca con el
      borde, ese eje se para.
 
-     Como el arrastre, va estirando la capa (en vivo) y se pinta una vez al
-     pararse, cuando reposa. */
+     El recorrido entero se sabe al soltar (ver trayectoriaDeLanzamiento), y
+     se le da hecho a la GPU: la capa lo recorre sola, en el compositor, y lo
+     que tarde el hilo principal en otra cosa no le quita un cuadro. Antes
+     cada cuadro lo ponia JavaScript, y un lanzamiento normal se salia de lo
+     pintado a medio camino: el mapa se pintaba entero con el mapa en marcha,
+     y en un telefono modesto eso era el mapa parado unas decenas de ms justo
+     cuando mas se le mira. Ahora, si hace falta pintar, se pinta UNA vez lo
+     que el viaje va a necesitar (ver vistaParaLanzamiento), y mientras se
+     pinta la capa de antes sigue corriendo.
+
+     Cuadro a cuadro queda para cuando eso no puede ser: un navegador sin
+     animaciones, un lanzamiento tan largo que ninguna capa lo abarca, o algo
+     enganchado al mapa (ver seguir) que tendria que ir con el. */
   const lanzar = () => {
     const m = muestras.current
     muestras.current = []
-    const lanzamiento = velocidadDeLanzamiento(m, performance.now())
-    if (!lanzamiento) return
-    let { vx, vy } = lanzamiento
+    const velocidad = velocidadDeLanzamiento(m, performance.now())
+    if (!velocidad) return
+    const trayectoria = trayectoriaDeLanzamiento(
+      vistaRef.current,
+      velocidad,
+      medida,
+      anchoContenido,
+      altoContenido,
+    )
+    const { desde, destino, duracion } = trayectoria
+    // Lanzado contra el borde en el que ya estaba: no hay a donde ir
+    if (!seMueve(desde, destino, medida)) return
 
-    let previo = null
-    const paso = (ahora) => {
-      if (previo != null) {
-        const d = Math.min(32, ahora - previo)
-        const v = vistaRef.current
-        const quiere = { ...v, x: v.x + vx * d, y: v.y + vy * d }
-        aplicarVista(quiere, true)
-        const llego = vistaRef.current
-        if (Math.abs(llego.x - quiere.x) > 0.5) vx = 0
-        if (Math.abs(llego.y - quiere.y) > 0.5) vy = 0
-        const f = frenado(d)
-        vx *= f
-        vy *= f
-        if (Math.hypot(vx, vy) < 0.02) {
+    const yaCubre = capaCubre(
+      destino,
+      pintadaRef.current,
+      medida,
+      anchoContenido,
+      altoContenido,
+      AUMENTO_GESTO,
+      MARGEN_CAPA,
+    )
+    const base = yaCubre
+      ? pintadaRef.current
+      : vistaParaLanzamiento(desde, destino, medida, MARGEN_CAPA)
+
+    if (!base || !capaRef.current?.animate || seguidores.current.size) {
+      let inicio = null
+      const paso = (ahora) => {
+        inicio ??= ahora
+        const t = Math.min(ahora - inicio, duracion)
+        aplicarVista(trayectoria.en(t), true)
+        if (t >= duracion) {
           reposo.asegurar()
           return
         }
+        marcarGesto()
+        inercia.current = requestAnimationFrame(paso)
       }
-      previo = ahora
-      marcarGesto()
       inercia.current = requestAnimationFrame(paso)
+      return
     }
-    inercia.current = requestAnimationFrame(paso)
+
+    /* Mientras corre es un gesto, y nadie lo va a ir recordando cuadro a
+       cuadro: la hora de darlo por acabado se pone al parar. Y el reposo no
+       pinta por el camino: pinta el lanzamiento. */
+    marcarGesto()
+    finGesto.cancelar()
+    reposo.cancelar()
+    const l = {
+      trayectoria,
+      animacion: null,
+      inicio: null,
+      /* Con la capa ya en marcha, y no antes: pintar ocupa el hilo principal
+         un buen rato, y hecho al soltar el mapa se quedaba parado ese rato
+         antes de arrancar. Asi arranca en el acto con lo que hay pintado y
+         lo nuevo llega con el mapa corriendo. */
+      alArrancar() {
+        if (lanzado.current === l && !mismaVista(base, pintadaRef.current)) setVista(base)
+      },
+      alAcabar() {
+        if (lanzado.current !== l) return
+        lanzado.current = null
+        vistaRef.current = destino
+        vistaReposo.current = destino
+        estirarCapa()
+        l.animacion.cancel()
+        finGesto.aplazar()
+        /* Pintado mas lejos para abarcar el viaje, se ve estirado: se pinta
+           ya, sin esperar al reposo. Si no, lo que haya que pintar es solo
+           recolocar la capa, y eso espera a que el dedo no vuelva. */
+        if (pintadaRef.current.escala !== destino.escala) asentarVista()
+        else reposo.asegurar()
+      },
+    }
+    lanzado.current = l
+    animarLanzamiento(l)
   }
 
   /* Doble toque en el lienzo: acerca al doble alrededor del dedo, que es

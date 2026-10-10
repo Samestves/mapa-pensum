@@ -6,10 +6,13 @@ import {
   AUMENTO_VIAJE,
   MARGEN_CAPA,
   capaCubre,
+  fotogramasDeLanzamiento,
   mismaVista,
   seMueve,
+  transformDeCapa,
   transformRelativo,
   vistaAdelantada,
+  vistaParaLanzamiento,
   vistaParaViaje,
 } from './vistaViva.js'
 
@@ -215,5 +218,64 @@ describe('el temblor de un dedo no cuenta como movimiento', () => {
     const tiembla = acercar(lejos, 1.004, 200, 150)
     assert.ok(Math.abs(tiembla.x - lejos.x) > 20, 'el origen se corre decenas de pixeles')
     assert.ok(!seMueve(lejos, tiembla, VENTANA), 'y en pantalla no se ha movido nada')
+  })
+})
+
+describe('la vista para un lanzamiento', () => {
+  const MEDIDA = { ancho: 360, alto: 740, arriba: 0 }
+  const MAPA = [20000, 20000]
+  const SALIDA = { x: -8000, y: -8000, escala: 1 }
+  const hacia = (dx, dy = 0) => ({ x: SALIDA.x + dx, y: SALIDA.y + dy, escala: SALIDA.escala })
+
+  test('la capa pintada cubre la salida, lo del medio y la llegada de cada recorrido', () => {
+    for (const [dx, dy] of [
+      [50, 0],
+      [250, 0],
+      [900, 400],
+    ]) {
+      const destino = hacia(dx, dy)
+      const vista = vistaParaLanzamiento(SALIDA, destino, MEDIDA, MARGEN_CAPA)
+      assert.ok(vista, `hay vista para un recorrido de ${dx} y ${dy} px`)
+      for (const v of [SALIDA, hacia(dx / 2, dy / 2), destino]) {
+        assert.ok(capaCubre(v, vista, MEDIDA, ...MAPA, AUMENTO_VIAJE, MARGEN_CAPA))
+      }
+    }
+  })
+
+  test('un recorrido corto se pinta ya en la llegada, que es lo que se ve al parar', () => {
+    const destino = hacia(50)
+    assert.deepEqual(vistaParaLanzamiento(SALIDA, destino, MEDIDA, MARGEN_CAPA), destino)
+  })
+
+  test('un recorrido de entre uno y dos margenes se pinta a la misma escala que la salida', () => {
+    const vista = vistaParaLanzamiento(SALIDA, hacia(250), MEDIDA, MARGEN_CAPA)
+    assert.equal(vista.escala, SALIDA.escala)
+  })
+
+  test('un recorrido larguisimo no tiene vista que sirva: hay que pintar cada cuadro', () => {
+    assert.equal(vistaParaLanzamiento(SALIDA, hacia(5000), MEDIDA, MARGEN_CAPA), null)
+  })
+})
+
+describe('el transform y los fotogramas de un lanzamiento', () => {
+  const PINTADA = { x: 0, y: 0, escala: 1 }
+  const falsa = (duracion) => ({ duracion, en: (t) => ({ x: t, y: 0, escala: 1 }) })
+
+  test('la capa pintada en la misma vista no se mueve ni se estira', () => {
+    assert.equal(transformDeCapa(PINTADA, PINTADA), 'translate(0px, 0px) scale(1)')
+  })
+
+  test('el primer fotograma es la salida y el ultimo la llegada', () => {
+    const t = falsa(320)
+    const fotogramas = fotogramasDeLanzamiento(t, PINTADA)
+    assert.ok(fotogramas.length >= 2)
+    assert.equal(fotogramas[0], transformDeCapa(t.en(0), PINTADA))
+    assert.equal(fotogramas[fotogramas.length - 1], transformDeCapa(t.en(t.duracion), PINTADA))
+  })
+
+  test('un lanzamiento mas largo da mas fotogramas', () => {
+    const corto = fotogramasDeLanzamiento(falsa(320), PINTADA)
+    const largo = fotogramasDeLanzamiento(falsa(640), PINTADA)
+    assert.ok(largo.length > corto.length)
   })
 })

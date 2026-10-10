@@ -65,6 +65,12 @@ export function transformRelativo(viva, pintada) {
   return { k, x: viva.x - k * pintada.x, y: viva.y - k * pintada.y }
 }
 
+/** Ese transform, como lo escribe el CSS */
+export function transformDeCapa(viva, pintada) {
+  const { k, x, y } = transformRelativo(viva, pintada)
+  return `translate(${x}px, ${y}px) scale(${k})`
+}
+
 /** Mismo sitio y misma escala: no hay nada que estirar */
 export function mismaVista(a, b) {
   return a.x === b.x && a.y === b.y && a.escala === b.escala
@@ -243,4 +249,68 @@ export function vistaParaViaje(desde, hasta, medida, anchoContenido, altoConteni
     y: (medida.alto - (y1 + y0) * escala) / 2,
   }
   return cubre(desde, base) && cubre(hasta, base) ? base : null
+}
+
+/**
+ * La vista a la que pintar el mapa UNA vez para que un lanzamiento -el mapa
+ * soltado con velocidad, ver trayectoriaDeLanzamiento- se haga entero
+ * estirando la capa. O null si va tan lejos que no hay ninguna que sirva.
+ *
+ * Un lanzamiento solo desplaza: sale y llega a la misma escala. La capa
+ * pintada mide la ventana mas `margen` por cada lado, asi que:
+ *
+ *  - Si entre la salida y la llegada hay menos de dos margenes, se pinta a
+ *    la escala de siempre, nitida, y lo mas cerca de la llegada que deje
+ *    seguir viendo la salida. Si cabe pintarla EN la llegada, al parar ya
+ *    esta pintado lo que se ve y no hay que pintar nada mas.
+ *  - Si hay mas, se pinta mas lejos, lo justo para que la capa abarque el
+ *    viaje, y centrada en el. Va algo estirada mientras el mapa corre, que es
+ *    cuando no se lee, y se pinta nitida al parar.
+ */
+export function vistaParaLanzamiento(desde, destino, medida, margen) {
+  const capa = 1 + 2 * margen
+  const dx = destino.x - desde.x
+  const dy = destino.y - desde.y
+  const aumento = Math.max(
+    1,
+    (1 + Math.abs(dx) / medida.ancho) / capa,
+    (1 + Math.abs(dy) / medida.alto) / capa,
+  )
+  if (aumento > AUMENTO_VIAJE) return null
+
+  if (aumento === 1) {
+    const cerca = (llegada, salida, holgura) =>
+      Math.min(Math.max(llegada, salida - holgura), salida + holgura)
+    return {
+      ...desde,
+      x: cerca(destino.x, desde.x, margen * medida.ancho),
+      y: cerca(destino.y, desde.y, margen * medida.alto),
+    }
+  }
+  /* El centro de la capa estirada, sobre el centro de lo que barre la
+     ventana: de transformRelativo, despejando la vista pintada. */
+  const centrar = (salida, recorrido, ventana) =>
+    (salida + (aumento * ventana) / 2 - (ventana - recorrido) / 2) / aumento
+  return {
+    escala: desde.escala / aumento,
+    x: centrar(desde.x, dx, medida.ancho),
+    y: centrar(desde.y, dy, medida.alto),
+  }
+}
+
+/* Cada cuanto se le da a la GPU un punto del recorrido de un lanzamiento.
+   Entre punto y punto va en linea recta: a dos cuadros de distancia, la curva
+   de la friccion se aparta de la recta menos de un pixel. */
+const PASO_FOTOGRAMA_MS = 32
+
+/**
+ * El recorrido de un lanzamiento como lo entiende una animacion: el
+ * transform de la capa pintada con `pintada` en instantes repartidos por
+ * igual, del primero al ultimo.
+ */
+export function fotogramasDeLanzamiento(trayectoria, pintada) {
+  const tramos = Math.max(1, Math.ceil(trayectoria.duracion / PASO_FOTOGRAMA_MS))
+  return Array.from({ length: tramos + 1 }, (_, i) =>
+    transformDeCapa(trayectoria.en((trayectoria.duracion * i) / tramos), pintada),
+  )
 }
