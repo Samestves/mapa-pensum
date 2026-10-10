@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Lock, LockOpen } from 'lucide-react'
 import { ESTADO } from '../../data/estados'
 import { bloqueada } from '../../layout/filtrosLista'
@@ -12,8 +12,8 @@ import { colorSituacion } from './aspecto'
 /**
  * Lo que el desplegable de una fila cuenta del camino: lo que le falta si esta
  * cerrada, o lo que desbloquea. Es lo unico de la fila que mira los estados de
- * todas las demas, y por eso vive aparte: la fila no los lee, y solo este se
- * repinta cuando cambian.
+ * todas las demas, y por eso vive aparte: la fila no los lee, y este se monta
+ * la primera vez que se abre (ver FilaMateria).
  */
 function CaminoDeLaFila({ cerrada, aprobada, desbloquea, previas, alIr }) {
   const estados = useEstados()
@@ -79,6 +79,12 @@ export default memo(function FilaMateria({
     .map((c) => porCodigo.get(c))
     .filter(Boolean)
   const cerrada = bloqueada(situacion)
+
+  /* El camino se monta la primera vez que se abre la fila y ya no se quita:
+     sesenta filas cerradas no tienen por que mirar los estados de las demas,
+     y al plegarse el panel necesita seguir teniendo contenido. */
+  const [yaAbierta, setYaAbierta] = useState(abierta)
+  if (abierta && !yaAbierta) setYaAbierta(true)
 
   const colorNombre = aprobada
     ? 'var(--tinta-suave)'
@@ -160,13 +166,15 @@ export default memo(function FilaMateria({
                 abre la fila: el panel esta siempre montado para plegarse
                 suave, y sin esto solo animarian la primera vez. */}
             <div key={abierta ? 'abierta' : 'cerrada'}>
-              <CaminoDeLaFila
-                cerrada={cerrada}
-                aprobada={aprobada}
-                desbloquea={desbloquea}
-                previas={previas}
-                alIr={alIr}
-              />
+              {yaAbierta && (
+                <CaminoDeLaFila
+                  cerrada={cerrada}
+                  aprobada={aprobada}
+                  desbloquea={desbloquea}
+                  previas={previas}
+                  alIr={alIr}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import { RUTA_CARRERA, abrirPagina, prepararBanco } from '../banco/navegador.js'
 
 const MARCAR = 'button[aria-label^="Marcar"]'
 const LISTA = 'nav[aria-label="Vistas de la carrera"] button[aria-label*="lista"]'
+const FILAS = '.seccion-lista[id^="lista-semestre"] li[id^="fila-"]'
 const MAPA = 'nav[aria-label="Vistas de la carrera"] button[aria-label*="mapa"]'
 /* Lo que tardan en asentarse un pliegue (360 ms) y el deslizamiento que lo
    espera (380 ms, ver deslizarA en VistaLista) */
@@ -106,25 +107,44 @@ await comprobar('«Elegir» una electiva lleva a su grupo, al final', async () =
 })
 
 await comprobar('ir a una materia de otro semestre desde sus pastillas', async () => {
+  /* Las pastillas solo existen en las filas que se han abierto alguna vez: el
+     desplegable de una fila cerrada no se monta hasta la primera vez. Por eso
+     se busca abriendo las filas de una en una: se abre, se mira si alguna
+     pastilla lleva a otro semestre y se vuelve a cerrar. */
+  const pulsarFila = (n) =>
+    pagina.evaluate(
+      ([sel, k]) =>
+        document.querySelectorAll(sel)[k].querySelector('button[aria-expanded]').click(),
+      [FILAS, n],
+    )
   await subirArriba()
   await pagina.waitForTimeout(300)
-  /* El par de filas mas alejado que une una pastilla */
-  const par = await pagina.evaluate(() => {
-    const semestreDe = (f) => Number(f.closest('.seccion-lista').id.replace('lista-semestre-', ''))
-    const filas = [
-      ...document.querySelectorAll('.seccion-lista[id^="lista-semestre"] li[id^="fila-"]'),
-    ]
-    const nombreDe = (f) => f.querySelector('button[aria-expanded] span').textContent.trim()
-    let mejor = null
-    for (const fila of filas)
-      for (const pastilla of fila.querySelectorAll(':scope .plegable li button')) {
-        const otra = filas.find((f) => f !== fila && nombreDe(f) === pastilla.textContent.trim())
-        const lejos = otra && Math.abs(semestreDe(otra) - semestreDe(fila))
-        if (lejos && (!mejor || lejos > mejor.lejos))
-          mejor = { desde: fila.id, hasta: otra.id, nombre: nombreDe(otra), lejos }
-      }
-    return mejor
-  })
+  const total = await pagina.evaluate((sel) => document.querySelectorAll(sel).length, FILAS)
+  let par = null
+  for (let i = 0; i < Math.min(total, 20) && !par; i++) {
+    await pulsarFila(i)
+    await pagina.waitForTimeout(150)
+    par = await pagina.evaluate(
+      ([sel, k]) => {
+        const semestreDe = (f) =>
+          Number(f.closest('.seccion-lista').id.replace('lista-semestre-', ''))
+        const nombreDe = (f) => f.querySelector('button[aria-expanded] span').textContent.trim()
+        const filas = [...document.querySelectorAll(sel)]
+        const fila = filas[k]
+        for (const pastilla of fila.querySelectorAll(':scope .plegable li button')) {
+          const otra = filas.find(
+            (f) =>
+              semestreDe(f) !== semestreDe(fila) && nombreDe(f) === pastilla.textContent.trim(),
+          )
+          if (otra) return { desde: fila.id, hasta: otra.id, nombre: nombreDe(otra) }
+        }
+        return null
+      },
+      [FILAS, i],
+    )
+    await pulsarFila(i)
+    await pagina.waitForTimeout(150)
+  }
   if (!par) return 'no hay pastillas que lleven a otro semestre'
   await pagina.evaluate((id) => {
     const fila = document.getElementById(id)
