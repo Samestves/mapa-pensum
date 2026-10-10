@@ -143,25 +143,31 @@ function VistaLista({
     [porCodigo],
   )
 
-  const fila = (nodo) => (
-    <FilaMateria
-      key={nodo.codigo}
-      nodo={nodo}
-      estado={estados[nodo.codigo]}
-      estados={estados}
-      relaciones={relaciones}
-      porCodigo={porCodigo}
-      abierta={foco === nodo.codigo}
-      enfoque={enfoqueDe(nodo.codigo)}
-      tocada={toque?.codigo === nodo.codigo}
-      claveToque={toque?.n}
-      recienAbierta={abiertasAhora.has(nodo.codigo)}
-      claveDescarga={descarga?.n}
-      alMarcar={alMarcar}
-      alAlternar={alAlternar}
-      alIr={alIr}
-    />
-  )
+  /* El contador (n) solo se le pasa a quien lo usa: darselo a todas las filas
+     repintaba la lista entera en cada marca. */
+  const fila = (nodo) => {
+    const tocada = toque?.codigo === nodo.codigo
+    const recienAbierta = abiertasAhora.has(nodo.codigo)
+    return (
+      <FilaMateria
+        key={nodo.codigo}
+        nodo={nodo}
+        estado={estados[nodo.codigo]}
+        estados={estados}
+        relaciones={relaciones}
+        porCodigo={porCodigo}
+        abierta={foco === nodo.codigo}
+        enfoque={enfoqueDe(nodo.codigo)}
+        tocada={tocada}
+        claveToque={tocada ? toque.n : undefined}
+        recienAbierta={recienAbierta}
+        claveDescarga={recienAbierta ? descarga.n : undefined}
+        alMarcar={alMarcar}
+        alAlternar={alAlternar}
+        alIr={alIr}
+      />
+    )
+  }
 
   const visibles = semestres
     .map((s) => ({ ...s, filas: s.materias.filter((_, i) => entra(s.situaciones[i])) }))

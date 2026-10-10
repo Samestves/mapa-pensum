@@ -83,6 +83,13 @@ function dibujarForma(nodo, contexto, { seleccionado = null, cadena = null } = {
   }
 
   const situacion = situaciones.get(nodo.codigo)
+  /* El contador (n) solo se le pasa a quien lo usa: dárselo a todas las tarjetas
+     y cables repintaba el mapa entero en cada marca. */
+  const destellando =
+    descarga != null &&
+    situacion === SITUACION.INSCRIBIBLE &&
+    (nodo.prerrequisitos ?? []).includes(descarga.codigo)
+  const tocado = toque?.codigo === nodo.codigo
   return (
     <NodoAsignatura
       key={nodo.codigo}
@@ -90,14 +97,10 @@ function dibujarForma(nodo, contexto, { seleccionado = null, cadena = null } = {
       situacion={situacion}
       seleccionado={seleccionado === nodo.codigo}
       resaltado={cadena?.has(nodo.codigo) ?? false}
-      destellando={
-        descarga != null &&
-        situacion === SITUACION.INSCRIBIBLE &&
-        (nodo.prerrequisitos ?? []).includes(descarga.codigo)
-      }
-      claveDestello={descarga?.n}
-      tocado={toque?.codigo === nodo.codigo}
-      claveToque={toque?.n}
+      destellando={destellando}
+      claveDestello={destellando ? descarga.n : undefined}
+      tocado={tocado}
+      claveToque={tocado ? toque.n : undefined}
       alSenalar={alSenalar}
       alDejarDeSenalar={alDejarDeSenalar}
       alVerFicha={alVerFicha}
@@ -157,16 +160,19 @@ function FormasBaseSinMemo(props) {
       {/* Los cables van debajo de las tarjetas, pero el ruteo garantiza que
           ninguno pasa por encima de un nodo. */}
       <g>
-        {aristas.map((arista) => (
-          <CableBase
-            key={arista.id}
-            arista={arista}
-            areaDestino={porCodigo.get(arista.destino)?.area}
-            tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
-            descargando={descarga?.codigo === arista.origen}
-            claveDescarga={descarga?.n}
-          />
-        ))}
+        {aristas.map((arista) => {
+          const descargando = descarga?.codigo === arista.origen
+          return (
+            <CableBase
+              key={arista.id}
+              arista={arista}
+              areaDestino={porCodigo.get(arista.destino)?.area}
+              tramo={tramoDe(situaciones.get(arista.origen), situaciones.get(arista.destino))}
+              descargando={descargando}
+              claveDescarga={descargando ? descarga.n : undefined}
+            />
+          )
+        })}
       </g>
       {todasLasTarjetas(nodos, casillasFranja).map((nodo) => dibujarForma(nodo, props))}
     </>
