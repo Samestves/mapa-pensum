@@ -10,6 +10,10 @@ import MiniMapa from '../MiniMapa'
  *
  * Al tocarla abre su ficha (ver FichaCarrera); el pensum se empieza a bajar
  * en cuanto el dedo la toca, asi que al pulsar "Abrir el mapa" ya esta.
+ *
+ * El filo entre una fila y otra es el borde de arriba del texto, que llega
+ * hasta el canto derecho por debajo de la flecha: empieza donde empieza el
+ * texto, como en iOS, sin pintar nada aparte ni sumar un objeto por fila.
  */
 function FilaCarrera({ carrera, color, hechas, alElegir, alPrecargar }) {
   return (
@@ -24,7 +28,7 @@ function FilaCarrera({ carrera, color, hechas, alElegir, alPrecargar }) {
       <span className="fila-silueta">
         <MiniMapa silueta={carrera.silueta} color={color} hechas={hechas} className="size-full" />
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="fila-texto">
         <span className="block font-ui text-[17px] leading-tight text-tinta">{carrera.nombre}</span>
         <span className="mt-1 block text-[13px] text-tinta-tenue">
           {carrera.semestres} semestres · {carrera.asignaturas} materias

@@ -81,7 +81,7 @@ const todo = (archivos) => js(archivos) + css(archivos)
  */
 const PARTIDAS = [
   { nombre: 'portada · JS de entrada', kB: js(entrada), tope: 79.7 },
-  { nombre: 'portada · CSS', kB: css(entrada), tope: 15.6 },
+  { nombre: 'portada · CSS', kB: css(entrada), tope: 16.5 },
   {
     // Las que pinta cualquier pantalla: las unicas que se piden sin condicion
     nombre: 'portada · fuentes',

@@ -73,7 +73,7 @@ function MenuPortada({ tema, alternarTema, alVerGuia }) {
         />
         <Renglon icono={Code} titulo="Código abierto" texto="Revísalo en GitHub" href={REPO} />
       </ul>
-      <p className="mt-4 rounded-2xl bg-panel-suave px-4 py-3 text-[13px] leading-relaxed text-tinta-suave">
+      <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-tinta-tenue">
         Datos tomados de los pensums de la DACE del Núcleo de Monagas. Pueden tener errores:
         confirma con control de estudios antes de inscribir.
       </p>

@@ -1,13 +1,16 @@
-import { MoreHorizontal } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import Logo from '../Logo'
 
 /**
- * La marca y, al otro lado, el menu de la portada.
+ * La marca y, al otro lado, los ajustes de la portada.
  *
  * El nombre es el h1 de la pagina: lo que nombra la cosa va primero. Lo demas
  * que estuvo aqui -el boton del tema, los enlaces- se usa una vez de cada
  * cien visitas y ocupaba el sitio de lo que se viene a hacer; ahora vive en
- * el menu de los tres puntos.
+ * la hoja de ajustes. El boton es un engranaje y no tres puntos: dice que
+ * hay dentro antes de tocarlo. Relleno y sin aro, como los botones de la
+ * barra de iOS, y del mismo alto que la marca para que los dos extremos de
+ * la cabecera caigan en la misma linea.
  */
 function Cabecera({ menuAbierto, alAbrirMenu }) {
   return (
@@ -30,9 +33,9 @@ function Cabecera({ menuAbierto, alAbrirMenu }) {
         aria-label="Ajustes y ayuda"
         aria-haspopup="dialog"
         aria-expanded={menuAbierto}
-        className="boton-aro ml-auto grid size-11 shrink-0 place-items-center rounded-full"
+        className="boton-ajustes ml-auto"
       >
-        <MoreHorizontal size={19} strokeWidth={1.75} />
+        <Settings size={20} strokeWidth={1.75} />
       </button>
     </header>
   )

@@ -304,9 +304,14 @@ describe('lo que la portada cuenta de tu carrera', () => {
     const r = resumenParaPortada(pensum, { A1: 'aprobada' })
     assert.deepEqual(r.hechas, [1, 0])
     assert.equal(r.porcentaje, 40)
-    assert.equal(r.cuanto, '4 de 10 UC')
+    assert.deepEqual([r.llevas, r.de, r.unidad], [4, 10, 'UC'])
     // A2 no tiene prerrequisitos y B1 se abrio al aprobar A1
     assert.equal(r.disponibles, 2)
+  })
+
+  test('sin creditos oficiales cuenta materias', () => {
+    const r = resumenParaPortada({ ...pensum, creditos: null }, { A1: 'aprobada' })
+    assert.deepEqual([r.llevas, r.de, r.unidad], [1, 3, 'materias'])
   })
 
   test('las marcas de otro pensum no cuentan', () => {

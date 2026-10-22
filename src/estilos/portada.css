@@ -291,62 +291,238 @@
   }
 }
 
-/* ---- Tu carrera ---------------------------------------------------------
-   La tarjeta de quien vuelve, en el color de su carrera. El texto va en el
-   color del lienzo: casi negro sobre los colores claros del tema oscuro y
-   casi blanco sobre los profundos del claro. */
-.tarjeta-seguir {
-  position: relative;
-  overflow: hidden;
-  padding: 1.25rem 1.25rem 1.125rem;
-  border-radius: 28px;
-  color: var(--lienzo);
-  background:
-    radial-gradient(
-      120% 90% at 0% 0%,
-      color-mix(in oklab, var(--acento) 55%, white),
-      transparent 62%
-    ),
-    linear-gradient(160deg, var(--acento), color-mix(in oklab, var(--acento) 58%, black));
-  box-shadow: 0 24px 48px -28px color-mix(in oklab, var(--acento) 70%, black);
+/* ---- La cabecera -------------------------------------------------------
+   El boton de ajustes, relleno y sin aro como los de la barra de iOS, del
+   mismo alto que la caja de la marca. */
+.boton-ajustes {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
+  color: var(--tinta-suave);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.seguir-cifra {
-  font-size: 76px;
+.boton-ajustes:active {
+  transform: scale(0.92);
+}
+
+.boton-ajustes[aria-expanded='true'] {
+  color: var(--tinta);
+  background: color-mix(in oklab, var(--tinta) 12%, transparent);
+}
+
+@media (hover: hover) {
+  .boton-ajustes:hover {
+    color: var(--tinta);
+    background: color-mix(in oklab, var(--tinta) 11%, transparent);
+  }
+}
+
+/* ---- Tu carrera ---------------------------------------------------------
+   Superficie sobria con el color de la carrera de acento: su luz en la
+   esquina y su punto junto a la etiqueta, y un filo de un pixel. Fue un
+   degradado recortado con mascara, como .marca-caja: se veia casi igual y
+   la mascara costaba rasterizarla en un telefono modesto.
+
+   Las esquinas son concentricas: 32 de radio menos 18 de margen dan los 14
+   de los botones de dentro. */
+.tarjeta-seguir {
+  --margen-tarjeta: 18px;
+  --radio-tarjeta: 32px;
+  --anillo-claro: color-mix(in oklab, var(--estado-aprobada) 55%, white);
+  position: relative;
+  padding: var(--margen-tarjeta);
+  border-radius: var(--radio-tarjeta);
+  background:
+    radial-gradient(
+      120% 75% at 0% 0%,
+      color-mix(in oklab, var(--acento) 17%, transparent),
+      transparent 62%
+    ),
+    var(--panel);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--tinta) 9%, transparent),
+    0 30px 60px -36px rgb(0 0 0 / 0.7);
+}
+
+[data-tema='claro'] .tarjeta-seguir {
+  box-shadow:
+    inset 0 0 0 1px rgb(23 26 32 / 0.06),
+    0 1px 2px rgb(23 26 32 / 0.06),
+    0 24px 48px -30px rgb(23 26 32 / 0.3);
+}
+
+.seguir-etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 500;
-  line-height: 0.8;
-  letter-spacing: -0.045em;
+  color: var(--tinta-tenue);
+}
+
+.seguir-etiqueta::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acento);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--acento) 22%, transparent);
+}
+
+.seguir-cuerpo {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.seguir-cuerpo > :not(.anillo-portada) {
   transition: opacity 300ms ease;
 }
 
-.seguir-cifra small {
-  margin-left: 2px;
-  font-size: 0.38em;
-  letter-spacing: 0;
-  opacity: 0.7;
-}
-
-[data-listo='false'] .seguir-cifra {
+[data-listo='false'] > :not(.anillo-portada),
+[data-listo='false'] .anillo-portada p {
   opacity: 0;
 }
 
-/* Los diez semestres, cada uno lleno en lo que llevas de el */
-.tramos-semestre {
+/* El anillo, como los de Apple Fitness */
+.anillo-portada {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  flex: none;
+}
+
+.anillo-portada svg {
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+
+.anillo-portada circle {
+  fill: none;
+}
+
+.anillo-portada .pista {
+  stroke: color-mix(in oklab, var(--estado-aprobada) 14%, transparent);
+}
+
+.anillo-portada .arco {
+  stroke: url(#degradado-anillo);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1100ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Llenarse es repintar el anillo en cada cuadro: en un telefono modesto se
+   pone en su sitio de una vez */
+[data-ligero] .anillo-portada .arco {
+  transition: none;
+}
+
+.anillo-portada p {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 36px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--tinta);
+  transition: opacity 300ms ease;
+}
+
+.anillo-portada small {
+  margin-left: 1px;
+  font-size: 0.5em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tinta-tenue);
+}
+
+/* Las dos cifras de al lado: el rotulo pequeño arriba y el numero debajo,
+   alineados a la izquierda y separados por un filo */
+.seguir-datos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.seguir-datos > div + div {
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-borde);
+}
+
+.seguir-datos dt {
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+.seguir-datos dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--tinta);
+}
+
+.seguir-datos dd small {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--tinta-tenue);
+}
+
+/* Los semestres: diez capsulas, cada una llena en lo que llevas de ella */
+.seguir-semestres {
+  margin-top: 20px;
+}
+
+.seguir-semestres p {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+.seguir-semestres p span:last-child:not(:first-child) {
+  color: var(--tinta-suave);
+}
+
+.seguir-semestres > div {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
-  gap: 4px;
-  margin-top: 1.125rem;
+  gap: 5px;
+  margin-top: 8px;
 }
 
-.tramos-semestre i {
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    currentColor calc(var(--lleno) * 100%),
-    color-mix(in oklab, currentColor 24%, transparent) 0
-  );
+.seguir-semestres i {
+  height: 8px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, var(--anillo-claro), var(--estado-aprobada)) 0 0 /
+      calc(var(--lleno) * 100%) 100% no-repeat,
+    color-mix(in oklab, var(--tinta) 9%, transparent);
+}
+
+.seguir-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .seguir-entrar,
@@ -355,7 +531,7 @@
   align-items: center;
   justify-content: center;
   height: 52px;
-  border-radius: 16px;
+  border-radius: calc(var(--radio-tarjeta) - var(--margen-tarjeta));
   transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -364,13 +540,14 @@
   gap: 8px;
   font-size: 15.5px;
   font-weight: 600;
-  background: var(--lienzo);
-  color: var(--tinta);
+  background: var(--tinta);
+  color: var(--lienzo);
 }
 
 .seguir-horario {
   width: 52px;
-  background: color-mix(in oklab, var(--lienzo) 18%, transparent);
+  background: color-mix(in oklab, var(--tinta) 8%, transparent);
+  color: var(--tinta);
 }
 
 .seguir-entrar:active,
@@ -388,23 +565,22 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 48px;
+    height: 46px;
     margin-top: 1.125rem;
     padding-inline: 16px;
-    border: 1px solid var(--panel-borde);
     border-radius: 14px;
-    background: var(--panel);
+    background: color-mix(in oklab, var(--tinta) 6%, transparent);
     color: var(--tinta-tenue);
-    transition: border-color 200ms ease;
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: box-shadow 200ms ease;
   }
 
   .buscador-en-linea:focus-within {
-    border-color: color-mix(in oklab, var(--tinta) 40%, transparent);
+    box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tinta) 35%, transparent);
   }
 }
 
-.buscador-en-linea input,
-.buscador-hoja input {
+.buscador-en-linea input {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -413,20 +589,20 @@
   outline: none;
 }
 
-.buscador-en-linea input::placeholder,
-.buscador-hoja input::placeholder {
+.buscador-en-linea input::placeholder {
   color: var(--tinta-tenue);
 }
 
-/* El filtro se queda arriba al bajar por la lista: siempre a mano para
-   cambiar de grupo sin volver al principio. */
+/* Los filtros: capsulas rellenas sin aro, como los de Apple Music. El
+   filtro se queda arriba al bajar por la lista, para cambiar de grupo sin
+   volver al principio. */
 .filtro-carreras {
   position: sticky;
   top: 0;
   z-index: 5;
   display: flex;
-  gap: 6px;
-  margin: 0.75rem -1.25rem 0;
+  gap: 8px;
+  margin: 0.625rem -1.25rem 0;
   padding: 0.625rem 1.25rem;
   overflow-x: auto;
   scrollbar-width: none;
@@ -439,11 +615,10 @@
 
 .filtro-carreras button {
   flex: none;
-  height: 38px;
-  padding-inline: 15px;
-  border: 1px solid var(--panel-borde);
-  border-radius: 19px;
-  background: var(--panel);
+  height: 34px;
+  padding-inline: 14px;
+  border-radius: 17px;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
   font-size: 14px;
   font-weight: 500;
   color: var(--tinta-suave);
@@ -453,7 +628,6 @@
 }
 
 .filtro-carreras button[aria-pressed='true'] {
-  border-color: transparent;
   background: var(--tinta);
   color: var(--lienzo);
 }
@@ -467,39 +641,68 @@
   }
 }
 
+/* El rotulo de cada grupo, a la altura del texto de las filas y no del
+   borde del panel: es lo que hace que la lista se lea como una */
 .grupo-carreras h3 {
   display: flex;
   justify-content: space-between;
-  margin: 1.25rem 0.25rem 0.5rem;
+  margin: 1.375rem 16px 0.5rem;
   font-size: 13px;
   font-weight: 500;
   color: var(--tinta-tenue);
 }
 
+/* El panel de cada grupo. Sus esquinas son concentricas con la ficha de
+   cada fila: 22 de radio menos 11 de margen dan los 11 de la silueta. */
 .lista-panel {
+  --radio-panel: 22px;
+  --margen-fila: 11px;
   overflow: hidden;
-  border: 1px solid var(--panel-borde);
-  border-radius: 22px;
+  border-radius: var(--radio-panel);
   background: var(--panel);
 }
 
-.lista-panel > li + li {
+[data-tema='claro'] .lista-panel {
+  box-shadow:
+    0 0 0 1px rgb(23 26 32 / 0.05),
+    0 1px 3px rgb(23 26 32 / 0.05);
+}
+
+/* Los separadores empiezan donde empieza el texto, como en iOS (ver
+   FilaCarrera) */
+.lista-panel > li + li .fila-texto {
   border-top: 1px solid var(--panel-borde);
 }
 
 .fila-carrera {
+  position: relative;
   display: flex;
-  align-items: center;
   gap: 14px;
   width: 100%;
-  min-height: 76px;
-  padding: 12px 16px 12px 12px;
+  min-height: 72px;
+  padding-left: var(--margen-fila);
   text-align: left;
   transition: background-color 160ms ease;
 }
 
+.fila-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: var(--margen-fila) 46px var(--margen-fila) 0;
+}
+
+.fila-carrera > svg {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  translate: 0 -50%;
+}
+
 .fila-carrera:active {
-  background: color-mix(in oklab, var(--tinta) 5%, transparent);
+  background: color-mix(in oklab, var(--tinta) 6%, transparent);
 }
 
 @media (hover: hover) {
@@ -509,45 +712,71 @@
 }
 
 .fila-silueta {
+  align-self: center;
+  margin-block: var(--margen-fila);
   display: grid;
   place-items: center;
-  width: 60px;
+  width: 58px;
   height: 50px;
   flex: none;
-  padding: 8px;
-  border-radius: 14px;
-  background: color-mix(in oklab, var(--acento) 12%, transparent);
+  padding: 9px 8px;
+  border-radius: calc(var(--radio-panel) - var(--margen-fila));
+  background: color-mix(in oklab, var(--acento) 13%, transparent);
 }
 
-/* ---- El pie ---- */
+/* ---- El pie -------------------------------------------------------------
+   Tres renglones en la misma columna, de mas a menos importante, con el
+   texto a la altura del de las filas y los rotulos de grupo. */
 .pie-portada {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 62ch;
-  margin-top: 3rem;
-  padding-top: 1.5rem;
+  gap: 10px;
+  max-width: 60ch;
+  margin-top: 2.75rem;
+  padding: 1.25rem 16px 0;
   border-top: 1px solid var(--panel-borde);
-  font-size: 13.5px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--tinta-tenue);
+}
+
+.pie-confianza {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+
+.pie-confianza svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--estado-aprobada);
 }
 
 .pie-portada a {
   color: var(--tinta-suave);
-  text-decoration: underline;
-  text-decoration-color: var(--panel-borde);
-  text-underline-offset: 3px;
   transition: color 200ms ease;
 }
 
-.pie-portada a.enlace-pie {
+.pie-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* El punto medio entre enlaces, fuera del texto de cada uno */
+.pie-enlaces a + a::before {
+  content: '·';
+  padding-inline: 10px;
+  color: var(--tinta-tenue);
+}
+
+.pie-enlaces a {
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 40px;
   font-weight: 500;
-  text-decoration: none;
 }
 
 @media (hover: hover) {
@@ -556,14 +785,30 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .pie-portada {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 3rem;
+  }
+
+  .pie-enlaces {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+}
+
 /* ---- El buscador del telefono -------------------------------------------
-   Una isla abajo, sobre un velo del lienzo para que la lista no se lea por
-   debajo. En escritorio el buscador va en linea y esto no sale. */
+   Una isla abajo, con los mismos margenes que la pagina, sobre un velo del
+   lienzo para que la lista no se lea por debajo. En escritorio el buscador
+   va en linea y esto no sale. */
 .dock-portada {
   position: fixed;
   z-index: 40;
   inset: auto 0 0;
-  padding: 1.75rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  padding: 1.75rem 1.25rem calc(0.875rem + env(safe-area-inset-bottom));
   background: linear-gradient(transparent, var(--lienzo) 58%);
   pointer-events: none;
 }
@@ -574,10 +819,10 @@
   gap: 10px;
   width: 100%;
   max-width: 32rem;
-  height: 56px;
+  height: 54px;
   margin-inline: auto;
-  padding-inline: 20px;
-  border-radius: 28px;
+  padding-inline: 18px;
+  border-radius: 27px;
   font-size: 16px;
   color: var(--tinta-suave);
   pointer-events: auto;

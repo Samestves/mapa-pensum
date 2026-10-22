@@ -113,7 +113,9 @@ function Bienvenida({ alTerminar }) {
                 aria-hidden={i !== paso}
                 inert={i !== paso}
               >
-                <div className="bienvenida-escena">{escena}</div>
+                <div className="bienvenida-escena" aria-hidden="true">
+                  {escena}
+                </div>
                 <h2 className="font-ui text-[32px] leading-[1.05] font-light tracking-[-0.02em] text-balance text-tinta">
                   {titulo}
                 </h2>

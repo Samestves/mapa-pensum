@@ -1,40 +1,73 @@
 /* ---- Lo que se abre encima de la portada ---------------------------------
-   La ficha de una carrera, el buscador del telefono y el menu. Viaja con su
-   codigo (ver HojasPortada.jsx): la portada se pinta sin esto. */
+   La ficha de una carrera, el buscador del telefono y los ajustes. Viaja con
+   su codigo (ver HojasPortada.jsx): la portada se pinta sin esto.
 
+   Los bloques de dentro son grupos como los de Ajustes de iOS: relleno
+   apenas mas claro que la hoja, sin aro, y separadores que empiezan donde
+   empieza el texto. Las cifras van en Inter seminegrita, como todas las de
+   la aplicacion. */
+
+/* El campo de buscar, relleno y sin aro como el de iOS */
 .buscador-hoja {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 52px;
-  padding-inline: 16px;
-  border: 1.5px solid color-mix(in oklab, var(--tinta) 35%, transparent);
-  border-radius: 16px;
-  background: var(--panel-suave);
+  height: 46px;
+  padding-inline: 14px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--tinta) 7%, transparent);
   color: var(--tinta-tenue);
 }
 
+.buscador-hoja input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  font-size: 16px;
+  color: var(--tinta);
+  outline: none;
+}
+
+.buscador-hoja input::placeholder {
+  color: var(--tinta-tenue);
+}
+
+/* ---- La ficha ----------------------------------------------------------- */
 .ficha-silueta {
   display: grid;
   place-items: center;
-  width: 132px;
-  height: 92px;
-  padding: 16px;
-  border-radius: 26px;
-  background: color-mix(in oklab, var(--acento) 13%, transparent);
+  width: 128px;
+  height: 88px;
+  padding: 16px 18px;
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      100% 100% at 30% 0%,
+      color-mix(in oklab, var(--acento) 26%, transparent),
+      transparent 70%
+    ),
+    color-mix(in oklab, var(--acento) 10%, var(--panel-suave));
 }
 
 .ficha-tipo {
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: 26px;
   margin-top: 1rem;
-  padding-inline: 12px;
-  border-radius: 14px;
+  padding-inline: 11px;
+  border-radius: 13px;
   background: color-mix(in oklab, var(--acento) 15%, transparent);
   font-size: 12.5px;
   font-weight: 600;
   color: var(--acento);
+}
+
+/* Los grupos de la ficha: mismo radio, mismo relleno y mismo margen */
+.ficha-cifras > div,
+.ficha-barras,
+.ficha-dentro {
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--tinta) 5%, transparent);
 }
 
 .ficha-cifras {
@@ -48,34 +81,35 @@
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
-  padding: 12px 6px;
-  border-radius: 18px;
-  background: var(--panel-suave);
+  padding: 13px 6px 12px;
 }
 
 .ficha-cifras dd {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: 26px;
+  font-size: 24px;
+  font-weight: 600;
   line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--tinta);
 }
 
 .ficha-cifras dt {
-  margin-top: 5px;
+  margin-top: 6px;
   font-size: 12px;
   color: var(--tinta-tenue);
 }
 
+/* Materias por semestre: barras redondeadas en el color de la carrera, de
+   mas claro arriba a pleno abajo, sobre una pista que marca el maximo */
 .ficha-barras {
   margin: 8px 0 0;
   padding: 14px 16px 12px;
-  border-radius: 20px;
-  background: var(--panel-suave);
 }
 
 .ficha-barras figcaption {
-  font-size: 13.5px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
   font-weight: 500;
   color: var(--tinta);
 }
@@ -88,59 +122,97 @@
 
 .ficha-barras > div {
   align-items: flex-end;
-  height: 64px;
-  margin-top: 12px;
+  height: 72px;
+  margin-top: 14px;
 }
 
 .ficha-barras i {
   flex: 1;
-  border-radius: 5px 5px 3px 3px;
-  background: var(--acento);
+  min-height: 8px;
+  border-radius: 6px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--acento) 70%, white),
+    var(--acento)
+  );
+}
+
+[data-tema='claro'] .ficha-barras i {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--acento) 75%, white),
+    var(--acento)
+  );
 }
 
 .ficha-barras i[data-apagada='true'] {
-  opacity: 0.25;
+  background: color-mix(in oklab, var(--tinta) 11%, transparent);
 }
 
 .ficha-barras > p {
-  margin-top: 6px;
+  margin-top: 7px;
 }
 
 .ficha-barras > p span {
   flex: 1;
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--tinta-tenue);
 }
 
-.ficha-dentro {
-  margin-top: 8px;
-  padding: 4px 16px;
-  border-radius: 20px;
-  background: var(--panel-suave);
+/* ---- Grupos con renglones: lo de dentro de la ficha y los ajustes ------- */
+.ficha-dentro,
+.menu-portada {
+  --sangria: 70px;
 }
 
-.ficha-dentro li {
+.ficha-dentro {
+  margin-top: 8px;
+  padding-inline: 14px;
+}
+
+.menu-portada {
+  border-radius: 18px;
+  padding-inline: 14px;
+  background: color-mix(in oklab, var(--tinta) 5%, transparent);
+}
+
+.ficha-dentro li,
+.renglon-menu {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding-block: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding-block: 11px;
+  text-align: left;
 }
 
-.ficha-dentro li + li {
-  border-top: 1px solid var(--panel-borde);
+/* Los separadores empiezan donde empieza el texto */
+.ficha-dentro li + li::before,
+.menu-portada li + li .renglon-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: calc(var(--sangria) - 14px);
+  height: 1px;
+  background: var(--panel-borde);
 }
 
 .ficha-dentro li > span,
 .tecla-menu {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex: none;
   border-radius: 12px;
   background: var(--panel);
   color: var(--tinta);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }
 
 .ficha-dentro b,
@@ -148,55 +220,50 @@
   display: block;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--tinta);
 }
 
 .ficha-dentro p,
 .renglon-menu b + span {
   display: block;
+  margin-top: 1px;
   font-size: 13px;
   line-height: 1.35;
   color: var(--tinta-tenue);
 }
 
-.tecla-menu {
-  background: var(--panel-suave);
-}
-
-.renglon-menu {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding-block: 12px;
-  text-align: left;
-}
-
-.menu-portada li + li .renglon-menu {
-  border-top: 1px solid var(--panel-borde);
+@media (hover: hover) {
+  .renglon-menu:hover b {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--tinta) 30%, transparent);
+    text-underline-offset: 3px;
+  }
 }
 
 /* El interruptor del tema, como el de iOS */
 .interruptor {
   position: relative;
-  width: 50px;
-  height: 30px;
+  width: 51px;
+  height: 31px;
   flex: none;
-  border-radius: 15px;
-  background: color-mix(in oklab, var(--tinta) 18%, transparent);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--tinta) 16%, transparent);
   transition: background-color 250ms ease;
 }
 
 .interruptor::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.25);
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 0.15),
+    0 1px 1px rgb(0 0 0 / 0.16);
   transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 

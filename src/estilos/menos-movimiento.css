@@ -24,4 +24,9 @@
 
   /* La de salida del aviso se deja: sin ella se quedaria en pantalla los
      260 ms que tarda en desmontarse, pero congelado y sin irse nunca. */
+
+  /* Estas se mueven con transition, no con animation */
+  .anillo-portada .arco {
+    transition: none;
+  }
 }

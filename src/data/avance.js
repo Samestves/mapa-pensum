@@ -191,7 +191,9 @@ export function conMarcas(marcas, cambios) {
 
 /**
  * Lo que la portada cuenta de tu carrera sin abrirla: los puntos de la
- * silueta, el porcentaje y la frase del anillo, y cuantas puedes inscribir.
+ * silueta, el porcentaje, cuanto llevas de cuanto -en UC donde hay creditos
+ * oficiales, en materias donde no, como el anillo de dentro- y cuantas
+ * puedes inscribir.
  * Es la misma cuenta que hace usePensum dentro de la carrera, con las marcas
  * depuradas igual, para que el numero de fuera y el de dentro no discrepen.
  */
@@ -205,10 +207,13 @@ export function resumenParaPortada(carrera, marcasGuardadas) {
     carrera.creditos,
     avanceDeGrupos(carrera.grupos, marcas),
   )
+  const conUc = progreso.porcentaje != null
   return {
     hechas: aprobadasPorSemestre(carrera, marcas),
     porcentaje: Math.round(avanceDe(progreso)),
-    cuanto: cuantoLlevas(progreso),
+    llevas: conUc ? progreso.ucAprobadas + progreso.ucElectivas : progreso.aprobadas,
+    de: conUc ? progreso.ucTitulo : progreso.total,
+    unidad: conUc ? 'UC' : 'materias',
     disponibles: progreso.disponibles,
   }
 }

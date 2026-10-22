@@ -28,9 +28,10 @@ function Estado({ situacion, cuando }) {
 /**
  * Una materia como en el mapa, que puede cambiar de estado a mitad de la
  * escena: `antes` es como empieza y `despues` como acaba. Sin `despues` no
- * cambia. Ver .materia-escena en bienvenida.css.
+ * cambia. Con `toque`, un dedo la toca justo antes de cambiar. Ver
+ * .materia-escena en bienvenida.css.
  */
-function Materia({ nombre, antes, despues, orden }) {
+function Materia({ nombre, antes, despues, orden, toque }) {
   return (
     <div
       className="materia-escena"
@@ -39,6 +40,7 @@ function Materia({ nombre, antes, despues, orden }) {
       style={{ '--orden': orden }}
     >
       <span className="estados">
+        {toque && <i className="toque" />}
         <Estado situacion={antes} cuando="antes" />
         {despues && <Estado situacion={despues} cuando="despues" />}
       </span>
@@ -56,6 +58,7 @@ export function EscenaMapa() {
         antes={SITUACION.INSCRIBIBLE}
         despues={SITUACION.HECHA}
         orden={0}
+        toque
       />
       <span className="enlace-escena e1" />
       <Materia
@@ -78,6 +81,7 @@ export function EscenaMarcar() {
         <div key={nombre} className="renglon-escena" style={{ '--orden': i }}>
           <b>{nombre}</b>
           <span className="marca-escena">
+            <i className="toque" />
             <IconoSituacion situacion={SITUACION.HECHA} size={28} />
           </span>
         </div>
@@ -112,12 +116,21 @@ export function EscenaAvance() {
   return (
     <div className="escena-avance">
       <div className="aro-escena">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="degradado-escena" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" style={{ stopColor: 'var(--anillo-claro)' }} />
+              <stop offset="1" style={{ stopColor: 'var(--estado-aprobada)' }} />
+            </linearGradient>
+          </defs>
           <circle cx="60" cy="60" r="52" className="pista" />
           <circle cx="60" cy="60" r="52" className="arco" pathLength="100" />
         </svg>
+        {/* La cifra es un contador de CSS que sube de 0 a 34 mientras el
+            aro se llena (ver .cuenta en bienvenida.css) */}
         <p className="tabular-nums">
-          34<small>%</small>
+          <span className="cuenta" />
+          <small>%</small>
         </p>
       </div>
       <ul>
