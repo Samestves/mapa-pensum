@@ -56,8 +56,8 @@ const ESCENARIOS = [
   {
     nombre: 'portada',
     ruta: '',
-    listo: '.tarjeta-carrera',
-    presupuesto: { peticiones: 7, nodos: 905, objetos: 725, cpu: 1000 },
+    listo: '.fila-carrera',
+    presupuesto: { peticiones: 7, nodos: 905, objetos: 795, cpu: 1000 },
   },
   {
     nombre: 'carrera por la lista',

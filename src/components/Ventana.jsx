@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useFocoAtrapado } from '../hooks/useFocoAtrapado'
+import '../estilos/superficies.css'
 
 /**
  * Una ventana centrada sobre la aplicacion, con su velo. Es lo que en

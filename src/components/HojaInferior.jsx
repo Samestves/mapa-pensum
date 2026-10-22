@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape'
 import { useEntrada } from '../hooks/useEntrada'
+import '../estilos/superficies.css'
 
 /* Lo que tarda en irse. Tiene que coincidir con la transicion de
    .hoja-inferior en estilos/hojas.css: es el tiempo que la hoja sigue montada despues

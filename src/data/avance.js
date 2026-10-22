@@ -188,3 +188,27 @@ export function conMarcas(marcas, cambios) {
   }
   return copia
 }
+
+/**
+ * Lo que la portada cuenta de tu carrera sin abrirla: los puntos de la
+ * silueta, el porcentaje y la frase del anillo, y cuantas puedes inscribir.
+ * Es la misma cuenta que hace usePensum dentro de la carrera, con las marcas
+ * depuradas igual, para que el numero de fuera y el de dentro no discrepen.
+ */
+export function resumenParaPortada(carrera, marcasGuardadas) {
+  const asignaturas = carrera.asignaturas.filter((a) => !a.esHueco)
+  const todas = [...asignaturas, ...carrera.grupos.flatMap((g) => g.asignaturas)]
+  const marcas = depurarMarcas(marcasGuardadas, new Set(todas.map((a) => a.codigo)))
+  const progreso = progresoDe(
+    asignaturas,
+    estadosDe(todas, marcas),
+    carrera.creditos,
+    avanceDeGrupos(carrera.grupos, marcas),
+  )
+  return {
+    hechas: aprobadasPorSemestre(carrera, marcas),
+    porcentaje: Math.round(avanceDe(progreso)),
+    cuanto: cuantoLlevas(progreso),
+    disponibles: progreso.disponibles,
+  }
+}

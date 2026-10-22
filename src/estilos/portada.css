@@ -186,190 +186,410 @@
 }
 
 /* ------------------------------------------------------------------
-   Portada en pantalla ancha y BAJA, que es lo que es un portatil.
-
-   El problema no era de anchura sino de altura, asi que las consultas van
-   por altura. Medido a 1440x900: la pagina pedia 1143 px y dejaba 243 fuera,
-   o sea que las tres ultimas carreras y el pie exigian desplazarse.
-
-   De esos 1143, 823 eran tarjetas y 320 eran espacios -padding de pagina,
-   margenes de la rejilla, huecos y pie-. Se recorta ahi primero, que es de
-   donde se saca sin perder nada, y solo al final se le pide algo a la
-   silueta. La silueta es lo unico que distingue una carrera de otra de un
-   vistazo, asi que es lo ultimo que se toca y lo que menos se toca.
-
-   Son DOS escalones y no uno. Con un solo corte a 960 px pasaba algo
-   absurdo: una pantalla de 900 entraba entera y una de 1080 -mas grande- se
-   quedaba desplazandose, porque la consulta no le llegaba. El umbral de
-   arriba tiene que estar donde la pagina SIN comprimir deja de caber, que
-   son sus 1143 px redondeados a 1180, no donde a uno le parezca.
+   La portada: una columna en el telefono y dos en escritorio -a la
+   izquierda lo que se cuenta (la presentacion o tu carrera), a la derecha
+   las carreras-. Abajo en el telefono queda sitio para el buscador, que
+   flota encima (ver .dock-portada).
    ------------------------------------------------------------------ */
-
-/* Primer escalon: la pagina sin comprimir ya no cabe. Se recorta solo
-   espacio muerto; la silueta no se entera. Deja la pagina en unos 945 px. */
-@media (min-width: 1024px) and (max-height: 1180px) {
-  .portada {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
-  }
-
-  .rejilla-carreras {
-    /* Aire entre la cabecera y la primera fila. Es lo unico que se AÑADE en
-       estos bloques en vez de recortarse, y cabe porque a esta altura sobran
-       129 px: la cabecera pegada a las tarjetas hacia que el titulo pareciera
-       el rotulo de la primera tarjeta y no el de la pagina. */
-    margin-top: 2rem;
-    margin-bottom: 1.5rem;
-    gap: 0.875rem;
-  }
-
-  .tarjeta-carrera {
-    padding: 1.125rem;
-  }
-
-  .silueta-carrera {
-    margin-top: 0.875rem;
-  }
+.portada {
+  position: relative;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1.25rem calc(6.5rem + env(safe-area-inset-bottom));
 }
 
-/* Segundo escalon: ni con eso. Aqui si se le pide a la silueta, de 96 a
-   80 px, y se aprieta el interior de la tarjeta. Deja la pagina en 841 px,
-   con las nueve carreras y el pie a la vista en un portatil de 900. */
-@media (min-width: 1024px) and (max-height: 980px) {
-  .portada {
-    padding-top: 1.25rem;
-    padding-bottom: 1.25rem;
-  }
-
-  .rejilla-carreras {
-    /* Aqui el aire se reparte con cuentagotas: a 1366x768 la ultima fila
-       acaba a 757 px de 768, asi que cada pixel que se añada arriba se lo
-       come la novena carrera por abajo. Seis, y no mas. */
-    margin-top: 1.375rem;
-    margin-bottom: 1.25rem;
-    gap: 0.75rem;
-  }
-
-  .tarjeta-carrera {
-    padding: 1rem;
-  }
-
-  .silueta-carrera {
-    height: 5rem;
-    margin-top: 0.75rem;
-  }
-
-  /* El rotulo con el nombre largo de la carrera, al pie de cada tarjeta */
-  .tarjeta-carrera > p:last-child {
-    margin-top: 0.75rem;
-    padding-top: 0.625rem;
-  }
+.portada-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  margin-top: 2rem;
 }
 
-/* Tercer escalon: los portatiles de 768, que siguen siendo muchos.
-   Con el escalon anterior las nueve tarjetas entraban, pero por 5 px. Cinco
-   pixeles no es que entre: es que cabe hoy y deja de caber en cuanto el
-   navegador redondee una linea de texto de otra manera. Este escalon lo sube
-   a 27, que ya es un margen y no una casualidad. */
-@media (min-width: 1024px) and (max-height: 800px) {
-  /* Medido otra vez a 1366x768 con la cajita del logo ya puesta: la pagina
-     pedia 783 px y volvia a desplazarse 15. Y desde que la portada se centra
-     en alto, esos quince pixeles no son solo un scroll: son la diferencia
-     entre una pagina centrada y una pegada arriba. Se recortan margenes, no
-     tarjetas, y la silueta cede cuatro pixeles. Deja unos 17 de holgura. */
-  .portada {
-    padding-top: 0.875rem;
-    padding-bottom: 0.875rem;
-  }
-
-  .rejilla-carreras {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    gap: 0.625rem;
-  }
-
-  .silueta-carrera {
-    height: 4.5rem;
-  }
-
-  .portada > footer {
-    padding-top: 1rem;
-  }
+/* Lo que entra al abrir: la cabecera, lo de la izquierda y la lista, uno
+   detras de otro. Con translate y no transform, que es donde los botones
+   ponen su hundido al tocarlos. */
+.portada > *,
+.portada-cuerpo > * {
+  animation: portada-entra 520ms cubic-bezier(0.22, 0.61, 0.2, 1) backwards;
 }
 
-/* ---- Selector de carreras -----------------------------------------------
-   El giro se aplica por style en linea desde JS (sigue al cursor), aqui va
-   solo la transicion para que volver al reposo no sea un salto. */
-.tarjeta-carrera {
-  transform-style: preserve-3d;
-  transition:
-    transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
-    border-color 200ms ease,
-    background-color 200ms ease;
-  will-change: transform;
+.portada-cuerpo > :nth-child(1) {
+  animation-delay: 70ms;
 }
 
-.tarjeta-carrera:hover {
-  border-color: color-mix(in oklab, var(--acento) 45%, var(--panel-borde));
+.portada-cuerpo > :nth-child(2) {
+  animation-delay: 140ms;
 }
 
-.tarjeta-carrera > * {
-  transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-/* El filo de luz del borde de arriba de cada carrera, en su color: se
-   enciende al señalarla. Va un pixel por encima para montarse sobre el
-   borde en vez de quedar debajo de el. */
-.filo-carrera {
-  position: absolute;
-  top: -1px;
-  left: 1.5rem;
-  right: 1.5rem;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--acento), transparent);
-  opacity: 0;
-  transition: opacity 300ms ease;
-}
-
-.tarjeta-carrera:hover .filo-carrera,
-.tarjeta-carrera:focus-visible .filo-carrera {
-  opacity: 0.9;
-}
-
-/* Las tarjetas entran una detras de otra, como los renglones de un menu
-   que se carga. Con `translate` y no con `transform`, que es donde vive el
-   giro que sigue al cursor. Y con `backwards`: `both` dejaria la opacidad
-   clavada en 1 al terminar y el atenuado de abajo no podria bajarla. */
-.tarjeta-entrar {
-  animation: entrar-tarjeta 520ms cubic-bezier(0.22, 0.61, 0.2, 1) backwards;
-  animation-delay: calc(var(--i, 0) * 45ms + 60ms);
-}
-
-@keyframes entrar-tarjeta {
+@keyframes portada-entra {
   from {
     opacity: 0;
     translate: 0 10px;
   }
-  to {
-    opacity: 1;
-    translate: 0 0;
+}
+
+@media (min-width: 1024px) {
+  .portada {
+    padding: 2.25rem 2.5rem 2.5rem;
+  }
+
+  .portada-cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 27rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 5rem;
+    margin-top: 3.5rem;
+  }
+
+  .portada-lado {
+    position: sticky;
+    top: 2rem;
   }
 }
 
-/* Al señalar una carrera las demas se apagan un poco, como el renglon
-   elegido de un menu de juego frente al resto. Solo con raton: en un
-   telefono no hay señalar sin tocar, y un toque ya entra. */
-@media (hover: hover) and (pointer: fine) {
-  .tarjeta-carrera {
-    transition:
-      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
-      border-color 200ms ease,
-      background-color 200ms ease,
-      opacity 300ms ease;
+/* ---- La presentacion ----------------------------------------------------
+   La segunda linea del titulo lleva los colores de las nueve carreras (el
+   degradado lo pone Presentacion.jsx con los del tema). */
+.presentacion-color {
+  padding-bottom: 0.08em;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* La banda con las formas de todas las carreras, que pasa despacio. Se
+   desvanece por los lados para que no tenga principio ni fin. */
+.banda-carreras {
+  height: 58px;
+  margin: 1.75rem -1.25rem 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+
+.banda-carreras > span {
+  display: block;
+  width: calc(var(--ancho-banda) * 2);
+  height: 100%;
+  background-repeat: repeat-x;
+  animation: banda-desliza 110s linear infinite;
+}
+
+@keyframes banda-desliza {
+  to {
+    transform: translateX(calc(var(--ancho-banda) * -1));
+  }
+}
+
+[data-ligero] .banda-carreras > span {
+  animation: none;
+}
+
+@media (min-width: 1024px) {
+  .banda-carreras {
+    margin-inline: 0;
+  }
+}
+
+/* ---- Tu carrera ---------------------------------------------------------
+   La tarjeta de quien vuelve, en el color de su carrera. El texto va en el
+   color del lienzo: casi negro sobre los colores claros del tema oscuro y
+   casi blanco sobre los profundos del claro. */
+.tarjeta-seguir {
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem 1.25rem 1.125rem;
+  border-radius: 28px;
+  color: var(--lienzo);
+  background:
+    radial-gradient(
+      120% 90% at 0% 0%,
+      color-mix(in oklab, var(--acento) 55%, white),
+      transparent 62%
+    ),
+    linear-gradient(160deg, var(--acento), color-mix(in oklab, var(--acento) 58%, black));
+  box-shadow: 0 24px 48px -28px color-mix(in oklab, var(--acento) 70%, black);
+}
+
+.seguir-cifra {
+  font-size: 76px;
+  font-weight: 500;
+  line-height: 0.8;
+  letter-spacing: -0.045em;
+  transition: opacity 300ms ease;
+}
+
+.seguir-cifra small {
+  margin-left: 2px;
+  font-size: 0.38em;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+[data-listo='false'] .seguir-cifra {
+  opacity: 0;
+}
+
+/* Los diez semestres, cada uno lleno en lo que llevas de el */
+.tramos-semestre {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  margin-top: 1.125rem;
+}
+
+.tramos-semestre i {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    currentColor calc(var(--lleno) * 100%),
+    color-mix(in oklab, currentColor 24%, transparent) 0
+  );
+}
+
+.seguir-entrar,
+.seguir-horario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border-radius: 16px;
+  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.seguir-entrar {
+  flex: 1;
+  gap: 8px;
+  font-size: 15.5px;
+  font-weight: 600;
+  background: var(--lienzo);
+  color: var(--tinta);
+}
+
+.seguir-horario {
+  width: 52px;
+  background: color-mix(in oklab, var(--lienzo) 18%, transparent);
+}
+
+.seguir-entrar:active,
+.seguir-horario:active {
+  transform: scale(0.97);
+}
+
+/* ---- Las carreras -------------------------------------------------------- */
+.buscador-en-linea {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .buscador-en-linea {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    margin-top: 1.125rem;
+    padding-inline: 16px;
+    border: 1px solid var(--panel-borde);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--tinta-tenue);
+    transition: border-color 200ms ease;
   }
 
-  .rejilla-carreras:has(.tarjeta-carrera:hover) .tarjeta-carrera:not(:hover) {
-    opacity: 0.55;
+  .buscador-en-linea:focus-within {
+    border-color: color-mix(in oklab, var(--tinta) 40%, transparent);
+  }
+}
+
+.buscador-en-linea input,
+.buscador-hoja input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  font-size: 16px;
+  color: var(--tinta);
+  outline: none;
+}
+
+.buscador-en-linea input::placeholder,
+.buscador-hoja input::placeholder {
+  color: var(--tinta-tenue);
+}
+
+/* El filtro se queda arriba al bajar por la lista: siempre a mano para
+   cambiar de grupo sin volver al principio. */
+.filtro-carreras {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  margin: 0.75rem -1.25rem 0;
+  padding: 0.625rem 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: linear-gradient(var(--lienzo) 72%, transparent);
+}
+
+.filtro-carreras::-webkit-scrollbar {
+  display: none;
+}
+
+.filtro-carreras button {
+  flex: none;
+  height: 38px;
+  padding-inline: 15px;
+  border: 1px solid var(--panel-borde);
+  border-radius: 19px;
+  background: var(--panel);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.filtro-carreras button[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--tinta);
+  color: var(--lienzo);
+}
+
+@media (min-width: 1024px) {
+  .filtro-carreras {
+    position: static;
+    margin-inline: 0;
+    padding-inline: 0;
+    background: none;
+  }
+}
+
+.grupo-carreras h3 {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.25rem 0.25rem 0.5rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tinta-tenue);
+}
+
+.lista-panel {
+  overflow: hidden;
+  border: 1px solid var(--panel-borde);
+  border-radius: 22px;
+  background: var(--panel);
+}
+
+.lista-panel > li + li {
+  border-top: 1px solid var(--panel-borde);
+}
+
+.fila-carrera {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 16px 12px 12px;
+  text-align: left;
+  transition: background-color 160ms ease;
+}
+
+.fila-carrera:active {
+  background: color-mix(in oklab, var(--tinta) 5%, transparent);
+}
+
+@media (hover: hover) {
+  .fila-carrera:hover {
+    background: color-mix(in oklab, var(--acento) 7%, transparent);
+  }
+}
+
+.fila-silueta {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 50px;
+  flex: none;
+  padding: 8px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--acento) 12%, transparent);
+}
+
+/* ---- El pie ---- */
+.pie-portada {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 62ch;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--panel-borde);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--tinta-tenue);
+}
+
+.pie-portada a {
+  color: var(--tinta-suave);
+  text-decoration: underline;
+  text-decoration-color: var(--panel-borde);
+  text-underline-offset: 3px;
+  transition: color 200ms ease;
+}
+
+.pie-portada a.enlace-pie {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .pie-portada a:hover {
+    color: var(--tinta);
+  }
+}
+
+/* ---- El buscador del telefono -------------------------------------------
+   Una isla abajo, sobre un velo del lienzo para que la lista no se lea por
+   debajo. En escritorio el buscador va en linea y esto no sale. */
+.dock-portada {
+  position: fixed;
+  z-index: 40;
+  inset: auto 0 0;
+  padding: 1.75rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--lienzo) 58%);
+  pointer-events: none;
+}
+
+.boton-buscar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 32rem;
+  height: 56px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  border-radius: 28px;
+  font-size: 16px;
+  color: var(--tinta-suave);
+  pointer-events: auto;
+  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.boton-buscar:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 1024px) {
+  .dock-portada {
+    display: none;
   }
 }

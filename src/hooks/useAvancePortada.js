@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react'
 import { cargarCarrera } from '../data/carreras'
-import { aprobadasPorSemestre } from '../data/avance'
+import { resumenParaPortada } from '../data/avance'
 import { marcasGuardadasDe } from './usePensum'
 
 /**
- * Cuantas aprobaste de cada semestre en cada carrera, para encender su
- * silueta en la portada.
+ * Lo que llevas de cada carrera donde tienes marcas: los puntos encendidos de
+ * su silueta, el porcentaje y cuantas puedes inscribir (ver
+ * resumenParaPortada).
  *
  * El indice que ya esta en la portada no trae las materias -son lo pesado de
- * cada carrera-, asi que para saber cuantas aprobaste de cada semestre hay
- * que bajar el pensum. Se baja SOLO el de las carreras donde tienes marcas,
- * que casi siempre es una, y despues de pintar: la portada sale en el acto y
- * la silueta de tu carrera se enciende un instante despues. De paso ese
- * pensum queda en memoria, y entrar a tu carrera es inmediato.
+ * cada carrera-, asi que hay que bajar el pensum. Se baja SOLO el de las
+ * carreras donde tienes marcas, que casi siempre es una, y despues de pintar:
+ * la portada sale en el acto y tu avance llega un instante despues. De paso
+ * ese pensum queda en memoria, y entrar a tu carrera es inmediato.
  */
 export function useAvancePortada(carreras) {
   const [avances, setAvances] = useState({})
@@ -27,7 +27,7 @@ export function useAvancePortada(carreras) {
           if (!vigente) return
           setAvances((previos) => ({
             ...previos,
-            [carrera.slug]: aprobadasPorSemestre(datos, marcas),
+            [carrera.slug]: resumenParaPortada(datos, marcas),
           }))
         })
         .catch(() => {
@@ -40,4 +40,10 @@ export function useAvancePortada(carreras) {
   }, [carreras])
 
   return avances
+}
+
+/** Si una carrera tiene alguna materia marcada, sin bajar su pensum */
+export const tieneMarcas = (slug) => {
+  const marcas = marcasGuardadasDe(slug)
+  return Boolean(marcas && Object.keys(marcas).length)
 }

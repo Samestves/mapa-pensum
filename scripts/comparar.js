@@ -127,14 +127,15 @@ const TOMAS = [
   { nombre: 'portada · portatil oscuro', aparato: PORTATIL, tema: 'oscuro', ruta: '' },
   { nombre: 'portada · portatil claro', aparato: PORTATIL, tema: 'claro', ruta: '' },
   {
-    /* Entrando desde la portada: el codigo y los estilos de la carrera
-       llegan con el toque, no con la pagina. */
+    /* Entrando desde la portada por tu carrera -la del avance de prueba-:
+       el codigo y los estilos de la carrera llegan con el toque, no con la
+       pagina. */
     nombre: 'carrera · desde la portada',
     aparato: TELEFONO,
     tema: 'oscuro',
     ruta: '',
     vista: 'lista',
-    accion: (pagina) => pagina.locator('button.tarjeta-carrera:has-text("Sistemas")').tap(),
+    accion: (pagina) => pagina.locator('.tarjeta-seguir .seguir-entrar').tap(),
   },
   { nombre: 'panel de uso · sin clave', aparato: PORTATIL, tema: 'oscuro', ruta: 'panel' },
   { nombre: 'silueta de carga · telefono', aparato: TELEFONO, tema: 'oscuro', sinVista: true },

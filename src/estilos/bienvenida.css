@@ -1,0 +1,493 @@
+/* ---- La bienvenida ---------------------------------------------------------
+   Viaja con su codigo (ver Bienvenida.jsx): quien ya la vio no la baja.
+
+   Las escenas se animan solo en la lamina activa ([data-activa]) y una sola
+   vez. Cada animacion va con `both`: mientras espera su turno enseña el
+   primer cuadro y al acabar se queda en el ultimo. Fuera de la lamina activa
+   no hay animacion y se ve el cuadro final, que es el mismo en el que acabo:
+   al irse no salta nada. */
+
+.bienvenida {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  background: var(--lienzo);
+  animation: bienvenida-entra 420ms ease both;
+}
+
+@keyframes bienvenida-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+.bienvenida-columna {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  min-height: 100%;
+  margin-inline: auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1.375rem max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.bienvenida-saltar {
+  min-height: 44px;
+  padding-inline: 0.75rem;
+  margin-right: -0.75rem;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+
+.bienvenida-ventana {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin-inline: -1.375rem;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.bienvenida-pista {
+  display: flex;
+  flex: 1;
+  transform: translateX(calc(var(--paso) * -100%));
+  transition: transform 560ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bienvenida-lamina {
+  display: flex;
+  flex: 0 0 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-inline: 1.375rem;
+}
+
+.bienvenida-escena {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 300px;
+  padding-block: 1.5rem 2rem;
+}
+
+.bienvenida-puntos {
+  display: flex;
+  gap: 6px;
+}
+
+.bienvenida-puntos > button {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--tinta) 22%, transparent);
+  transition:
+    width 400ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 300ms ease;
+}
+
+.bienvenida-puntos > button[aria-current] {
+  width: 26px;
+  background: var(--tinta);
+}
+
+/* Lo que aparece al llegar: sube un poco mientras se funde, uno tras otro */
+@keyframes escena-aparece {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* ---- Escena 1: aprobar abre la siguiente --------------------------------
+   Tres tarjetas del mapa en cadena. Matematicas I pasa de inscribible a
+   aprobada, el enlace hacia abajo se enciende y Matematicas II se abre. */
+.escena-mapa {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 320px;
+}
+
+.materia-escena {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+  padding-inline: 16px;
+  border: 1px solid var(--borde-escena);
+  border-radius: 16px;
+  background: var(--fondo-escena);
+  transition: none;
+}
+
+.materia-escena b {
+  order: -1;
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 16.5px;
+  font-weight: var(--peso-nombre);
+  color: var(--nombre-escena, var(--tinta));
+}
+
+/* El aspecto de cada estado, con los colores de la tarjeta del mapa */
+.materia-escena[data-despues='hecha'] {
+  --fondo-escena: var(--sit-hecha-fondo);
+  --borde-escena: var(--sit-hecha-borde);
+  --nombre-escena: var(--sit-hecha-nombre);
+}
+
+.materia-escena[data-despues='inscribible'] {
+  --fondo-escena: var(--sit-inscribible-fondo);
+  --borde-escena: var(--sit-inscribible-borde);
+}
+
+.materia-escena[data-despues='lejana'] {
+  --fondo-escena: var(--sit-lejana-fondo);
+  --borde-escena: var(--sit-lejana-borde);
+  --nombre-escena: var(--sit-lejana-nombre);
+}
+
+.estados {
+  display: grid;
+  justify-items: end;
+}
+
+.estado-materia {
+  display: flex;
+  grid-area: 1 / 1;
+  align-items: center;
+  gap: 7px;
+}
+
+.estado-materia small {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.estado-materia.antes:has(+ .despues) {
+  opacity: 0;
+}
+
+.enlace-escena {
+  width: 2px;
+  height: 22px;
+  margin-left: auto;
+  margin-right: 26px;
+  border-radius: 1px;
+  background: linear-gradient(var(--estado-aprobada), var(--sit-inscribible-luz));
+  transform-origin: top;
+}
+
+.enlace-escena.e2 {
+  background: color-mix(in oklab, var(--tinta) 16%, transparent);
+}
+
+[data-activa] .materia-escena {
+  animation: escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(250ms + var(--orden) * 110ms);
+}
+
+/* El cambio de estado: el fondo y el icono pasan del de antes al de despues */
+[data-activa] .materia-escena[data-antes='inscribible'][data-despues='hecha'] {
+  animation:
+    escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    de-inscribible 500ms ease both;
+  animation-delay: 250ms, 1500ms;
+}
+
+[data-activa] .materia-escena[data-antes='lejana'][data-despues='inscribible'] {
+  animation:
+    escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    de-lejana 500ms ease both;
+  animation-delay: 360ms, 2150ms;
+}
+
+@keyframes de-inscribible {
+  from {
+    background-color: var(--sit-inscribible-fondo);
+    border-color: var(--sit-inscribible-borde);
+    color: var(--tinta);
+  }
+}
+
+@keyframes de-lejana {
+  from {
+    background-color: var(--sit-lejana-fondo);
+    border-color: var(--sit-lejana-borde);
+  }
+}
+
+[data-activa] [data-despues='inscribible'] b {
+  animation: nombre-se-abre 500ms ease 2150ms both;
+}
+
+@keyframes nombre-se-abre {
+  from {
+    color: var(--sit-lejana-nombre);
+  }
+}
+
+[data-activa] .e1 {
+  animation: enlace-enciende 420ms cubic-bezier(0.32, 0.72, 0, 1) 1850ms both;
+}
+
+[data-activa] .e2 {
+  animation: escena-aparece 520ms ease 470ms both;
+}
+
+@keyframes enlace-enciende {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+[data-activa] .materia-escena[data-antes='inscribible'] .antes {
+  animation: icono-se-va 300ms ease 1500ms both;
+}
+
+[data-activa] .materia-escena[data-antes='inscribible'] .despues {
+  animation: icono-llega 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 1580ms both;
+}
+
+[data-activa] .materia-escena[data-antes='lejana'] .antes:has(+ .despues) {
+  animation: icono-se-va 300ms ease 2150ms both;
+}
+
+[data-activa] .materia-escena[data-antes='lejana'] .despues {
+  animation: icono-llega 420ms cubic-bezier(0.34, 1.4, 0.64, 1) 2230ms both;
+}
+
+@keyframes icono-se-va {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+@keyframes icono-llega {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+/* ---- Escena 2: marcar ---------------------------------------------------
+   Tres renglones de la lista. El sello de aprobada entra en cada uno, uno
+   detras de otro, como si se tocaran. */
+.escena-marcar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.renglon-escena {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 62px;
+  padding-inline: 18px 14px;
+  border: 1px solid var(--sit-hecha-borde);
+  border-radius: 16px;
+  background: var(--sit-hecha-fondo);
+}
+
+.renglon-escena b {
+  font-family: var(--font-ui);
+  font-size: 16.5px;
+  font-weight: var(--peso-nombre);
+  color: var(--tinta);
+}
+
+/* El hueco de la marca: un aro vacio, y encima el sello que llega */
+.marca-escena {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--estado-aprobada);
+}
+
+.marca-escena::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tinta) 26%, transparent);
+}
+
+.marca-escena svg {
+  position: relative;
+}
+
+.nota-escena {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--tinta-tenue);
+}
+
+[data-activa] .renglon-escena {
+  animation:
+    escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    renglon-se-marca 400ms ease both;
+  animation-delay: calc(200ms + var(--orden) * 100ms), calc(1100ms + var(--orden) * 520ms);
+}
+
+@keyframes renglon-se-marca {
+  from {
+    background-color: var(--panel);
+    border-color: var(--panel-borde);
+  }
+}
+
+[data-activa] .marca-escena svg {
+  animation: icono-llega 440ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  animation-delay: calc(1100ms + var(--orden) * 520ms);
+}
+
+[data-activa] .nota-escena {
+  animation: escena-aparece 500ms ease 2800ms both;
+}
+
+/* ---- Escena 3: lo que se gana -------------------------------------------
+   El aro de avance se llena hasta su numero y, al lado, lo que se ve al
+   entrar a una carrera. */
+.escena-avance {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.aro-escena {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  flex: none;
+}
+
+.aro-escena svg {
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+
+.aro-escena circle {
+  fill: none;
+  stroke-width: 9;
+}
+
+.aro-escena .pista {
+  stroke: color-mix(in oklab, var(--tinta) 11%, transparent);
+}
+
+.aro-escena .arco {
+  stroke: var(--estado-aprobada);
+  stroke-linecap: round;
+  stroke-dasharray: 34 100;
+}
+
+.aro-escena p {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 46px;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--tinta);
+}
+
+.aro-escena small {
+  font-size: 0.55em;
+  color: var(--tinta-tenue);
+}
+
+.escena-avance ul {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.escena-avance li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.escena-avance li > span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: color-mix(in oklab, currentColor 14%, transparent);
+}
+
+.escena-avance b {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--tinta);
+}
+
+.escena-avance small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+[data-activa] .aro-escena {
+  animation: escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+
+[data-activa] .aro-escena .arco {
+  animation: aro-se-llena 1300ms cubic-bezier(0.32, 0.72, 0, 1) 500ms both;
+}
+
+@keyframes aro-se-llena {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+[data-activa] .escena-avance li {
+  animation: escena-aparece 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(700ms + var(--orden) * 160ms);
+}
+
+/* El telefono estrecho: el aro encima de la lista, centrados */
+@media (max-width: 359px) {
+  .escena-avance {
+    flex-direction: column;
+  }
+}
+
+/* ---- Sin movimiento -----------------------------------------------------
+   Cada escena se ve terminada desde el principio: lo que cuenta es el
+   cuadro final, no el camino. */
+@media (prefers-reduced-motion: reduce) {
+  .bienvenida,
+  .bienvenida [data-activa] *,
+  .bienvenida [data-activa] {
+    animation: none !important;
+  }
+
+  .bienvenida-pista,
+  .bienvenida-puntos > button {
+    transition: none;
+  }
+}

@@ -1,0 +1,216 @@
+/* ---- Lo que se abre encima de la portada ---------------------------------
+   La ficha de una carrera, el buscador del telefono y el menu. Viaja con su
+   codigo (ver HojasPortada.jsx): la portada se pinta sin esto. */
+
+.buscador-hoja {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding-inline: 16px;
+  border: 1.5px solid color-mix(in oklab, var(--tinta) 35%, transparent);
+  border-radius: 16px;
+  background: var(--panel-suave);
+  color: var(--tinta-tenue);
+}
+
+.ficha-silueta {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 92px;
+  padding: 16px;
+  border-radius: 26px;
+  background: color-mix(in oklab, var(--acento) 13%, transparent);
+}
+
+.ficha-tipo {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  margin-top: 1rem;
+  padding-inline: 12px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--acento) 15%, transparent);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.ficha-cifras {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 1.375rem 0 0;
+}
+
+.ficha-cifras > div {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  padding: 12px 6px;
+  border-radius: 18px;
+  background: var(--panel-suave);
+}
+
+.ficha-cifras dd {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 26px;
+  line-height: 1;
+  color: var(--tinta);
+}
+
+.ficha-cifras dt {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+.ficha-barras {
+  margin: 8px 0 0;
+  padding: 14px 16px 12px;
+  border-radius: 20px;
+  background: var(--panel-suave);
+}
+
+.ficha-barras figcaption {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+.ficha-barras > div,
+.ficha-barras > p {
+  display: flex;
+  gap: 6px;
+}
+
+.ficha-barras > div {
+  align-items: flex-end;
+  height: 64px;
+  margin-top: 12px;
+}
+
+.ficha-barras i {
+  flex: 1;
+  border-radius: 5px 5px 3px 3px;
+  background: var(--acento);
+}
+
+.ficha-barras i[data-apagada='true'] {
+  opacity: 0.25;
+}
+
+.ficha-barras > p {
+  margin-top: 6px;
+}
+
+.ficha-barras > p span {
+  flex: 1;
+  font-size: 11px;
+  text-align: center;
+  color: var(--tinta-tenue);
+}
+
+.ficha-dentro {
+  margin-top: 8px;
+  padding: 4px 16px;
+  border-radius: 20px;
+  background: var(--panel-suave);
+}
+
+.ficha-dentro li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-block: 12px;
+}
+
+.ficha-dentro li + li {
+  border-top: 1px solid var(--panel-borde);
+}
+
+.ficha-dentro li > span,
+.tecla-menu {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--tinta);
+}
+
+.ficha-dentro b,
+.renglon-menu b {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.ficha-dentro p,
+.renglon-menu b + span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--tinta-tenue);
+}
+
+.tecla-menu {
+  background: var(--panel-suave);
+}
+
+.renglon-menu {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding-block: 12px;
+  text-align: left;
+}
+
+.menu-portada li + li .renglon-menu {
+  border-top: 1px solid var(--panel-borde);
+}
+
+/* El interruptor del tema, como el de iOS */
+.interruptor {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  flex: none;
+  border-radius: 15px;
+  background: color-mix(in oklab, var(--tinta) 18%, transparent);
+  transition: background-color 250ms ease;
+}
+
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.25);
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.interruptor[data-encendido='true'] {
+  background: var(--estado-aprobada);
+}
+
+.interruptor[data-encendido='true']::after {
+  transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interruptor,
+  .interruptor::after {
+    transition: none;
+  }
+}

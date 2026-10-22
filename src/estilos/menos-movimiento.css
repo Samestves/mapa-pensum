@@ -8,7 +8,9 @@
    lector.css.
    ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  .tarjeta-entrar,
+  .portada > *,
+  .portada-cuerpo > *,
+  .banda-carreras > span,
   .logo-entrada,
   .entrada-vista,
   .salida-vista,
@@ -22,11 +24,4 @@
 
   /* La de salida del aviso se deja: sin ella se quedaria en pantalla los
      260 ms que tarda en desmontarse, pero congelado y sin irse nunca. */
-
-  /* Estas se mueven con transition, no con animation: hay que apagarlas
-     aparte o siguen deslizandose. */
-  .tarjeta-carrera,
-  .tarjeta-carrera > * {
-    transition: none;
-  }
 }

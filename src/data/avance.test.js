@@ -10,6 +10,7 @@ import {
   describirAvance,
   estadosDe,
   progresoDe,
+  resumenParaPortada,
 } from './avance.js'
 import { ESTADO } from './estados.js'
 
@@ -284,5 +285,31 @@ describe('progresoDe: los totales que ve el estudiante', () => {
       ['Mu', 'Alfa', 'Zeta'],
     )
     assert.equal(p.disponibles, 3)
+  })
+})
+
+describe('lo que la portada cuenta de tu carrera', () => {
+  const pensum = {
+    semestres: [{ numero: 1 }, { numero: 2 }],
+    asignaturas: [
+      { codigo: 'A1', nombre: 'Uno', semestre: 1, uc: 4 },
+      { codigo: 'A2', nombre: 'Dos', semestre: 1, uc: 4 },
+      { codigo: 'B1', nombre: 'Tres', semestre: 2, uc: 2, prerrequisitos: ['A1'] },
+    ],
+    grupos: [],
+    creditos: { titulo: 10 },
+  }
+
+  test('enciende los puntos, cuenta el porcentaje y las que se abren', () => {
+    const r = resumenParaPortada(pensum, { A1: 'aprobada' })
+    assert.deepEqual(r.hechas, [1, 0])
+    assert.equal(r.porcentaje, 40)
+    assert.equal(r.cuanto, '4 de 10 UC')
+    // A2 no tiene prerrequisitos y B1 se abrio al aprobar A1
+    assert.equal(r.disponibles, 2)
+  })
+
+  test('las marcas de otro pensum no cuentan', () => {
+    assert.equal(resumenParaPortada(pensum, { Z9: 'aprobada', A1: 'raro' }).porcentaje, 0)
   })
 })

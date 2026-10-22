@@ -10,44 +10,19 @@
   transition: stroke-dashoffset 700ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* ---- Hoja inferior (telefono) ------------------------------------------
-   Aparece subiendo un paso corto mientras se funde, con una sola transicion:
-   se monta "fuera" y pasa a "dentro" un par de fotogramas despues (ver
-   useEntrada), y al cerrarse vuelve a "fuera". Subia desde fuera de la
-   pantalla, y en un telefono modesto el primer cuadro de esa subida salia a
-   destiempo: la hoja aparecia arriba y volvia a bajar, y por el hueco se
-   veia el mapa. Con un paso corto y fundiendose no hay hueco que ver.
-   El arrastre la baja entera con un transform en linea, que manda sobre
-   este. */
-.hoja-inferior,
+/* ---- Panel lateral (escritorio) ----------------------------------------
+   Su sombra es la de la hoja del telefono (ver superficies.css). */
 .panel-lateral {
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.04),
     0 24px 60px -12px rgb(0 0 0 / 0.6);
 }
 
-[data-tema='claro'] :is(.hoja-inferior, .panel-lateral) {
+[data-tema='claro'] .panel-lateral {
   box-shadow: 0 24px 60px -12px rgb(23 26 32 / 0.28);
 }
 
-.hoja-inferior {
-  transition:
-    transform 400ms cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 180ms ease;
-}
-
-.hoja-inferior[data-fase='fuera'] {
-  transform: translateY(48px);
-  opacity: 0;
-}
-
-/* En modo ligero sin sombra: el velo ya la separa del mapa, y una sombra de
-   sesenta pixeles de desenfoque es lo mas caro de pintar de toda la hoja. */
-[data-ligero] .hoja-inferior {
-  box-shadow: none;
-}
-
-/* ---- Panel lateral (escritorio) ----------------------------------------
+/* ---- Panel lateral, su entrada ----------------------------------------
    Entra desde la derecha con la misma curva que la hoja del telefono, un
    paso corto y no todo su ancho: viene de su sitio, no de fuera de la
    pantalla. Una sola transicion para entrar y salir, como la hoja (ver
@@ -87,21 +62,6 @@
 
 .desplazable-limpio::-webkit-scrollbar {
   display: none;
-}
-
-/* El velo oscurece poco: lo de detras sigue siendo la pantalla en la que
-   estas, no algo que haya desaparecido. */
-.velo-hoja {
-  background: rgb(0 0 0 / 0.45);
-  transition: opacity 300ms ease;
-}
-
-[data-tema='claro'] .velo-hoja {
-  background: rgb(23 26 32 / 0.22);
-}
-
-.velo-hoja[data-fase='fuera'] {
-  opacity: 0;
 }
 
 /* Una ficha del selector de electivas (ver FichaElectiva): un contorno

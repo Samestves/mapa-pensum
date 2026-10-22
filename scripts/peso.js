@@ -80,8 +80,8 @@ const todo = (archivos) => js(archivos) + css(archivos)
  *    codigo.
  */
 const PARTIDAS = [
-  { nombre: 'portada · JS de entrada', kB: js(entrada), tope: 79.1 },
-  { nombre: 'portada · CSS', kB: css(entrada), tope: 15.3 },
+  { nombre: 'portada · JS de entrada', kB: js(entrada), tope: 79.7 },
+  { nombre: 'portada · CSS', kB: css(entrada), tope: 15.6 },
   {
     // Las que pinta cualquier pantalla: las unicas que se piden sin condicion
     nombre: 'portada · fuentes',
@@ -94,7 +94,7 @@ const PARTIDAS = [
     kB: sumar(fuentes(/<link rel="preload"[^>]+fetchpriority="low"[^>]*>/g), crudo),
     tope: 17.5,
   },
-  { nombre: 'carrera · cascaron', kB: js(cascaron), tope: 25.6 },
+  { nombre: 'carrera · cascaron', kB: js(cascaron), tope: 24.8 },
   { nombre: 'carrera · CSS', kB: css(cascaron), tope: 7.9 },
   {
     nombre: 'carrera · pensum mas pesado',

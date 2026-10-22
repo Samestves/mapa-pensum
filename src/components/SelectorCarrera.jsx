@@ -1,195 +1,180 @@
-import { Moon, Sun } from 'lucide-react'
-import { CARRERAS } from '../data/carreras'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
+import { CARRERAS, precargarCarrera } from '../data/carreras'
 import { ultimaCarrera } from '../data/ultimaCarrera'
+import { recordarVista } from '../data/vistaInicial'
+import { bienvenidaVista, recordarBienvenida } from '../data/bienvenida'
+import { HOJA, TODAS, carreraPropia } from '../data/portada'
 import { useTema } from '../hooks/useTema'
-import { useAvancePortada } from '../hooks/useAvancePortada'
+import { tieneMarcas, useAvancePortada } from '../hooks/useAvancePortada'
+import { precargarVista } from './vistaDiferida'
 import AvisoInstalar from './AvisoInstalar'
-import Logo from './Logo'
-import PieSelector from './PieSelector'
-import TarjetaCarrera from './TarjetaCarrera'
+import Cabecera from './portada/Cabecera'
+import Presentacion from './portada/Presentacion'
+import SeguirCarrera from './portada/SeguirCarrera'
+import ListaCarreras from './portada/ListaCarreras'
+import PiePortada from './portada/PiePortada'
+import BotonBuscar from './portada/BotonBuscar'
+
+/* Lo que se abre encima y la guia de la primera visita van en sus propios
+   trozos: la portada se pinta sin ellos. */
+const cargarHojas = () => import('./portada/HojasPortada')
+const HojasPortada = lazy(cargarHojas)
+const Bienvenida = lazy(() => import('./bienvenida/Bienvenida'))
+
+/* Lo que tarda en bajarse el trozo de las hojas despues de pintar: para
+   cuando alguien toca una carrera ya esta, y no compite con la entrada. */
+const HOJAS_EN_REPOSO_MS = 1500
 
 /**
- * Portada y selector. Es la primera impresion del proyecto y su trabajo es
- * dejar comparar las nueve carreras de un vistazo.
+ * La portada: lo primero que ve quien abre la aplicacion.
  *
- * Decia que se veian las nueve sin desplazarse en escritorio, y no era
- * verdad: medido a 1440x900, la novena acababa 196 px por debajo del pliegue.
- * Las tarjetas adelgazaron 42 px cada una quitando aire sobrante -no
- * contenido- y ahora hacen falta 970 px de alto en vez de 1096, con lo que en
- * una pantalla de 1080 entran las nueve. En un portatil de 900 se sale la
- * ultima fila, y ahi se queda: cerrar esos setenta pixeles obligaria a
- * encoger la silueta, que es lo unico que distingue una carrera de otra de un
- * vistazo, y entonces la pagina cumpliria la promesa habiendo perdido la
- * razon por la que importaba.
+ * Contesta lo que pregunta cada uno. Quien llega por primera vez no sabe que
+ * es esto: le recibe una guia de tres pasos y, despues, una frase que lo
+ * dice y la lista de carreras. Quien vuelve -casi todos- viene a seguir con
+ * la suya: su carrera va arriba, en su color, con lo que lleva y un toque
+ * para entrar; las demas quedan debajo.
  *
- * La carrera vista por ultima vez se marca con "Continuar" en vez de saltar
- * directo a ella: redirigir automaticamente dejaria el selector inalcanzable
- * para quien ya entro una vez, y esta pantalla es tambien la que tiene que
- * posicionar en buscadores.
+ * Tocar una carrera abre su ficha en vez de entrar de golpe: quien no la
+ * conoce ve de que tamaño es y que hay dentro, y el pensum se va bajando
+ * mientras tanto. La carrera vista por ultima vez NO se abre sola: dejaria
+ * la portada inalcanzable, y esta pantalla es tambien la que posiciona en
+ * buscadores.
  *
- * Habla el idioma del mapa: nombres en Jost fina, rotulos en mayusculas
- * espaciadas, y la silueta de cada carrera encendida en lo que llevas
- * aprobado. Las tarjetas se quedan limpias, sin cifras: el avance lo cuentan
- * los puntos, no un numero.
+ * Este componente solo conecta las piezas; cada una vive en portada/.
  */
 function SelectorCarrera({ alElegir }) {
   const { tema, alternarTema } = useTema()
-  const ultima = ultimaCarrera()
   const avances = useAvancePortada(CARRERAS)
+  const [propia] = useState(() => carreraPropia(CARRERAS, ultimaCarrera(), tieneMarcas))
+  const [guia, setGuia] = useState(() => !propia && !bienvenidaVista())
+  const [hoja, setHoja] = useState(null)
+  const [hojasPedidas, setHojasPedidas] = useState(false)
+  const [tipo, setTipo] = useState(TODAS)
+  const [texto, setTexto] = useState('')
+
+  const colorDe = useCallback(
+    (carrera) =>
+      (tema === 'oscuro' ? carrera.color?.oscuro : carrera.color?.claro) ?? 'var(--tinta-suave)',
+    [tema],
+  )
+  const suya = CARRERAS.find((c) => c.slug === propia)
+  const otras = useMemo(() => CARRERAS.filter((c) => c.slug !== propia), [propia])
+
+  useEffect(() => {
+    const t = setTimeout(cargarHojas, HOJAS_EN_REPOSO_MS)
+    return () => clearTimeout(t)
+  }, [])
+
+  /* Se calientan las dos cosas a la vez: los datos del pensum y el codigo
+     que los dibuja. Precargar solo una cambiaria una espera por otra. */
+  const precargar = useCallback((slug) => {
+    precargarCarrera(slug)
+    precargarVista()
+  }, [])
+
+  const abrir = (nueva) => {
+    setHojasPedidas(true)
+    setHoja(nueva)
+  }
+  const abrirFicha = (slug) => abrir({ tipo: HOJA.CARRERA, slug })
+
+  /* Entrar a una carrera, con la vista pedida o, sin ella, con la ultima que
+     se uso (ver vistaInicial). */
+  const entrar = (slug, vista) => {
+    if (vista) recordarVista(vista)
+    precargar(slug)
+    alElegir(slug)
+  }
+
+  const terminarGuia = () => {
+    recordarBienvenida()
+    setGuia(false)
+  }
 
   return (
     <div className="relative h-full overflow-y-auto">
       {/* Veladura de color arriba. Va aqui fuera y no dentro del contenedor
-          centrado para que cruce todo el ancho de la pantalla: una luz que
-          se corta en el margen del contenido se ve como un rectangulo. */}
+          centrado para que cruce todo el ancho de la pantalla. */}
       <div className="ambiente-portada" aria-hidden="true">
         <span className="velo-oscuro" />
         <span className="velo-claro" />
       </div>
-      {/* El ancho crece con la pantalla en vez de quedarse clavado en 1024px:
-          en un monitor grande unas tarjetas apretadas al centro dejan medio
-          lienzo vacio y se ven de juguete.
 
-          El tope baja de 1600 a 1360 px al pasar a tres columnas: con cuatro
-          hacia falta ese ancho para que las tarjetas no salieran pequeñas,
-          con tres a 1600 saldrian de 520 px y la silueta, que nunca llena a
-          lo ancho, quedaria nadando en hueco.
+      <div className="portada">
+        <Cabecera
+          menuAbierto={hoja?.tipo === HOJA.MENU}
+          alAbrirMenu={() => abrir({ tipo: HOJA.MENU })}
+        />
 
-          En escritorio el bloque entero -cabecera, tarjetas y pie- se centra
-          en alto. Iba todo arriba y el alto que sobraba quedaba debajo del
-          pie, que en un monitor de 1080 son cien pixeles vacios solo por
-          abajo: la pagina parecia cortada y no compuesta. Si no cabe, el
-          centrado no hace nada y se desplaza como siempre. */}
-      <div className="portada mx-auto flex min-h-full max-w-5xl flex-col px-4 py-8 sm:px-6 sm:py-12 lg:justify-center xl:max-w-[min(85rem,94vw)] xl:px-10 xl:py-14 2xl:px-16">
-        {/* Cabecera.
-
-            Sin filete divisorio y sin contrapesos a la derecha. Lo unico que
-            ordena esto es la jerarquia de tamaño: el titulo manda, la linea
-            de universidad acompaña, y la marca sujeta las dos. Todo lo demas
-            que se probo aqui -un pelo difuminado, un contador de carreras en
-            versalitas- eran cosas puestas para llenar el ancho, y el ancho no
-            hay que llenarlo.
-
-            El orden es titulo primero y universidad debajo. Estuvo al reves,
-            con la universidad de cejilla encima en mono y versalitas anchas,
-            y se leia como una ficha tecnica: lo primero que decia la pagina
-            era donde queda la universidad, no que esto es un mapa de pensum.
-            Lo que nombra la cosa va primero. */}
-        <header className="relative flex items-center justify-between gap-6">
-          <div className="flex min-w-0 items-center gap-3 xl:gap-3.5">
-            {/* La marca vuelve a tener caja, y es a proposito.
-
-                Estuvo suelta sobre el lienzo y quedaba flotando en el margen:
-                sin nada que la sujete, una estrella de puntas finas no tiene
-                borde con el que alinearse y se lee como despegada del titulo.
-                La caja le da ese borde.
-
-                No es la caja de antes -un cuadrado con verde plano al 16 %,
-                que es color de relleno y no material-, sino uno cuyo contorno
-                es un degradado de un pixel: se enciende por una esquina y se
-                apaga por el resto, asi que nunca hay cuatro lados a la vez.
-                Ver .marca-caja.
-
-                En pantalla grande la caja NO crece. Es un apoyo, y un apoyo
-                que se hace mas grande que lo que sujeta deja de apoyar. */}
-            <span className="relative grid size-12 shrink-0 place-items-center sm:size-14">
-              <span className="marca-caja" aria-hidden="true" />
-              <Logo animado className="relative size-[30px] text-tinta sm:size-[35px]" />
-            </span>
-            <div className="min-w-0">
-              {/* Jost fina, como los nombres del mapa. Fue Inter en
-                  seminegrita, y era lo unico de la aplicacion que todavia
-                  hablaba el idioma de antes: una portada que grita para
-                  entrar a un mapa que susurra. */}
-              <h1
-                className="truncate font-ui text-[27px] leading-[1.06] tracking-[-0.01em] text-tinta sm:text-[31px] xl:text-[30px]"
-                style={{ fontWeight: 300 }}
-              >
-                Mapa de Pensum
-              </h1>
-              {/* En caja baja y peso normal. Estuvo en versalitas anchas y
-                  chillaba mas que el titulo teniendo un tercio de su tamaño:
-                  el espaciado ancho estira una linea corta hasta que compite
-                  por el ancho, y entonces las dos cosas piden el mismo turno.
-
-                  En el telefono la universidad va abreviada, y no es una
-                  rebaja: "Universidad de Oriente · Núcleo de Monagas" son
-                  cuarenta y un caracteres que a 375 px partian en dos lineas
-                  -"...Núcleo de" arriba y "Monagas" solo abajo-, y una
-                  segunda linea con una palabra suelta es justo lo que hacia
-                  que la cabecera se viera a medio terminar. UDO es ademas
-                  como la llama todo el mundo en Monagas. */}
-              {/* El rotulo de la universidad en mayusculas espaciadas, como
-                  SEMESTRE 04 en el mapa: se lee como credencial y no compite
-                  con el titulo, que es el unico en caja baja y grande.
-                  Abreviado en el telefono: UDO es como la llama todo el
-                  mundo en Monagas, y entero partia en dos lineas. */}
-              <p className="mt-2 truncate font-ui text-[9.5px] leading-none font-medium tracking-[0.24em] text-tinta-tenue uppercase sm:text-[10px]">
-                <span className="sm:hidden">UDO</span>
-                <span className="hidden sm:inline">Universidad de Oriente</span>
-                {' · Núcleo de Monagas'}
-              </p>
-            </div>
+        <div className="portada-cuerpo">
+          <div className="portada-lado">
+            {suya ? (
+              <SeguirCarrera
+                carrera={suya}
+                color={colorDe(suya)}
+                resumen={avances[suya.slug]}
+                conMarcas={tieneMarcas(suya.slug)}
+                alSeguir={() => entrar(suya.slug)}
+                alHorario={() => entrar(suya.slug, 'horario')}
+              />
+            ) : (
+              <Presentacion carreras={CARRERAS} colorDe={colorDe} />
+            )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
-            {/* Redondo y con aro, como la X de la ficha y el boton de
-                planificar: los botones sueltos de la aplicacion son uno. */}
-            <button
-              type="button"
-              onClick={alternarTema}
-              title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-              aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-              className="boton-aro grid size-10 shrink-0 place-items-center rounded-full"
-            >
-              {tema === 'oscuro' ? (
-                <Sun size={16} strokeWidth={1.6} />
-              ) : (
-                <Moon size={16} strokeWidth={1.6} />
-              )}
-            </button>
-          </div>
-        </header>
-
-        {/* Esta frase estaba a la vista y ocupaba una banda entera que las
-            tarjetas aprovechan mejor. No se borra, se esconde: sigue siendo
-            la primera orientacion que oye quien entra con lector de pantalla,
-            y la siguen leyendo los rastreadores que ejecutan JavaScript. Lo
-            que ven los que no lo ejecutan es la meta description, que dice lo
-            mismo y no depende de esto. */}
-        <p className="sr-only">
-          Tu carrera como un mapa: qué materia desbloquea cuál, qué puedes inscribir ahora y cuánto
-          te falta. Elige la tuya.
-        </p>
-
-        {/* Sin flex-1. Lo tenia para empujar el pie hasta abajo, pero de paso
-            la rejilla se quedaba todo el alto sobrante y estiraba sus filas:
-            en 1920x1440 la tarjeta media 510 px para 198 px de contenido, o
-            sea 156 px muertos. Ahora las tarjetas miden lo que miden, y el
-            alto sobrante lo reparte el centrado de la portada. */}
-        {/* Tres columnas y no cuatro: son nueve carreras, asi que 3x3 cierra
-            exacto. Con cuatro la ultima fila se quedaba con una tarjeta sola
-            y la cuadricula parecia rota por abajo. */}
-        <div className="rejilla-carreras mt-6 mb-10 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:mt-12 xl:mb-12 xl:gap-5 2xl:gap-6">
-          {CARRERAS.map((carrera, indice) => (
-            <TarjetaCarrera
-              key={carrera.slug}
-              carrera={carrera}
-              tema={tema}
-              indice={indice}
-              hechas={avances[carrera.slug]}
-              esUltima={carrera.slug === ultima}
-              alElegir={alElegir}
-            />
-          ))}
+          <ListaCarreras
+            titulo={suya ? 'Otras carreras' : 'Elige tu carrera'}
+            carreras={otras}
+            tipo={tipo}
+            texto={texto}
+            colorDe={colorDe}
+            avances={avances}
+            alCambiarTipo={setTipo}
+            alCambiarTexto={setTexto}
+            alElegir={abrirFicha}
+            alPrecargar={precargar}
+          />
         </div>
 
-        <PieSelector />
+        <PiePortada />
       </div>
+
+      <BotonBuscar
+        abierto={hoja?.tipo === HOJA.BUSCAR}
+        alAbrir={() => abrir({ tipo: HOJA.BUSCAR })}
+      />
 
       {/* Solo aqui y no dentro de una carrera: quien esta leyendo su mapa
           esta haciendo algo, y no es el momento de interrumpirlo. */}
-      <AvisoInstalar />
+      {!guia && <AvisoInstalar />}
+
+      {hojasPedidas && (
+        <Suspense fallback={null}>
+          <HojasPortada
+            hoja={hoja}
+            carreras={CARRERAS}
+            propia={propia}
+            tema={tema}
+            colorDe={colorDe}
+            avances={avances}
+            alCerrar={() => setHoja(null)}
+            alAbrirFicha={abrirFicha}
+            alEntrar={entrar}
+            alPrecargar={precargar}
+            alternarTema={alternarTema}
+            alVerGuia={() => {
+              setHoja(null)
+              setGuia(true)
+            }}
+          />
+        </Suspense>
+      )}
+
+      {guia && (
+        <Suspense fallback={<div className="fixed inset-0 z-[60] bg-lienzo" />}>
+          <Bienvenida alTerminar={terminarGuia} />
+        </Suspense>
+      )}
     </div>
   )
 }

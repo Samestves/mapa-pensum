@@ -16,7 +16,6 @@
   .capa-llegando,
   .menu-clase.ficha-saliendo,
   .hoja-ficha.tarjeta-saliendo,
-  .surgir,
   .bloque-clase,
   .celda-fantasma,
   .popover-clase,
@@ -34,8 +33,6 @@
   .dibujo-clase::after,
   .dibujo-lector,
   .dibujo-fase,
-  .hoja-inferior,
-  .velo-hoja,
   .panel-lateral,
   .pulso-ahora::after {
     animation: none;
@@ -47,8 +44,6 @@
   .selector-lente,
   .lente-tema,
   .arco-avance,
-  .hoja-inferior,
-  .velo-hoja,
   .panel-lateral,
   .plegable,
   .selector-pastilla,
