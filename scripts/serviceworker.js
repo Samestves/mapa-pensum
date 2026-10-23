@@ -175,8 +175,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url)
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return
-  // La telemetria nunca se guarda ni se sirve de cache: o llega o no llega
-  if (url.pathname.startsWith('/_vercel/')) return
+  // La telemetria nunca se guarda ni se sirve de cache: o llega o no llega.
+  // El API tampoco: sus respuestas no llevan hash en el nombre, cambian con
+  // cada pedido, y con la cache primero el panel mostraba siempre la primera
+  // que guardo, hasta el siguiente despliegue.
+  if (url.pathname.startsWith('/_vercel/') || url.pathname.startsWith('/api/')) return
 
   // Navegar va primero a la red. Asi, con conexion, siempre se ve el pensum
   // publicado hoy; la copia guardada es la red de emergencia, no la fuente.
