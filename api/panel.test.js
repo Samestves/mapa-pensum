@@ -151,7 +151,8 @@ describe('los horarios en el panel', () => {
     await handler(pedido('la-buena-de-verdad'), res)
 
     assert.equal(res.codigo, 200)
-    assert.equal(almacen.mock.callCount(), 1, 'los horarios van en la tanda de siempre')
+    // Una tanda para todo lo que se lee y otra, aparte, para la prueba de escritura
+    assert.equal(almacen.mock.callCount(), 2, 'los horarios van en la tanda de siempre')
     const { horarios, dias } = res.cuerpo
     assert.equal(horarios.hechos, 42)
     assert.equal(horarios.creados, 8)

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, CircleHelp, KeyRound, LogOut, RefreshCw, TriangleAlert } from 'lucide-react'
 import { CARRERAS } from '../data/carreras'
+import AvisoSalud from './panel/AvisoSalud'
 import ComoSeCuenta from './panel/ComoSeCuenta'
 import PanelAparatos from './panel/PanelAparatos'
 import PanelCarreras from './panel/PanelCarreras'
@@ -317,6 +318,8 @@ function PanelUso({ alVolver }) {
                 ))}
               </div>
             </nav>
+
+            <AvisoSalud salud={general?.salud} />
 
             {aviso && (
               <p className="flex items-center gap-2 rounded-xl border border-[color-mix(in_oklab,var(--estado-rojo)_40%,transparent)] px-4 py-3 text-[12.5px] text-[var(--estado-rojo)]">

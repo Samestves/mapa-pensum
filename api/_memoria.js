@@ -60,7 +60,8 @@ export async function recordarLectura(huella) {
     const [guardado] = await pedir([['GET', k('leida', huella)]])
     const clases = clasesGuardadas(guardado)
     if (!clases) return null
-    await pedir([['HINCRBY', k('dia', fechaDe()), 'memoria', '1']])
+    // Contar el acierto es lo de menos: si no se puede, la lectura se sirve igual
+    await pedir([['HINCRBY', k('dia', fechaDe()), 'memoria', '1']]).catch(() => {})
     return { clases, modelo: MODELO_MEMORIA, intentos: 0 }
   } catch {
     // Sin memoria se lee de nuevo: se gasta cupo, no se pierde la lectura
