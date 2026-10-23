@@ -1,12 +1,26 @@
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import {
+  Activity,
+  BookOpen,
+  CalendarDays,
+  Clock,
+  Download,
+  LayoutGrid,
+  Smartphone,
+  SquareCheckBig,
+  TriangleAlert,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import { CARRERAS } from '../../data/carreras'
-import { Bloque, Cifra, Muestra, Reparto, Serie, Tarjeta, Vacio } from './piezas'
+import { Vacio, Widget } from './piezas'
+import { Anillo, Area, Barras, Cambio, Chispa, Columnas } from './graficas'
 import {
   DIAS_LARGOS,
   DIAS_SEMANA,
   VERDE,
-  diaCorto,
+  diaLargo,
+  haceCuanto,
   hora,
   mesLargo,
   tinte,
@@ -14,12 +28,123 @@ import {
 } from './formato'
 
 const NOMBRE_VISTA = { mapa: 'Mapa', lista: 'Lista', horario: 'Horario' }
-const NOMBRE_APARATO = { movil: 'Teléfono', escritorio: 'Computadora' }
 const TRAMOS = {
   '0-1': 'Menos de 1 min',
   '1-3': '1 a 3 min',
   '3-10': '3 a 10 min',
   '10+': 'Más de 10 min',
+}
+
+/* Lo que se puede dibujar en la grafica grande: que es y como se dice */
+const MEDIDAS = {
+  activos: { nombre: 'Aparatos', unidad: 'aparatos distintos' },
+  visitas: { nombre: 'Visitas', unidad: 'visitas' },
+  nuevos: { nombre: 'Nuevos', unidad: 'aparatos nuevos' },
+}
+
+/* Pasado un dia sin un solo latido, el silencio ya no es una noche tranquila */
+const SIN_LATIDOS_MS = 24 * 60 * 60 * 1000
+
+const porcentaje = (parte, todo) => (todo ? Math.round((parte / todo) * 100) : 0)
+
+/**
+ * Lo primero: como va la cosa. Una grafica grande de los ultimos 30 dias que
+ * se lee dia a dia con el dedo, y un selector para ver aparatos, visitas o
+ * nuevos. El total de aparatos es el de distintos en los 30 dias -no la
+ * suma de cada dia, que contaria tres veces a quien entra tres dias-.
+ */
+function Actividad({ datos }) {
+  const [medida, setMedida] = useState('activos')
+  const [leido, setLeido] = useState(null)
+  const { dias, activos } = datos
+  const { unidad } = MEDIDAS[medida]
+  const dia = leido != null ? dias[leido] : null
+  const total = medida === 'activos' ? activos.treinta : dias.reduce((s, d) => s + d[medida], 0)
+
+  return (
+    <Widget
+      icono={Users}
+      titulo="Actividad"
+      className="ocupa-4 alto"
+      extra={
+        <span className="medidas" role="group" aria-label="Qué se dibuja">
+          {Object.entries(MEDIDAS).map(([clave, { nombre }]) => (
+            <button
+              key={clave}
+              type="button"
+              aria-pressed={medida === clave}
+              onClick={() => setMedida(clave)}
+            >
+              {nombre}
+            </button>
+          ))}
+        </span>
+      }
+    >
+      <p className="lectura" aria-live="polite">
+        {dia ? (
+          <>
+            <b className="tabular-nums">{dia[medida].toLocaleString('es-VE')}</b>
+            <span>
+              {unidad} · {diaLargo(dia.fecha)}
+            </span>
+          </>
+        ) : (
+          <>
+            <b className="tabular-nums">{total.toLocaleString('es-VE')}</b>
+            <span>{unidad} en 30 días</span>
+            {medida === 'activos' && (
+              <span className="flex items-center gap-2">
+                <Cambio valor={variacion(activos.mes, activos.mesAnterior)} />
+                {mesLargo(datos.mes)} frente a {mesLargo(datos.mesAnterior)}
+              </span>
+            )}
+          </>
+        )}
+      </p>
+      <div className="mt-auto pt-4">
+        <Area puntos={dias} campo={medida} alto={210} alLeer={setLeido} />
+      </div>
+    </Widget>
+  )
+}
+
+/**
+ * Si el contador esta guardando, de un vistazo. El aviso largo, con lo que
+ * contesto Redis y donde se arregla, va arriba del panel (ver AvisoSalud).
+ */
+function Contador({ salud }) {
+  const callado =
+    salud?.ultimoLatido && Date.now() - new Date(salud.ultimoLatido).getTime() > SIN_LATIDOS_MS
+  const mal = salud && (!salud.escribe || callado)
+  const estado = !salud
+    ? 'Sin datos'
+    : !salud.escribe
+      ? 'Sin guardar'
+      : callado
+        ? 'Callado'
+        : salud.ultimoLatido
+          ? 'Guardando'
+          : 'Esperando'
+
+  return (
+    <Widget
+      icono={mal ? TriangleAlert : Activity}
+      titulo="Contador"
+      className="widget-contador"
+      data-mal={mal || undefined}
+      extra={<span className="luz-contador" aria-hidden="true" />}
+    >
+      <p className="cifra-grande" style={{ fontSize: 24, letterSpacing: '-0.015em' }}>
+        {estado}
+      </p>
+      <p className="widget-nota">
+        {salud?.ultimoLatido
+          ? `Último latido ${haceCuanto(salud.ultimoLatido)}`
+          : 'Todavía no ha llegado ningún latido'}
+      </p>
+    </Widget>
+  )
 }
 
 /**
@@ -33,39 +158,39 @@ function Reloj({ reloj }) {
   const techo = Math.max(...plano, 1)
   const suma = plano.reduce((s, n) => s + n, 0)
 
-  if (!suma) return <Vacio>Todavía no hay visitas suficientes para ver un patrón de horas.</Vacio>
+  if (!suma) {
+    return (
+      <p className="widget-nota">Todavía no hay visitas suficientes para ver un patrón de horas.</p>
+    )
+  }
 
   const pico = plano.indexOf(techo)
   const porDia = reloj.map((fila) => fila.reduce((s, n) => s + n, 0))
-  const porHora = Array.from({ length: 24 }, (_, h) => reloj.reduce((s, fila) => s + fila[h], 0))
   const diaFuerte = porDia.indexOf(Math.max(...porDia))
-  const techoHora = Math.max(...porHora, 1)
   const mostrada = celda ?? { d: Math.floor(pico / 24), h: pico % 24 }
   const n = reloj[mostrada.d][mostrada.h]
 
   return (
-    <Tarjeta className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[12.5px]">
-        <p className="text-tinta">
+    <div className="mt-3 flex flex-col gap-3">
+      <p className="text-[12.5px] leading-snug">
+        <span className="text-tinta">
           {celda ? '' : 'Hora pico: '}
           <span className={celda ? 'capitalize' : ''}>{DIAS_LARGOS[mostrada.d]}</span> a las{' '}
           {hora(mostrada.h)}
-          <span className="text-tinta-tenue">
-            {' '}
-            · {n} {n === 1 ? 'visita' : 'visitas'} · {Math.round((n / suma) * 100)}% del total
-          </span>
-        </p>
-        <p className="text-tinta-tenue">El día más fuerte es el {DIAS_LARGOS[diaFuerte]}</p>
-      </div>
+        </span>
+        <span className="text-tinta-tenue">
+          {' '}
+          · {n} {n === 1 ? 'visita' : 'visitas'} · el día más fuerte es el {DIAS_LARGOS[diaFuerte]}
+        </span>
+      </p>
 
-      <div className="overflow-x-auto" onPointerLeave={() => setCelda(null)}>
-        <div className="min-w-[540px]">
+      <div className="desplazable-limpio overflow-x-auto" onPointerLeave={() => setCelda(null)}>
+        <div className="min-w-[460px]">
           {reloj.map((fila, d) => (
-            <div
-              key={d}
-              className="grid grid-cols-[34px_repeat(24,1fr)_44px] items-center gap-[2px] py-[1px]"
-            >
-              <span className="text-[10.5px] text-tinta-tenue">{DIAS_SEMANA[d]}</span>
+            <div key={d} className="grid grid-cols-[30px_repeat(24,1fr)] gap-[3px] py-[1.5px]">
+              <span className="flex items-center text-[10.5px] text-tinta-tenue">
+                {DIAS_SEMANA[d]}
+              </span>
               {fila.map((veces, h) => {
                 const activa = mostrada.d === d && mostrada.h === h
                 return (
@@ -75,268 +200,177 @@ function Reloj({ reloj }) {
                     aria-label={`${DIAS_SEMANA[d]} ${hora(h)}: ${veces}`}
                     onPointerEnter={() => setCelda({ d, h })}
                     onClick={() => setCelda({ d, h })}
-                    className="h-[18px] rounded-[4px] outline-none"
+                    className="aspect-square rounded-[4px] outline-none"
                     style={{
                       backgroundColor: veces
-                        ? tinte(VERDE, 0.14 + (veces / techo) * 0.76)
-                        : 'color-mix(in oklab, var(--tinta) 5%, transparent)',
-                      boxShadow: activa ? '0 0 0 1.5px var(--tinta)' : undefined,
+                        ? tinte(VERDE, 0.14 + (veces / techo) * 0.8)
+                        : 'color-mix(in oklab, var(--tinta) 6%, transparent)',
+                      boxShadow: activa
+                        ? '0 0 0 2px var(--panel), 0 0 0 3.5px var(--tinta)'
+                        : undefined,
                     }}
                   />
                 )
               })}
-              <span className="pl-1.5 text-right text-[10.5px] text-tinta-tenue tabular-nums">
-                {porDia[d]}
-              </span>
             </div>
           ))}
-          {/* Cuanto pesa cada hora sumando toda la semana */}
-          <div className="mt-1 grid grid-cols-[34px_repeat(24,1fr)_44px] items-end gap-[2px]">
-            <span />
-            {porHora.map((veces, h) => (
-              <span key={h} className="flex h-5 items-end">
-                <span
-                  className="w-full rounded-t-[2px] bg-[color-mix(in_oklab,var(--tinta)_22%,transparent)]"
-                  style={{ height: `${(veces / techoHora) * 100}%` }}
-                />
-              </span>
-            ))}
-            <span />
-          </div>
-          <div className="grid grid-cols-[34px_repeat(24,1fr)_44px] gap-[2px] text-[9.5px] text-tinta-tenue tabular-nums">
+          <div className="grid grid-cols-[30px_repeat(24,1fr)] gap-[3px] pt-1 text-[10px] text-tinta-tenue tabular-nums">
             <span />
             {Array.from({ length: 24 }, (_, h) => (
-              <span key={h} className="text-center">
-                {h % 6 === 0 ? String(h).padStart(2, '0') : ''}
+              <span key={h} className="whitespace-nowrap">
+                {h % 6 === 0 ? `${h} h` : ''}
               </span>
             ))}
-            <span />
           </div>
         </div>
       </div>
-
-      <div className="flex items-center gap-2 border-t border-panel-borde pt-2.5 text-[11px] text-tinta-tenue">
-        menos
-        <span
-          className="h-2 w-24 rounded-full"
-          style={{
-            background: `linear-gradient(90deg, ${tinte(VERDE, 0.14)}, ${tinte(VERDE, 0.9)})`,
-          }}
-        />
-        más
-        <span className="ml-auto">hora de Venezuela · últimos 30 días</span>
-      </div>
-    </Tarjeta>
-  )
-}
-
-/**
- * Todas las carreras, de la mas usada a la que nadie ha abierto todavia.
- * Cada fila lleva a la pestaña de esa carrera.
- */
-function Carreras({ carreras, mes, mesAnterior, colorDe, alAbrir }) {
-  const filas = CARRERAS.map((c) => ({ ...c, datos: carreras?.[c.slug] ?? {} })).sort(
-    (a, b) =>
-      (b.datos.mes ?? 0) - (a.datos.mes ?? 0) || (b.datos.aparatos ?? 0) - (a.datos.aparatos ?? 0),
-  )
-  const mayor = Math.max(...filas.map((c) => c.datos.mes ?? 0), 1)
-
-  return (
-    <Tarjeta className="flex flex-col p-1.5">
-      {filas.map((c) => {
-        const color = colorDe(c)
-        const { mes: aperturas = 0, mesAnterior: antes = 0, aparatos = 0 } = c.datos
-        const cambio = variacion(aperturas, antes)
-        return (
-          <button
-            key={c.slug}
-            type="button"
-            onClick={() => alAbrir(c.slug)}
-            className="group flex flex-col gap-1.5 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-panel-suave"
-            style={{ opacity: aperturas || aparatos ? 1 : 0.5 }}
-          >
-            <div className="flex w-full items-center gap-2.5 text-[13px]">
-              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-              <span className="min-w-0 flex-1 truncate text-tinta">{c.nombreCorto}</span>
-              <span className="shrink-0 text-[11.5px] text-tinta-tenue tabular-nums">
-                {aparatos} {aparatos === 1 ? 'aparato' : 'aparatos'}
-              </span>
-              <span className="w-[74px] shrink-0 text-right text-tinta tabular-nums">
-                {aperturas}
-                {cambio != null && (
-                  <span
-                    className="ml-1.5 text-[11px]"
-                    style={{ color: cambio >= 0 ? VERDE : 'var(--estado-rojo)' }}
-                  >
-                    {cambio > 0 ? '+' : ''}
-                    {cambio}%
-                  </span>
-                )}
-              </span>
-              <ChevronRight
-                size={14}
-                className="shrink-0 text-tinta-tenue transition-transform group-hover:translate-x-0.5"
-              />
-            </div>
-            <div className="ml-[18px] mr-[22px] h-[3px] overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--tinta)_8%,transparent)]">
-              <span
-                className="riel-tramo block h-full rounded-full"
-                style={{ width: `${(aperturas / mayor) * 100}%`, backgroundColor: color }}
-              />
-            </div>
-          </button>
-        )
-      })}
-      <p className="px-2.5 pt-1 pb-1.5 text-[11px] leading-snug text-tinta-tenue">
-        El número es cuántas veces se abrió en {mesLargo(mes)}, comparado con{' '}
-        {mesLargo(mesAnterior)}. Los aparatos son los distintos de los últimos 30 días.
-      </p>
-    </Tarjeta>
-  )
-}
-
-/**
- * Los horarios que se crean: cuantos hay hechos en total y, en el rango, cuantos
- * se crearon cada dia, desde la foto o a mano.
- */
-function Horarios({ horarios, dias }) {
-  const puntos = dias.map((d, i) => ({ ...d, creados: horarios.porDia?.[i] ?? 0 }))
-
-  return (
-    <>
-      <section className="grid grid-cols-2 gap-3">
-        <Cifra valor={horarios.hechos} rotulo="horarios hechos" />
-        <Cifra
-          valor={horarios.creados}
-          rotulo="creados"
-          nota={`desde foto ${horarios.foto} · a mano ${horarios.mano}`}
-        />
-      </section>
-      <Serie
-        puntos={puntos}
-        principal="creados"
-        detalle={(d) => (
-          <span>
-            <span className="text-tinta">{d.creados}</span> creados
-          </span>
-        )}
-      />
-    </>
+    </div>
   )
 }
 
 export default function PanelGeneral({ datos, colorDe, alAbrirCarrera }) {
-  const { activos, dias } = datos
+  const { activos, dias, horarios } = datos
   const suma = (campo) => dias.reduce((s, d) => s + d[campo], 0)
   const visitas = suma('visitas')
-  const nuevos = suma('nuevos')
 
   if (visitas === 0 && activos.treinta === 0) {
     return (
       <Vacio>
-        Todavía no hay visitas registradas. La cuenta empezó el{' '}
-        {datos.desde ? diaCorto(datos.desde) : 'día del despliegue'}, y solo cuenta lo que pasa en
-        la web publicada: lo que hagas en tu computadora mientras desarrollas no entra.
+        Todavía no hay visitas registradas en estos 30 días. Solo cuenta lo que pasa en la web
+        publicada: lo que hagas en tu computadora mientras desarrollas no entra.
       </Vacio>
     )
   }
 
+  const telefono = datos.aparato?.movil ?? 0
+  const computadora = datos.aparato?.escritorio ?? 0
+  const vistas = Object.entries(NOMBRE_VISTA).map(([clave, nombre]) => [
+    nombre,
+    datos.vistas?.[clave] ?? 0,
+  ])
+  const todasLasVistas = vistas.reduce((s, [, n]) => s + n, 0)
+  const carreras = CARRERAS.map((c) => ({ c, d: datos.carreras?.[c.slug] }))
+    .filter(({ d }) => d?.mes)
+    .sort((a, b) => b.d.mes - a.d.mes)
+    .slice(0, 5)
+  const creados = dias.map((d, i) => ({ fecha: d.fecha, creados: horarios?.porDia?.[i] ?? 0 }))
+
   return (
-    <div className="flex flex-col gap-8">
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Cifra valor={activos.hoy} rotulo="Hoy" nota="aparatos distintos, el día va en curso" />
-        <Cifra valor={activos.siete} rotulo="7 días" nota="aparatos distintos" />
-        <Cifra valor={activos.treinta} rotulo="30 días" nota="aparatos distintos" />
-        <Cifra
-          valor={activos.mes}
-          rotulo={`En ${mesLargo(datos.mes)}`}
-          nota={`${activos.mesAnterior} en ${mesLargo(datos.mesAnterior)}`}
-          cambio={variacion(activos.mes, activos.mesAnterior)}
-        />
-      </section>
+    <div className="bento">
+      <Actividad datos={datos} />
+      <Contador salud={datos.salud} />
 
-      <Bloque
-        titulo="Día a día"
-        explica="Aparatos distintos cada día y, detrás, las visitas. Toca un día para ver su detalle."
-      >
-        <Serie
-          puntos={dias}
-          principal="activos"
-          fondo="visitas"
-          detalle={(d) => (
-            <span className="flex flex-wrap gap-x-3">
-              <span>
-                <span className="text-tinta">{d.activos}</span> aparatos
-              </span>
-              <span>{d.visitas} visitas</span>
-              <span>{d.nuevos} nuevos</span>
-              {d.pwa > 0 && <span>{d.pwa} con la app</span>}
-            </span>
-          )}
-        />
-        <div className="flex gap-4 px-1 text-[11px] text-tinta-tenue">
-          <Muestra color={VERDE}>aparatos distintos</Muestra>
-          <Muestra color="color-mix(in oklab, var(--tinta) 20%, transparent)">visitas</Muestra>
-          <span className="ml-auto">la raya es la media</span>
+      <Widget icono={Activity} titulo="Hoy">
+        <p className="cifra-grande tabular-nums">
+          {activos.hoy}
+          <small>activos</small>
+        </p>
+        <div className="mt-3">
+          <Chispa valores={dias.slice(-14).map((d) => d.activos)} />
         </div>
-      </Bloque>
+      </Widget>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Cifra valor={visitas} rotulo="Visitas" nota="veces que se abrió, en 30 días" />
-        <Cifra valor={nuevos} rotulo="Nuevos" nota="aparatos que entraban por primera vez" />
-        <Cifra
-          valor={`${visitas ? Math.round((suma('pwa') / visitas) * 100) : 0}%`}
-          rotulo="Con la app"
-          nota="visitas desde la app instalada"
-        />
-        <Cifra
-          valor={datos.acciones?.marcas ?? 0}
-          rotulo="Materias marcadas"
-          nota={`en ${datos.acciones?.['visitas-con-marcas'] ?? 0} visitas de ${mesLargo(datos.mes)}`}
-        />
-      </section>
+      <Widget icono={UserPlus} titulo="Nuevos">
+        <p className="cifra-grande tabular-nums">{suma('nuevos').toLocaleString('es-VE')}</p>
+        <p className="widget-nota">aparatos que entraban por primera vez</p>
+      </Widget>
 
-      {datos.horarios && (
-        <Bloque
-          titulo="Horarios"
-          explica="Horarios creados cada día en los últimos 30 días. Toca un día para ver su número."
+      <Widget icono={Smartphone} titulo="Teléfono">
+        <div className="mx-auto mt-3">
+          <Anillo valor={porcentaje(telefono, telefono + computadora)} />
+        </div>
+        <p className="widget-nota text-center">
+          {porcentaje(computadora, telefono + computadora)}% desde computadora
+        </p>
+      </Widget>
+
+      <Widget
+        icono={BookOpen}
+        titulo="Carreras"
+        className="ocupa-3"
+        extra={`aperturas en ${mesLargo(datos.mes)}`}
+      >
+        <div className="mt-4">
+          {carreras.length ? (
+            <Barras
+              filas={carreras.map(({ c, d }) => ({
+                clave: c.slug,
+                nombre: c.nombreCorto,
+                valor: d.mes,
+                color: colorDe(c),
+                cambio: variacion(d.mes, d.mesAnterior),
+              }))}
+              alElegir={alAbrirCarrera}
+            />
+          ) : (
+            <p className="widget-nota">Nadie ha abierto una carrera este mes todavía.</p>
+          )}
+        </div>
+      </Widget>
+
+      <Widget icono={Clock} titulo="Cuándo entran" className="ocupa-3" extra="hora de Venezuela">
+        <Reloj reloj={datos.reloj ?? []} />
+      </Widget>
+
+      <Widget
+        icono={LayoutGrid}
+        titulo="Qué usan"
+        className="ocupa-3"
+        extra={`visitas de ${mesLargo(datos.mes)}`}
+      >
+        <div className="anillos">
+          {vistas.map(([nombre, n]) => (
+            <div key={nombre}>
+              <Anillo valor={porcentaje(n, todasLasVistas)} tam={76} />
+              {nombre}
+            </div>
+          ))}
+        </div>
+      </Widget>
+
+      <Widget icono={Clock} titulo="Cuánto se quedan" className="ocupa-3">
+        <p className="widget-nota">Muchas de menos de un minuto suele ser gente que solo miraba.</p>
+        <div className="mt-4">
+          <Barras
+            porcentaje
+            filas={Object.entries(TRAMOS).map(([clave, nombre]) => ({
+              clave,
+              nombre,
+              valor: datos.duracion?.[clave] ?? 0,
+            }))}
+          />
+        </div>
+      </Widget>
+
+      {horarios && (
+        <Widget
+          icono={CalendarDays}
+          titulo="Horarios creados"
+          className="ocupa-4"
+          extra={`${horarios.hechos} hechos · ${porcentaje(horarios.foto, horarios.foto + horarios.mano)}% desde una foto`}
         >
-          <Horarios horarios={datos.horarios} dias={dias} />
-        </Bloque>
+          <div className="mt-3">
+            <Columnas puntos={creados} campo="creados" nombre="creados" alto={90} />
+          </div>
+        </Widget>
       )}
 
-      <Bloque titulo="Carreras" explica="Toca una para ver su detalle y su mapa de calor.">
-        <Carreras
-          carreras={datos.carreras}
-          mes={datos.mes}
-          mesAnterior={datos.mesAnterior}
-          colorDe={colorDe}
-          alAbrir={alAbrirCarrera}
-        />
-      </Bloque>
+      <Widget icono={SquareCheckBig} titulo="Materias marcadas">
+        <p className="cifra-grande tabular-nums">
+          {(datos.acciones?.marcas ?? 0).toLocaleString('es-VE')}
+        </p>
+        <p className="widget-nota">
+          en {datos.acciones?.['visitas-con-marcas'] ?? 0} visitas de {mesLargo(datos.mes)}
+        </p>
+      </Widget>
 
-      <div className="grid gap-8 sm:grid-cols-2">
-        <Bloque
-          titulo="Qué parte usan"
-          explica={`Visitas de ${mesLargo(datos.mes)} que abrieron cada vista.`}
-        >
-          <Reparto datos={datos.vistas} nombres={NOMBRE_VISTA} />
-        </Bloque>
-        <Bloque titulo="Desde qué aparato" explica={`Visitas de ${mesLargo(datos.mes)}.`}>
-          <Reparto datos={datos.aparato} nombres={NOMBRE_APARATO} />
-        </Bloque>
-      </div>
-
-      <Bloque
-        titulo="Cuánto se quedan"
-        explica="Duración de cada visita. Muchas de menos de un minuto suele ser gente que solo miraba."
-      >
-        <Reparto datos={datos.duracion} nombres={TRAMOS} orden={Object.keys(TRAMOS)} />
-      </Bloque>
-
-      <Bloque titulo="A qué hora entran" explica="Cada cuadro es una hora de un día de la semana.">
-        <Reloj reloj={datos.reloj ?? []} />
-      </Bloque>
+      <Widget icono={Download} titulo="Con la app">
+        <p className="cifra-grande tabular-nums">
+          {porcentaje(suma('pwa'), visitas)}
+          <small>%</small>
+        </p>
+        <p className="widget-nota">de las visitas, desde la app instalada</p>
+      </Widget>
     </div>
   )
 }

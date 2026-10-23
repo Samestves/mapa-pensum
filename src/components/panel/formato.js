@@ -68,3 +68,9 @@ export const variacion = (ahora, antes) =>
 /** Un color con la fuerza que se pida, sobre el fondo de las tarjetas */
 export const tinte = (color, fuerza) =>
   `color-mix(in oklab, ${color} ${Math.round(Math.min(Math.max(fuerza, 0), 1) * 100)}%, var(--panel))`
+
+/** "23 sep": el dia y el mes corto, para los ejes de las graficas */
+export const diaMes = (iso) =>
+  new Date(`${iso}T12:00:00Z`)
+    .toLocaleDateString('es-VE', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    .replace('.', '')
