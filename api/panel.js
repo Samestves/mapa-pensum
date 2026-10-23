@@ -136,6 +136,7 @@ async function general(hoy, cuantos) {
     ['HMGET', k('horario', 'creados'), ...dias],
     ['HMGET', k('horario', 'origen'), 'foto', 'mano'],
     ['ZRANGE', k('ap', 'vistos'), '-1', '-1', 'WITHSCORES'],
+    ['HGETALL', k('cm', meses.at(-1))],
   ]
 
   const r = await pedir(comandos)
@@ -159,11 +160,13 @@ async function general(hoy, cuantos) {
   const creados = r[i++] ?? []
   const [foto, mano] = r[i++] ?? []
   const ultimoLatido = instanteDe(r[i++])
+  const marcasMes = aObjeto(r[i++])
   const creadosPorDia = dias.map((_, n) => numero(creados[n]))
 
   /* Las carreras de las que hay algo, y de cada una sus aperturas y sus
      aparatos distintos en la ventana. Cuales son solo se sabe despues de
-     leer los meses, asi que va en una segunda peticion. */
+     leer los meses, asi que va en una segunda peticion. Las aperturas van
+     tambien dia a dia: son la minigrafica de cada carrera en el panel. */
   const slugs = [...new Set([...Object.keys(carrerasMes), ...Object.keys(carrerasAntes)])].filter(
     (s) => SLUG.test(s),
   )
@@ -176,11 +179,14 @@ async function general(hoy, cuantos) {
       ]),
     )
     slugs.forEach((s, n) => {
+      const porDia = dias.map((_, d) => numero(r2[n * 2]?.[d]))
       carreras[s] = {
-        aperturas: (r2[n * 2] ?? []).reduce((suma, v) => suma + numero(v), 0),
+        aperturas: porDia.reduce((suma, v) => suma + v, 0),
+        porDia,
         aparatos: numero(r2[n * 2 + 1]),
         mes: carrerasMes[s] ?? 0,
         mesAnterior: carrerasAntes[s] ?? 0,
+        marcas: marcasMes[s] ?? 0,
       }
     })
   }

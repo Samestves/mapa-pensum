@@ -1,0 +1,960 @@
+/* ---- El panel de uso -------------------------------------------------------
+   Viaja con su trozo (ver PanelUso.jsx): quien mira su pensum no lo baja.
+
+   Es un bento: piezas de distinto tamaño en una rejilla de 2 columnas en el
+   telefono, 4 en una tableta y 6 en escritorio. Cada pieza es un .widget; su
+   tamaño lo dicen las clases ocupa-2, ocupa-3, ocupa-4, ocupa-6 y alto (no
+   w-N: en Tailwind esas ya son anchos). Las graficas tienen una sola serie
+   cada una, en el verde de aprobada; el color de una carrera solo va en lo
+   que es de esa carrera. */
+
+.panel-uso {
+  --serie: var(--estado-aprobada);
+  --serie-clara: color-mix(in oklab, var(--estado-aprobada) 55%, white);
+  --hueco-panel: color-mix(in oklab, var(--tinta) 6%, transparent);
+  --sombra-widget: 0 0 0 1px color-mix(in oklab, var(--tinta) 6%, transparent);
+}
+
+[data-tema='claro'] .panel-uso {
+  --sombra-widget: 0 1px 2px rgb(23 26 32 / 0.05), 0 12px 32px -20px rgb(23 26 32 / 0.28);
+}
+
+/* ---- Cabecera y pestañas ---- */
+.panel-titulo {
+  font-family: var(--font-ui);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.panel-pestanas {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-pestanas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 36px;
+  padding-inline: 15px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  background: var(--hueco-panel);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.panel-pestanas button[aria-current='page'] {
+  background: var(--tinta);
+  color: var(--lienzo);
+}
+
+.boton-panel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 38px;
+  height: 38px;
+  padding-inline: 11px;
+  border-radius: 19px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  background: var(--hueco-panel);
+  transition: color 200ms ease;
+}
+
+@media (hover: hover) {
+  .boton-panel:hover {
+    color: var(--tinta);
+  }
+}
+
+/* ---- La rejilla y sus piezas ---- */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 12px;
+}
+
+.widget {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 26px;
+  background: var(--panel);
+  box-shadow: var(--sombra-widget);
+}
+
+.ocupa-2,
+.ocupa-3,
+.ocupa-4,
+.ocupa-6 {
+  grid-column: span 2;
+}
+
+.widget-titulo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.widget-titulo > svg {
+  flex: none;
+  color: var(--serie);
+}
+
+.widget-titulo .extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--tinta-tenue);
+}
+
+.cifra-grande {
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--tinta);
+}
+
+.cifra-grande small {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--tinta-tenue);
+}
+
+.widget-nota {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--tinta-tenue);
+}
+
+@media (min-width: 760px) {
+  .bento {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .alto {
+    grid-row: span 2;
+  }
+
+  .ocupa-6 {
+    grid-column: span 4;
+  }
+}
+
+@media (min-width: 1040px) {
+  .bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .ocupa-3 {
+    grid-column: span 3;
+  }
+
+  .ocupa-4 {
+    grid-column: span 4;
+  }
+
+  .ocupa-6 {
+    grid-column: span 6;
+  }
+}
+
+/* El contador: verde si guarda, rojo si no, con su luz */
+.widget-contador {
+  background:
+    linear-gradient(150deg, color-mix(in oklab, var(--serie) 16%, transparent), transparent 70%),
+    var(--panel);
+}
+
+.widget-contador[data-mal] {
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in oklab, var(--estado-rojo) 18%, transparent),
+      transparent 70%
+    ),
+    var(--panel);
+}
+
+.widget-contador[data-mal] .widget-titulo > svg {
+  color: var(--estado-rojo);
+}
+
+.luz-contador {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--serie);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--serie) 22%, transparent);
+}
+
+[data-mal] .luz-contador {
+  background: var(--estado-rojo);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--estado-rojo) 22%, transparent);
+}
+
+/* ---- Graficas ---- */
+.lectura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-height: 50px;
+  margin-top: 10px;
+}
+
+.lectura b {
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.lectura span {
+  color: var(--tinta-tenue);
+}
+
+.medidas {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--hueco-panel);
+}
+
+.medidas button {
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tinta-tenue);
+}
+
+.medidas button:is([aria-pressed='true'], [aria-checked='true']) {
+  background: var(--panel-suave);
+  color: var(--tinta);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.14);
+}
+
+.area {
+  position: relative;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.area svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.area .rejilla {
+  stroke: var(--panel-borde);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.area-lava-arriba {
+  stop-color: var(--serie);
+  stop-opacity: 0.34;
+}
+
+.area-lava-abajo {
+  stop-color: var(--serie);
+  stop-opacity: 0;
+}
+
+.area-linea {
+  fill: none;
+  stroke: var(--serie);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.area-cruz {
+  stroke: color-mix(in oklab, var(--tinta) 22%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.area-marca {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: var(--serie);
+  box-shadow: 0 0 0 3px var(--panel);
+  pointer-events: none;
+}
+
+.eje-y {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-tenue);
+}
+
+.ejes-x,
+.columnas-ejes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--tinta-tenue);
+}
+
+.ejes-x {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.chispa {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.chispa svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chispa path {
+  fill: none;
+  stroke: var(--c, var(--serie));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chispa i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--c, var(--serie));
+  box-shadow: 0 0 0 2px var(--panel);
+}
+
+.cambio {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  padding-inline: 7px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: var(--estado-rojo);
+  background: color-mix(in oklab, var(--estado-rojo) 12%, transparent);
+}
+
+.cambio[data-sube] {
+  color: var(--serie);
+  background: color-mix(in oklab, var(--serie) 13%, transparent);
+}
+
+.columnas-lectura {
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+.columnas-lectura b {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+/* Redondeadas arriba, rectas en la base, con dos pixeles de aire entre una
+   y otra */
+.columnas-barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.columnas-barras i {
+  flex: 1;
+  min-width: 2px;
+  min-height: 3px;
+  border-radius: 4px 4px 1px 1px;
+  background: linear-gradient(
+    to top,
+    var(--c, var(--serie)),
+    color-mix(in oklab, var(--c, var(--serie)) 72%, white)
+  );
+  transition: opacity 150ms ease;
+}
+
+.columnas-barras i[data-cero] {
+  background: color-mix(in oklab, var(--tinta) 12%, transparent);
+}
+
+.columnas-barras:has(i[data-elegida]) i:not([data-elegida]) {
+  opacity: 0.45;
+}
+
+.columnas-ejes {
+  margin-top: 6px;
+}
+
+.anillo {
+  position: relative;
+  flex: none;
+}
+
+.anillo svg {
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+
+.anillo circle {
+  fill: none;
+  stroke-width: 11;
+}
+
+.anillo-pista {
+  stroke: color-mix(in oklab, var(--serie) 13%, transparent);
+}
+
+.anillo-arco {
+  stroke-linecap: round;
+}
+
+.anillo-claro {
+  stop-color: var(--serie-clara);
+}
+
+.anillo-pleno {
+  stop-color: var(--serie);
+}
+
+.anillo p {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Si la fila estira el widget, los anillos quedan al medio y no arriba */
+.anillos {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.anillos > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--tinta-suave);
+}
+
+.barras > li + li {
+  margin-top: 13px;
+}
+
+.barras li > * {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.barras-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+.barras-nombre span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barras-nombre i {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.barras-valor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.barras-pista {
+  grid-column: 1 / -1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--hueco-panel);
+}
+
+.barras-pista b {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--c, var(--serie)),
+    color-mix(in oklab, var(--c, var(--serie)) 70%, white)
+  );
+}
+
+/* ---- Carreras ---- */
+.carreras-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+/* Nueve carreras: tres columnas cierran 3x3 sin dejar una sola abajo */
+@media (min-width: 640px) {
+  .carreras-rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tarjeta-carrera-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      90% 70% at 100% 0%,
+      color-mix(in oklab, var(--c) 16%, transparent),
+      transparent 70%
+    ),
+    var(--panel);
+  box-shadow: var(--sombra-widget);
+  text-align: left;
+  transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.tarjeta-carrera-panel:active {
+  transform: scale(0.985);
+}
+
+.tarjeta-carrera-panel[aria-pressed='true'] {
+  box-shadow:
+    inset 0 0 0 2px var(--c),
+    var(--sombra-widget);
+}
+
+.tarjeta-carrera-panel .cab {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tarjeta-carrera-panel .cab b {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--tinta);
+}
+
+.tarjeta-carrera-panel small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+.tarjeta-carrera-panel .forma {
+  width: 58px;
+  height: 38px;
+  flex: none;
+}
+
+.tarjeta-carrera-panel .cifra {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tarjeta-carrera-panel .cifra b {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--tinta);
+}
+
+.tarjeta-carrera-panel .chispa {
+  width: 46%;
+}
+
+.tarjeta-carrera-panel .pie {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-borde);
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+.tarjeta-carrera-panel .pie b {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.detalle-carrera {
+  padding: 0;
+  overflow: hidden;
+}
+
+.detalle-carrera .cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 20px 18px;
+  background: radial-gradient(
+    80% 140% at 0% 0%,
+    color-mix(in oklab, var(--c) 22%, transparent),
+    transparent 70%
+  );
+}
+
+.detalle-carrera .cabecera small {
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+.detalle-carrera .cabecera h2 {
+  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.detalle-carrera .cabecera .forma {
+  width: 92px;
+  height: 60px;
+  flex: none;
+}
+
+.detalle-carrera .cifras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--panel-borde);
+  border-block: 1px solid var(--panel-borde);
+}
+
+.detalle-carrera .cifras > div {
+  padding: 14px 20px;
+  background: var(--panel);
+}
+
+.detalle-carrera .cifras small {
+  display: block;
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+.detalle-carrera .cifras b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.detalle-carrera .cifras p {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--tinta-tenue);
+}
+
+.detalle-carrera .cuerpo {
+  display: grid;
+  gap: 24px;
+  padding: 20px;
+}
+
+.detalle-carrera h3 {
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+@media (min-width: 760px) {
+  .detalle-carrera .cifras {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---- Dispositivos ---- */
+.buscador-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding-inline: 14px;
+  border-radius: 14px;
+  background: var(--hueco-panel);
+  color: var(--tinta-tenue);
+}
+
+.buscador-panel input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  font-size: 15px;
+  color: var(--tinta);
+  outline: none;
+}
+
+.buscador-panel input::placeholder {
+  color: var(--tinta-tenue);
+}
+
+.filtros-panel {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filtros-panel button {
+  flex: none;
+  height: 32px;
+  padding-inline: 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--tinta-suave);
+  background: var(--hueco-panel);
+}
+
+.filtros-panel button[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--lienzo);
+}
+
+.filtros-panel button span {
+  margin-left: 4px;
+  opacity: 0.6;
+}
+
+.equipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  align-items: start;
+  gap: 10px;
+}
+
+.equipo {
+  border-radius: 20px;
+  background: var(--panel-suave);
+  box-shadow: inset 0 0 0 1px var(--panel-borde);
+}
+
+.equipo > button {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  text-align: left;
+}
+
+.equipo .icono {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  color: var(--tinta-suave);
+}
+
+.equipo .icono[data-tuyo] {
+  color: var(--serie);
+}
+
+.equipo .nombre {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--tinta);
+}
+
+.equipo .tecnica {
+  display: block;
+  margin-top: 1px;
+  font-size: 12.5px;
+  color: var(--tinta-tenue);
+}
+
+.equipo .datos {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-borde);
+  font-size: 12.5px;
+  color: var(--tinta-suave);
+}
+
+.equipo .datos > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.equipo .datos svg {
+  flex: none;
+  color: var(--tinta-tenue);
+}
+
+.punto-activo {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--tinta-tenue);
+}
+
+.punto-activo[data-hoy] {
+  background: var(--serie);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--serie) 20%, transparent);
+}
+
+.etiqueta-panel {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin-left: 6px;
+  padding-inline: 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+  color: var(--c, var(--tinta-suave));
+  background: color-mix(in oklab, var(--c, var(--tinta)) 14%, transparent);
+}
+
+.equipo dl {
+  display: grid;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0 14px 14px;
+  font-size: 12px;
+}
+
+.equipo dl > div {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.equipo dt {
+  width: 104px;
+  flex: none;
+  color: var(--tinta-tenue);
+}
+
+.equipo dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--tinta-suave);
+}
+
+.boton-mas {
+  width: 100%;
+  height: 40px;
+  border-radius: 14px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+  background: var(--hueco-panel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-carrera-panel,
+  .columnas-barras i {
+    transition: none;
+  }
+}

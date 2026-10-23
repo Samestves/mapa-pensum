@@ -190,3 +190,42 @@ describe('los horarios en el panel', () => {
     assert.equal(res.cuerpo.horarios.porDia.length, 14)
   })
 })
+
+describe('las carreras en el panel', () => {
+  afterEach(() => {
+    mock.restoreAll()
+    delete process.env.KV_REST_API_URL
+    delete process.env.KV_REST_API_TOKEN
+  })
+
+  test('cada una trae sus aperturas dia a dia y sus marcas del mes', async () => {
+    process.env.PANEL_CLAVE = 'la-buena-de-verdad'
+    process.env.KV_REST_API_URL = 'https://almacen.falso'
+    process.env.KV_REST_API_TOKEN = 'falso'
+    const mes = fechaDe().slice(0, 7)
+    const [ayer, hoy] = ultimosDias(2, fechaDe())
+    mock.method(globalThis, 'fetch', async (_url, { body }) => {
+      const resultados = JSON.parse(body).map(([orden, clave, ...resto]) => {
+        if (orden === 'HGETALL' && clave === k('carreras', mes)) return ['sistemas', '9']
+        if (orden === 'HGETALL' && clave === k('cm', mes)) return ['sistemas', '4']
+        if (orden === 'MGET' && clave.startsWith(k('ca', 'sistemas')))
+          return [clave, ...resto].map((c) =>
+            c.endsWith(ayer) ? '2' : c.endsWith(hoy) ? '3' : null,
+          )
+        if (orden === 'PFCOUNT' && clave.startsWith(k('cu', 'sistemas'))) return 5
+        return null
+      })
+      return { ok: true, json: async () => resultados.map((result) => ({ result })) }
+    })
+    const res = respuesta()
+    await handler(pedido('la-buena-de-verdad'), res)
+
+    const sistemas = res.cuerpo.carreras.sistemas
+    assert.deepEqual(sistemas.porDia.slice(-2), [2, 3])
+    assert.equal(sistemas.porDia.length, res.cuerpo.dias.length)
+    assert.equal(sistemas.aperturas, 5)
+    assert.equal(sistemas.marcas, 4)
+    assert.equal(sistemas.mes, 9)
+    assert.equal(sistemas.aparatos, 5)
+  })
+})

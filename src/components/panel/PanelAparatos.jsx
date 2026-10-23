@@ -1,8 +1,22 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, CircleHelp, MapPin, Monitor, Smartphone, Tablet } from 'lucide-react'
+import {
+  CircleHelp,
+  Cpu,
+  Fingerprint,
+  Globe,
+  MapPin,
+  Monitor,
+  Search,
+  ShieldAlert,
+  Smartphone,
+  Tablet,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import { CARRERAS } from '../../data/carreras'
 import { contarEsteAparato, idDeEsteAparato, seCuentaEsteAparato } from '../../data/latido'
-import { Bloque, Cifra, Hueco, Reparto, Segmentos, Tarjeta, Vacio } from './piezas'
+import { Hueco, Segmentos, Vacio, Widget } from './piezas'
+import { Anillo, Barras } from './graficas'
 import { VERDE, fechaHora, haceCuanto } from './formato'
 
 /* Los estados de Venezuela por su letra ISO 3166-2, que es lo que da Vercel */
@@ -33,7 +47,6 @@ const ESTADOS_VE = {
   Y: 'Delta Amacuro',
   Z: 'Amazonas',
 }
-const TIPOS = { telefono: 'Teléfono', tablet: 'Tableta', computadora: 'Computadora' }
 const AMBAR = 'var(--estado-cursando)'
 const POR_PAGINA = 30
 
@@ -96,15 +109,33 @@ const contar = (lista, clave) =>
     return acc
   }, {})
 
-const Etiqueta = ({ color, children, titulo }) => (
-  <span
-    title={titulo}
-    className="rounded-full border px-1.5 py-[1px] text-[10px] leading-[14px] whitespace-nowrap"
-    style={{ color, borderColor: `color-mix(in oklab, ${color} 45%, transparent)` }}
-  >
-    {children}
-  </span>
-)
+/* Un reparto en filas para Barras: las mas frecuentes primero y, con `tope`,
+   las que no caben se dicen aparte en vez de alargar la lista */
+function repartir(conteo, tope = 6) {
+  const todas = Object.entries(conteo)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+  const filas = todas.slice(0, tope).map(([nombre, valor]) => ({ clave: nombre, nombre, valor }))
+  return { filas, resto: todas.length - filas.length }
+}
+
+/** Un reparto en su widget: el titulo, las barras y cuantas quedaron fuera */
+function Reparto({ icono, titulo, nota, conteo, tope, vacio = 'Todavía no hay datos.' }) {
+  const { filas, resto } = repartir(conteo, tope)
+  return (
+    <Widget icono={icono} titulo={titulo} className="ocupa-2">
+      {nota && <p className="widget-nota">{nota}</p>}
+      <div className="mt-4">
+        {filas.length ? (
+          <Barras filas={filas} porcentaje />
+        ) : (
+          <p className="widget-nota">{vacio}</p>
+        )}
+      </div>
+      {resto > 0 && <p className="widget-nota mt-3">y {resto} más</p>}
+    </Widget>
+  )
+}
 
 /**
  * Este aparato: el que tienes en la mano mirando el panel. Desde aqui se le
@@ -122,59 +153,52 @@ function EsteAparato({ lista }) {
   }
 
   return (
-    <Tarjeta className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div className="min-w-0 flex-1">
-        <p className="text-[13.5px] text-tinta">
-          Este aparato{' '}
-          <span className="text-tinta-tenue">
-            {visto ? `· ${nombreDe(visto)}` : id ? `· ${id.slice(0, 6)}…` : ''}
-          </span>
-        </p>
-        <p className="mt-1 text-[12px] leading-snug text-tinta-tenue">
-          {cuenta
-            ? 'Se está contando. Si es tuyo, apágalo aquí y en cada teléfono, computadora y navegador que uses.'
-            : 'No se cuenta: lo que hagas desde aquí no entra en ningún total. En la lista sale como «Tú».'}
-          {!id &&
-            ' Todavía no ha abierto el mapa, así que no tiene identificador: la marca se aplicará cuando lo abra.'}
-        </p>
-      </div>
+    <Widget icono={Fingerprint} titulo="Este aparato" className="ocupa-2">
+      <p className="mt-2 text-[14px] font-medium text-tinta">
+        {visto ? nombreDe(visto) : id ? `${id.slice(0, 6)}…` : 'Sin identificador todavía'}
+      </p>
+      <p className="widget-nota">
+        {cuenta
+          ? 'Se está contando. Si es tuyo, apágalo aquí y en cada teléfono, computadora y navegador que uses.'
+          : 'No se cuenta: lo que hagas desde aquí no entra en ningún total. En la lista sale como «Tú».'}
+        {!id && ' La marca se aplicará cuando abra el mapa.'}
+      </p>
       <button
         type="button"
         role="switch"
         aria-checked={!cuenta}
         onClick={alternar}
-        className="flex shrink-0 items-center gap-2.5 self-start rounded-full border border-panel-borde py-1.5 pr-3 pl-1.5 text-[12.5px] text-tinta-suave sm:self-auto"
+        className="mt-auto flex items-center gap-2.5 self-start pt-3 text-[13px] font-medium text-tinta-suave"
       >
         <span
-          className="relative h-5 w-9 rounded-full transition-colors"
+          className="relative h-[26px] w-[44px] rounded-full transition-colors"
           style={{
             backgroundColor: cuenta ? 'color-mix(in oklab, var(--tinta) 16%, transparent)' : VERDE,
           }}
         >
           <span
-            className="absolute top-0.5 size-4 rounded-full bg-[var(--lienzo)] transition-[left]"
-            style={{ left: cuenta ? 2 : 18 }}
+            className="absolute top-[3px] size-5 rounded-full bg-white shadow transition-[left]"
+            style={{ left: cuenta ? 3 : 21 }}
           />
         </span>
         No contar este aparato
       </button>
-    </Tarjeta>
+    </Widget>
   )
 }
 
-/** Un aparato de la lista. Tocarlo abre todo lo que se sabe de el. */
-function Aparato({ a, esEste, nuevo, colorDe, abierto, alAbrir }) {
-  const Icono =
-    a.tipo === 'computadora'
-      ? Monitor
-      : a.tipo === 'tablet'
-        ? Tablet
-        : a.tipo === 'telefono'
-          ? Smartphone
-          : CircleHelp
+const ICONOS = { computadora: Monitor, tablet: Tablet, telefono: Smartphone }
+/* Visto en el ultimo dia: lleva el punto verde de activo */
+const deHoy = (a) => a.ultima && Date.now() - Date.parse(a.ultima) < 86400000
+
+/** Un aparato. Tocarlo despliega todo lo que se sabe de el. */
+function Aparato({ a, suyo, nuevo, colorDe, abierto, alAbrir }) {
+  const Icono = ICONOS[a.tipo] ?? CircleHelp
   const lugar = lugarDe(a)
-  const suyo = a.yo || esEste
-  const carreras = Object.entries(a.carreras ?? {}).sort((x, y) => y[1] - x[1])
+  const carreras = Object.entries(a.carreras ?? {})
+    .sort((x, y) => y[1] - x[1])
+    .map(([slug, n]) => ({ c: CARRERAS.find((x) => x.slug === slug), n }))
+    .filter(({ c }) => c)
 
   const datos = [
     [
@@ -199,104 +223,86 @@ function Aparato({ a, esEste, nuevo, colorDe, abierto, alAbrir }) {
       'Pantalla',
       a.pantalla && `${a.pantalla.replace('x', '×')} puntos${a.dpr ? ` a ${a.dpr}x` : ''}`,
     ],
+    ['Carreras', carreras.map(({ c, n }) => `${c.nombreCorto}${n > 1 ? ` ×${n}` : ''}`).join(', ')],
     ['Identificador', a.id],
   ].filter(([, v]) => v)
 
   return (
-    <li>
-      <button
-        type="button"
-        onClick={alAbrir}
-        aria-expanded={abierto}
-        className="flex w-full rounded-xl px-3 py-3 text-left transition-colors hover:bg-panel-suave"
-      >
-        <div className="flex w-full gap-3">
-          <span
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-panel-borde"
-            style={{ color: suyo ? VERDE : 'var(--tinta-suave)' }}
-          >
-            <Icono size={16} strokeWidth={1.5} />
+    <article className="equipo">
+      <button type="button" onClick={alAbrir} aria-expanded={abierto}>
+        <span className="icono" data-tuyo={suyo || undefined}>
+          <Icono size={20} strokeWidth={1.6} />
+        </span>
+        <span className="min-w-0">
+          <span className="nombre">
+            {nombreDe(a)}
+            {suyo && (
+              <span className="etiqueta-panel" style={{ '--c': VERDE }}>
+                Tú
+              </span>
+            )}
+            {a.vpn && (
+              <span className="etiqueta-panel" style={{ '--c': AMBAR }}>
+                VPN
+              </span>
+            )}
+            {nuevo && !suyo && (
+              <span className="etiqueta-panel" style={{ '--c': 'var(--sit-inscribible-luz)' }}>
+                Nuevo
+              </span>
+            )}
+            {a.pwa && <span className="etiqueta-panel">App</span>}
           </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-baseline gap-2">
-              <p className="min-w-0 flex-1 truncate text-[13.5px] text-tinta">{nombreDe(a)}</p>
-              <span className="shrink-0 text-[11px] text-tinta-tenue">
-                {a.ultima && haceCuanto(a.ultima)}
-              </span>
-            </div>
-            <p className="truncate text-[11.5px] text-tinta-tenue">
-              {lineaTecnica(a) || 'Entró con una versión anterior de la app'}
-            </p>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-tinta-suave">
-              {lugar && (
-                <span className="flex min-w-0 items-center gap-1">
-                  <MapPin size={11} className="shrink-0 text-tinta-tenue" />
-                  <span className="truncate">{lugar}</span>
-                </span>
-              )}
-              {a.vpn && (
-                <Etiqueta
-                  color={AMBAR}
-                  titulo={`La IP sale por ${nombrePais(a.pais) ?? 'otro sitio'} pero el reloj está en ${a.zona}`}
-                >
-                  VPN probable
-                </Etiqueta>
-              )}
-              {suyo && <Etiqueta color={VERDE}>Tú</Etiqueta>}
-              {nuevo && !suyo && <Etiqueta color="var(--sit-inscribible-luz)">Nuevo</Etiqueta>}
-              {a.pwa && <Etiqueta color="var(--tinta-suave)">App instalada</Etiqueta>}
-            </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-tinta-tenue tabular-nums">
-              <span>
-                <span className="text-tinta-suave">{a.visitas}</span>{' '}
-                {a.visitas === 1 ? 'visita' : 'visitas'}
-              </span>
-              {a.minutos > 0 && <span>{a.minutos} min</span>}
-              {a.marcas > 0 && <span>{a.marcas} marcas</span>}
-              {carreras.map(([slug, n]) => {
-                const c = CARRERAS.find((x) => x.slug === slug)
-                if (!c) return null
-                return (
-                  <span key={slug} className="flex items-center gap-1">
-                    <span
-                      className="size-1.5 rounded-full"
-                      style={{ backgroundColor: colorDe(c) }}
-                    />
-                    {c.nombreCorto}
-                    {n > 1 && <span>×{n}</span>}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-          <ChevronDown
-            size={14}
-            className="mt-1 shrink-0 text-tinta-tenue transition-transform"
-            style={{ transform: abierto ? 'rotate(180deg)' : undefined }}
-          />
-        </div>
+          <span className="tecnica truncate">
+            {lineaTecnica(a) || 'Entró con una versión anterior de la app'}
+          </span>
+        </span>
+        <span className="datos">
+          <span>
+            <i className="punto-activo" data-hoy={deHoy(a) || undefined} />
+            {a.ultima ? haceCuanto(a.ultima) : 'sin fecha'}
+          </span>
+          {lugar && (
+            <span>
+              <MapPin size={13} />
+              <span className="truncate">{lugar}</span>
+            </span>
+          )}
+          {carreras[0] && (
+            <span>
+              <i
+                className="size-2 rounded-full"
+                style={{ backgroundColor: colorDe(carreras[0].c) }}
+              />
+              {carreras[0].c.nombreCorto}
+              {carreras.length > 1 && ` +${carreras.length - 1}`}
+            </span>
+          )}
+          <span className="ml-auto tabular-nums">
+            {a.visitas} {a.visitas === 1 ? 'visita' : 'visitas'}
+            {a.minutos > 0 && ` · ${a.minutos} min`}
+          </span>
+        </span>
       </button>
 
       {/* Fuera del boton, para poder seleccionar y copiar el identificador */}
       {abierto && (
-        <div className="px-3 pb-3">
-          <dl className="grid gap-x-6 sm:ml-12 gap-y-1.5 border-t border-panel-borde pt-3 text-[11.5px] sm:grid-cols-2">
-            {datos.map(([rotulo, valor]) => (
-              <div key={rotulo} className="flex min-w-0 gap-2">
-                <dt className="w-[108px] shrink-0 text-tinta-tenue">{rotulo}</dt>
-                <dd className="min-w-0 break-words text-tinta-suave">{valor}</dd>
-              </div>
-            ))}
-            {a.vpn && (
-              <p className="text-[11.5px] leading-snug sm:col-span-2" style={{ color: AMBAR }}>
-                La conexión sale por {nombrePais(a.pais)}, pero el reloj del aparato está en{' '}
-                {a.zona}. Casi seguro es alguien usando una VPN.
-              </p>
-            )}
-          </dl>
-        </div>
+        <dl>
+          {datos.map(([rotulo, valor]) => (
+            <div key={rotulo}>
+              <dt>{rotulo}</dt>
+              <dd>{valor}</dd>
+            </div>
+          ))}
+          {a.vpn && (
+            <p className="leading-snug" style={{ color: AMBAR }}>
+              La conexión sale por {nombrePais(a.pais)}, pero el reloj del aparato está en {a.zona}.
+              Casi seguro es alguien usando una VPN.
+            </p>
+          )}
+        </dl>
       )}
-    </li>
+    </article>
   )
 }
 
@@ -310,8 +316,17 @@ const FILTROS = [
   ['tuyos', 'Tuyos'],
 ]
 
+/* Lo que se busca: el nombre, el lugar y lo tecnico, sin tildes */
+const sinTildes = (texto) =>
+  texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+const textoDe = (a) => sinTildes([nombreDe(a), lugarDe(a), lineaTecnica(a)].join(' '))
+
 export default function PanelAparatos({ datos, cargando, ventana, alCambiarVentana, colorDe }) {
   const [filtro, setFiltro] = useState('todos')
+  const [busca, setBusca] = useState('')
   const [abierto, setAbierto] = useState(null)
   const [cuantos, setCuantos] = useState(POR_PAGINA)
   const miId = idDeEsteAparato()
@@ -332,11 +347,13 @@ export default function PanelAparatos({ datos, cargando, ventana, alCambiarVenta
     app: (a) => a.pwa,
     tuyos: esTuyo,
   }
-  const filtrados = lista.filter(pasa[filtro])
+  const palabras = sinTildes(busca).split(/\s+/).filter(Boolean)
+  const filtrados = lista
+    .filter(pasa[filtro])
+    .filter((a) => palabras.every((p) => textoDe(a).includes(p)))
 
   const repartos = useMemo(
     () => ({
-      tipo: contar(ajenos, (a) => TIPOS[a.tipo]),
       sistema: contar(ajenos, (a) => a.so),
       navegador: contar(ajenos, (a) => a.navegador),
       marca: contar(
@@ -355,14 +372,15 @@ export default function PanelAparatos({ datos, cargando, ventana, alCambiarVenta
   const enVenezuela = ajenos.filter((a) => a.venezuela).length
   const conVpn = ajenos.filter((a) => a.vpn).length
   const nuevos = ajenos.filter(esNuevo).length
+  const telefonos = ajenos.filter((a) => a.tipo === 'telefono' || a.tipo === 'tablet').length
+  const conApp = ajenos.filter((a) => a.pwa).length
   const truncado = datos && datos.total > lista.length
+  const porcentaje = (n) => (ajenos.length ? Math.round((n / ajenos.length) * 100) : 0)
 
   return (
-    <div className="flex flex-col gap-8">
-      <EsteAparato lista={lista} />
-
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[12px] text-tinta-tenue">Aparatos que entraron en los últimos</p>
+        <p className="text-[13px] text-tinta-tenue">Dispositivos que entraron en los últimos</p>
         <Segmentos
           etiqueta="Ventana de tiempo"
           valor={ventana}
@@ -376,144 +394,150 @@ export default function PanelAparatos({ datos, cargando, ventana, alCambiarVenta
       </div>
 
       {cargando || !datos ? (
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[0, 1, 2, 3].map((n) => (
-              <Hueco key={n} alto={104} />
-            ))}
-          </div>
-          <Hueco alto={380} />
+        <div className="bento">
+          {[0, 1, 2, 3].map((n) => (
+            <Hueco key={n} alto={130} />
+          ))}
+          <Hueco alto={130} className="ocupa-2" />
+          <Hueco alto={380} className="ocupa-6" />
         </div>
       ) : !lista.length ? (
         <Vacio>
-          Todavía no hay fichas de aparatos en esta ventana. Empiezan a llenarse con la primera
+          Todavía no hay fichas de dispositivos en esta ventana. Empiezan a llenarse con la primera
           visita después de publicar esta versión.
         </Vacio>
       ) : (
-        <>
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Cifra
-              valor={ajenos.length}
-              rotulo="Aparatos"
-              nota={
-                truncado
-                  ? `se detallan los ${lista.length} más recientes de ${datos.total}`
-                  : 'sin contar los tuyos'
-              }
-            />
-            <Cifra
-              valor={enVenezuela}
-              rotulo="En Venezuela"
-              nota={`${ajenos.length ? Math.round((enVenezuela / ajenos.length) * 100) : 0}%, por la IP o por el reloj`}
-              acento={VERDE}
-            />
-            <Cifra
-              valor={conVpn}
-              rotulo="VPN probable"
-              nota="la IP y el reloj no coinciden"
-              acento={conVpn ? AMBAR : undefined}
-            />
-            <Cifra
-              valor={nuevos}
-              rotulo="Nuevos"
-              nota={`su primera vez fue en estos ${ventana} días`}
-            />
-          </section>
+        <div className="bento">
+          <Widget icono={Users} titulo="Dispositivos">
+            <p className="cifra-grande tabular-nums">{ajenos.length}</p>
+            <p className="widget-nota">
+              {truncado
+                ? `los ${lista.length} más recientes de ${datos.total}`
+                : 'sin contar los tuyos'}
+            </p>
+          </Widget>
+          <Widget icono={UserPlus} titulo="Nuevos">
+            <p className="cifra-grande tabular-nums">{nuevos}</p>
+            <p className="widget-nota">su primera vez fue en estos {ventana} días</p>
+          </Widget>
+          <Widget icono={MapPin} titulo="En Venezuela">
+            <p className="cifra-grande tabular-nums">
+              {porcentaje(enVenezuela)}
+              <small>%</small>
+            </p>
+            <p className="widget-nota">{enVenezuela} por la IP o por el reloj</p>
+          </Widget>
+          <Widget icono={ShieldAlert} titulo="VPN probable">
+            <p className="cifra-grande tabular-nums" style={{ color: conVpn ? AMBAR : undefined }}>
+              {conVpn}
+            </p>
+            <p className="widget-nota">la IP y el reloj no coinciden</p>
+          </Widget>
+          <EsteAparato lista={lista} />
 
-          <div className="grid gap-8 sm:grid-cols-2">
-            <Bloque titulo="Tipo de aparato">
-              <Reparto datos={repartos.tipo} />
-            </Bloque>
-            <Bloque titulo="Sistema">
-              <Reparto datos={repartos.sistema} tope={6} />
-            </Bloque>
-            <Bloque
-              titulo="Marca del teléfono"
-              explica="Android con Chrome dice el modelo; el iPhone no."
-            >
-              <Reparto datos={repartos.marca} tope={6} />
-            </Bloque>
-            <Bloque titulo="Navegador">
-              <Reparto datos={repartos.navegador} tope={6} />
-            </Bloque>
-            <Bloque
-              titulo="Ciudades de Venezuela"
-              explica="Sin los que usan VPN. Aproximada: sale de la IP."
-            >
-              <Reparto
-                datos={repartos.ciudad}
-                tope={8}
-                vacio="Nadie desde Venezuela sin VPN todavía."
-              />
-            </Bloque>
-            <Bloque
-              titulo="País de la conexión"
-              explica="Con VPN sale el país de la VPN, no el de la persona."
-            >
-              <Reparto datos={repartos.pais} tope={6} />
-            </Bloque>
-          </div>
-
-          <Bloque
-            titulo="Cada aparato"
-            explica="Del más reciente al más antiguo. Tócalo para ver todo lo que se sabe de él."
-          >
-            <div className="-mx-5 overflow-x-auto px-5 desplazable-limpio">
-              <div className="flex w-max gap-1.5">
-                {FILTROS.map(([clave, nombre]) => {
-                  const n = lista.filter(pasa[clave]).length
-                  return (
-                    <button
-                      key={clave}
-                      type="button"
-                      aria-pressed={filtro === clave}
-                      onClick={() => {
-                        setFiltro(clave)
-                        setCuantos(POR_PAGINA)
-                      }}
-                      className={`rounded-full border px-3 py-1.5 text-[12px] whitespace-nowrap transition-colors ${
-                        filtro === clave
-                          ? 'border-[color-mix(in_oklab,var(--tinta)_30%,transparent)] bg-panel-suave text-tinta'
-                          : 'border-panel-borde bg-panel text-tinta-tenue'
-                      }`}
-                    >
-                      {nombre} <span className="tabular-nums opacity-70">{n}</span>
-                    </button>
-                  )
-                })}
+          <Widget icono={Smartphone} titulo="Tipo" className="ocupa-2">
+            <div className="mt-3 flex items-center gap-5">
+              <Anillo valor={porcentaje(telefonos)} tam={92} />
+              <div>
+                <p className="text-[15px] font-semibold text-tinta">Teléfonos y tabletas</p>
+                <p className="widget-nota">
+                  {ajenos.length - telefonos} computadoras · {conApp} con la app instalada
+                </p>
               </div>
+            </div>
+          </Widget>
+          <Reparto icono={Cpu} titulo="Sistema" conteo={repartos.sistema} />
+          <Reparto icono={Globe} titulo="Navegador" conteo={repartos.navegador} />
+          <Reparto
+            icono={Smartphone}
+            titulo="Marca del teléfono"
+            nota="Android con Chrome dice el modelo; el iPhone no."
+            conteo={repartos.marca}
+          />
+          <Reparto
+            icono={MapPin}
+            titulo="Ciudades de Venezuela"
+            nota="Sin los que usan VPN. Aproximada: sale de la IP."
+            conteo={repartos.ciudad}
+            tope={8}
+            vacio="Nadie desde Venezuela sin VPN todavía."
+          />
+          <Reparto
+            icono={Globe}
+            titulo="País de la conexión"
+            nota="Con VPN sale el país de la VPN, no el de la persona."
+            conteo={repartos.pais}
+          />
+
+          <Widget
+            icono={Search}
+            titulo="Cada dispositivo"
+            className="ocupa-6"
+            extra={`${filtrados.length} de ${lista.length}`}
+          >
+            <label className="buscador-panel mt-3">
+              <Search size={17} aria-hidden="true" />
+              <input
+                type="search"
+                value={busca}
+                onChange={(e) => {
+                  setBusca(e.target.value)
+                  setCuantos(POR_PAGINA)
+                }}
+                placeholder="Buscar por modelo, ciudad o sistema"
+                aria-label="Buscar dispositivo"
+                autoComplete="off"
+              />
+            </label>
+            <div className="filtros-panel mt-2.5" role="group" aria-label="Filtro">
+              {FILTROS.map(([clave, nombre]) => (
+                <button
+                  key={clave}
+                  type="button"
+                  aria-pressed={filtro === clave}
+                  onClick={() => {
+                    setFiltro(clave)
+                    setCuantos(POR_PAGINA)
+                  }}
+                >
+                  {nombre}
+                  <span className="tabular-nums">{lista.filter(pasa[clave]).length}</span>
+                </button>
+              ))}
             </div>
 
             {filtrados.length ? (
-              <Tarjeta className="p-1.5">
-                <ul className="flex flex-col divide-y divide-panel-borde">
+              <>
+                <div className="equipos mt-4">
                   {filtrados.slice(0, cuantos).map((a) => (
                     <Aparato
                       key={a.id}
                       a={a}
-                      esEste={a.id === miId}
+                      suyo={esTuyo(a)}
                       nuevo={esNuevo(a)}
                       colorDe={colorDe}
                       abierto={abierto === a.id}
                       alAbrir={() => setAbierto(abierto === a.id ? null : a.id)}
                     />
                   ))}
-                </ul>
+                </div>
                 {filtrados.length > cuantos && (
                   <button
                     type="button"
                     onClick={() => setCuantos((n) => n + POR_PAGINA)}
-                    className="mt-1 w-full rounded-xl py-2.5 text-[12.5px] text-tinta-suave hover:bg-panel-suave"
+                    className="boton-mas mt-3"
                   >
                     Ver {Math.min(POR_PAGINA, filtrados.length - cuantos)} más
                   </button>
                 )}
-              </Tarjeta>
+              </>
             ) : (
-              <Vacio>Ningún aparato con ese filtro.</Vacio>
+              <p className="py-8 text-center text-[13px] text-tinta-tenue">
+                Ningún dispositivo coincide.
+              </p>
             )}
-          </Bloque>
-        </>
+          </Widget>
+        </div>
       )}
     </div>
   )

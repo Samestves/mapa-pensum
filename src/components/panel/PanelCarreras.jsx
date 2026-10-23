@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CARRERAS, cargarCarrera } from '../../data/carreras'
-import { Bloque, Cifra, Hueco, Muestra, Serie, Tarjeta, Vacio } from './piezas'
+import MiniMapa from '../MiniMapa'
+import { Hueco, Vacio } from './piezas'
+import { Cambio, Chispa, Columnas } from './graficas'
 import { diaCorto, mesLargo, tinte, total, variacion } from './formato'
 
 /**
@@ -82,8 +84,8 @@ function Calor({ slug, calor, color }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Tarjeta className="flex flex-col gap-2">
-        <p className="text-[11px] tracking-[0.14em] text-tinta-tenue uppercase">Las más miradas</p>
+      <div className="flex flex-col gap-2">
+        <h3>Las más miradas</h3>
         {top.map((t, i) => (
           <button
             key={t.codigo}
@@ -106,9 +108,9 @@ function Calor({ slug, calor, color }) {
             <span className="shrink-0 text-tinta-suave tabular-nums">{t.n}</span>
           </button>
         ))}
-      </Tarjeta>
+      </div>
 
-      <Tarjeta className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-panel-borde pt-4">
         <p className="min-h-[36px] text-[12.5px] leading-snug">
           {detalle ? (
             <>
@@ -183,136 +185,166 @@ function Calor({ slug, calor, color }) {
           más
           <span className="ml-auto">una fila por semestre · EL son las electivas</span>
         </div>
-      </Tarjeta>
+      </div>
     </div>
   )
 }
 
-/**
- * Una carrera sola. Lo de arriba -las pastillas para elegir- no se mueve al
- * cambiar: solo se recarga lo de debajo, y lo demas del panel ni se entera.
- */
-export default function PanelCarreras({ slug, alElegir, datos, cargando, resumen, colorDe }) {
-  const carrera = CARRERAS.find((c) => c.slug === slug) ?? CARRERAS[0]
-  const color = colorDe(carrera)
-  // Las mas usadas primero: las que se miran estan siempre a mano
-  const porUso = [...CARRERAS].sort(
-    (a, b) => (resumen?.[b.slug]?.aparatos ?? 0) - (resumen?.[a.slug]?.aparatos ?? 0),
-  )
+/* "Ingeniería", "Licenciatura" o "Gerencia": la primera palabra del nombre */
+const tipoDe = (carrera) => carrera.nombre.split(' ')[0]
 
+/**
+ * Una carrera en la rejilla: su forma, sus aperturas del mes con la
+ * tendencia de los ultimos 30 dias, y sus aparatos y marcas. Todo en su
+ * color; tocarla la abre arriba.
+ */
+function TarjetaCarrera({ carrera, color, datos, mes, elegida, alElegir }) {
+  const { mes: aperturas = 0, mesAnterior = 0, aparatos = 0, marcas = 0, porDia = [] } = datos ?? {}
   return (
-    <div className="flex flex-col gap-6">
-      <div className="-mx-5 overflow-x-auto px-5 pb-1 desplazable-limpio">
-        <div className="flex w-max gap-1.5">
-          {porUso.map((c) => {
-            const activa = c.slug === carrera.slug
-            const tono = colorDe(c)
-            const aparatos = resumen?.[c.slug]?.aparatos ?? 0
-            return (
-              <button
-                key={c.slug}
-                type="button"
-                onClick={() => alElegir(c.slug)}
-                aria-pressed={activa}
-                className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] whitespace-nowrap transition-colors"
-                style={{
-                  borderColor: activa
-                    ? `color-mix(in oklab, ${tono} 55%, transparent)`
-                    : 'var(--panel-borde)',
-                  backgroundColor: activa
-                    ? `color-mix(in oklab, ${tono} 14%, var(--panel))`
-                    : 'var(--panel)',
-                  color: activa ? 'var(--tinta)' : 'var(--tinta-suave)',
-                }}
-              >
-                <span className="size-1.5 rounded-full" style={{ backgroundColor: tono }} />
-                {c.nombreCorto}
-                <span className="text-[11px] text-tinta-tenue tabular-nums">{aparatos}</span>
-              </button>
-            )
-          })}
+    <button
+      type="button"
+      className="tarjeta-carrera-panel"
+      aria-pressed={elegida}
+      onClick={() => alElegir(carrera.slug)}
+      style={{ '--c': color }}
+    >
+      <span className="cab">
+        <span>
+          <b>{carrera.nombreCorto}</b>
+          <small>{tipoDe(carrera)}</small>
+        </span>
+        <MiniMapa silueta={carrera.silueta} color={color} className="forma" />
+      </span>
+      <span className="cifra">
+        <span>
+          <b className="tabular-nums">{aperturas.toLocaleString('es-VE')}</b>
+          <small>aperturas en {mesLargo(mes)}</small>
+        </span>
+        <Chispa valores={porDia} color={color} />
+      </span>
+      <span className="pie">
+        <span>
+          <b>{aparatos}</b> aparatos
+        </span>
+        <span>
+          <b>{marcas.toLocaleString('es-VE')}</b> marcas
+        </span>
+        <span className="ml-auto">
+          <Cambio valor={variacion(aperturas, mesAnterior)} />
+        </span>
+      </span>
+    </button>
+  )
+}
+
+/** La carrera elegida, entera: sus cifras, su dia a dia y su mapa de calor */
+function Detalle({ carrera, color, datos, cargando }) {
+  return (
+    <section
+      className="widget detalle-carrera ocupa-6"
+      style={{ '--c': color }}
+      aria-label={carrera.nombre}
+    >
+      <div className="cabecera">
+        <div className="min-w-0">
+          <small>{tipoDe(carrera)}</small>
+          <h2>{carrera.nombre}</h2>
+          <p className="mt-1 text-[12px] text-tinta-tenue">
+            {datos?.desde
+              ? `Por día se mide desde el ${diaCorto(datos.desde)}.`
+              : 'Aparatos y aperturas por día empiezan a medirse con esta versión del panel.'}
+          </p>
         </div>
+        <MiniMapa silueta={carrera.silueta} color={color} className="forma" />
       </div>
 
-      <header className="flex flex-col gap-1">
-        <h2 className="text-[22px] leading-tight font-light tracking-[-0.02em]" style={{ color }}>
-          {carrera.nombre}
-        </h2>
-        <p className="text-[12px] text-tinta-tenue">
-          {datos?.desde
-            ? `Aparatos y aperturas por día se miden desde el ${diaCorto(datos.desde)}.`
-            : 'Aparatos y aperturas por día empiezan a medirse con esta versión del panel.'}
-        </p>
-      </header>
-
       {cargando || !datos ? (
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[0, 1, 2, 3].map((n) => (
-              <Hueco key={n} alto={104} />
-            ))}
-          </div>
-          <Hueco alto={220} />
-          <Hueco alto={300} />
+        <div className="p-5">
+          <Hueco alto={260} />
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Cifra
-              valor={datos.aparatos.treinta}
-              rotulo="Aparatos 30 días"
-              nota={`${datos.aparatos.siete} en los últimos 7`}
-              acento={color}
-            />
-            <Cifra
-              valor={datos.aperturas.mes}
-              rotulo="Aperturas"
-              nota={`en ${mesLargo(datos.mes)}; ${datos.aperturas.mesAnterior} en ${mesLargo(datos.mesAnterior)}`}
-              cambio={variacion(datos.aperturas.mes, datos.aperturas.mesAnterior)}
-            />
-            <Cifra
-              valor={datos.marcas.mes}
-              rotulo="Marcas"
-              nota={`materias marcadas en ${mesLargo(datos.mes)}`}
-              cambio={variacion(datos.marcas.mes, datos.marcas.mesAnterior)}
-            />
-            <Cifra valor={total(datos.calor)} rotulo="Fichas abiertas" nota="desde que se mide" />
-          </section>
-
-          <Bloque
-            titulo="Día a día"
-            explica="Aparatos distintos que abrieron esta carrera cada día y, detrás, cuántas veces se abrió."
-          >
-            <Serie
-              puntos={datos.dias}
-              principal="aparatos"
-              fondo="aperturas"
-              color={color}
-              detalle={(d) => (
-                <span className="flex gap-3">
-                  <span>
-                    <span className="text-tinta">{d.aparatos}</span> aparatos
-                  </span>
-                  <span>{d.aperturas} aperturas</span>
-                </span>
-              )}
-            />
-            <div className="flex gap-4 px-1 text-[11px] text-tinta-tenue">
-              <Muestra color={color}>aparatos distintos</Muestra>
-              <Muestra color="color-mix(in oklab, var(--tinta) 20%, transparent)">
-                aperturas
-              </Muestra>
+          <div className="cifras">
+            <div>
+              <small>Aparatos 30 días</small>
+              <b className="tabular-nums">{datos.aparatos.treinta}</b>
+              <p>{datos.aparatos.siete} en los últimos 7</p>
             </div>
-          </Bloque>
+            <div>
+              <small>Aperturas en {mesLargo(datos.mes)}</small>
+              <b className="tabular-nums">
+                {datos.aperturas.mes}
+                <Cambio valor={variacion(datos.aperturas.mes, datos.aperturas.mesAnterior)} />
+              </b>
+              <p>
+                {datos.aperturas.mesAnterior} en {mesLargo(datos.mesAnterior)}
+              </p>
+            </div>
+            <div>
+              <small>Marcas en {mesLargo(datos.mes)}</small>
+              <b className="tabular-nums">
+                {datos.marcas.mes}
+                <Cambio valor={variacion(datos.marcas.mes, datos.marcas.mesAnterior)} />
+              </b>
+              <p>materias marcadas</p>
+            </div>
+            <div>
+              <small>Fichas abiertas</small>
+              <b className="tabular-nums">{total(datos.calor)}</b>
+              <p>desde que se mide</p>
+            </div>
+          </div>
 
-          <Bloque
-            titulo="Mapa de calor"
-            explica="Qué materias abre la gente para ver sus requisitos. Cuanto más intenso, más veces."
-          >
-            <Calor slug={carrera.slug} calor={datos.calor} color={color} />
-          </Bloque>
+          <div className="cuerpo lg:grid-cols-2">
+            <div>
+              <h3>Aparatos distintos por día</h3>
+              <Columnas puntos={datos.dias} campo="aparatos" nombre="aparatos" color={color} />
+            </div>
+            <div>
+              <h3>Aperturas por día</h3>
+              <Columnas puntos={datos.dias} campo="aperturas" nombre="aperturas" color={color} />
+            </div>
+            <div className="lg:col-span-2">
+              <h3>Mapa de calor</h3>
+              <p className="mb-3 text-[12px] text-tinta-tenue">
+                Qué materias abre la gente para ver sus requisitos. Cuanto más intenso, más veces.
+              </p>
+              <Calor slug={carrera.slug} calor={datos.calor} color={color} />
+            </div>
+          </div>
         </>
       )}
+    </section>
+  )
+}
+
+/**
+ * Las carreras: la elegida arriba, entera, y debajo las nueve en tarjetas
+ * para comparar de un vistazo y cambiar de una a otra. Las mas usadas van
+ * primero.
+ */
+export default function PanelCarreras({ slug, alElegir, datos, cargando, resumen, mes, colorDe }) {
+  const carrera = CARRERAS.find((c) => c.slug === slug) ?? CARRERAS[0]
+  const porUso = [...CARRERAS].sort(
+    (a, b) => (resumen?.[b.slug]?.mes ?? 0) - (resumen?.[a.slug]?.mes ?? 0),
+  )
+
+  return (
+    <div className="bento">
+      <Detalle carrera={carrera} color={colorDe(carrera)} datos={datos} cargando={cargando} />
+      <div className="carreras-rejilla ocupa-6">
+        {porUso.map((c) => (
+          <TarjetaCarrera
+            key={c.slug}
+            carrera={c}
+            color={colorDe(c)}
+            datos={resumen?.[c.slug]}
+            mes={mes}
+            elegida={c.slug === carrera.slug}
+            alElegir={alElegir}
+          />
+        ))}
+      </div>
     </div>
   )
 }

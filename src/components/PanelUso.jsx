@@ -11,6 +11,7 @@ import { Hueco } from './panel/piezas'
 /* Dos piezas de dentro de una carrera -el riel de tramos y el desplazable sin
    barra- que este panel tambien pinta, y se entra a el sin pasar por ninguna. */
 import '../estilos/carrera.css'
+import '../estilos/panel.css'
 
 /**
  * El panel de uso. Privado: es la unica pantalla de la aplicacion que no es
@@ -31,7 +32,7 @@ const PESTANA_GUARDADA = 'mapa-pensum:panel-pestana'
 /* La ultima, en un telefono, es solo el icono: con el nombre entero las
    cuatro no caben en 375 px y la barra se cortaba. */
 const PESTANAS = [
-  ['general', 'General'],
+  ['general', 'Resumen'],
   ['carreras', 'Carreras'],
   ['aparatos', 'Dispositivos'],
   ['como', 'Cómo se cuenta', CircleHelp],
@@ -201,14 +202,15 @@ function PanelUso({ alVolver }) {
   const ocupado = Object.values(cargando).some(Boolean)
 
   return (
-    <div ref={contenedor} className="h-full overflow-y-auto bg-lienzo px-5 pb-10 text-tinta">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <header className="flex items-start justify-between gap-3 pt-8">
+    <div
+      ref={contenedor}
+      className="panel-uso h-full overflow-y-auto bg-lienzo px-4 pb-12 text-tinta sm:px-6"
+    >
+      <div className="mx-auto flex max-w-[1160px] flex-col gap-5">
+        <header className="flex items-start justify-between gap-3 pt-7">
           <div className="min-w-0">
-            <p className="text-[10.5px] tracking-[0.24em] text-tinta-tenue uppercase">
-              Mapa de Pensum
-            </p>
-            <h1 className="mt-1 text-[28px] leading-tight font-light tracking-[-0.03em]">Uso</h1>
+            <p className="text-[12.5px] text-tinta-tenue">Mapa de Pensum</p>
+            <h1 className="panel-titulo">Uso</h1>
             {general && (
               <p className="mt-1 text-[12px] text-tinta-tenue">
                 {general.desde && `Midiendo desde el ${diaCorto(general.desde)}`}
@@ -224,7 +226,7 @@ function PanelUso({ alVolver }) {
                   type="button"
                   onClick={actualizar}
                   aria-label="Actualizar"
-                  className="grid size-9 place-items-center rounded-full border border-panel-borde text-tinta-suave transition-colors hover:text-tinta"
+                  className="boton-panel"
                 >
                   <RefreshCw size={15} className={ocupado ? 'animate-spin' : ''} />
                 </button>
@@ -235,7 +237,7 @@ function PanelUso({ alVolver }) {
                     salir()
                   }}
                   aria-label="Olvidar la clave"
-                  className="grid size-9 place-items-center rounded-full border border-panel-borde text-tinta-suave transition-colors hover:text-tinta"
+                  className="boton-panel"
                 >
                   <LogOut size={15} />
                 </button>
@@ -245,7 +247,7 @@ function PanelUso({ alVolver }) {
               type="button"
               onClick={alVolver}
               aria-label="Salir del panel"
-              className="flex h-9 items-center gap-2 rounded-full border border-panel-borde px-2.5 text-[12.5px] text-tinta-suave transition-colors hover:text-tinta sm:px-3.5"
+              className="boton-panel"
             >
               <ArrowLeft size={14} />
               <span className="hidden sm:inline">Salir</span>
@@ -296,9 +298,9 @@ function PanelUso({ alVolver }) {
                 el fondo de la lista de aparatos no deberia obligar a subir. */}
             <nav
               aria-label="Secciones del panel"
-              className="sticky top-0 z-10 -mx-5 overflow-x-auto bg-[color-mix(in_oklab,var(--lienzo)_86%,transparent)] px-5 py-3 backdrop-blur-md desplazable-limpio"
+              className="sticky top-0 z-10 -mx-4 overflow-x-auto bg-[color-mix(in_oklab,var(--lienzo)_86%,transparent)] px-4 py-3 sm:-mx-6 sm:px-6 backdrop-blur-md desplazable-limpio"
             >
-              <div className="flex w-max rounded-full border border-panel-borde bg-panel p-1">
+              <div className="panel-pestanas w-max">
                 {PESTANAS.map(([clave, nombre, Icono]) => (
                   <button
                     key={clave}
@@ -306,11 +308,6 @@ function PanelUso({ alVolver }) {
                     aria-current={pestana === clave ? 'page' : undefined}
                     aria-label={Icono ? nombre : undefined}
                     onClick={() => irA(clave)}
-                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12.5px] whitespace-nowrap transition-colors ${
-                      pestana === clave
-                        ? 'bg-panel-suave text-tinta'
-                        : 'text-tinta-tenue hover:text-tinta-suave'
-                    }`}
                   >
                     {Icono && <Icono size={14} strokeWidth={1.6} className="sm:hidden" />}
                     <span className={Icono ? 'hidden sm:inline' : undefined}>{nombre}</span>
@@ -349,6 +346,7 @@ function PanelUso({ alVolver }) {
                 datos={porCarrera[slug]}
                 cargando={!!cargando[`carrera:${slug}`] && !porCarrera[slug]}
                 resumen={general.carreras}
+                mes={general.mes}
                 colorDe={colorDe}
               />
             )}
