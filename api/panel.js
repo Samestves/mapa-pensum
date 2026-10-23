@@ -79,9 +79,33 @@ const leerFicha = (texto) => {
 }
 
 /**
+ * Si el almacen acepta escrituras, y si no, que contesta Redis.
+ *
+ * El panel solo lee, y leer funciona aunque escribir no -con el token de
+ * solo lectura de Upstash, por ejemplo-, asi que unos numeros parados no
+ * dicen por si solos que algo va mal. La prueba escribe una clave que caduca
+ * sola a los diez minutos: un comando por visita al panel, en su propia
+ * peticion para que su fallo no se lleve lo demas. Lo que conteste Redis va
+ * tal cual, porque es lo que dice que arreglar.
+ */
+export async function probarEscritura(ahora = Date.now()) {
+  try {
+    await pedir([['SET', k('salud', 'sonda'), String(ahora), 'EX', '600']])
+    return { escribe: true }
+  } catch (e) {
+    return { escribe: false, error: String(e.message ?? e).slice(0, 200) }
+  }
+}
+
+/* El ultimo aparato en dar señales, con su hora: ZRANGE ... WITHSCORES
+   devuelve [id, puntuacion], y la puntuacion es el instante en ms */
+const instanteDe = (ultimo) => (ultimo?.[1] ? new Date(Number(ultimo[1])).toISOString() : null)
+
+/**
  * Lo de toda la web: activos, dias, reloj, vistas, duracion, el ranking de
- * carreras y los horarios. Es lo que se ve al entrar, y no cambia por mucho que se mire una
- * carrera u otra: cada seccion se pide aparte.
+ * carreras, los horarios y si el contador esta guardando. Es lo que se ve al
+ * entrar, y no cambia por mucho que se mire una carrera u otra: cada seccion
+ * se pide aparte.
  */
 async function general(hoy, cuantos) {
   const dias = ultimosDias(cuantos, hoy)
@@ -111,6 +135,7 @@ async function general(hoy, cuantos) {
     ['HLEN', k('horario', 'hechos')],
     ['HMGET', k('horario', 'creados'), ...dias],
     ['HMGET', k('horario', 'origen'), 'foto', 'mano'],
+    ['ZRANGE', k('ap', 'vistos'), '-1', '-1', 'WITHSCORES'],
   ]
 
   const r = await pedir(comandos)
@@ -133,6 +158,7 @@ async function general(hoy, cuantos) {
   const hechos = numero(r[i++])
   const creados = r[i++] ?? []
   const [foto, mano] = r[i++] ?? []
+  const ultimoLatido = instanteDe(r[i++])
   const creadosPorDia = dias.map((_, n) => numero(creados[n]))
 
   /* Las carreras de las que hay algo, y de cada una sus aperturas y sus
@@ -204,6 +230,9 @@ async function general(hoy, cuantos) {
       foto: numero(foto),
       mano: numero(mano),
     },
+    /* Si el contador esta guardando: cuando entro el ultimo latido y si el
+       almacen deja escribir (ver AvisoSalud en el panel) */
+    salud: { ultimoLatido, ...(await probarEscritura()) },
   }
 }
 

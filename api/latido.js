@@ -391,8 +391,13 @@ export default async function handler(req, res) {
   try {
     const comandos = comandosDe(latido, fechaDe())
     if (hayAlmacen() && comandos.length) await pedir([...comandos, ...contarOrigen(origen)])
-  } catch {
-    // Que el almacen falle no es asunto de quien esta usando la aplicacion
+  } catch (e) {
+    /* Que el almacen falle no es asunto de quien esta usando la aplicacion,
+       y a el no se le dice. Pero queda en el registro de la funcion en
+       Vercel: callarlo tambien ahi es como el contador estuvo dias sin
+       guardar nada sin que nadie lo supiera. El panel lo avisa ademas (ver
+       saludDelAlmacen en panel.js). */
+    console.error(`latido sin guardar (${latido.tipo}): ${e.message}`)
   }
   return res.status(204).end()
 }

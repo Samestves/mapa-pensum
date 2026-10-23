@@ -26,7 +26,15 @@ export function hayAlmacen() {
   return Boolean(url && token)
 }
 
-/** Manda los comandos en una sola peticion y devuelve el resultado de cada uno */
+/**
+ * Manda los comandos en una sola peticion y devuelve el resultado de cada uno.
+ *
+ * Si Redis rechaza alguno -un token sin permiso de escritura, una clave de
+ * otro tipo- lanza con su motivo en vez de dejar un undefined en su sitio.
+ * Antes se devolvia el hueco y el fallo no dejaba rastro: el contador estuvo
+ * dias sin guardar una sola visita y nada lo decia. Quien llama decide que
+ * hacer con el fallo; lo que no puede es no enterarse.
+ */
 export async function pedir(comandos) {
   const { url, token } = destino()
   const respuesta = await fetch(`${url}/pipeline`, {
@@ -36,5 +44,7 @@ export async function pedir(comandos) {
   })
   if (!respuesta.ok) throw new Error(`Redis respondio ${respuesta.status}`)
   const datos = await respuesta.json()
+  const rechazos = [...new Set(datos.filter((d) => d.error).map((d) => d.error))]
+  if (rechazos.length) throw new Error(`Redis rechazo un comando: ${rechazos.join(' | ')}`)
   return datos.map((d) => d.result)
 }
